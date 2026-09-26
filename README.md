@@ -75,41 +75,54 @@ lib/
 ## 🚀 Quickstart & Setup Guide
 
 ### 1. Firebase Configuration & Deployment (Automated — No Manual Console Work)
+
 The project is configured for Firebase project `food-fight-bd72e`.
 
 1. **Configure Firebase Options** (Already generated via FlutterFire CLI):
+
    ```bash
    flutterfire configure --project=food-fight-bd72e
    ```
+
 2. **Deploy Security Rules & Composite Indexes in a Single Command**:
+
    ```bash
    firebase deploy --only firestore
    ```
+
    *(Or individually: `firebase deploy --only firestore:rules` and `firebase deploy --only firestore:indexes`)*.
 3. **Automatic Collections**:
    Firestore collections (`users`, `categories`, `menuItems`, `orders`, `deliveryAreas`, `coupons`, `reviews`, `notifications`) are created automatically the first time the app or admin writes to them. No manual collection creation in the console is required.
 
 ### 2. Supabase Storage Setup (For Media Assets Only)
+
 Supabase Storage is pre-configured for food images, category icons, banners, and videos using the public bucket `food-images`:
+
 - **Project URL**: `https://acevokhgphqrtvitukzv.supabase.co`
 - **Publishable Key**: `sb_publishable_IAGhxF2xmeKLKOR5ZqITcw_ksW0Ghdc` *(safe for client apps; zero secret/service_role keys exposed)*.
 - **Storage Bucket**: `food-images` (configured in `lib/core/config/supabase_config.dart` and `lib/core/constants/app_constants.dart`).
 - **Media Upload Flow**: Every media upload uploads to `food-images` via `SupabaseStorageService`, generates an accessible public URL, and saves that URL into the matching Firestore document (`imageUrl` field). No text or application records are stored in Supabase.
 
 ### 3. Setting Up an Admin Account
+
 To access the Admin Panel:
+
 1. Register a new account inside the app via the **Sign Up** screen (or in Firebase Auth console).
 2. Go to **Cloud Firestore** -> `users` collection -> locate your user document by UID.
 3. Set the field `role` to string `"admin"` (default is `"customer"`).
 4. When you log in with this account, the app will automatically route you to the **Admin Dashboard**!
 
 ### 4. Google Sign-In Platform Setup
+
 Google Sign-In is integrated using Firebase Authentication's Google Provider:
+
 1. **Android Setup**:
    - Generate your development SHA-1 and SHA-256 fingerprints:
+
      ```bash
      cd android && ./gradlew signingReport
      ```
+
    - In the [Firebase Console](https://console.firebase.google.com/), select project `food-fight-bd72e` -> Project Settings -> Your Android App.
    - Add both the **SHA-1** and **SHA-256** fingerprints.
    - Download the updated `google-services.json` and place it in `android/app/`.
@@ -123,7 +136,9 @@ Google Sign-In is integrated using Firebase Authentication's Google Provider:
    - On first Google Sign-In, the app automatically creates the user document in `users/{uid}` in Firestore with `role: 'customer'`, ensuring seamless order placement and admin promotion.
 
 ### 5. Supabase Storage RLS Policies
+
 To ensure authenticated app users can upload menu and profile pictures while keeping public read access active, run the migration in `supabase_storage_policies.sql` inside your **Supabase Dashboard -> SQL Editor**:
+
 - Grants public read (`SELECT`) access on `food-images`.
 - Grants authenticated users `INSERT`, `UPDATE`, and `DELETE` access.
 - In `lib/main.dart`, Supabase client is initialized with a Firebase Auth ID token bridge so Supabase recognizes authenticated app requests.
@@ -151,7 +166,8 @@ flutter run
 
 ## 📱 Features Breakdown
 
-### 🥊 Customer Panel:
+### 🥊 Customer Panel
+
 - **Authentication**: Modern redesigned hero auth flow with email/password and **Continue with Google** sign-in. Password reset support.
 - **Dark Mode**: High-contrast, WCAG-compliant dark theme with full support across all surfaces, cards, and text. Theme toggle available in Profile.
 - **Home Screen**: Real-time category selector, search bar, active promotional banners, live food dishes from Firestore.
@@ -162,7 +178,8 @@ flutter run
 - **My Orders**: Complete order history with status badges, item summaries, and polished empty states.
 - **Profile**: Change details, upload profile picture to Supabase Storage, switch theme (Light/Dark/System), and switch to Admin panel if user is an administrator.
 
-### 🛡️ Admin Panel:
+### 🛡️ Admin Panel
+
 - **Dashboard**: Live KPI cards (Today's Sales, Orders Count, Pending Action, Delivery Zones), management shortcuts, and real-time live order stream with polished empty state.
 - **Order Management**: Tabbed pipeline (`All`, `Pending`, `Accepted`, `Preparing`, `Ready`, `Out for Delivery`, `Delivered`, `Cancelled`). One-tap action buttons to advance status, or cancel with required reason prompt.
 - **Menu Management**: Searchable menu list with category filters, image preview, active/inactive availability switch, and Add/Edit screen with camera/gallery photo upload to Supabase.
