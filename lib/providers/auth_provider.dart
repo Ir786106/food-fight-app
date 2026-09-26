@@ -19,6 +19,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isSuperAdmin => _currentUser?.isSuperAdmin ?? false;
   bool get isAdmin => (_currentUser?.isAdmin ?? false) || isSuperAdmin;
   bool get isCustomer => _currentUser?.isCustomer ?? false;
+  bool get isRider => _currentUser?.isRider ?? false;
 
   /// Initialize auth state from Firebase on app launch
   Future<void> init() async {
@@ -143,6 +144,9 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  /// Alias for sendPasswordReset
+  Future<bool> sendPasswordResetEmail(String email) => sendPasswordReset(email);
 
   /// Update Profile Details
   Future<bool> updateProfile({String? name, String? phone, String? profileImage}) async {

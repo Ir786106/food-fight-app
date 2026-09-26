@@ -1,3 +1,4 @@
+import '../core/utils/safe_convert.dart';
 import 'menu_item_model.dart';
 
 class FoodModel {
@@ -92,48 +93,53 @@ class FoodModel {
   }
 
   factory FoodModel.fromJson(Map<String, dynamic> json) {
-    // Parse variants
+    // Parse variants safely
     List<MenuVariant>? parsedVariants;
     if (json['variants'] is List) {
       parsedVariants = (json['variants'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((v) => MenuVariant.fromJson(v))
+          .whereType<Map>()
+          .map((v) => MenuVariant.fromJson(Map<String, dynamic>.from(v)))
           .toList();
     } else if (json['sizePrices'] != null && json['sizePrices'] is Map) {
       final sizeMap = Map<String, dynamic>.from(json['sizePrices'] as Map);
       parsedVariants = sizeMap.entries.map((e) {
         return MenuVariant(
           label: e.key.toString(),
-          price: (e.value is num) ? (e.value as num).toDouble() : 0.0,
+          price: SafeConvert.toDouble(e.value),
         );
       }).toList();
     }
 
-    // Parse addons
+    // Parse addons safely
     List<MenuAddon>? parsedAddons;
     if (json['addons'] is List) {
       parsedAddons = (json['addons'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((a) => MenuAddon.fromJson(a))
+          .whereType<Map>()
+          .map((a) => MenuAddon.fromJson(Map<String, dynamic>.from(a)))
           .toList();
     }
 
+    Map<String, double>? parsedSizePrices;
+    if (json['sizePrices'] != null && json['sizePrices'] is Map) {
+      parsedSizePrices = SafeConvert.toDoubleMap(json['sizePrices']);
+    }
+
     return FoodModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      price: SafeConvert.toDouble(json['price']),
       variants: parsedVariants,
       addons: parsedAddons,
-      sizePrices: json['sizePrices'] != null ? Map<String, double>.from(json['sizePrices']) : null,
-      imageEmoji: json['imageEmoji'] ?? '🥊',
-      imageUrl: json['imageUrl'],
-      category: json['category'] ?? '',
-      rating: (json['rating'] ?? 4.8).toDouble(),
-      prepTimeMinutes: json['prepTimeMinutes'] ?? 25,
-      restaurantId: json['restaurantId'] ?? 'food_fight_hq',
-      isSpicy: json['isSpicy'] ?? false,
-      isVeg: json['isVeg'] ?? true,
+      sizePrices: parsedSizePrices,
+      imageEmoji: json['imageEmoji']?.toString() ?? '🥊',
+      imageUrl: json['imageUrl']?.toString(),
+      category: json['category']?.toString() ?? '',
+      rating: SafeConvert.toDouble(json['rating'], 4.8),
+      prepTimeMinutes: SafeConvert.toInt(json['prepTimeMinutes'], 25),
+      restaurantId: json['restaurantId']?.toString() ?? 'food_fight_hq',
+      isSpicy: json['isSpicy'] == true || json['isSpicy'] == 1,
+      isVeg: json['isVeg'] == null ? true : (json['isVeg'] == true || json['isVeg'] == 1),
     );
   }
 

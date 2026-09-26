@@ -58,8 +58,8 @@ class ReportService {
           if (!dailyMap.containsKey(dateKey)) {
             dailyMap[dateKey] = {'date': DateTime(date.year, date.month, date.day), 'revenue': 0.0, 'count': 0};
           }
-          dailyMap[dateKey]!['revenue'] = (dailyMap[dateKey]!['revenue'] as double) + total;
-          dailyMap[dateKey]!['count'] = (dailyMap[dateKey]!['count'] as int) + 1;
+          dailyMap[dateKey]!['revenue'] = ((dailyMap[dateKey]!['revenue'] as num?)?.toDouble() ?? 0.0) + total;
+          dailyMap[dateKey]!['count'] = ((dailyMap[dateKey]!['count'] as num?)?.toInt() ?? 0) + 1;
 
           // Item sales
           final items = (data['items'] as List?) ?? [];
@@ -68,8 +68,8 @@ class ReportService {
               final food = itemJson['food'] as Map? ?? itemJson;
               final itemId = (food['id'] ?? '').toString();
               final itemName = (food['name'] ?? 'Item').toString();
-              final basePrice = (food['price'] ?? 0).toDouble();
-              final qty = (itemJson['quantity'] ?? 1) as int;
+              final basePrice = (food['price'] is num) ? (food['price'] as num).toDouble() : 0.0;
+              final qty = (itemJson['quantity'] as num?)?.toInt() ?? 1;
               final double lineRevenue = itemJson['totalPrice'] != null
                   ? (itemJson['totalPrice'] as num).toDouble()
                   : (itemJson['unitPrice'] != null
@@ -86,8 +86,8 @@ class ReportService {
                   'image': img,
                 };
               }
-              itemSalesMap[itemId]!['qty'] = (itemSalesMap[itemId]!['qty'] as int) + qty;
-              itemSalesMap[itemId]!['revenue'] = (itemSalesMap[itemId]!['revenue'] as double) + lineRevenue;
+              itemSalesMap[itemId]!['qty'] = ((itemSalesMap[itemId]!['qty'] as num?)?.toInt() ?? 0) + qty;
+              itemSalesMap[itemId]!['revenue'] = ((itemSalesMap[itemId]!['revenue'] as num?)?.toDouble() ?? 0.0) + lineRevenue;
             }
           }
         }
@@ -96,10 +96,10 @@ class ReportService {
       // Convert items map to sorted list
       final topItemsList = itemSalesMap.values.map((v) {
         return TopSellingItem(
-          menuItemId: v['id'] as String,
-          name: v['name'] as String,
-          quantitySold: v['qty'] as int,
-          totalRevenue: v['revenue'] as double,
+          menuItemId: v['id']?.toString() ?? '',
+          name: v['name']?.toString() ?? '',
+          quantitySold: (v['qty'] as num?)?.toInt() ?? 0,
+          totalRevenue: (v['revenue'] as num?)?.toDouble() ?? 0.0,
           imageUrl: v['image'] as String?,
         );
       }).toList();
@@ -109,8 +109,8 @@ class ReportService {
       final dailySalesList = dailyMap.values.map((v) {
         return DailySalesStat(
           date: v['date'] as DateTime,
-          revenue: v['revenue'] as double,
-          ordersCount: v['count'] as int,
+          revenue: (v['revenue'] as num?)?.toDouble() ?? 0.0,
+          ordersCount: (v['count'] as num?)?.toInt() ?? 0,
         );
       }).toList();
       dailySalesList.sort((a, b) => b.date.compareTo(a.date));

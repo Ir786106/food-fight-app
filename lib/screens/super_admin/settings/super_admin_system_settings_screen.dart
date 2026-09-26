@@ -25,6 +25,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
   late TextEditingController _whatsappCtrl;
   late TextEditingController _deliveryChargeCtrl;
   late TextEditingController _freeDeliveryThresholdCtrl;
+  late TextEditingController _cancellationWindowCtrl;
 
   bool _isStoreOpen = true;
   bool _maintenanceMode = false;
@@ -32,6 +33,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
   bool _allowOnlinePay = true;
   bool _pushNotifications = true;
   bool _emailNotifications = true;
+  bool _smsNotifications = true;
 
   bool _initialized = false;
   bool _isSaving = false;
@@ -44,6 +46,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
     _whatsappCtrl = TextEditingController(text: settings.supportWhatsApp);
     _deliveryChargeCtrl = TextEditingController(text: settings.defaultDeliveryCharge.toStringAsFixed(0));
     _freeDeliveryThresholdCtrl = TextEditingController(text: settings.freeDeliveryThreshold.toStringAsFixed(0));
+    _cancellationWindowCtrl = TextEditingController(text: settings.orderCancellationWindowMinutes.toString());
 
     _isStoreOpen = settings.isStoreOpen;
     _maintenanceMode = settings.maintenanceMode;
@@ -51,6 +54,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
     _allowOnlinePay = settings.allowOnlinePayment;
     _pushNotifications = settings.pushNotificationsEnabled;
     _emailNotifications = settings.emailNotificationsEnabled;
+    _smsNotifications = settings.smsNotificationsEnabled;
   }
 
   @override
@@ -62,6 +66,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
     _whatsappCtrl.dispose();
     _deliveryChargeCtrl.dispose();
     _freeDeliveryThresholdCtrl.dispose();
+    _cancellationWindowCtrl.dispose();
     super.dispose();
   }
 
@@ -80,12 +85,14 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
       supportWhatsApp: _whatsappCtrl.text.trim(),
       defaultDeliveryCharge: double.tryParse(_deliveryChargeCtrl.text.trim()) ?? 150.0,
       freeDeliveryThreshold: double.tryParse(_freeDeliveryThresholdCtrl.text.trim()) ?? 2500.0,
+      orderCancellationWindowMinutes: int.tryParse(_cancellationWindowCtrl.text.trim()) ?? 10,
       isStoreOpen: _isStoreOpen,
       maintenanceMode: _maintenanceMode,
       allowCashOnDelivery: _allowCod,
       allowOnlinePayment: _allowOnlinePay,
       pushNotificationsEnabled: _pushNotifications,
       emailNotificationsEnabled: _emailNotifications,
+      smsNotificationsEnabled: _smsNotifications,
       updatedAt: DateTime.now(),
     );
 
@@ -124,245 +131,288 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
       _initialized = true;
     }
 
-    return Scaffold(
-      backgroundColor: SuperAdminTheme.getBackground(context),
-      drawer: const SuperAdminDrawer(currentRoute: '/super-admin/settings'),
-      appBar: AppBar(
-        title: const Text(
-          'Platform & System Settings',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        backgroundColor: SuperAdminTheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save_rounded),
-            tooltip: 'Save Settings',
-            onPressed: _isSaving ? null : _handleSave,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: SuperAdminTheme.getBackground(context),
+        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/settings'),
+        appBar: AppBar(
+          title: const FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Platform & System Settings',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
           ),
-        ],
-      ),
-      body: ResponsiveContainer.content(
-        maxWidth: 900,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Platform Operating Status
-                Text(
-                  'Operational State Master Switches',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
-                ),
-                const SizedBox(height: 12),
-                _buildSwitchCard(
-                  title: 'Restaurant Kitchen Status (Store Open)',
-                  subtitle: _isStoreOpen
-                      ? 'Store is OPEN: Accepting incoming customer food orders'
-                      : 'Store is CLOSED: Orders paused across customer app',
-                  value: _isStoreOpen,
-                  activeColor: Colors.green,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                  onChanged: (val) => setState(() => _isStoreOpen = val),
-                ),
-                const SizedBox(height: 10),
-                _buildSwitchCard(
-                  title: 'Platform Maintenance Mode',
-                  subtitle: _maintenanceMode
-                      ? 'MAINTENANCE ACTIVE: Only Super Admins can access services'
-                      : 'NORMAL MODE: All users and customers have standard access',
-                  value: _maintenanceMode,
-                  activeColor: Colors.orange,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                  onChanged: (val) => setState(() => _maintenanceMode = val),
-                ),
-
-                const SizedBox(height: 24),
-
-                // General Branding & App Info
-                Text(
-                  'Brand & Contact Details',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+          backgroundColor: SuperAdminTheme.primary,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.save_rounded),
+              tooltip: 'Save Settings',
+              onPressed: _isSaving ? null : _handleSave,
+            ),
+          ],
+        ),
+        body: ResponsiveContainer.content(
+          maxWidth: 900,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Platform Operating Status
+                  Text(
+                    'Operational State Master Switches',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
                   ),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _appNameCtrl,
-                        validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'App Name'),
-                        decoration: const InputDecoration(
-                          labelText: 'Application Name *',
-                          prefixIcon: Icon(Icons.app_registration_rounded),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _restaurantNameCtrl,
-                        validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Restaurant Brand'),
-                        decoration: const InputDecoration(
-                          labelText: 'Restaurant Brand *',
-                          prefixIcon: Icon(Icons.storefront_rounded),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _contactEmailCtrl,
-                        validator: ValidatorUtils.validateEmail,
-                        decoration: const InputDecoration(
-                          labelText: 'Support Email Address *',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _contactPhoneCtrl,
-                        validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Contact Phone'),
-                        decoration: const InputDecoration(
-                          labelText: 'Support Hotline Phone *',
-                          prefixIcon: Icon(Icons.phone_outlined),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _whatsappCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Customer Support WhatsApp Number',
-                          prefixIcon: Icon(Icons.chat_outlined),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 12),
+                  _buildSwitchCard(
+                    title: 'Restaurant Kitchen Status (Store Open)',
+                    subtitle: _isStoreOpen
+                        ? 'Store is OPEN: Accepting incoming customer food orders'
+                        : 'Store is CLOSED: Orders paused across customer app',
+                    value: _isStoreOpen,
+                    activeColor: Colors.green,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _isStoreOpen = val),
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Delivery Fee Rules
-                Text(
-                  'Global Delivery Fee Policy',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                  const SizedBox(height: 10),
+                  _buildSwitchCard(
+                    title: 'Platform Maintenance Mode',
+                    subtitle: _maintenanceMode
+                        ? 'MAINTENANCE ACTIVE: Only Super Admins can access services'
+                        : 'NORMAL MODE: All users and customers have standard access',
+                    value: _maintenanceMode,
+                    activeColor: Colors.orange,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _maintenanceMode = val),
                   ),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _deliveryChargeCtrl,
-                        keyboardType: TextInputType.number,
-                        validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Default delivery charge'),
-                        decoration: const InputDecoration(
-                          labelText: 'Default Delivery Fee (Rs.) *',
-                          prefixIcon: Icon(Icons.delivery_dining_rounded),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _freeDeliveryThresholdCtrl,
-                        keyboardType: TextInputType.number,
-                        validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Free delivery threshold'),
-                        decoration: const InputDecoration(
-                          labelText: 'Free Delivery Order Threshold (Rs.) *',
-                          helperText: 'Orders above this amount automatically receive free delivery',
-                          prefixIcon: Icon(Icons.local_shipping_outlined),
-                        ),
-                      ),
-                    ],
+
+                  const SizedBox(height: 24),
+
+                  // General Branding & App Info
+                  Text(
+                    'Brand & Contact Details',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Payment Gateways & Notification Rules
-                Text(
-                  'Payment & Notification Rules',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
-                ),
-                const SizedBox(height: 12),
-                _buildSwitchCard(
-                  title: 'Cash on Delivery (COD)',
-                  subtitle: 'Enable customers to pay in cash upon meal arrival',
-                  value: _allowCod,
-                  activeColor: SuperAdminTheme.primary,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                  onChanged: (val) => setState(() => _allowCod = val),
-                ),
-                const SizedBox(height: 10),
-                _buildSwitchCard(
-                  title: 'Online Card / Mobile Payments',
-                  subtitle: 'Enable credit cards and digital wallets checkout',
-                  value: _allowOnlinePay,
-                  activeColor: SuperAdminTheme.primary,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                  onChanged: (val) => setState(() => _allowOnlinePay = val),
-                ),
-                const SizedBox(height: 10),
-                _buildSwitchCard(
-                  title: 'Push Notifications System',
-                  subtitle: 'Send real-time order status notifications to users',
-                  value: _pushNotifications,
-                  activeColor: Colors.teal,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                  onChanged: (val) => setState(() => _pushNotifications = val),
-                ),
-                const SizedBox(height: 10),
-                _buildSwitchCard(
-                  title: 'Automated Email Receipts & Alerts',
-                  subtitle: 'Dispatch email order confirmations and admin alerts',
-                  value: _emailNotifications,
-                  activeColor: Colors.teal,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                  onChanged: (val) => setState(() => _emailNotifications = val),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Save Changes CTA
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: SuperAdminTheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 3,
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
                     ),
-                    icon: _isSaving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check_circle_rounded),
-                    label: Text(
-                      _isSaving ? 'Synchronizing System Configuration...' : 'Save Global Settings',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _appNameCtrl,
+                          validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'App Name'),
+                          decoration: const InputDecoration(
+                            labelText: 'Application Name *',
+                            prefixIcon: Icon(Icons.app_registration_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _restaurantNameCtrl,
+                          validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Restaurant Brand'),
+                          decoration: const InputDecoration(
+                            labelText: 'Restaurant Brand *',
+                            prefixIcon: Icon(Icons.storefront_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _contactEmailCtrl,
+                          validator: ValidatorUtils.validateEmail,
+                          decoration: const InputDecoration(
+                            labelText: 'Support Email Address *',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _contactPhoneCtrl,
+                          validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Contact Phone'),
+                          decoration: const InputDecoration(
+                            labelText: 'Support Hotline Phone *',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _whatsappCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Customer Support WhatsApp Number',
+                            prefixIcon: Icon(Icons.chat_outlined),
+                          ),
+                        ),
+                      ],
                     ),
-                    onPressed: _isSaving ? null : _handleSave,
                   ),
-                ),
-                const SizedBox(height: 24),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  // Delivery Fee Rules & Order Policies
+                  Text(
+                    'Delivery & Order Cancellation Policies',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _deliveryChargeCtrl,
+                          keyboardType: TextInputType.number,
+                          validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Default delivery charge'),
+                          decoration: const InputDecoration(
+                            labelText: 'Default Delivery Fee (Rs.) *',
+                            prefixIcon: Icon(Icons.delivery_dining_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _freeDeliveryThresholdCtrl,
+                          keyboardType: TextInputType.number,
+                          validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Free delivery threshold'),
+                          decoration: const InputDecoration(
+                            labelText: 'Free Delivery Order Threshold (Rs.) *',
+                            helperText: 'Orders above this amount automatically receive free delivery',
+                            prefixIcon: Icon(Icons.local_shipping_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _cancellationWindowCtrl,
+                          keyboardType: TextInputType.number,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Cancellation window is required';
+                            final val = int.tryParse(v);
+                            if (val == null || val < 1 || val > 60) {
+                              return 'Please enter a valid window between 1 and 60 minutes';
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Order Cancellation Window (minutes) *',
+                            helperText: 'Window within which customers are permitted to self-cancel an order (1–60 min)',
+                            prefixIcon: Icon(Icons.timer_outlined),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Payment Gateways & Notification Rules
+                  Text(
+                    'Payment & Notification Rules',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSwitchCard(
+                    title: 'Cash on Delivery (COD)',
+                    subtitle: 'Enable customers to pay in cash upon meal arrival',
+                    value: _allowCod,
+                    activeColor: SuperAdminTheme.primary,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _allowCod = val),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSwitchCard(
+                    title: 'Online Card / Mobile Payments',
+                    subtitle: 'Enable credit cards and digital wallets checkout',
+                    value: _allowOnlinePay,
+                    activeColor: SuperAdminTheme.primary,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _allowOnlinePay = val),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSwitchCard(
+                    title: 'Push Notifications System',
+                    subtitle: 'Send real-time order status notifications to users',
+                    value: _pushNotifications,
+                    activeColor: Colors.teal,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _pushNotifications = val),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSwitchCard(
+                    title: 'Automated Email Receipts & Alerts',
+                    subtitle: 'Dispatch email order confirmations and admin alerts',
+                    value: _emailNotifications,
+                    activeColor: Colors.teal,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _emailNotifications = val),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSwitchCard(
+                    title: 'SMS Alerts & Order Updates',
+                    subtitle: 'Send automated SMS notifications to customers on order progress',
+                    value: _smsNotifications,
+                    activeColor: Colors.teal,
+                    cardBg: cardBg,
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _smsNotifications = val),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Save Changes CTA
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: SuperAdminTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 3,
+                      ),
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check_circle_rounded),
+                      label: Text(
+                        _isSaving ? 'Synchronizing System Configuration...' : 'Save Global Settings',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      onPressed: _isSaving ? null : _handleSave,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),

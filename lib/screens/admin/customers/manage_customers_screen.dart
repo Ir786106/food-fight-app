@@ -42,8 +42,8 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
           future: context.read<CustomerProvider>().getCustomerStats(customer.id),
           builder: (context, snapshot) {
             final stats = snapshot.data ?? {'totalOrders': 0, 'totalSpent': 0.0};
-            final totalOrders = stats['totalOrders'] as int;
-            final totalSpent = stats['totalSpent'] as double;
+            final totalOrders = (stats['totalOrders'] as num?)?.toInt() ?? 0;
+            final totalSpent = (stats['totalSpent'] as num?)?.toDouble() ?? 0.0;
 
             return Padding(
               padding: const EdgeInsets.all(24),

@@ -1,3 +1,5 @@
+import '../../core/utils/safe_convert.dart';
+
 /// System Settings Model for platform-wide configurations
 class SystemSettingsModel {
   final String id;
@@ -8,12 +10,14 @@ class SystemSettingsModel {
   final String supportWhatsApp;
   final double defaultDeliveryCharge;
   final double freeDeliveryThreshold;
+  final int orderCancellationWindowMinutes;
   final bool isStoreOpen;
   final bool maintenanceMode;
   final bool allowCashOnDelivery;
   final bool allowOnlinePayment;
   final bool pushNotificationsEnabled;
   final bool emailNotificationsEnabled;
+  final bool smsNotificationsEnabled;
   final DateTime updatedAt;
 
   SystemSettingsModel({
@@ -25,12 +29,14 @@ class SystemSettingsModel {
     this.supportWhatsApp = '+923001234567',
     this.defaultDeliveryCharge = 150.0,
     this.freeDeliveryThreshold = 2500.0,
+    this.orderCancellationWindowMinutes = 10,
     this.isStoreOpen = true,
     this.maintenanceMode = false,
     this.allowCashOnDelivery = true,
     this.allowOnlinePayment = true,
     this.pushNotificationsEnabled = true,
     this.emailNotificationsEnabled = true,
+    this.smsNotificationsEnabled = true,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now();
 
@@ -43,12 +49,14 @@ class SystemSettingsModel {
     String? supportWhatsApp,
     double? defaultDeliveryCharge,
     double? freeDeliveryThreshold,
+    int? orderCancellationWindowMinutes,
     bool? isStoreOpen,
     bool? maintenanceMode,
     bool? allowCashOnDelivery,
     bool? allowOnlinePayment,
     bool? pushNotificationsEnabled,
     bool? emailNotificationsEnabled,
+    bool? smsNotificationsEnabled,
     DateTime? updatedAt,
   }) {
     return SystemSettingsModel(
@@ -60,12 +68,15 @@ class SystemSettingsModel {
       supportWhatsApp: supportWhatsApp ?? this.supportWhatsApp,
       defaultDeliveryCharge: defaultDeliveryCharge ?? this.defaultDeliveryCharge,
       freeDeliveryThreshold: freeDeliveryThreshold ?? this.freeDeliveryThreshold,
+      orderCancellationWindowMinutes:
+          orderCancellationWindowMinutes ?? this.orderCancellationWindowMinutes,
       isStoreOpen: isStoreOpen ?? this.isStoreOpen,
       maintenanceMode: maintenanceMode ?? this.maintenanceMode,
       allowCashOnDelivery: allowCashOnDelivery ?? this.allowCashOnDelivery,
       allowOnlinePayment: allowOnlinePayment ?? this.allowOnlinePayment,
       pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       emailNotificationsEnabled: emailNotificationsEnabled ?? this.emailNotificationsEnabled,
+      smsNotificationsEnabled: smsNotificationsEnabled ?? this.smsNotificationsEnabled,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -80,35 +91,38 @@ class SystemSettingsModel {
       'supportWhatsApp': supportWhatsApp,
       'defaultDeliveryCharge': defaultDeliveryCharge,
       'freeDeliveryThreshold': freeDeliveryThreshold,
+      'orderCancellationWindowMinutes': orderCancellationWindowMinutes,
       'isStoreOpen': isStoreOpen,
       'maintenanceMode': maintenanceMode,
       'allowCashOnDelivery': allowCashOnDelivery,
       'allowOnlinePayment': allowOnlinePayment,
       'pushNotificationsEnabled': pushNotificationsEnabled,
       'emailNotificationsEnabled': emailNotificationsEnabled,
+      'smsNotificationsEnabled': smsNotificationsEnabled,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
   }
 
   factory SystemSettingsModel.fromJson(Map<String, dynamic> json) {
     return SystemSettingsModel(
-      id: json['id'] ?? 'global_settings',
-      appName: json['appName'] ?? 'Food Fight',
-      restaurantName: json['restaurantName'] ?? 'Food Fight Restaurant HQ',
-      contactEmail: json['contactEmail'] ?? 'contact@foodfight.pk',
-      contactPhone: json['contactPhone'] ?? '+92 300 1234567',
-      supportWhatsApp: json['supportWhatsApp'] ?? '+923001234567',
-      defaultDeliveryCharge: (json['defaultDeliveryCharge'] ?? 150.0).toDouble(),
-      freeDeliveryThreshold: (json['freeDeliveryThreshold'] ?? 2500.0).toDouble(),
+      id: json['id']?.toString() ?? 'global_settings',
+      appName: json['appName']?.toString() ?? 'Food Fight',
+      restaurantName: json['restaurantName']?.toString() ?? 'Food Fight Restaurant HQ',
+      contactEmail: json['contactEmail']?.toString() ?? 'contact@foodfight.pk',
+      contactPhone: json['contactPhone']?.toString() ?? '+92 300 1234567',
+      supportWhatsApp: json['supportWhatsApp']?.toString() ?? '+923001234567',
+      defaultDeliveryCharge: SafeConvert.toDouble(json['defaultDeliveryCharge'], 150.0),
+      freeDeliveryThreshold: SafeConvert.toDouble(json['freeDeliveryThreshold'], 2500.0),
+      orderCancellationWindowMinutes:
+          SafeConvert.toInt(json['orderCancellationWindowMinutes'], 10),
       isStoreOpen: json['isStoreOpen'] ?? true,
       maintenanceMode: json['maintenanceMode'] ?? false,
       allowCashOnDelivery: json['allowCashOnDelivery'] ?? true,
       allowOnlinePayment: json['allowOnlinePayment'] ?? true,
       pushNotificationsEnabled: json['pushNotificationsEnabled'] ?? true,
       emailNotificationsEnabled: json['emailNotificationsEnabled'] ?? true,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] as int)
-          : DateTime.now(),
+      smsNotificationsEnabled: json['smsNotificationsEnabled'] ?? true,
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }
 

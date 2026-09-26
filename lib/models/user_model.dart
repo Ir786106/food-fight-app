@@ -1,9 +1,16 @@
+import '../core/utils/safe_convert.dart';
+
 class UserModel {
+  static const String roleCustomer = 'customer';
+  static const String roleAdmin = 'admin';
+  static const String roleSuperAdmin = 'super_admin';
+  static const String roleRider = 'rider';
+
   final String id;
   final String name;
   final String email;
   final String phone;
-  final String role; // 'customer', 'admin', 'super_admin'
+  final String role; // 'customer', 'admin', 'super_admin', 'rider'
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -29,6 +36,7 @@ class UserModel {
   bool get isSuperAdmin => role.toLowerCase() == 'super_admin';
   bool get isAdmin => role.toLowerCase() == 'admin' || isSuperAdmin;
   bool get isCustomer => role.toLowerCase() == 'customer';
+  bool get isRider => role.toLowerCase() == 'rider';
 
   UserModel copyWith({
     String? id,
@@ -87,12 +95,8 @@ class UserModel {
       phone: json['phone'] ?? '',
       role: json['role'] ?? 'customer',
       isActive: json['isActive'] == 1 || json['isActive'] == true,
-      createdAt: json['createdAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'])
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
-          : DateTime.now(),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       profileImage: json['profileImage'],
       password: json['password'],
       permissions: parsedPermissions,

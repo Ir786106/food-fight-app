@@ -74,7 +74,9 @@ class SuperAdminProvider extends ChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        _errorMessage = 'Failed to load system settings: $e';
         AppLogger.error('SuperAdminProvider settings watch error: $e', tag: 'SuperAdminProvider');
+        notifyListeners();
       },
     );
   }

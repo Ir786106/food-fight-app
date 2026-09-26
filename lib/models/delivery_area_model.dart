@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 class DeliveryAreaModel {
   final String id;
   final String name;
@@ -31,13 +33,13 @@ class DeliveryAreaModel {
 
   factory DeliveryAreaModel.fromJson(Map<String, dynamic> json) {
     return DeliveryAreaModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      deliveryCharge: (json['deliveryCharge'] ?? json['delivery_fee'] ?? 0).toDouble(),
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      deliveryCharge: SafeConvert.toDouble(json['deliveryCharge'] ?? json['delivery_fee']),
       isActive: json['isActive'] == 1 || json['isActive'] == true,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
-      description: json['description'],
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
+      description: json['description']?.toString(),
     );
   }
 }

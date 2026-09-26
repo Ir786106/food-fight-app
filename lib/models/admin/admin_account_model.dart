@@ -1,3 +1,5 @@
+import '../../core/utils/safe_convert.dart';
+
 /// Admin Account Model for Super Admin management
 class AdminAccountModel {
   final String id;
@@ -91,14 +93,10 @@ class AdminAccountModel {
       status: json['status'] ?? (json['isActive'] == 1 || json['isActive'] == true ? 'active' : 'suspended'),
       permissions: perms,
       restaurantId: json['restaurantId'] ?? 'food_fight_hq',
-      createdAt: json['createdAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int)
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] as int)
-          : DateTime.now(),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       lastLoginAt: json['lastLoginAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['lastLoginAt'] as int)
+          ? SafeConvert.toDateTime(json['lastLoginAt'])
           : null,
     );
   }

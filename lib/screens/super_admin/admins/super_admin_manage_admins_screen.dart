@@ -332,9 +332,19 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
     final provider = context.watch<AdminAccountProvider>();
     final admins = provider.filteredAdmins;
 
-    return Scaffold(
-      backgroundColor: SuperAdminTheme.getBackground(context),
-      drawer: const SuperAdminDrawer(currentRoute: '/super-admin/admins'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: SuperAdminTheme.getBackground(context),
+        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/admins'),
       appBar: AppBar(
         title: const Text(
           'Admin & Staff Management',
@@ -571,6 +581,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
         onPressed: () => _openAdminDialog(),
         icon: const Icon(Icons.person_add),
         label: const Text('New Admin'),
+      ),
       ),
     );
   }

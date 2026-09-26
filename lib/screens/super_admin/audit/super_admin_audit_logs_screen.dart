@@ -55,34 +55,49 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
     final textDark = SuperAdminTheme.getTextDark(context);
     final textMuted = SuperAdminTheme.getTextMuted(context);
 
-    return Scaffold(
-      backgroundColor: SuperAdminTheme.getBackground(context),
-      drawer: const SuperAdminDrawer(currentRoute: '/super-admin/audit'),
-      appBar: AppBar(
-        backgroundColor: SuperAdminTheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Audit & Activity Log',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: SuperAdminTheme.getBackground(context),
+        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/audit'),
+        appBar: AppBar(
+          backgroundColor: SuperAdminTheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Audit & Activity Log',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                ),
+                Text(
+                  'Platform-wide event monitoring & tracking',
+                  style: TextStyle(fontSize: 11, color: Colors.white70),
+                ),
+              ],
             ),
-            Text(
-              'Platform-wide event monitoring & tracking',
-              style: TextStyle(fontSize: 11, color: Colors.white70),
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Refresh Logs',
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: () => auditProvider.watchLogs(),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh Logs',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => auditProvider.watchLogs(),
-          ),
-        ],
-      ),
       body: Column(
         children: [
           // Search & Filter header
@@ -176,6 +191,7 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
             child: _buildLogContent(context, auditProvider),
           ),
         ],
+      ),
       ),
     );
   }

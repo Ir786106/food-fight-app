@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 class AddressModel {
   final String id;
   final String userId;
@@ -40,16 +42,16 @@ class AddressModel {
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
-      id: json['id'] ?? '',
-      userId: json['userId'] ?? json['user_id'] ?? '',
-      label: json['label'] ?? '',
-      details: json['details'] ?? '',
-      iconType: json['iconType'] ?? json['icon_type'] ?? 'home',
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      details: json['details']?.toString() ?? '',
+      iconType: json['iconType']?.toString() ?? json['icon_type']?.toString() ?? 'home',
+      latitude: json['latitude'] != null ? SafeConvert.toDouble(json['latitude']) : null,
+      longitude: json['longitude'] != null ? SafeConvert.toDouble(json['longitude']) : null,
       isDefault: json['isDefault'] == 1 || json['isDefault'] == true,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }
 }

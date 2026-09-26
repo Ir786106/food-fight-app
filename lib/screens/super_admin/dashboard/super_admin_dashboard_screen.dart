@@ -17,9 +17,39 @@ class SuperAdminDashboardScreen extends StatelessWidget {
 
     final provider = context.watch<SuperAdminProvider>();
 
-    return Scaffold(
-      backgroundColor: SuperAdminTheme.getBackground(context),
-      drawer: const SuperAdminDrawer(currentRoute: '/super-admin/dashboard'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return;
+        }
+        final shouldSwitch = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Exit Super Admin HQ?'),
+            content: const Text('Do you want to return to the Customer Storefront?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Stay'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: SuperAdminTheme.primary),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Go to Storefront'),
+              ),
+            ],
+          ),
+        );
+        if (shouldSwitch == true && context.mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: SuperAdminTheme.getBackground(context),
+        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/dashboard'),
       appBar: AppBar(
         title: const Row(
           children: [
@@ -324,6 +354,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

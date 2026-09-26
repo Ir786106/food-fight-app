@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 class CategoryModel {
   final String id;
   final String name;
@@ -37,15 +39,15 @@ class CategoryModel {
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      description: json['description'],
-      imageUrl: json['imageUrl'] ?? json['categoryImage'],
-      order: json['order'] ?? 0,
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString(),
+      imageUrl: json['imageUrl']?.toString() ?? json['categoryImage']?.toString(),
+      order: SafeConvert.toInt(json['order']),
       isActive: json['isActive'] == 1 || json['isActive'] == true,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
-      restaurantId: json['restaurantId'] ?? json['restaurant_id'],
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
+      restaurantId: json['restaurantId']?.toString() ?? json['restaurant_id']?.toString(),
     );
   }
 }

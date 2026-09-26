@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 class ReviewModel {
   final String id;
   final String userId;
@@ -37,17 +39,17 @@ class ReviewModel {
 
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     return ReviewModel(
-      id: json['id'] ?? '',
-      userId: json['userId'] ?? json['user_id'] ?? '',
-      orderId: json['orderId'] ?? json['order_id'] ?? '',
-      itemId: json['itemId'] ?? json['item_id'] ?? '',
-      rating: (json['rating'] ?? 0).toDouble(),
-      reviewText: json['reviewText'] ?? json['review_text'],
-      imageUrls: json['imageUrls'] != null 
-          ? List<String>.from(json['imageUrls'] as List)
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
+      orderId: json['orderId']?.toString() ?? json['order_id']?.toString() ?? '',
+      itemId: json['itemId']?.toString() ?? json['item_id']?.toString() ?? '',
+      rating: SafeConvert.toDouble(json['rating']),
+      reviewText: json['reviewText']?.toString() ?? json['review_text']?.toString(),
+      imageUrls: json['imageUrls'] != null && json['imageUrls'] is List
+          ? (json['imageUrls'] as List).map((e) => e.toString()).toList()
           : null,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }
 }

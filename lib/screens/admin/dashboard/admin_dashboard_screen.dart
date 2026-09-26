@@ -22,9 +22,39 @@ class AdminDashboardScreen extends StatelessWidget {
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
 
-    return Scaffold(
-      backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/dashboard'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return;
+        }
+        final shouldSwitch = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Exit Admin Portal?'),
+            content: const Text('Do you want to return to the Customer Storefront?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Stay'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AdminTheme.primaryBlue),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Go to Storefront'),
+              ),
+            ],
+          ),
+        );
+        if (shouldSwitch == true && context.mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AdminTheme.getBackground(context),
+        drawer: const AdminDrawer(currentRoute: '/admin/dashboard'),
       appBar: AppBar(
         title: Row(
           children: [
@@ -606,6 +636,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

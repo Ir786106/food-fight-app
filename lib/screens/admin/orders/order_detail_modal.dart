@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/providers/order_provider.dart';
+import 'package:food_fight/providers/rider_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 
@@ -156,6 +157,148 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showAssignRiderSheet() {
+    final riderProvider = context.read<RiderProvider>();
+    riderProvider.watchAllRiders();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AdminTheme.getCardBg(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Assign Delivery Rider',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AdminTheme.getTextDark(context),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: Consumer<RiderProvider>(
+                  builder: (context, provider, _) {
+                    final riders = provider.activeRiders;
+                    if (provider.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (riders.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No active delivery riders found.\nAdd riders in Fleet Management.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AdminTheme.getTextMuted(context)),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      itemCount: riders.length,
+                      separatorBuilder: (_, __) => const Divider(height: 12),
+                      itemBuilder: (context, index) {
+                        final rider = riders[index];
+                        final isAssigned = widget.order.riderId == rider.id;
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          leading: CircleAvatar(
+                            backgroundColor: rider.isOnline ? Colors.green.shade100 : Colors.grey.shade200,
+                            child: Icon(
+                              Icons.delivery_dining_rounded,
+                              color: rider.isOnline ? Colors.green.shade800 : Colors.grey.shade600,
+                            ),
+                          ),
+                          title: Text(
+                            rider.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AdminTheme.getTextDark(context),
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${rider.phone} • ${(rider.vehicleType?.toUpperCase() ?? "BIKE")} • ${rider.isOnline ? "Online" : "Offline"}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AdminTheme.getTextMuted(context),
+                            ),
+                          ),
+                          trailing: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isAssigned ? Colors.grey : AdminTheme.primaryBlue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            ),
+                            onPressed: isAssigned
+                                ? null
+                                : () async {
+                                    Navigator.pop(ctx);
+                                    setState(() => _isUpdating = true);
+                                    final success = await provider.assignRider(
+                                      orderId: widget.order.id,
+                                      riderId: rider.id,
+                                      riderName: rider.name,
+                                      riderPhone: rider.phone,
+                                    );
+                                    if (mounted) {
+                                      setState(() => _isUpdating = false);
+                                      if (success) {
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Assigned order to ${rider.name}'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            child: Text(isAssigned ? 'Assigned' : 'Assign'),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -329,6 +472,118 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               child: Text(
                                 'Reason for Cancellation: ${order.cancellationReason}',
                                 style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Delivery Rider Assignment Card
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E26) : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? Colors.white12 : Colors.grey.shade200,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.delivery_dining_rounded, size: 18, color: AdminTheme.primaryBlue),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Delivery Rider',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13.5,
+                                      color: AdminTheme.getTextDark(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (order.status != OrderStatus.delivered && order.status != OrderStatus.cancelled)
+                                TextButton.icon(
+                                  onPressed: _isUpdating ? null : _showAssignRiderSheet,
+                                  icon: Icon(
+                                    order.riderId != null ? Icons.swap_horiz_rounded : Icons.person_add_alt_1_rounded,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    order.riderId != null ? 'Change Rider' : 'Assign Rider',
+                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AdminTheme.primaryBlue,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (order.riderName != null && order.riderName!.isNotEmpty) ...[
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.15),
+                                  child: const Icon(Icons.person, size: 16, color: AdminTheme.primaryBlue),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        order.riderName!,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: AdminTheme.getTextDark(context),
+                                        ),
+                                      ),
+                                      if (order.riderPhone != null && order.riderPhone!.isNotEmpty)
+                                        Text(
+                                          order.riderPhone!,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AdminTheme.getTextMuted(context),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'DISPATCHED',
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ] else ...[
+                            Text(
+                              'No rider assigned to this delivery yet.',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontStyle: FontStyle.italic,
+                                color: AdminTheme.getTextMuted(context),
                               ),
                             ),
                           ],

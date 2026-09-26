@@ -1,3 +1,4 @@
+import '../core/utils/safe_convert.dart';
 import 'food_model.dart';
 import 'menu_item_model.dart';
 
@@ -76,13 +77,14 @@ class CartItemModel {
   }
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
-    final food = FoodModel.fromJson(json['food'] as Map<String, dynamic>);
+    final foodMap = json['food'] is Map ? Map<String, dynamic>.from(json['food'] as Map) : <String, dynamic>{};
+    final food = FoodModel.fromJson(foodMap);
     final rawSize = json['selectedSize']?.toString();
 
     // Parse selected variant if saved or resolve from size
     MenuVariant? parsedVariant;
     if (json['selectedVariant'] != null && json['selectedVariant'] is Map) {
-      parsedVariant = MenuVariant.fromJson(json['selectedVariant'] as Map<String, dynamic>);
+      parsedVariant = MenuVariant.fromJson(Map<String, dynamic>.from(json['selectedVariant'] as Map));
     } else if (rawSize != null && food.variants != null && food.variants!.isNotEmpty) {
       parsedVariant = food.variants!.firstWhere(
         (v) => v.label.toLowerCase() == rawSize.toLowerCase(),
@@ -94,19 +96,19 @@ class CartItemModel {
     List<MenuAddon> parsedAddons = [];
     if (json['selectedAddons'] is List) {
       parsedAddons = (json['selectedAddons'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((a) => MenuAddon.fromJson(a))
+          .whereType<Map>()
+          .map((a) => MenuAddon.fromJson(Map<String, dynamic>.from(a)))
           .toList();
     }
 
     return CartItemModel(
       food: food,
-      quantity: json['quantity'] ?? 1,
-      note: json['note'],
+      quantity: SafeConvert.toInt(json['quantity'], 1),
+      note: json['note']?.toString(),
       selectedSize: rawSize,
       selectedVariant: parsedVariant,
       selectedAddons: parsedAddons,
-      unitPrice: json['unitPrice'] != null ? (json['unitPrice'] as num).toDouble() : null,
+      unitPrice: json['unitPrice'] != null ? SafeConvert.toDouble(json['unitPrice']) : null,
     );
   }
 

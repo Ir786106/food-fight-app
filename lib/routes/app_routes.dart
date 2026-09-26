@@ -27,8 +27,13 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/address/address_screen.dart';
 import '../screens/address/add_address_screen.dart';
+import '../screens/profile/payment_methods_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
+
+// Fleet & Rider Screens
+import '../screens/admin/riders/manage_riders_screen.dart';
+import '../screens/rider/rider_dashboard_screen.dart';
 
 // Admin Screens
 import '../screens/admin/dashboard/admin_dashboard_screen.dart';
@@ -84,11 +89,12 @@ class AppRoutes {
     '/order-history': (context) => const OrderHistoryScreen(),
     '/order-tracking': (context) => const OrderTrackingScreen(),
 
-    // User Profile, Addresses & Settings
+    // User Profile, Addresses, Payments & Settings
     '/profile': (context) => const ProfileScreen(),
     '/edit-profile': (context) => const EditProfileScreen(),
     '/addresses': (context) => const AddressScreen(),
     '/add-address': (context) => const AddAddressScreen(),
+    '/payment-methods': (context) => const PaymentMethodsScreen(),
     '/notifications': (context) => const NotificationsScreen(),
     '/settings': (context) => const SettingsScreen(),
 
@@ -103,6 +109,7 @@ class AppRoutes {
     '/admin/categories': (context) => const AdminRouteGuard(child: ManageCategoriesScreen()),
     '/admin/customers': (context) => const AdminRouteGuard(child: ManageCustomersScreen()),
     '/admin/delivery-areas': (context) => const AdminRouteGuard(child: ManageDeliveryAreasScreen()),
+    '/admin/riders': (context) => const AdminRouteGuard(child: ManageRidersScreen()),
     '/admin/coupons': (context) => const AdminRouteGuard(child: ManageCouponsScreen()),
     '/admin/reports': (context) => const AdminRouteGuard(child: SalesReportsScreen()),
 
@@ -114,6 +121,11 @@ class AppRoutes {
     '/super-admin/admins': (context) => const SuperAdminRouteGuard(child: SuperAdminManageAdminsScreen()),
     '/super-admin/settings': (context) => const SuperAdminRouteGuard(child: SuperAdminSystemSettingsScreen()),
     '/super-admin/audit': (context) => const SuperAdminRouteGuard(child: SuperAdminAuditLogsScreen()),
+
+    // -------------------------------------------------------------------------
+    // 4. Delivery Rider Console Routes (Protected by RiderRouteGuard)
+    // -------------------------------------------------------------------------
+    '/rider/dashboard': (context) => const RiderRouteGuard(child: RiderDashboardScreen()),
   };
 }
 
@@ -416,5 +428,79 @@ class SuperAdminRouteGuard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Route guard protecting Delivery Rider Console from unauthorized access.
+/// Requires user to be authenticated and hold 'rider', 'admin', or 'super_admin' role.
+class RiderRouteGuard extends StatelessWidget {
+  final Widget child;
+
+  const RiderRouteGuard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    // Case 1: Unauthenticated
+    if (!auth.isLoggedIn) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.delivery_dining_rounded, size: 64, color: AppColors.primary),
+                const SizedBox(height: 16),
+                const Text(
+                  'Rider Login Required',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text('Please sign in to access your delivery dispatch console.'),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false),
+                  child: const Text('Go to Sign In'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Case 2: Authenticated but not a Rider, Admin, or Super Admin
+    if (!auth.isRider && !auth.isAdmin && !auth.isSuperAdmin) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.shield_outlined, size: 64, color: Colors.orange),
+                const SizedBox(height: 16),
+                const Text(
+                  'Rider Clearance Required',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text('Your account is not registered as an active delivery rider.'),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
+                  child: const Text('Return to Home'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Case 3: Authorized
+    return child;
   }
 }

@@ -24,6 +24,8 @@ import 'providers/admin_dashboard_provider.dart';
 import 'providers/super_admin_provider.dart';
 import 'providers/admin_account_provider.dart';
 import 'providers/audit_log_provider.dart';
+import 'providers/payment_method_provider.dart';
+import 'providers/rider_provider.dart';
 
 // Supabase & Routing
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -136,6 +138,12 @@ class FoodFightApp extends StatelessWidget {
 
         // System-wide audit trail capturing actions across orders, menu, users, and settings
         ChangeNotifierProvider(create: (_) => AuditLogProvider()),
+
+        // Saved customer payment methods (tokenized gateway cards & mobile wallets)
+        ChangeNotifierProvider(create: (_) => PaymentMethodProvider()),
+
+        // Delivery fleet riders and active dispatch assignments
+        ChangeNotifierProvider(create: (_) => RiderProvider()),
 
         // Global theme mode (Light / Dark mode toggle)
         ChangeNotifierProvider.value(value: effectiveTheme),

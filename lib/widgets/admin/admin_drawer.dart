@@ -161,13 +161,19 @@ class AdminDrawer extends StatelessWidget {
                     route: '/admin/customers',
                   ),
 
-                  // DELIVERY
-                  _buildSectionHeader('DELIVERY', colorScheme),
+                  // DELIVERY & RIDERS
+                  _buildSectionHeader('DELIVERY & RIDERS', colorScheme),
                   _buildItem(
                     context,
                     title: 'Delivery Areas & Fees',
-                    icon: Icons.delivery_dining_rounded,
+                    icon: Icons.map_rounded,
                     route: '/admin/delivery-areas',
+                  ),
+                  _buildItem(
+                    context,
+                    title: 'Fleet & Delivery Riders',
+                    icon: Icons.delivery_dining_rounded,
+                    route: '/admin/riders',
                   ),
 
                   // REPORTS
@@ -341,7 +347,17 @@ class AdminDrawer extends StatelessWidget {
           onTap: () {
             Navigator.pop(context);
             if (!isSelected) {
-              Navigator.of(context).pushReplacementNamed(route);
+              if (route == '/admin/dashboard') {
+                Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
+              } else if (route == '/home') {
+                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+              } else {
+                if (currentRoute == '/admin/dashboard') {
+                  Navigator.of(context).pushNamed(route);
+                } else {
+                  Navigator.of(context).pushReplacementNamed(route);
+                }
+              }
             }
           },
         ),

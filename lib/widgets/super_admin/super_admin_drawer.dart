@@ -256,7 +256,19 @@ class SuperAdminDrawer extends StatelessWidget {
           onTap: () {
             Navigator.pop(context); // close drawer
             if (currentRoute != route) {
-              Navigator.of(context).pushReplacementNamed(route);
+              if (route == '/super-admin/dashboard') {
+                Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
+              } else if (route == '/home') {
+                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+              } else if (route == '/admin/dashboard') {
+                Navigator.of(context).pushNamed(route);
+              } else {
+                if (currentRoute == '/super-admin/dashboard') {
+                  Navigator.of(context).pushNamed(route);
+                } else {
+                  Navigator.of(context).pushReplacementNamed(route);
+                }
+              }
             }
           },
         ),

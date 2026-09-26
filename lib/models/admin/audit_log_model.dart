@@ -1,3 +1,5 @@
+import '../../core/utils/safe_convert.dart';
+
 /// System Audit Log Model for Super Admin monitoring
 class AuditLogModel {
   final String id;
@@ -75,10 +77,8 @@ class AuditLogModel {
       targetEntity: json['targetEntity'] ?? 'general',
       targetId: json['targetId'] ?? '',
       description: json['description'] ?? '',
-      timestamp: json['timestamp'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int)
-          : DateTime.now(),
-      metadata: json['metadata'] != null
+      timestamp: SafeConvert.toDateTime(json['timestamp']),
+      metadata: json['metadata'] != null && json['metadata'] is Map
           ? Map<String, dynamic>.from(json['metadata'] as Map)
           : null,
     );

@@ -51,14 +51,24 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   Widget build(BuildContext context) {
     final orderProvider = context.watch<OrderProvider>();
 
-    return Scaffold(
-      backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/orders'),
-      appBar: AppBar(
-        title: const Text(
-          'Order Management',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AdminTheme.getBackground(context),
+        drawer: const AdminDrawer(currentRoute: '/admin/orders'),
+        appBar: AppBar(
+          title: const Text(
+            'Order Management',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -134,8 +144,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
         controller: _tabController,
         children: _tabs.map((t) => _OrdersTabList(status: t['status']!)).toList(),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _OrdersTabList extends StatelessWidget {

@@ -113,7 +113,9 @@ class AdminDashboardProvider extends ChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        _errorMessage = 'Failed to load riders count: $e';
         AppLogger.error('Dashboard riders watch error: $e', tag: 'AdminDashboardProvider');
+        notifyListeners();
       },
     );
 
@@ -138,7 +140,9 @@ class AdminDashboardProvider extends ChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        _errorMessage = 'Failed to load customer count: $e';
         AppLogger.error('Dashboard customers watch error: $e', tag: 'AdminDashboardProvider');
+        notifyListeners();
       },
     );
 
@@ -166,7 +170,9 @@ class AdminDashboardProvider extends ChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        _errorMessage = 'Failed to load popular items: $e';
         AppLogger.error('Dashboard popular items watch error: $e', tag: 'AdminDashboardProvider');
+        notifyListeners();
       },
     );
   }

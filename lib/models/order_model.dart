@@ -1,3 +1,4 @@
+import '../core/utils/safe_convert.dart';
 import 'cart_item_model.dart';
 
 enum OrderStatus { pending, accepted, preparing, ready, assigned, pickedUp, outForDelivery, delivered, cancelled }
@@ -15,6 +16,8 @@ class OrderModel {
   OrderStatus status;
   final String deliveryAddress;
   final String? riderId;
+  final String? riderName;
+  final String? riderPhone;
   final String? cancellationReason;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -36,6 +39,8 @@ class OrderModel {
     this.status = OrderStatus.pending,
     required this.deliveryAddress,
     this.riderId,
+    this.riderName,
+    this.riderPhone,
     this.cancellationReason,
     required this.createdAt,
     required this.updatedAt,
@@ -82,6 +87,8 @@ class OrderModel {
       'status': status.name,
       'deliveryAddress': deliveryAddress,
       'riderId': riderId,
+      'riderName': riderName,
+      'riderPhone': riderPhone,
       'cancellationReason': cancellationReason,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
@@ -93,30 +100,37 @@ class OrderModel {
   }
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
-    final items = (json['items'] as List?)
-        ?.map((item) => CartItemModel.fromJson(item))
-        .toList() ?? [];
+    final rawItems = json['items'];
+    List<CartItemModel> items = [];
+    if (rawItems is List) {
+      items = rawItems
+          .whereType<Map>()
+          .map((item) => CartItemModel.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    }
     
     return OrderModel(
-      id: json['id'] ?? '',
-      orderNumber: json['orderNumber'] ?? '',
+      id: json['id']?.toString() ?? '',
+      orderNumber: json['orderNumber']?.toString() ?? '',
       items: items,
-      subtotal: (json['subtotal'] ?? 0).toDouble(),
-      discount: (json['discount'] ?? 0).toDouble(),
-      deliveryCharge: (json['deliveryCharge'] ?? json['delivery_charge'] ?? 0).toDouble(),
-      total: (json['total'] ?? 0).toDouble(),
-      paymentMethod: json['paymentMethod'] ?? 'Cash on Delivery',
-      paymentStatus: json['paymentStatus'] ?? json['payment_status'] ?? 'pending',
-      status: _getStatusFromString(json['status']),
-      deliveryAddress: json['deliveryAddress'] ?? json['delivery_address'] ?? '',
-      riderId: json['riderId'] ?? json['rider_id'],
-      cancellationReason: json['cancellationReason'] ?? json['cancellation_reason'],
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
-      customerId: json['customerId'] ?? json['customer_id'] ?? '',
-      customerName: json['customerName'] ?? json['customer_name'] ?? 'Guest Customer',
-      customerPhone: json['customerPhone'] ?? json['customer_phone'] ?? '',
-      restaurantName: json['restaurantName'] ?? json['restaurant_name'] ?? '',
+      subtotal: SafeConvert.toDouble(json['subtotal']),
+      discount: SafeConvert.toDouble(json['discount']),
+      deliveryCharge: SafeConvert.toDouble(json['deliveryCharge'] ?? json['delivery_charge']),
+      total: SafeConvert.toDouble(json['total']),
+      paymentMethod: json['paymentMethod']?.toString() ?? 'Cash on Delivery',
+      paymentStatus: json['paymentStatus']?.toString() ?? json['payment_status']?.toString() ?? 'pending',
+      status: _getStatusFromString(json['status']?.toString()),
+      deliveryAddress: json['deliveryAddress']?.toString() ?? json['delivery_address']?.toString() ?? '',
+      riderId: json['riderId']?.toString() ?? json['rider_id']?.toString(),
+      riderName: json['riderName']?.toString() ?? json['rider_name']?.toString(),
+      riderPhone: json['riderPhone']?.toString() ?? json['rider_phone']?.toString(),
+      cancellationReason: json['cancellationReason']?.toString() ?? json['cancellation_reason']?.toString(),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
+      customerId: json['customerId']?.toString() ?? json['customer_id']?.toString() ?? '',
+      customerName: json['customerName']?.toString() ?? json['customer_name']?.toString() ?? 'Guest Customer',
+      customerPhone: json['customerPhone']?.toString() ?? json['customer_phone']?.toString() ?? '',
+      restaurantName: json['restaurantName']?.toString() ?? json['restaurant_name']?.toString() ?? '',
     );
   }
 
@@ -133,6 +147,8 @@ class OrderModel {
     OrderStatus? status,
     String? deliveryAddress,
     String? riderId,
+    String? riderName,
+    String? riderPhone,
     String? cancellationReason,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -154,6 +170,8 @@ class OrderModel {
       status: status ?? this.status,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       riderId: riderId ?? this.riderId,
+      riderName: riderName ?? this.riderName,
+      riderPhone: riderPhone ?? this.riderPhone,
       cancellationReason: cancellationReason ?? this.cancellationReason,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

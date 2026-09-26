@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 class CouponModel {
   final String id;
   final String code;
@@ -53,20 +55,20 @@ class CouponModel {
 
   factory CouponModel.fromJson(Map<String, dynamic> json) {
     return CouponModel(
-      id: json['id'] ?? '',
-      code: json['code'] ?? '',
-      type: json['type'] ?? 'percentage',
-      value: (json['value'] ?? 0).toDouble(),
-      minimumOrder: (json['minimumOrder'] ?? 0).toDouble(),
-      maximumDiscount: json['maximumDiscount'] != null ? (json['maximumDiscount'] as num).toDouble() : null,
-      validFrom: DateTime.fromMillisecondsSinceEpoch(json['validFrom'] ?? 0),
-      validUntil: DateTime.fromMillisecondsSinceEpoch(json['validUntil'] ?? 0),
-      usageLimit: json['usageLimit'] ?? 0,
-      usageCount: json['usageCount'] ?? 0,
+      id: json['id']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'percentage',
+      value: SafeConvert.toDouble(json['value']),
+      minimumOrder: SafeConvert.toDouble(json['minimumOrder']),
+      maximumDiscount: json['maximumDiscount'] != null ? SafeConvert.toDouble(json['maximumDiscount']) : null,
+      validFrom: SafeConvert.toDateTime(json['validFrom']),
+      validUntil: SafeConvert.toDateTime(json['validUntil']),
+      usageLimit: SafeConvert.toInt(json['usageLimit']),
+      usageCount: SafeConvert.toInt(json['usageCount']),
       isActive: json['isActive'] == 1 || json['isActive'] == true,
-      description: json['description'],
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
+      description: json['description']?.toString(),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }
 }
