@@ -47,27 +47,44 @@ import '../screens/super_admin/admins/super_admin_manage_admins_screen.dart';
 import '../screens/super_admin/settings/super_admin_system_settings_screen.dart';
 import '../screens/super_admin/audit/super_admin_audit_logs_screen.dart';
 
-/// Centralized Application Routing with Role-Based Route Guards
+/// ============================================================================
+/// APPLICATION ROUTING TABLE & ROLE-BASED ACCESS CONTROL
+/// ============================================================================
+/// Maps string route identifiers to screen widgets and wraps privileged routes
+/// with specialized Route Guard widgets (`AdminRouteGuard`, `SuperAdminRouteGuard`).
+/// This ensures unauthorized roles cannot reach restricted screens even if navigated
+/// to directly.
 class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
-    // Shared & Customer Routes
+    // -------------------------------------------------------------------------
+    // 1. Shared & Customer Storefront Routes
+    // -------------------------------------------------------------------------
+    // Entry & Onboarding
     '/splash': (context) => const SplashScreen(),
     '/onboarding': (context) => const OnboardingScreen(),
+
+    // Authentication Flows
     '/login': (context) => const LoginScreen(),
     '/signup': (context) => const SignupScreen(),
     '/forgot-password': (context) => const ForgotPasswordScreen(),
     '/reset-password': (context) => const ResetPasswordScreen(),
+
+    // Customer Navigation & Food Discovery
     '/home': (context) => const MainNavigationScreen(),
     '/restaurant-detail': (context) => const RestaurantDetailScreen(),
     '/food-detail': (context) => const FoodDetailScreen(),
     '/menu': (context) => const MenuScreen(),
+    '/search': (context) => const SearchScreen(),
+    '/favorites': (context) => const FavoritesScreen(),
+
+    // Cart, Checkout & Orders
     '/cart': (context) => const CartScreen(),
     '/checkout': (context) => const CheckoutScreen(),
     '/order-success': (context) => const OrderSuccessScreen(),
     '/order-history': (context) => const OrderHistoryScreen(),
     '/order-tracking': (context) => const OrderTrackingScreen(),
-    '/search': (context) => const SearchScreen(),
-    '/favorites': (context) => const FavoritesScreen(),
+
+    // User Profile, Addresses & Settings
     '/profile': (context) => const ProfileScreen(),
     '/edit-profile': (context) => const EditProfileScreen(),
     '/addresses': (context) => const AddressScreen(),
@@ -75,7 +92,10 @@ class AppRoutes {
     '/notifications': (context) => const NotificationsScreen(),
     '/settings': (context) => const SettingsScreen(),
 
-    // Admin Panel Routes (Guarded: Admin or Super Admin)
+    // -------------------------------------------------------------------------
+    // 2. Restaurant Admin Panel Routes (Protected by AdminRouteGuard)
+    // -------------------------------------------------------------------------
+    // Requires authenticated user with 'admin' or 'super_admin' role
     '/admin/dashboard': (context) => const AdminRouteGuard(child: AdminDashboardScreen()),
     '/admin/orders': (context) => const AdminRouteGuard(child: AdminOrdersScreen()),
     '/admin/menu': (context) => const AdminRouteGuard(child: ManageMenuScreen()),
@@ -86,7 +106,10 @@ class AppRoutes {
     '/admin/coupons': (context) => const AdminRouteGuard(child: ManageCouponsScreen()),
     '/admin/reports': (context) => const AdminRouteGuard(child: SalesReportsScreen()),
 
-    // Super Admin Panel Routes (Guarded: Super Admin Only)
+    // -------------------------------------------------------------------------
+    // 3. Platform Super Admin Panel Routes (Protected by SuperAdminRouteGuard)
+    // -------------------------------------------------------------------------
+    // Requires authenticated user with 'super_admin' clearance exclusively
     '/super-admin/dashboard': (context) => const SuperAdminRouteGuard(child: SuperAdminDashboardScreen()),
     '/super-admin/admins': (context) => const SuperAdminRouteGuard(child: SuperAdminManageAdminsScreen()),
     '/super-admin/settings': (context) => const SuperAdminRouteGuard(child: SuperAdminSystemSettingsScreen()),
@@ -94,8 +117,13 @@ class AppRoutes {
   };
 }
 
-/// Route guard protecting Admin-level views from unauthorized access.
-/// Requires the user to be authenticated and hold either 'admin' or 'super_admin' role.
+/// ============================================================================
+/// ROUTE GUARD: RESTAURANT ADMIN
+/// ============================================================================
+/// Intercepts navigation to '/admin/*' endpoints:
+/// - If not authenticated: Prompts user to log in via '/login'.
+/// - If authenticated as customer: Blocks access and displays an Access Restricted card.
+/// - If authenticated as admin or super_admin: Grants pass-through access to the child view.
 class AdminRouteGuard extends StatelessWidget {
   final Widget child;
 
