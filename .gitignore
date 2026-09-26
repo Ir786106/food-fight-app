@@ -1,0 +1,68 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code related
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.flutter-plugins
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication & Obfuscation related
+app.*.symbols
+app.*.map.json
+
+# Android build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.gradle/
+/android/local.properties
+
+# Platform ephemeral files
+**/ephemeral/
+.widget_preview/
+
+# ==============================================================================
+# SECURITY & SENSITIVE CREDENTIALS (DO NOT UPLOAD TO VERSION CONTROL)
+# ==============================================================================
+**/google-services.json
+**/GoogleService-Info.plist
+*.env
+*.env.*
+.env
+.env.*
+*.jks
+*.keystore
+key.properties
+*service-account*.json
+*credentials*.json
+*.pem
+*.p8
+*.p12
+*.cer
+*.key

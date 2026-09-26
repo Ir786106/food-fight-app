@@ -1,0 +1,29 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "food-fight-bd72e",
+          "appId": "1:585587375994:android:35a98cfa7fc579f208a0c3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "food-fight-bd72e",
+          "configurations": {
+            "android": "1:585587375994:android:35a98cfa7fc579f208a0c3",
+            "ios": "1:585587375994:ios:367fcc3fd172478008a0c3",
+            "macos": "1:585587375994:ios:367fcc3fd172478008a0c3",
+            "web": "1:585587375994:web:26b1a17cfd2e6f7708a0c3",
+            "windows": "1:585587375994:web:4d16a76584886a6e08a0c3"
+          }
+        }
+      }
+    }
+  }
+}
