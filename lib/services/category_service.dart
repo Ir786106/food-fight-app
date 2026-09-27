@@ -11,15 +11,16 @@ class CategoryService {
   /// Stream of all active/all categories
   static Stream<List<CategoryModel>> watchCategories({bool activeOnly = false}) {
     Query query = _collection.orderBy('order');
-    if (activeOnly) {
-      query = query.where('isActive', isEqualTo: 1);
-    }
     return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return CategoryModel.fromJson(data);
       }).toList();
+      if (activeOnly) {
+        return items.where((c) => c.isActive).toList();
+      }
+      return items;
     });
   }
 

@@ -36,7 +36,7 @@ class RiderService {
           'role': 'rider',
           'name': rider.name,
           'phone': rider.phone,
-          'isActive': rider.isActive,
+          'isActive': rider.isActive ? 1 : 0,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }

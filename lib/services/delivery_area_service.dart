@@ -11,32 +11,33 @@ class DeliveryAreaService {
   /// Watch delivery areas
   static Stream<List<DeliveryAreaModel>> watchDeliveryAreas({bool activeOnly = false}) {
     Query query = _collection.orderBy('name');
-    if (activeOnly) {
-      query = query.where('isActive', isEqualTo: 1);
-    }
 
     return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return DeliveryAreaModel.fromJson(data);
       }).toList();
+      if (activeOnly) {
+        return items.where((a) => a.isActive).toList();
+      }
+      return items;
     });
   }
 
   /// Get delivery areas list
   static Future<List<DeliveryAreaModel>> getDeliveryAreas({bool activeOnly = false}) async {
     try {
-      Query query = _collection.orderBy('name');
-      if (activeOnly) {
-        query = query.where('isActive', isEqualTo: 1);
-      }
-      final snapshot = await query.get();
-      return snapshot.docs.map((doc) {
+      final snapshot = await _collection.orderBy('name').get();
+      final items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return DeliveryAreaModel.fromJson(data);
       }).toList();
+      if (activeOnly) {
+        return items.where((a) => a.isActive).toList();
+      }
+      return items;
     } catch (e) {
       AppLogger.error('Error fetching delivery areas: $e', tag: 'DeliveryAreaService');
       return [];

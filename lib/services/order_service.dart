@@ -33,14 +33,15 @@ class OrderService {
   static Stream<List<OrderModel>> watchCustomerOrders(String customerId) {
     return _collection
         .where('customerId', isEqualTo: customerId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final orders = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return OrderModel.fromJson(data);
       }).toList();
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
     });
   }
 
@@ -56,17 +57,24 @@ class OrderService {
 
   /// Watch all orders (Admin panel), optionally filtered by status
   static Stream<List<OrderModel>> watchAllOrders({String? status}) {
-    Query query = _collection.orderBy('createdAt', descending: true);
-    if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
-      query = query.where('status', isEqualTo: status.toLowerCase());
-    }
-
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+    return _collection
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      var orders = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return OrderModel.fromJson(data);
       }).toList();
+
+      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
+        final s = status.toLowerCase().replaceAll(' ', '');
+        orders = orders.where((o) =>
+            o.status.name.toLowerCase() == s ||
+            o.status.displayName.toLowerCase().replaceAll(' ', '') == s).toList();
+      }
+
+      return orders;
     });
   }
 

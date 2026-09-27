@@ -58,18 +58,37 @@ service cloud.firestore {
       allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow delete: if isSuperAdmin();
-    }
 
-    // Customer Saved Addresses
-    match /addresses/{addressId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
-      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
-      allow delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      // -----------------------------------------------------------------------
+      // PAYMENT METHODS SUBCOLLECTION
+      // -----------------------------------------------------------------------
+      // Customers can manage their own saved payment methods.
+      // Admins can read (for support/debugging).
+      match /payment_methods/{methodId} {
+        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+        allow create: if isAuthenticated() && isOwner(userId);
+        allow update: if isAuthenticated() && isOwner(userId);
+        allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      }
     }
 
     // =========================================================================
-    // 2. CATEGORIES & MENU ITEMS
+    // 2. CUSTOMER SAVED ADDRESSES
+    // =========================================================================
+    // List: Customers can list only their own addresses (query must filter by userId).
+    // Admin can list all addresses for support.
+    // Single-doc read/write guarded by userId ownership or admin role.
+    match /addresses/{addressId} {
+      // For list queries: allow if user is admin, or if the query filters by userId == caller
+      // For single-doc reads: allow if userId matches caller or admin
+      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // =========================================================================
+    // 3. CATEGORIES & MENU ITEMS
     // =========================================================================
     // Public read so anyone can view food menu. Admin & Super Admin write.
     match /categories/{categoryId} {
@@ -88,21 +107,27 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 3. ORDERS & LIFECYCLE
+    // 4. ORDERS & LIFECYCLE
     // =========================================================================
     // - Customers can read and create their own orders.
     // - Customers can update (cancel) their pending order within allowed window.
     // - Admins and Super Admins have full access to manage and advance orders.
     // - Assigned Riders can read and update orders assigned to them.
     match /orders/{orderId} {
-      allow read: if isAdmin() ||
+      allow read: if isAdmin() || isRider() ||
                      (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
                      (isAuthenticated() && resource.data.riderId == request.auth.uid);
       allow create: if isAuthenticated() && (request.resource.data.customerId == request.auth.uid || isAdmin());
-      allow update: if isAdmin() ||
+      allow update: if isAdmin() || isRider() ||
                        (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
                        (isAuthenticated() && resource.data.riderId == request.auth.uid);
       allow delete: if isSuperAdmin();
+
+      // Tracking subcollection for live GPS updates during delivery
+      match /tracking/{trackingId} {
+        allow read: if isAuthenticated();
+        allow write: if isRider() || isAdmin();
+      }
     }
 
     match /orderItems/{itemId} {
@@ -111,7 +136,7 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 4. DELIVERY AREAS & RIDERS
+    // 5. DELIVERY AREAS & RIDERS
     // =========================================================================
     match /deliveryAreas/{areaId} {
       allow read: if true;
@@ -124,19 +149,25 @@ service cloud.firestore {
     }
 
     match /riders/{riderId} {
-      allow read: if isAuthenticated() && (isAdmin() || isOwner(riderId) || isOwner(resource.data.userId));
+      allow read: if isAuthenticated() && (isAdmin() || isOwner(riderId) ||
+                     (resource != null && resource.data.userId == request.auth.uid));
       allow create: if isAdmin();
       allow update: if isAdmin() || isOwner(riderId) || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow delete: if isSuperAdmin();
     }
 
     match /riderAssignments/{assignmentId} {
-      allow read: if isAuthenticated() && (isAdmin() || resource.data.riderId == request.auth.uid);
-      allow write: if isAdmin();
+      allow read: if isAuthenticated() && (isAdmin() || isRider() || (resource != null && resource.data.riderId == request.auth.uid));
+      allow write: if isAdmin() || isRider();
+    }
+
+    match /rider_locations/{riderId} {
+      allow read: if isAuthenticated();
+      allow write: if isRider() || isAdmin() || isOwner(riderId);
     }
 
     // =========================================================================
-    // 5. COUPONS & PROMOTIONS
+    // 6. COUPONS & PROMOTIONS
     // =========================================================================
     match /coupons/{couponId} {
       allow read: if true;
@@ -144,7 +175,7 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 6. PLATFORM SETTINGS & CONFIGURATION
+    // 7. PLATFORM SETTINGS & CONFIGURATION
     // =========================================================================
     // Read: All authenticated and public users (store open/closed, delivery rules)
     // Write: Admin and Super Admin
@@ -154,7 +185,7 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 7. SYSTEM AUDIT & ACTIVITY LOGS
+    // 8. SYSTEM AUDIT & ACTIVITY LOGS
     // =========================================================================
     // Read: Admin and Super Admin
     // Create: Any authenticated user (app event logging)
@@ -166,7 +197,7 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 8. REVIEWS, NOTIFICATIONS & FAVORITES
+    // 9. REVIEWS
     // =========================================================================
     match /reviews/{reviewId} {
       allow read: if true;
@@ -174,13 +205,25 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
+    // =========================================================================
+    // 10. NOTIFICATIONS
+    // =========================================================================
+    // Customers can read their own notifications (query must filter by userId).
+    // Admins can read all and write (send notifications).
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
       allow write: if isAdmin();
     }
 
+    // =========================================================================
+    // 11. FAVORITES
+    // =========================================================================
+    // Customers can read/write their own favorites (query must filter by userId).
+    // Admins can read all.
     match /favorites/{favoriteId} {
-      allow read, write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
     }
   }
 }

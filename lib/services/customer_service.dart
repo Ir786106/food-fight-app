@@ -14,16 +14,16 @@ class CustomerService {
   static Stream<List<UserModel>> watchCustomers({String? search, bool? isActive}) {
     Query query = _usersCollection.where('role', isEqualTo: 'customer');
 
-    if (isActive != null) {
-      query = query.where('isActive', isEqualTo: isActive ? 1 : 0);
-    }
-
     return query.snapshots().map((snapshot) {
       var list = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return UserModel.fromJson(data);
       }).toList();
+
+      if (isActive != null) {
+        list = list.where((u) => u.isActive == isActive).toList();
+      }
 
       if (search != null && search.trim().isNotEmpty) {
         final q = search.trim().toLowerCase();

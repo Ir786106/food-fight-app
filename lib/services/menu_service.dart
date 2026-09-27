@@ -15,19 +15,20 @@ class MenuService {
     bool activeOnly = false,
   }) {
     Query query = _collection;
-    if (activeOnly) {
-      query = query.where('isActive', isEqualTo: 1);
-    }
     if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
       query = query.where('categoryId', isEqualTo: categoryId);
     }
 
     return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return MenuItemModel.fromJson(data);
       }).toList();
+      if (activeOnly) {
+        return items.where((i) => i.isActive).toList();
+      }
+      return items;
     });
   }
 

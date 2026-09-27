@@ -42,4 +42,12 @@ class DeliveryAreaModel {
       description: json['description']?.toString(),
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DeliveryAreaModel && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

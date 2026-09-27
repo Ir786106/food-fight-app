@@ -3,6 +3,31 @@ import 'cart_item_model.dart';
 
 enum OrderStatus { pending, accepted, preparing, ready, assigned, pickedUp, outForDelivery, delivered, cancelled }
 
+extension OrderStatusExtension on OrderStatus {
+  String get displayName {
+    switch (this) {
+      case OrderStatus.pending:
+        return 'Pending';
+      case OrderStatus.accepted:
+        return 'Accepted';
+      case OrderStatus.preparing:
+        return 'Preparing';
+      case OrderStatus.ready:
+        return 'Ready';
+      case OrderStatus.assigned:
+        return 'Assigned';
+      case OrderStatus.pickedUp:
+        return 'Picked Up';
+      case OrderStatus.outForDelivery:
+        return 'Out for Delivery';
+      case OrderStatus.delivered:
+        return 'Delivered';
+      case OrderStatus.cancelled:
+        return 'Cancelled';
+    }
+  }
+}
+
 class OrderModel {
   final String id;
   final String orderNumber;
@@ -195,13 +220,18 @@ class OrderModel {
         return OrderStatus.ready;
       case 'assigned':
         return OrderStatus.assigned;
+      case 'pickedup':
+      case 'picked_up':
       case 'picked up':
         return OrderStatus.pickedUp;
+      case 'outfordelivery':
+      case 'out_for_delivery':
       case 'out for delivery':
         return OrderStatus.outForDelivery;
       case 'delivered':
         return OrderStatus.delivered;
       case 'cancelled':
+      case 'canceled':
         return OrderStatus.cancelled;
       default:
         return OrderStatus.pending;

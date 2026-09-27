@@ -127,7 +127,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: DropdownButton<DeliveryAreaModel>(
                               isExpanded: true,
                               dropdownColor: colorScheme.surface,
-                              value: cart.selectedArea ?? deliveryAreas.first,
+                              value: (cart.selectedArea != null && deliveryAreas.contains(cart.selectedArea))
+                                  ? cart.selectedArea
+                                  : (deliveryAreas.isNotEmpty ? deliveryAreas.first : null),
                               items: deliveryAreas.map((area) {
                                 return DropdownMenuItem(
                                   value: area,

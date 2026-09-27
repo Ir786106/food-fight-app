@@ -70,6 +70,7 @@ class AdminAccountModel {
       'phone': phone,
       'role': role,
       'status': status,
+      'isActive': status == 'active' ? 1 : 0,
       'permissions': permissions,
       'restaurantId': restaurantId,
       'createdAt': createdAt.millisecondsSinceEpoch,
