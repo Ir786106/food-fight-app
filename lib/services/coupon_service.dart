@@ -25,26 +25,34 @@ class CouponService {
   static final CollectionReference _collection =
       FirebaseFirestore.instance.collection(FirestoreCollections.coupons);
 
-  /// Watch all coupons (Admin)
-  static Stream<List<CouponModel>> watchCoupons() {
+  /// Watch all coupons (Admin/Customer)
+  static Stream<List<CouponModel>> watchCoupons({String? branchId}) {
     return _collection.orderBy('createdAt', descending: true).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return CouponModel.fromJson(data);
       }).toList();
+      if (branchId != null && branchId.isNotEmpty) {
+        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+      }
+      return items;
     });
   }
 
   /// Get all coupons
-  static Future<List<CouponModel>> getCoupons() async {
+  static Future<List<CouponModel>> getCoupons({String? branchId}) async {
     try {
       final snapshot = await _collection.get();
-      return snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return CouponModel.fromJson(data);
       }).toList();
+      if (branchId != null && branchId.isNotEmpty) {
+        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+      }
+      return items;
     } catch (e) {
       AppLogger.error('Error fetching coupons: $e', tag: 'CouponService');
       return [];
@@ -85,7 +93,11 @@ class CouponService {
   }
 
   /// Validate coupon code during customer checkout
-  static Future<CouponValidationResult> validateCoupon(String code, double subtotal) async {
+  static Future<CouponValidationResult> validateCoupon(
+    String code,
+    double subtotal, {
+    String? branchId,
+  }) async {
     try {
       final cleanCode = code.toUpperCase().trim();
       final snapshot = await _collection.where('code', isEqualTo: cleanCode).limit(1).get();
@@ -98,6 +110,16 @@ class CouponService {
       final data = doc.data() as Map<String, dynamic>;
       data['id'] = doc.id;
       final coupon = CouponModel.fromJson(data);
+
+      if (branchId != null &&
+          coupon.branchId != null &&
+          coupon.branchId!.isNotEmpty &&
+          coupon.branchId != branchId) {
+        return CouponValidationResult(
+          isValid: false,
+          errorMessage: 'This coupon is not valid for the selected branch',
+        );
+      }
 
       if (!coupon.isActive) {
         return CouponValidationResult(isValid: false, errorMessage: 'This coupon is no longer active');

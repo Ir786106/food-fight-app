@@ -10,16 +10,26 @@ class CustomerService {
   static final CollectionReference _ordersCollection =
       FirebaseFirestore.instance.collection(FirestoreCollections.orders);
 
-  /// Watch all registered customers
-  static Stream<List<UserModel>> watchCustomers({String? search, bool? isActive}) {
+  /// Watch all registered customers (optionally scoped to a branch)
+  static Stream<List<UserModel>> watchCustomers({String? search, bool? isActive, String? branchId}) {
     Query query = _usersCollection.where('role', isEqualTo: 'customer');
 
-    return query.snapshots().map((snapshot) {
+    return query.snapshots().asyncMap((snapshot) async {
+      Set<String>? branchCustomerIds;
+      if (branchId != null && branchId.isNotEmpty) {
+        final ordersSnap = await _ordersCollection.where('branchId', isEqualTo: branchId).get();
+        branchCustomerIds = ordersSnap.docs.map((d) => (d.data() as Map<String, dynamic>)['customerId']?.toString() ?? '').toSet();
+      }
+
       var list = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return UserModel.fromJson(data);
       }).toList();
+
+      if (branchCustomerIds != null) {
+        list = list.where((u) => u.branchId == branchId || branchCustomerIds!.contains(u.id)).toList();
+      }
 
       if (isActive != null) {
         list = list.where((u) => u.isActive == isActive).toList();
@@ -47,11 +57,13 @@ class CustomerService {
   }
 
   /// Fetch stats for a specific customer (total orders, total spent)
-  static Future<Map<String, dynamic>> getCustomerStats(String customerId) async {
+  static Future<Map<String, dynamic>> getCustomerStats(String customerId, {String? branchId}) async {
     try {
-      final snapshot = await _ordersCollection
-          .where('customerId', isEqualTo: customerId)
-          .get();
+      Query q = _ordersCollection.where('customerId', isEqualTo: customerId);
+      if (branchId != null && branchId.isNotEmpty) {
+        q = q.where('branchId', isEqualTo: branchId);
+      }
+      final snapshot = await q.get();
 
       int totalOrders = snapshot.docs.length;
       double totalSpent = 0;

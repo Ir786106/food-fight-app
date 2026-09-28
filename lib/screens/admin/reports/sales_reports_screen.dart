@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/providers/report_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/admin/stat_card.dart';
@@ -10,8 +12,31 @@ import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 
-class SalesReportsScreen extends StatelessWidget {
+class SalesReportsScreen extends StatefulWidget {
   const SalesReportsScreen({super.key});
+
+  @override
+  State<SalesReportsScreen> createState() => _SalesReportsScreenState();
+}
+
+class _SalesReportsScreenState extends State<SalesReportsScreen> {
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final rp = context.read<ReportProvider>();
+          rp.setPreset(rp.selectedPreset, branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +44,8 @@ class SalesReportsScreen extends StatelessWidget {
     final cardBg = AdminTheme.getCardBg(context);
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
+    final auth = context.watch<AuthProvider>();
+    final user = auth.currentUser;
 
     final reportProvider = context.watch<ReportProvider>();
     final report = reportProvider.report;
@@ -27,7 +54,17 @@ class SalesReportsScreen extends StatelessWidget {
       backgroundColor: AdminTheme.getBackground(context),
       drawer: const AdminDrawer(currentRoute: '/admin/reports'),
       appBar: AppBar(
-        title: const Text('Sales & Analytics 📈', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Sales & Analytics 📈', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            Text(
+              user?.branchId != null ? 'Branch: ${user!.branchId}' : 'All Branches (HQ)',
+              style: const TextStyle(fontSize: 10.5, color: Colors.white70),
+            ),
+          ],
+        ),
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -123,7 +160,7 @@ class SalesReportsScreen extends StatelessWidget {
                           title: 'Total Revenue',
                           value: 'Rs. ${report.totalRevenue.toStringAsFixed(0)}',
                           icon: Icons.account_balance_wallet_rounded,
-                          color: Colors.green.shade600,
+                          color: AppColors.success,
                           subtitle: 'Gross Volume',
                         ),
                         StatCard(
@@ -137,14 +174,14 @@ class SalesReportsScreen extends StatelessWidget {
                           title: 'Average Order Value',
                           value: 'Rs. ${report.averageOrderValue.toStringAsFixed(0)}',
                           icon: Icons.trending_up_rounded,
-                          color: Colors.teal.shade700,
+                          color: AppColors.primaryYellow,
                           subtitle: 'Per non-cancelled order',
                         ),
                         StatCard(
                           title: 'Order Status',
                           value: '${report.deliveredOrders} / ${report.cancelledOrders}',
                           icon: Icons.donut_large_rounded,
-                          color: Colors.purple.shade600,
+                          color: AppColors.accent,
                           subtitle: 'Delivered vs Cancelled',
                         ),
                       ],
@@ -201,7 +238,7 @@ class SalesReportsScreen extends StatelessWidget {
                                   padding: const EdgeInsets.all(3),
                                   decoration: BoxDecoration(
                                     color: index == 0
-                                        ? Colors.amber.shade700
+                                        ? AppColors.warning
                                         : (index == 1 ? Colors.grey.shade600 : Colors.brown.shade400),
                                     borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(8),
@@ -290,7 +327,7 @@ class SalesReportsScreen extends StatelessWidget {
                             'Rs. ${daily.revenue.toStringAsFixed(0)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.w900,
-                              color: Colors.green,
+                              color: AppColors.success,
                               fontSize: 14,
                             ),
                           ),

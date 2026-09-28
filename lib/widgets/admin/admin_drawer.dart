@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_constants.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
@@ -79,21 +80,35 @@ class AdminDrawer extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 3),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'ADMINISTRATOR',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                user?.isSubAdmin == true ? 'SUB-ADMIN' : 'BRANCH ADMIN',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
-                          ),
+                            if (user?.branchId != null) ...[
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  user!.branchId!,
+                                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
@@ -116,74 +131,102 @@ class AdminDrawer extends StatelessWidget {
                     route: '/admin/dashboard',
                   ),
 
-                  // MENU MANAGEMENT
-                  _buildSectionHeader('MENU MANAGEMENT', colorScheme),
-                  _buildItem(
-                    context,
-                    title: 'Menu Items',
-                    icon: Icons.restaurant_menu_rounded,
-                    route: '/admin/menu',
-                  ),
-                  _buildItem(
-                    context,
-                    title: 'Add New Item',
-                    icon: Icons.add_circle_outline_rounded,
-                    route: '/admin/menu/add',
-                  ),
-                  _buildItem(
-                    context,
-                    title: 'Categories',
-                    icon: Icons.category_rounded,
-                    route: '/admin/categories',
-                  ),
-                  _buildItem(
-                    context,
-                    title: 'Deals & Coupons',
-                    icon: Icons.local_offer_rounded,
-                    route: '/admin/coupons',
-                  ),
+                  // MENU MANAGEMENT (guarded)
+                  if (user == null || user.can('menu') || user.can('categories') || user.can('coupons')) ...[
+                    _buildSectionHeader('MENU MANAGEMENT', colorScheme),
+                    if (user == null || user.can('menu')) ...[
+                      _buildItem(
+                        context,
+                        title: 'Menu Items',
+                        icon: Icons.restaurant_menu_rounded,
+                        route: '/admin/menu',
+                      ),
+                      _buildItem(
+                        context,
+                        title: 'Add New Item',
+                        icon: Icons.add_circle_outline_rounded,
+                        route: '/admin/menu/add',
+                      ),
+                    ],
+                    if (user == null || user.can('categories'))
+                      _buildItem(
+                        context,
+                        title: 'Categories',
+                        icon: Icons.category_rounded,
+                        route: '/admin/categories',
+                      ),
+                    if (user == null || user.can('coupons'))
+                      _buildItem(
+                        context,
+                        title: 'Deals & Coupons',
+                        icon: Icons.local_offer_rounded,
+                        route: '/admin/coupons',
+                      ),
+                  ],
 
-                  // ORDER MANAGEMENT
-                  _buildSectionHeader('ORDER MANAGEMENT', colorScheme),
-                  _buildItem(
-                    context,
-                    title: 'Orders & Dispatch',
-                    icon: Icons.receipt_long_rounded,
-                    route: '/admin/orders',
-                  ),
+                  // ORDER MANAGEMENT (guarded)
+                  if (user == null || user.can('orders')) ...[
+                    _buildSectionHeader('ORDER MANAGEMENT', colorScheme),
+                    _buildItem(
+                      context,
+                      title: 'Orders & Dispatch',
+                      icon: Icons.receipt_long_rounded,
+                      route: '/admin/orders',
+                    ),
+                  ],
 
-                  // CUSTOMER MANAGEMENT
-                  _buildSectionHeader('CUSTOMER MANAGEMENT', colorScheme),
-                  _buildItem(
-                    context,
-                    title: 'Customers',
-                    icon: Icons.people_alt_rounded,
-                    route: '/admin/customers',
-                  ),
+                  // CUSTOMER MANAGEMENT (guarded)
+                  if (user == null || user.can('customers')) ...[
+                    _buildSectionHeader('CUSTOMER MANAGEMENT', colorScheme),
+                    _buildItem(
+                      context,
+                      title: 'Customers',
+                      icon: Icons.people_alt_rounded,
+                      route: '/admin/customers',
+                    ),
+                  ],
 
-                  // DELIVERY & RIDERS
-                  _buildSectionHeader('DELIVERY & RIDERS', colorScheme),
-                  _buildItem(
-                    context,
-                    title: 'Delivery Areas & Fees',
-                    icon: Icons.map_rounded,
-                    route: '/admin/delivery-areas',
-                  ),
-                  _buildItem(
-                    context,
-                    title: 'Fleet & Delivery Riders',
-                    icon: Icons.delivery_dining_rounded,
-                    route: '/admin/riders',
-                  ),
+                  // DELIVERY & RIDERS (guarded)
+                  if (user == null || user.can('delivery_areas') || user.can('riders')) ...[
+                    _buildSectionHeader('DELIVERY & RIDERS', colorScheme),
+                    if (user == null || user.can('delivery_areas'))
+                      _buildItem(
+                        context,
+                        title: 'Delivery Areas & Fees',
+                        icon: Icons.map_rounded,
+                        route: '/admin/delivery-areas',
+                      ),
+                    if (user == null || user.can('riders'))
+                      _buildItem(
+                        context,
+                        title: 'Fleet & Delivery Riders',
+                        icon: Icons.delivery_dining_rounded,
+                        route: '/admin/riders',
+                      ),
+                  ],
 
-                  // REPORTS
-                  _buildSectionHeader('REPORTS & ANALYTICS', colorScheme),
-                  _buildItem(
-                    context,
-                    title: 'Sales & Performance',
-                    icon: Icons.insights_rounded,
-                    route: '/admin/reports',
-                  ),
+                  // REPORTS (guarded)
+                  if (user == null || user.can('reports')) ...[
+                    _buildSectionHeader('REPORTS & ANALYTICS', colorScheme),
+                    _buildItem(
+                      context,
+                      title: 'Sales & Performance',
+                      icon: Icons.insights_rounded,
+                      route: '/admin/reports',
+                    ),
+                  ],
+
+                  // SUB-ADMIN MANAGEMENT (only for full branch admin)
+                  if (user != null && !user.isSubAdmin) ...[
+                    _buildSectionHeader('STAFF & PERMISSIONS', colorScheme),
+                    _buildItem(
+                      context,
+                      title: 'Sub-Admin Management',
+                      icon: Icons.admin_panel_settings_rounded,
+                      route: '/admin/sub-admins',
+                      color: AppColors.darkBrown,
+                    ),
+                  ],
 
                   // PREFERENCES & NAVIGATION
                   _buildSectionHeader('PREFERENCES', colorScheme),
@@ -257,7 +300,7 @@ class AdminDrawer extends StatelessWidget {
                     title: 'Switch to Customer View',
                     icon: Icons.swap_horiz_rounded,
                     route: '/home',
-                    color: Colors.orange.shade700,
+                    color: AppColors.primaryYellow,
                   ),
                 ],
               ),
@@ -267,14 +310,14 @@ class AdminDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Material(
-                color: Colors.red.withValues(alpha: 0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   dense: true,
-                  leading: const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+                  leading: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
                   title: const Text(
                     'Sign Out',
-                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 13.5),
+                    style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 13.5),
                   ),
                   onTap: () async {
                     Navigator.pop(context);

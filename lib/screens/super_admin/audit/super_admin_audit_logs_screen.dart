@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/theme/super_admin_theme.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:food_fight/models/admin/audit_log_model.dart';
 import 'package:food_fight/providers/audit_log_provider.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
@@ -434,7 +435,7 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
       case 'order':
         return {
           'icon': Icons.shopping_bag_rounded,
-          'color': const Color(0xFF00C49F),
+          'color': AppColors.primaryYellow,
         };
       case 'admin':
         return {
@@ -444,27 +445,27 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
       case 'menu':
         return {
           'icon': Icons.restaurant_menu_rounded,
-          'color': const Color(0xFFFFB703),
+          'color': AppColors.accent,
         };
       case 'category':
         return {
           'icon': Icons.category_rounded,
-          'color': const Color(0xFF6C5CE7),
+          'color': AppColors.darkBrown,
         };
       case 'coupon':
         return {
           'icon': Icons.confirmation_number_rounded,
-          'color': const Color(0xFFFF5252),
+          'color': AppColors.primaryYellow,
         };
       case 'system':
         return {
           'icon': Icons.settings_rounded,
-          'color': const Color(0xFF0984E3),
+          'color': AppColors.darkBrown,
         };
       default:
         return {
           'icon': Icons.history_rounded,
-          'color': Colors.blueGrey,
+          'color': AppColors.textSecondary,
         };
     }
   }

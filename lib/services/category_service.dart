@@ -9,14 +9,20 @@ class CategoryService {
       FirebaseFirestore.instance.collection(FirestoreCollections.categories);
 
   /// Stream of all active/all categories
-  static Stream<List<CategoryModel>> watchCategories({bool activeOnly = false}) {
+  static Stream<List<CategoryModel>> watchCategories({
+    bool activeOnly = false,
+    String? branchId,
+  }) {
     Query query = _collection.orderBy('order');
     return query.snapshots().map((snapshot) {
-      final items = snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return CategoryModel.fromJson(data);
       }).toList();
+      if (branchId != null && branchId.isNotEmpty) {
+        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+      }
       if (activeOnly) {
         return items.where((c) => c.isActive).toList();
       }
@@ -25,14 +31,18 @@ class CategoryService {
   }
 
   /// Get list of categories
-  static Future<List<CategoryModel>> getCategories() async {
+  static Future<List<CategoryModel>> getCategories({String? branchId}) async {
     try {
       final snapshot = await _collection.orderBy('order').get();
-      return snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return CategoryModel.fromJson(data);
       }).toList();
+      if (branchId != null && branchId.isNotEmpty) {
+        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+      }
+      return items;
     } catch (e) {
       AppLogger.error('Error fetching categories: $e', tag: 'CategoryService');
       return [];

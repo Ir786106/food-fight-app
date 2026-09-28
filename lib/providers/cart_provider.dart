@@ -17,6 +17,7 @@ class CartProvider extends ChangeNotifier {
   double _couponDiscount = 0.0;
   bool _isFreeDelivery = false;
   String? _couponError;
+  String? _branchId;
 
   List<CartItemModel> get items => List.unmodifiable(_items);
   List<FoodModel> get favorites => List.unmodifiable(_favorites);
@@ -25,6 +26,18 @@ class CartProvider extends ChangeNotifier {
   double get couponDiscount => _couponDiscount;
   bool get isFreeDelivery => _isFreeDelivery;
   String? get couponError => _couponError;
+  String? get branchId => _branchId ?? (_items.isNotEmpty ? _items.first.food.branchId : null);
+
+  void setBranchId(String? id) {
+    _branchId = id;
+    notifyListeners();
+  }
+
+  bool isDifferentBranch(String? incomingBranchId) {
+    if (_items.isEmpty || incomingBranchId == null || incomingBranchId.isEmpty) return false;
+    final current = branchId;
+    return current != null && current.isNotEmpty && current != incomingBranchId;
+  }
 
   void toggleFavorite(FoodModel food) {
     final exists = _favorites.any((f) => f.id == food.id);
@@ -71,7 +84,17 @@ class CartProvider extends ChangeNotifier {
     String? selectedSize,
     MenuVariant? selectedVariant,
     List<MenuAddon>? selectedAddons,
+    bool clearIfDifferentBranch = false,
   }) {
+    if (food.branchId != null && food.branchId!.isNotEmpty) {
+      if (isDifferentBranch(food.branchId)) {
+        if (clearIfDifferentBranch) {
+          clearCart();
+        }
+      }
+      _branchId ??= food.branchId;
+    }
+
     // Resolve variant if not explicitly provided
     final variant = selectedVariant ??
         (selectedSize != null && food.variants != null && food.variants!.isNotEmpty
@@ -184,6 +207,7 @@ class CartProvider extends ChangeNotifier {
     _couponDiscount = 0.0;
     _isFreeDelivery = false;
     _couponError = null;
+    _branchId = null;
     notifyListeners();
   }
 
@@ -260,10 +284,13 @@ class CartProvider extends ChangeNotifier {
     String customerPhone = '',
     String paymentStatus = 'pending',
     String restaurantName = 'Food Fight HQ',
+    String? branchId,
   }) async {
+    final effectiveBranchId = branchId ?? this.branchId;
     final order = OrderModel(
       id: '',
       orderNumber: OrderService.generateOrderNumber(),
+      branchId: effectiveBranchId,
       items: List.from(_items),
       subtotal: subtotal,
       discount: _couponDiscount,
@@ -286,6 +313,7 @@ class CartProvider extends ChangeNotifier {
     final savedOrder = OrderModel(
       id: generatedId,
       orderNumber: order.orderNumber,
+      branchId: effectiveBranchId,
       items: order.items,
       subtotal: order.subtotal,
       discount: order.discount,

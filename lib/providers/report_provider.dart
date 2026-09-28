@@ -12,20 +12,31 @@ class ReportProvider extends ChangeNotifier {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  String? _currentBranchId;
+
   ReportModel? get report => _report;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get selectedPreset => _selectedPreset;
   DateTime? get startDate => _startDate;
   DateTime? get endDate => _endDate;
+  String? get currentBranchId => _currentBranchId;
 
   ReportProvider() {
     setPreset('month');
   }
 
+  void setBranchId(String? branchId) {
+    if (_currentBranchId != branchId) {
+      _currentBranchId = branchId;
+      fetchReport(startDate: _startDate, endDate: _endDate, branchId: branchId);
+    }
+  }
+
   /// Change preset date range and fetch report
-  void setPreset(String preset) {
+  void setPreset(String preset, {String? branchId}) {
     _selectedPreset = preset;
+    if (branchId != null) _currentBranchId = branchId;
     final now = DateTime.now();
 
     switch (preset) {
@@ -49,19 +60,21 @@ class ReportProvider extends ChangeNotifier {
         break;
     }
 
-    fetchReport(startDate: _startDate, endDate: _endDate);
+    fetchReport(startDate: _startDate, endDate: _endDate, branchId: _currentBranchId);
   }
 
   /// Set custom date range
-  void setCustomDateRange(DateTime start, DateTime end) {
+  void setCustomDateRange(DateTime start, DateTime end, {String? branchId}) {
     _selectedPreset = 'custom';
     _startDate = start;
     _endDate = end;
-    fetchReport(startDate: start, endDate: end);
+    if (branchId != null) _currentBranchId = branchId;
+    fetchReport(startDate: start, endDate: end, branchId: _currentBranchId);
   }
 
   /// Fetch sales report
-  Future<void> fetchReport({DateTime? startDate, DateTime? endDate}) async {
+  Future<void> fetchReport({DateTime? startDate, DateTime? endDate, String? branchId}) async {
+    if (branchId != null) _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -70,6 +83,7 @@ class ReportProvider extends ChangeNotifier {
       _report = await ReportService.fetchSalesReport(
         startDate: startDate,
         endDate: endDate,
+        branchId: _currentBranchId,
       );
       _isLoading = false;
       notifyListeners();

@@ -9,10 +9,11 @@ class MenuService {
   static final CollectionReference _collection =
       FirebaseFirestore.instance.collection(FirestoreCollections.menuItems);
 
-  /// Stream of menu items with optional category filtering and search
+  /// Stream of menu items with optional category filtering and search, plus branch scoping
   static Stream<List<MenuItemModel>> watchMenuItems({
     String? categoryId,
     bool activeOnly = false,
+    String? branchId,
   }) {
     Query query = _collection;
     if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
@@ -20,11 +21,16 @@ class MenuService {
     }
 
     return query.snapshots().map((snapshot) {
-      final items = snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return MenuItemModel.fromJson(data);
       }).toList();
+
+      if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+        items = items.where((i) => i.branchId == null || i.branchId == branchId).toList();
+      }
+
       if (activeOnly) {
         return items.where((i) => i.isActive).toList();
       }
@@ -33,18 +39,24 @@ class MenuService {
   }
 
   /// Get menu items as a Future
-  static Future<List<MenuItemModel>> getMenuItems({String? categoryId}) async {
+  static Future<List<MenuItemModel>> getMenuItems({String? categoryId, String? branchId}) async {
     try {
       Query query = _collection;
       if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
         query = query.where('categoryId', isEqualTo: categoryId);
       }
       final snapshot = await query.get();
-      return snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return MenuItemModel.fromJson(data);
       }).toList();
+
+      if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+        items = items.where((i) => i.branchId == null || i.branchId == branchId).toList();
+      }
+
+      return items;
     } catch (e) {
       AppLogger.error('Error fetching menu items: $e', tag: 'MenuService');
       return [];

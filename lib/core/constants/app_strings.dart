@@ -51,10 +51,10 @@ class AppStrings {
 
   // Role names
   static const String roleCustomer = 'customer';
-  static const String roleRider = 'rider';
+  static const String roleRider = 'delivery_rider';
   static const String roleStaff = 'staff';
   static const String roleAdmin = 'admin';
-  static const String roleSuperAdmin = 'superAdmin';
+  static const String roleSuperAdmin = 'super_admin';
 
   // Order status messages
   static const String statusPending = 'Pending';

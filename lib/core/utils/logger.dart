@@ -15,6 +15,8 @@ class AppLogger {
     print('WARNING: $prefixedMessage');
   }
 
+  static void warn(String message, {String? tag}) => warning(message, tag: tag);
+
   static void error(String message, {dynamic error, StackTrace? stackTrace, String? tag}) {
     final prefixedMessage = tag != null ? '[$tag] $message' : message;
     print('ERROR: $prefixedMessage');

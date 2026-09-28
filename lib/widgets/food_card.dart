@@ -233,6 +233,44 @@ class FoodCard extends StatelessWidget {
 
                     return InkWell(
                       onTap: () {
+                        if (cart.isDifferentBranch(food.branchId)) {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              title: const Text('Start New Order?'),
+                              content: const Text(
+                                'Your cart contains items from a different branch. Adding this item will start a fresh cart for this branch.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: colorScheme.primary,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    cart.clearCart();
+                                    cart.addToCart(food);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('${food.name} added to new cart 🥊'),
+                                        duration: const Duration(milliseconds: 900),
+                                        backgroundColor: colorScheme.secondary,
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Start New Cart'),
+                                ),
+                              ],
+                            ),
+                          );
+                          return;
+                        }
                         cart.addToCart(food);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

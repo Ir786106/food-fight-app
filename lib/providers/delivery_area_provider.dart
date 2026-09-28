@@ -17,6 +17,10 @@ class DeliveryAreaProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  String? _currentBranchId;
+
+  String? get currentBranchId => _currentBranchId;
+
   DeliveryAreaProvider() {
     init();
   }
@@ -26,13 +30,17 @@ class DeliveryAreaProvider extends ChangeNotifier {
   }
 
   /// Watch real-time delivery areas
-  void watchAreas({bool activeOnly = false}) {
+  void watchAreas({bool activeOnly = false, String? branchId}) {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     _subscription?.cancel();
-    _subscription = DeliveryAreaService.watchDeliveryAreas(activeOnly: activeOnly).listen(
+    _subscription = DeliveryAreaService.watchDeliveryAreas(
+      activeOnly: activeOnly,
+      branchId: branchId,
+    ).listen(
       (data) {
         _areas = data;
         _isLoading = false;
@@ -49,13 +57,17 @@ class DeliveryAreaProvider extends ChangeNotifier {
   }
 
   /// Fetch areas manually
-  Future<void> fetchAreas({bool activeOnly = false}) async {
+  Future<void> fetchAreas({bool activeOnly = false, String? branchId}) async {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _areas = await DeliveryAreaService.getDeliveryAreas(activeOnly: activeOnly);
+      _areas = await DeliveryAreaService.getDeliveryAreas(
+        activeOnly: activeOnly,
+        branchId: branchId,
+      );
       _isLoading = false;
       notifyListeners();
     } catch (e) {

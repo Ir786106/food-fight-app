@@ -67,14 +67,14 @@ class OrderProvider extends ChangeNotifier {
     );
   }
 
-  /// Watch all orders for Admin panel
-  void watchAdminOrders({String? status}) {
+  /// Watch all orders for Admin panel (scoped by branchId if provided)
+  void watchAdminOrders({String? status, String? branchId}) {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     _adminOrdersSub?.cancel();
-    _adminOrdersSub = OrderService.watchAllOrders(status: status).listen(
+    _adminOrdersSub = OrderService.watchAllOrders(status: status, branchId: branchId).listen(
       (orders) {
         _adminOrders = orders;
         _isLoading = false;

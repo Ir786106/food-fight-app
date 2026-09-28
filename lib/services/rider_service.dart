@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/rider_model.dart';
 import '../models/order_model.dart';
+import '../core/constants/firestore_collections.dart';
 import '../core/utils/logger.dart';
 
 class RiderService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final CollectionReference _ridersCol = _firestore.collection('riders');
-  static final CollectionReference _ordersCol = _firestore.collection('orders');
+  static final CollectionReference _ridersCol =
+      _firestore.collection(FirestoreCollections.riders);
+  static final CollectionReference _ordersCol =
+      _firestore.collection(FirestoreCollections.orders);
 
   /// Stream all delivery riders (Admin / Super Admin)
   static Stream<List<RiderModel>> watchAllRiders() {
@@ -30,10 +33,10 @@ class RiderService {
 
       await docRef.set(data);
 
-      // Also ensure user document reflects the 'rider' role
+      // Also ensure user document reflects the 'delivery_rider' role
       if (rider.userId.isNotEmpty) {
-        await _firestore.collection('users').doc(rider.userId).set({
-          'role': 'rider',
+        await _firestore.collection(FirestoreCollections.users).doc(rider.userId).set({
+          'role': 'delivery_rider',
           'name': rider.name,
           'phone': rider.phone,
           'isActive': rider.isActive ? 1 : 0,
@@ -103,8 +106,8 @@ class RiderService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Record assignment in riderAssignments subcollection
-      await _firestore.collection('riderAssignments').add({
+      // Record assignment in riderAssignments collection
+      await _firestore.collection(FirestoreCollections.riderAssignments).add({
         'orderId': orderId,
         'riderId': riderId,
         'assignedAt': FieldValue.serverTimestamp(),

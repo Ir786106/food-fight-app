@@ -12,10 +12,14 @@ class ReportService {
   static Future<ReportModel> fetchSalesReport({
     DateTime? startDate,
     DateTime? endDate,
+    String? branchId,
   }) async {
     try {
       Query query = _ordersCollection;
 
+      if (branchId != null && branchId.isNotEmpty) {
+        query = query.where('branchId', isEqualTo: branchId);
+      }
       if (startDate != null) {
         query = query.where('createdAt', isGreaterThanOrEqualTo: startDate.millisecondsSinceEpoch);
       }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_constants.dart';
 import 'package:food_fight/core/theme/super_admin_theme.dart';
@@ -26,7 +27,7 @@ class SuperAdminDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [SuperAdminTheme.primary, Color(0xFF230833)],
+                  colors: [SuperAdminTheme.primary, SuperAdminTheme.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -181,10 +182,10 @@ class SuperAdminDrawer extends StatelessWidget {
                 ),
               ),
               child: ListTile(
-                leading: const Icon(Icons.logout_rounded, color: Colors.red),
+                leading: const Icon(Icons.logout_rounded, color: AppColors.error),
                 title: const Text(
                   'Sign Out',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 onTap: () async {
@@ -240,7 +241,7 @@ class SuperAdminDrawer extends StatelessWidget {
             icon,
             color: isSelected
                 ? SuperAdminTheme.primary
-                : (isSecondary ? Colors.blue.shade700 : SuperAdminTheme.getTextMuted(context)),
+                : SuperAdminTheme.getTextMuted(context),
             size: 22,
           ),
           title: Text(

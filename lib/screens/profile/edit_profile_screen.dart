@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -119,7 +121,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       child: ClipOval(
                         child: _pickedImage != null
-                            ? const Center(child: Icon(Icons.check_circle, color: Colors.green, size: 40))
+                            ? Image.file(
+                                File(_pickedImage!.path),
+                                width: 96,
+                                height: 96,
+                                fit: BoxFit.cover,
+                              )
                             : NetworkImageView(
                                 imageUrl: _profileImageUrl,
                                 width: 96,

@@ -25,14 +25,22 @@ class CategoryProvider extends ChangeNotifier {
     watchCategories();
   }
 
+  String? _currentBranchId;
+
+  String? get currentBranchId => _currentBranchId;
+
   /// Watch real-time categories from Firestore
-  void watchCategories({bool activeOnly = false}) {
+  void watchCategories({bool activeOnly = false, String? branchId}) {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     _subscription?.cancel();
-    _subscription = CategoryService.watchCategories(activeOnly: activeOnly).listen(
+    _subscription = CategoryService.watchCategories(
+      activeOnly: activeOnly,
+      branchId: branchId,
+    ).listen(
       (data) {
         _categories = data;
         _isLoading = false;
@@ -49,13 +57,14 @@ class CategoryProvider extends ChangeNotifier {
   }
 
   /// Manual fetch
-  Future<void> fetchCategories() async {
+  Future<void> fetchCategories({String? branchId}) async {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _categories = await CategoryService.getCategories();
+      _categories = await CategoryService.getCategories(branchId: branchId);
       _isLoading = false;
       notifyListeners();
     } catch (e) {

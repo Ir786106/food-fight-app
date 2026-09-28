@@ -131,8 +131,8 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.primary,
-              Color(0xFFFF6B4A),
+              AppColors.primaryYellow,
+              AppColors.primaryDark,
             ],
           ),
         ),
@@ -230,10 +230,10 @@ class _SplashScreenState extends State<SplashScreen>
                               Text(
                                 AppConstants.appTagline,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.95),
+                                style: const TextStyle(
+                                  color: AppColors.darkBrown,
                                   fontSize: 14.5,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
                                 ),
                               ),
@@ -244,7 +244,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
+                                    AppColors.darkBrown,
                                   ),
                                 ),
                               ),

@@ -279,7 +279,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                     content: Text(ok
                                         ? 'Payment method safely tokenized and saved!'
                                         : 'Failed to add payment method'),
-                                    backgroundColor: ok ? Colors.green : Colors.red,
+                                    backgroundColor: ok ? AppColors.success : AppColors.error,
                                   ),
                                 );
                               }
@@ -528,7 +528,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                       child: const Text('Cancel'),
                                     ),
                                     FilledButton(
-                                      style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                                      style: FilledButton.styleFrom(backgroundColor: AppColors.error),
                                       onPressed: () => Navigator.pop(ctx, true),
                                       child: const Text('Remove'),
                                     ),
@@ -556,9 +556,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                  Icon(Icons.delete_outline, color: AppColors.error, size: 18),
                                   SizedBox(width: 8),
-                                  Text('Delete Method', style: TextStyle(color: Colors.red)),
+                                  Text('Delete Method', style: TextStyle(color: AppColors.error)),
                                 ],
                               ),
                             ),

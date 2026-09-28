@@ -9,15 +9,21 @@ class DeliveryAreaService {
       FirebaseFirestore.instance.collection(FirestoreCollections.deliveryAreas);
 
   /// Watch delivery areas
-  static Stream<List<DeliveryAreaModel>> watchDeliveryAreas({bool activeOnly = false}) {
+  static Stream<List<DeliveryAreaModel>> watchDeliveryAreas({
+    bool activeOnly = false,
+    String? branchId,
+  }) {
     Query query = _collection.orderBy('name');
 
     return query.snapshots().map((snapshot) {
-      final items = snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return DeliveryAreaModel.fromJson(data);
       }).toList();
+      if (branchId != null && branchId.isNotEmpty) {
+        items = items.where((a) => a.branchId == null || a.branchId == branchId).toList();
+      }
       if (activeOnly) {
         return items.where((a) => a.isActive).toList();
       }
@@ -26,14 +32,20 @@ class DeliveryAreaService {
   }
 
   /// Get delivery areas list
-  static Future<List<DeliveryAreaModel>> getDeliveryAreas({bool activeOnly = false}) async {
+  static Future<List<DeliveryAreaModel>> getDeliveryAreas({
+    bool activeOnly = false,
+    String? branchId,
+  }) async {
     try {
       final snapshot = await _collection.orderBy('name').get();
-      final items = snapshot.docs.map((doc) {
+      var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return DeliveryAreaModel.fromJson(data);
       }).toList();
+      if (branchId != null && branchId.isNotEmpty) {
+        items = items.where((a) => a.branchId == null || a.branchId == branchId).toList();
+      }
       if (activeOnly) {
         return items.where((a) => a.isActive).toList();
       }

@@ -28,8 +28,12 @@ class CustomerProvider extends ChangeNotifier {
     watchCustomers();
   }
 
+  String? _currentBranchId;
+  String? get currentBranchId => _currentBranchId;
+
   /// Watch real-time customer data
-  void watchCustomers({String? search, bool? isActive}) {
+  void watchCustomers({String? search, bool? isActive, String? branchId}) {
+    if (branchId != null) _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -38,6 +42,7 @@ class CustomerProvider extends ChangeNotifier {
     _subscription = CustomerService.watchCustomers(
       search: search ?? _searchQuery,
       isActive: isActive ?? _activeFilter,
+      branchId: _currentBranchId,
     ).listen(
       (data) {
         _customers = data;
@@ -57,13 +62,13 @@ class CustomerProvider extends ChangeNotifier {
   /// Filter search query
   void setSearch(String query) {
     _searchQuery = query;
-    watchCustomers(search: query, isActive: _activeFilter);
+    watchCustomers(search: query, isActive: _activeFilter, branchId: _currentBranchId);
   }
 
   /// Filter by active/inactive
   void setActiveFilter(bool? isActive) {
     _activeFilter = isActive;
-    watchCustomers(search: _searchQuery, isActive: isActive);
+    watchCustomers(search: _searchQuery, isActive: isActive, branchId: _currentBranchId);
   }
 
   /// Toggle status

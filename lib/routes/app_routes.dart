@@ -45,6 +45,7 @@ import '../screens/admin/customers/manage_customers_screen.dart';
 import '../screens/admin/delivery_areas/manage_delivery_areas_screen.dart';
 import '../screens/admin/coupons/manage_coupons_screen.dart';
 import '../screens/admin/reports/sales_reports_screen.dart';
+import '../screens/admin/sub_admins/manage_sub_admins_screen.dart';
 
 // Super Admin Screens
 import '../screens/super_admin/dashboard/super_admin_dashboard_screen.dart';
@@ -103,15 +104,16 @@ class AppRoutes {
     // -------------------------------------------------------------------------
     // Requires authenticated user with 'admin' or 'super_admin' role
     '/admin/dashboard': (context) => const AdminRouteGuard(child: AdminDashboardScreen()),
-    '/admin/orders': (context) => const AdminRouteGuard(child: AdminOrdersScreen()),
-    '/admin/menu': (context) => const AdminRouteGuard(child: ManageMenuScreen()),
-    '/admin/menu/add': (context) => const AdminRouteGuard(child: AddEditMenuItemScreen()),
-    '/admin/categories': (context) => const AdminRouteGuard(child: ManageCategoriesScreen()),
-    '/admin/customers': (context) => const AdminRouteGuard(child: ManageCustomersScreen()),
-    '/admin/delivery-areas': (context) => const AdminRouteGuard(child: ManageDeliveryAreasScreen()),
-    '/admin/riders': (context) => const AdminRouteGuard(child: ManageRidersScreen()),
-    '/admin/coupons': (context) => const AdminRouteGuard(child: ManageCouponsScreen()),
-    '/admin/reports': (context) => const AdminRouteGuard(child: SalesReportsScreen()),
+    '/admin/orders': (context) => const AdminRouteGuard(requiredPermission: 'orders', child: AdminOrdersScreen()),
+    '/admin/menu': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: ManageMenuScreen()),
+    '/admin/menu/add': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: AddEditMenuItemScreen()),
+    '/admin/categories': (context) => const AdminRouteGuard(requiredPermission: 'categories', child: ManageCategoriesScreen()),
+    '/admin/customers': (context) => const AdminRouteGuard(requiredPermission: 'customers', child: ManageCustomersScreen()),
+    '/admin/delivery-areas': (context) => const AdminRouteGuard(requiredPermission: 'delivery_areas', child: ManageDeliveryAreasScreen()),
+    '/admin/riders': (context) => const AdminRouteGuard(requiredPermission: 'riders', child: ManageRidersScreen()),
+    '/admin/coupons': (context) => const AdminRouteGuard(requiredPermission: 'coupons', child: ManageCouponsScreen()),
+    '/admin/reports': (context) => const AdminRouteGuard(requiredPermission: 'reports', child: SalesReportsScreen()),
+    '/admin/sub-admins': (context) => const AdminRouteGuard(blockSubAdmin: true, child: ManageSubAdminsScreen()),
 
     // -------------------------------------------------------------------------
     // 3. Platform Super Admin Panel Routes (Protected by SuperAdminRouteGuard)
@@ -138,8 +140,15 @@ class AppRoutes {
 /// - If authenticated as admin or super_admin: Grants pass-through access to the child view.
 class AdminRouteGuard extends StatelessWidget {
   final Widget child;
+  final String? requiredPermission;
+  final bool blockSubAdmin;
 
-  const AdminRouteGuard({super.key, required this.child});
+  const AdminRouteGuard({
+    super.key,
+    required this.child,
+    this.requiredPermission,
+    this.blockSubAdmin = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -167,11 +176,38 @@ class AdminRouteGuard extends StatelessWidget {
         actionLabel: 'Return to Customer App',
         onAction: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
         icon: Icons.shield_outlined,
-        accentColor: Colors.red.shade600,
+        accentColor: AppColors.error,
       );
     }
 
-    // Case 3: Authorized
+    // Case 3: Block sub-admin from management actions (e.g. creating further sub-admins)
+    final user = auth.currentUser;
+    if (blockSubAdmin && (user?.isSubAdmin == true)) {
+      return _buildAccessDeniedScreen(
+        context: context,
+        title: 'Action Prohibited',
+        message: 'Sub-admin staff accounts are not authorized to manage other administrative accounts.',
+        actionLabel: 'Back to Dashboard',
+        onAction: () => Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false),
+        icon: Icons.admin_panel_settings_outlined,
+        accentColor: AppColors.warning,
+      );
+    }
+
+    // Case 4: Sub-admin permission restriction
+    if (requiredPermission != null && user != null && user.isSubAdmin && !user.can(requiredPermission!)) {
+      return _buildAccessDeniedScreen(
+        context: context,
+        title: 'Section Restricted',
+        message: 'Your sub-admin account is restricted from accessing the "$requiredPermission" module. Contact your branch manager to request access.',
+        actionLabel: 'Back to Dashboard',
+        onAction: () => Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false),
+        icon: Icons.lock_clock_rounded,
+        accentColor: AppColors.warning,
+      );
+    }
+
+    // Case 5: Authorized
     return child;
   }
 
@@ -432,7 +468,7 @@ class SuperAdminRouteGuard extends StatelessWidget {
 }
 
 /// Route guard protecting Delivery Rider Console from unauthorized access.
-/// Requires user to be authenticated and hold 'rider', 'admin', or 'super_admin' role.
+/// Requires user to be authenticated and hold 'delivery_rider', 'admin', or 'super_admin' role.
 class RiderRouteGuard extends StatelessWidget {
   final Widget child;
 
@@ -480,7 +516,7 @@ class RiderRouteGuard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.shield_outlined, size: 64, color: Colors.orange),
+                const Icon(Icons.shield_outlined, size: 64, color: AppColors.warning),
                 const SizedBox(height: 16),
                 const Text(
                   'Rider Clearance Required',

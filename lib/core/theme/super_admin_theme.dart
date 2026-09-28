@@ -3,13 +3,13 @@ import 'package:food_fight/core/theme/admin_theme.dart';
 
 /// Super Admin Visual Theme - Premium Deep Purple / Gold / Obsidian accents
 class SuperAdminTheme {
-  static const Color primary = Color(0xFF3F1651); // Imperial Purple
-  static const Color secondary = Color(0xFF5B1B74);
-  static const Color accentGold = Color(0xFFFFB703); // Golden crest
-  static const Color accentCyan = Color(0xFF00C49F);
-  static const Color background = Color(0xFFF9F7FA);
-  static const Color darkBackground = Color(0xFF0F0B13);
-  static const Color darkCardBg = Color(0xFF191220);
+  static const Color primary = Color(0xFF3C1810); // Food Fight Dark Brown
+  static const Color secondary = Color(0xFF2E1A11); // Food Fight Deep Dark Brown
+  static const Color accentGold = Color(0xFFFFC700); // Food Fight Yellow
+  static const Color accentCyan = Color(0xFFFFC700); // Food Fight Yellow
+  static const Color background = Color(0xFFFAF6F0); // Warm Cream Neutral
+  static const Color darkBackground = Color(0xFF170F0B); // Deep Roasted Chocolate
+  static const Color darkCardBg = Color(0xFF231812); // Dark Chocolate Card
   static const Color cardBg = Colors.white;
 
   static Color getBackground(BuildContext context) {

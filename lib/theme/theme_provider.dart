@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.dark;
   static const String _storageKey = 'ff_theme_mode';
 
   ThemeMode get themeMode => _themeMode;
@@ -20,12 +20,14 @@ class ThemeProvider extends ChangeNotifier {
           _themeMode = ThemeMode.dark;
           break;
         case 'system':
-        default:
           _themeMode = ThemeMode.system;
+          break;
+        default:
+          _themeMode = ThemeMode.dark;
           break;
       }
     } catch (_) {
-      _themeMode = ThemeMode.system;
+      _themeMode = ThemeMode.dark;
     }
 
     notifyListeners();

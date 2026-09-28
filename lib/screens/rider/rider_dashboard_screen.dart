@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/order_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../providers/rider_provider.dart';
 import '../../services/rider_location_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/empty_state_view.dart';
@@ -28,10 +29,14 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = context.read<AuthProvider>().currentUser;
+      final auth = context.read<AuthProvider>();
+      final user = auth.currentUser;
       if (user != null) {
-        // Watch all orders assigned to this rider or pending delivery
-        context.read<OrderProvider>().watchAdminOrders();
+        if (auth.isAdmin) {
+          context.read<OrderProvider>().watchAdminOrders();
+        } else {
+          context.read<RiderProvider>().watchRiderDeliveries(user.id);
+        }
       }
     });
   }
@@ -94,7 +99,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Delivery started! Live GPS tracking is broadcasting to customer. 🛵'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -112,7 +117,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Order delivered successfully! Great job champion! 🏆'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
     }
@@ -127,12 +132,18 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
+    final riderProvider = context.watch<RiderProvider>();
+
     // Filter orders assigned to this rider or available for dispatch
-    final myDeliveries = orderProvider.adminOrders.where((o) {
-      return (o.riderId == user?.id || o.riderId == null || o.status == OrderStatus.assigned || o.status == OrderStatus.outForDelivery) &&
-          o.status != OrderStatus.delivered &&
-          o.status != OrderStatus.cancelled;
-    }).toList();
+    final myDeliveries = auth.isAdmin
+        ? orderProvider.adminOrders.where((o) {
+            return (o.riderId == user?.id || o.riderId == null || o.status == OrderStatus.assigned || o.status == OrderStatus.outForDelivery) &&
+                o.status != OrderStatus.delivered &&
+                o.status != OrderStatus.cancelled;
+          }).toList()
+        : riderProvider.assignedDeliveries.where((o) {
+            return o.status != OrderStatus.delivered && o.status != OrderStatus.cancelled;
+          }).toList();
 
     return PopScope(
       canPop: false,
@@ -141,11 +152,11 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
       },
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF141820) : const Color(0xFFF7F9FC),
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
         appBar: AppBar(
           title: const Row(
             children: [
-              Icon(Icons.two_wheeler_rounded, color: Colors.green),
+              Icon(Icons.two_wheeler_rounded, color: AppColors.primaryYellow),
               SizedBox(width: 8),
               Text(
                 'Rider Delivery Console',
@@ -153,7 +164,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
               ),
             ],
           ),
-          backgroundColor: isDark ? const Color(0xFF1B222D) : Colors.white,
+          backgroundColor: isDark ? AppColors.darkBackground : AppColors.surface,
           foregroundColor: colorScheme.onSurface,
           actions: [
             IconButton(
@@ -174,15 +185,15 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _isOnline
-                        ? [Colors.green.shade800, Colors.teal.shade800]
-                        : [Colors.blueGrey.shade800, Colors.blueGrey.shade900],
+                        ? const [AppColors.darkBrown, Color(0xFF230F0A)]
+                        : const [Color(0xFF2E2018), Color(0xFF170F0B)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: (_isOnline ? Colors.green : Colors.black).withValues(alpha: 0.3),
+                      color: Colors.black.withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -219,7 +230,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                                 _isOnline
                                     ? (_isBroadcasting
                                         ? '🔴 LIVE GPS BROADCASTING TO ORDER'
-                                        : '🟢 ONLINE • Ready for Deliveries')
+                                        : '🟡 ONLINE • Ready for Deliveries')
                                     : '⚪ OFFLINE',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.9),
@@ -232,8 +243,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                         ),
                         Switch(
                           value: _isOnline,
-                          activeThumbColor: Colors.white,
-                          activeTrackColor: Colors.greenAccent.shade400,
+                          activeThumbColor: AppColors.darkBrown,
+                          activeTrackColor: AppColors.primaryYellow,
                           onChanged: (val) {
                             setState(() => _isOnline = val);
                             if (!val) _stopGpsBroadcast();
@@ -259,7 +270,15 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                     ),
                   ),
                   TextButton.icon(
-                    onPressed: () => context.read<OrderProvider>().watchAdminOrders(),
+                    onPressed: () {
+                      final currentAuth = context.read<AuthProvider>();
+                      final currentUser = currentAuth.currentUser;
+                      if (currentAuth.isAdmin) {
+                        context.read<OrderProvider>().watchAdminOrders();
+                      } else if (currentUser != null) {
+                        context.read<RiderProvider>().watchRiderDeliveries(currentUser.id);
+                      }
+                    },
                     icon: const Icon(Icons.refresh_rounded, size: 16),
                     label: const Text('Refresh'),
                   ),
@@ -286,7 +305,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: isEnRoute ? Colors.green : colorScheme.outlineVariant,
+                        color: isEnRoute ? AppColors.success : colorScheme.outlineVariant,
                         width: isEnRoute ? 2 : 1,
                       ),
                       boxShadow: [
@@ -312,7 +331,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: isEnRoute ? Colors.green.withValues(alpha: 0.15) : AppColors.primary.withValues(alpha: 0.15),
+                                  color: isEnRoute ? AppColors.success.withValues(alpha: 0.15) : AppColors.primary.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -320,7 +339,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 10.5,
-                                    color: isEnRoute ? Colors.green : AppColors.primary,
+                                    color: isEnRoute ? AppColors.success : AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -329,7 +348,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              const Icon(Icons.person_outline, size: 16, color: Colors.blueGrey),
+                              const Icon(Icons.person_outline, size: 16, color: AppColors.textSecondary),
                               const SizedBox(width: 6),
                               Text(
                                 '${order.customerName} • ${order.customerPhone}',
@@ -341,7 +360,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.location_on_outlined, size: 16, color: Colors.redAccent),
+                              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.error),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -362,7 +381,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                               if (!isEnRoute)
                                 FilledButton.icon(
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
+                                    backgroundColor: AppColors.primaryYellow,
+                                    foregroundColor: AppColors.darkBrown,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
                                   onPressed: () => _handleStartDelivery(order),
@@ -372,7 +392,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                               else
                                 FilledButton.icon(
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.green,
+                                    backgroundColor: AppColors.success,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
                                   onPressed: () => _handleCompleteDelivery(order),

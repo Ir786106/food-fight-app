@@ -1,8 +1,11 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_fight/models/order_model.dart';
+import 'package:food_fight/models/notification_model.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'notification_service.dart';
+import 'branch_service.dart';
 
 /// Order Service for Customer ordering and Admin order management
 class OrderService {
@@ -26,6 +29,30 @@ class OrderService {
     }
     await docRef.set(data);
     AppLogger.info('Order placed: ${data['orderNumber']} (${docRef.id})', tag: 'OrderService');
+
+    // Automatically update branch financial metrics
+    if (order.branchId != null && order.branchId!.isNotEmpty) {
+      await BranchService.recordOrderFinancials(order.branchId!, order.total);
+    }
+
+    // Create real notification for customer
+    if (order.customerId.isNotEmpty) {
+      try {
+        final notifService = NotificationService();
+        await notifService.createNotification(NotificationModel(
+          id: '',
+          userId: order.customerId,
+          title: 'Order Placed! 🥊',
+          message: 'Your order #${data['orderNumber']} has been received and sent to the kitchen.',
+          type: 'order',
+          referenceId: docRef.id,
+          createdAt: DateTime.now(),
+        ));
+      } catch (e) {
+        AppLogger.warn('Could not emit order notification: $e', tag: 'OrderService');
+      }
+    }
+
     return docRef.id;
   }
 
@@ -55,8 +82,8 @@ class OrderService {
     });
   }
 
-  /// Watch all orders (Admin panel), optionally filtered by status
-  static Stream<List<OrderModel>> watchAllOrders({String? status}) {
+  /// Watch all orders (Admin panel), optionally filtered by status and branchId
+  static Stream<List<OrderModel>> watchAllOrders({String? status, String? branchId}) {
     return _collection
         .orderBy('createdAt', descending: true)
         .snapshots()
@@ -66,6 +93,10 @@ class OrderService {
         data['id'] = doc.id;
         return OrderModel.fromJson(data);
       }).toList();
+
+      if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+        orders = orders.where((o) => o.branchId == branchId).toList();
+      }
 
       if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
         final s = status.toLowerCase().replaceAll(' ', '');
@@ -94,6 +125,20 @@ class OrderService {
 
     await _collection.doc(orderId).update(updates);
     AppLogger.info('Updated order $orderId to ${newStatus.name}', tag: 'OrderService');
+
+    // Emit live status notification to the customer
+    try {
+      final order = await getOrder(orderId);
+      if (order != null && order.customerId.isNotEmpty) {
+        await NotificationService().sendOrderUpdateNotification(
+          order.customerId,
+          order.orderNumber.isNotEmpty ? order.orderNumber : orderId,
+          newStatus.displayName,
+        );
+      }
+    } catch (e) {
+      AppLogger.warn('Could not emit order status notification: $e', tag: 'OrderService');
+    }
   }
 
   /// Fetch single order by ID

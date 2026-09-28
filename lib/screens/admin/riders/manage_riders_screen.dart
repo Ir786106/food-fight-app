@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/admin_theme.dart';
 import '../../../models/rider_model.dart';
@@ -142,7 +143,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                               content: Text(ok
                                   ? (rider == null ? 'Rider registered successfully!' : 'Rider profile updated!')
                                   : 'Operation failed'),
-                              backgroundColor: ok ? Colors.green : Colors.red,
+                              backgroundColor: ok ? AppColors.success : AppColors.error,
                             ),
                           );
                         }
@@ -321,7 +322,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: rider.isOnline
-              ? Colors.green.withValues(alpha: 0.5)
+              ? AppColors.success.withValues(alpha: 0.5)
               : (isDark ? Colors.white12 : Colors.grey.shade200),
           width: rider.isOnline ? 1.5 : 1,
         ),
@@ -339,11 +340,11 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
           CircleAvatar(
             radius: 24,
             backgroundColor: rider.isOnline
-                ? Colors.green.withValues(alpha: 0.15)
+                ? AppColors.success.withValues(alpha: 0.15)
                 : AdminTheme.primaryBlue.withValues(alpha: 0.12),
             child: Icon(
               Icons.two_wheeler_rounded,
-              color: rider.isOnline ? Colors.green : AdminTheme.primaryBlue,
+              color: rider.isOnline ? AppColors.success : AdminTheme.primaryBlue,
               size: 26,
             ),
           ),
@@ -371,7 +372,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: rider.isOnline
-                            ? Colors.green.withValues(alpha: 0.12)
+                            ? AppColors.success.withValues(alpha: 0.12)
                             : Colors.grey.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -380,7 +381,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: rider.isOnline ? Colors.green : Colors.grey,
+                          color: rider.isOnline ? AppColors.success : Colors.grey,
                         ),
                       ),
                     ),
@@ -396,14 +397,14 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                    const Icon(Icons.star_rounded, color: AppColors.warning, size: 16),
                     const SizedBox(width: 3),
                     Text(
                       rider.rating.toStringAsFixed(1),
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                     const SizedBox(width: 14),
-                    const Icon(Icons.local_shipping_outlined, size: 15, color: Colors.blueGrey),
+                    const Icon(Icons.local_shipping_outlined, size: 15, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       '${rider.totalDeliveries} Deliveries',
@@ -440,13 +441,13 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                   children: [
                     Icon(
                       rider.isActive ? Icons.cancel_outlined : Icons.check_circle_outline,
-                      color: rider.isActive ? Colors.red : Colors.green,
+                      color: rider.isActive ? AppColors.error : AppColors.success,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       rider.isActive ? 'Deactivate' : 'Activate',
-                      style: TextStyle(color: rider.isActive ? Colors.red : Colors.green),
+                      style: TextStyle(color: rider.isActive ? AppColors.error : AppColors.success),
                     ),
                   ],
                 ),

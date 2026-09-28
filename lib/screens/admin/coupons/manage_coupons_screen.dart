@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/coupon_model.dart';
 import 'package:food_fight/providers/coupon_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
@@ -19,6 +21,22 @@ class ManageCouponsScreen extends StatefulWidget {
 
 class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<CouponProvider>().watchCoupons(branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -219,6 +237,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                         setDialogState(() => isSaving = true);
                         try {
                           final provider = context.read<CouponProvider>();
+                          final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
 
                           if (coupon == null) {
                             await provider.createCoupon(CouponModel(
@@ -232,6 +251,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                               validFrom: DateTime.now(),
                               validUntil: DateTime.now().add(Duration(days: validDays)),
                               isActive: true,
+                              branchId: currentBranchId,
                             ));
                           } else {
                             await provider.updateCoupon(CouponModel(
@@ -247,6 +267,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                               isActive: coupon.isActive,
                               usageCount: coupon.usageCount,
                               usageLimit: coupon.usageLimit,
+                              branchId: coupon.branchId ?? currentBranchId,
                             ));
                           }
 
@@ -255,7 +276,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
                             );
                           }
                         }
@@ -289,7 +310,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
               final success = await context.read<CouponProvider>().deleteCoupon(coupon.id);
@@ -481,7 +502,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                                     value: 'edit',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.edit_rounded, size: 18, color: Colors.blue),
+                                                        Icon(Icons.edit_rounded, size: 18, color: AppColors.darkBrown),
                                                         SizedBox(width: 8),
                                                         Text('Edit'),
                                                       ],
@@ -491,9 +512,9 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                                     value: 'delete',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.delete_rounded, size: 18, color: Colors.red),
+                                                        Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
                                                         SizedBox(width: 8),
-                                                        Text('Delete', style: TextStyle(color: Colors.red)),
+                                                        Text('Delete', style: TextStyle(color: AppColors.error)),
                                                       ],
                                                     ),
                                                   ),
@@ -520,22 +541,22 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                                 : (coupon.type == 'free_delivery'
                                                     ? 'FREE DELIVERY'
                                                     : 'Rs. ${coupon.value.toStringAsFixed(0)} OFF'),
-                                            color: Colors.green,
+                                            color: AppColors.success,
                                           ),
                                           _buildBadge(
                                             label: 'Min Rs. ${coupon.minimumOrder.toStringAsFixed(0)}',
-                                            color: Colors.blue,
+                                            color: AppColors.darkBrown,
                                           ),
                                           if (isExpired)
-                                            _buildBadge(label: 'EXPIRED', color: Colors.red)
+                                            _buildBadge(label: 'EXPIRED', color: AppColors.error)
                                           else
                                             _buildBadge(
                                               label: 'Expires ${_formatDate(coupon.validUntil)}',
-                                              color: Colors.orange,
+                                              color: AppColors.warning,
                                             ),
                                           _buildBadge(
                                             label: '${coupon.usageCount} Used',
-                                            color: Colors.purple,
+                                            color: AppColors.darkBrown,
                                           ),
                                         ],
                                       ),

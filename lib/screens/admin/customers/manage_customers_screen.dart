@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/user_model.dart';
+import 'package:food_fight/services/customer_service.dart';
 import 'package:food_fight/providers/customer_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
@@ -18,6 +21,22 @@ class ManageCustomersScreen extends StatefulWidget {
 
 class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<CustomerProvider>().watchCustomers(branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -30,6 +49,7 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
     final cardBg = AdminTheme.getCardBg(context);
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
+    final branchId = context.read<AuthProvider>().currentUser?.branchId;
 
     showModalBottomSheet(
       context: context,
@@ -39,7 +59,7 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
       ),
       builder: (ctx) {
         return FutureBuilder<Map<String, dynamic>>(
-          future: context.read<CustomerProvider>().getCustomerStats(customer.id),
+          future: CustomerService.getCustomerStats(customer.id, branchId: branchId),
           builder: (context, snapshot) {
             final stats = snapshot.data ?? {'totalOrders': 0, 'totalSpent': 0.0};
             final totalOrders = (stats['totalOrders'] as num?)?.toInt() ?? 0;
@@ -109,16 +129,16 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: customer.isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                          color: customer.isActive ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: customer.isActive ? Colors.green.withValues(alpha: 0.4) : Colors.red.withValues(alpha: 0.4),
+                            color: customer.isActive ? AppColors.success.withValues(alpha: 0.4) : AppColors.error.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Text(
                           customer.isActive ? 'Active' : 'Blocked',
                           style: TextStyle(
-                            color: customer.isActive ? Colors.green : Colors.red,
+                            color: customer.isActive ? AppColors.success : AppColors.error,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -170,7 +190,7 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  color: AppColors.success,
                                 ),
                               ),
                             ],
@@ -185,7 +205,7 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: customer.isActive ? Colors.red.shade700 : Colors.green.shade700,
+                        backgroundColor: customer.isActive ? AppColors.error : AppColors.success,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -338,14 +358,14 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                 decoration: BoxDecoration(
                                                   color: customer.isActive
-                                                      ? Colors.green.withValues(alpha: 0.1)
-                                                      : Colors.red.withValues(alpha: 0.1),
+                                                      ? AppColors.success.withValues(alpha: 0.1)
+                                                      : AppColors.error.withValues(alpha: 0.1),
                                                   borderRadius: BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
                                                   customer.isActive ? 'Active' : 'Blocked',
                                                   style: TextStyle(
-                                                    color: customer.isActive ? Colors.green : Colors.red,
+                                                    color: customer.isActive ? AppColors.success : AppColors.error,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 11,
                                                   ),

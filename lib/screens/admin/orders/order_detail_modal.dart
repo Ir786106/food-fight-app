@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/providers/order_provider.dart';
@@ -63,7 +64,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Order status updated to ${nextStatus.name}'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -72,7 +73,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
       if (mounted) {
         setState(() => _isUpdating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating order: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error updating order: $e'), backgroundColor: AppColors.error),
         );
       }
     }
@@ -130,7 +131,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
@@ -148,7 +149,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Order cancelled successfully'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.error,
                   ),
                 );
               }
@@ -237,10 +238,10 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           leading: CircleAvatar(
-                            backgroundColor: rider.isOnline ? Colors.green.shade100 : Colors.grey.shade200,
+                            backgroundColor: rider.isOnline ? AppColors.success.withValues(alpha: 0.15) : Colors.grey.shade200,
                             child: Icon(
                               Icons.delivery_dining_rounded,
-                              color: rider.isOnline ? Colors.green.shade800 : Colors.grey.shade600,
+                              color: rider.isOnline ? AppColors.success : Colors.grey.shade600,
                             ),
                           ),
                           title: Text(
@@ -281,7 +282,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                             content: Text('Assigned order to ${rider.name}'),
-                                            backgroundColor: Colors.green,
+                                            backgroundColor: AppColors.success,
                                           ),
                                         );
                                       }
@@ -429,7 +430,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              const Icon(Icons.payment_rounded, size: 18, color: Colors.green),
+                              const Icon(Icons.payment_rounded, size: 18, color: AppColors.success),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -447,7 +448,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.15),
+                                  color: AppColors.warning.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -455,7 +456,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.orange,
+                                    color: AppColors.warning,
                                   ),
                                 ),
                               ),
@@ -466,12 +467,12 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
+                                color: AppColors.error,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 'Reason for Cancellation: ${order.cancellationReason}',
-                                style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600),
+                                style: const TextStyle(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -567,12 +568,12 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.1),
+                                    color: AppColors.darkBrown.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
                                     'DISPATCHED',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.darkBrown),
                                   ),
                                 ),
                               ],
@@ -670,7 +671,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                     // Price Breakdown
                     _summaryRow(context, 'Subtotal', 'Rs. ${order.subtotal.toStringAsFixed(0)}'),
                     if (order.discount > 0)
-                      _summaryRow(context, 'Discount', '- Rs. ${order.discount.toStringAsFixed(0)}', color: Colors.green),
+                      _summaryRow(context, 'Discount', '- Rs. ${order.discount.toStringAsFixed(0)}', color: AppColors.success),
                     _summaryRow(context, 'Delivery Fee', 'Rs. ${order.deliveryCharge.toStringAsFixed(0)}'),
                     const Divider(height: 16),
                     _summaryRow(context, 'Total Amount', 'Rs. ${order.total.toStringAsFixed(0)}', isBold: true),
@@ -686,8 +687,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_fight/models/category_model.dart';
 import 'package:food_fight/providers/category_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/services/supabase/supabase_image_storage_service.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
@@ -22,6 +24,22 @@ class ManageCategoriesScreen extends StatefulWidget {
 
 class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<CategoryProvider>().watchCategories(branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -80,7 +98,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                               borderRadius: BorderRadius.circular(16),
                               child: pickedImage != null
                                   ? const Center(
-                                      child: Icon(Icons.check_circle, color: Colors.green, size: 36),
+                                      child: Icon(Icons.check_circle, color: AppColors.success, size: 36),
                                     )
                                   : NetworkImageView(
                                       imageUrl: imageUrl,
@@ -189,6 +207,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           final desc = descController.text.trim();
 
                           final provider = context.read<CategoryProvider>();
+                          final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
 
                           if (category == null) {
                             await provider.createCategory(CategoryModel(
@@ -198,6 +217,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                               imageUrl: finalImageUrl,
                               order: orderNum,
                               isActive: true,
+                              branchId: currentBranchId,
                               createdAt: DateTime.now(),
                               updatedAt: DateTime.now(),
                             ));
@@ -209,6 +229,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                               imageUrl: finalImageUrl,
                               order: orderNum,
                               isActive: category.isActive,
+                              branchId: category.branchId ?? currentBranchId,
                               createdAt: category.createdAt,
                               updatedAt: DateTime.now(),
                             ));
@@ -219,7 +240,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
                             );
                           }
                         }
@@ -254,7 +275,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
@@ -469,7 +490,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                                             value: 'edit',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit_rounded, size: 18, color: Colors.blue),
+                                                Icon(Icons.edit_rounded, size: 18, color: AppColors.darkBrown),
                                                 SizedBox(width: 8),
                                                 Text('Edit'),
                                               ],
@@ -479,9 +500,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                                             value: 'delete',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.delete_rounded, size: 18, color: Colors.red),
+                                                Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
                                                 SizedBox(width: 8),
-                                                Text('Delete', style: TextStyle(color: Colors.red)),
+                                                Text('Delete', style: TextStyle(color: AppColors.error)),
                                               ],
                                             ),
                                           ),

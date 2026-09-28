@@ -13,6 +13,7 @@ class CouponModel {
   final int usageCount;
   final bool isActive;
   final String? description;
+  final String? branchId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -29,6 +30,7 @@ class CouponModel {
     this.usageCount = 0,
     this.isActive = true,
     this.description,
+    this.branchId,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now(),
@@ -48,6 +50,7 @@ class CouponModel {
       'usageCount': usageCount,
       'isActive': isActive ? 1 : 0,
       'description': description,
+      if (branchId != null) 'branchId': branchId,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
@@ -67,6 +70,7 @@ class CouponModel {
       usageCount: SafeConvert.toInt(json['usageCount']),
       isActive: json['isActive'] == 1 || json['isActive'] == true,
       description: json['description']?.toString(),
+      branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );

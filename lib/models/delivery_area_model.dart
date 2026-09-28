@@ -8,6 +8,7 @@ class DeliveryAreaModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? description;
+  final String? branchId;
 
   DeliveryAreaModel({
     required this.id,
@@ -17,6 +18,7 @@ class DeliveryAreaModel {
     required this.createdAt,
     required this.updatedAt,
     this.description,
+    this.branchId,
   });
 
   Map<String, dynamic> toJson() {
@@ -28,6 +30,7 @@ class DeliveryAreaModel {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'description': description,
+      if (branchId != null) 'branchId': branchId,
     };
   }
 
@@ -40,6 +43,7 @@ class DeliveryAreaModel {
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       description: json['description']?.toString(),
+      branchId: json['branchId']?.toString(),
     );
   }
 

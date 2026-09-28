@@ -10,6 +10,8 @@ class AdminAccountModel {
   final String status; // 'active', 'suspended', 'deactivated'
   final List<String> permissions; // e.g., 'manage_menu', 'manage_orders', 'view_reports', 'manage_coupons'
   final String? restaurantId;
+  final String? branchId;
+  final String? parentAdminId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? lastLoginAt;
@@ -23,6 +25,8 @@ class AdminAccountModel {
     this.status = 'active',
     List<String>? permissions,
     this.restaurantId = 'food_fight_hq',
+    this.branchId,
+    this.parentAdminId,
     DateTime? createdAt,
     DateTime? updatedAt,
     this.lastLoginAt,
@@ -33,6 +37,7 @@ class AdminAccountModel {
   bool get isActive => status == 'active';
   bool get isSuspended => status == 'suspended';
   bool get isDeactivated => status == 'deactivated';
+  bool get isSubAdmin => parentAdminId != null && parentAdminId!.isNotEmpty;
 
   AdminAccountModel copyWith({
     String? id,
@@ -43,6 +48,8 @@ class AdminAccountModel {
     String? status,
     List<String>? permissions,
     String? restaurantId,
+    String? branchId,
+    String? parentAdminId,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? lastLoginAt,
@@ -56,6 +63,8 @@ class AdminAccountModel {
       status: status ?? this.status,
       permissions: permissions ?? this.permissions,
       restaurantId: restaurantId ?? this.restaurantId,
+      branchId: branchId ?? this.branchId,
+      parentAdminId: parentAdminId ?? this.parentAdminId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
@@ -73,6 +82,8 @@ class AdminAccountModel {
       'isActive': status == 'active' ? 1 : 0,
       'permissions': permissions,
       'restaurantId': restaurantId,
+      if (branchId != null) 'branchId': branchId,
+      if (parentAdminId != null) 'parentAdminId': parentAdminId,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.millisecondsSinceEpoch,
@@ -83,6 +94,9 @@ class AdminAccountModel {
     List<String> perms = [];
     if (json['permissions'] is List) {
       perms = List<String>.from(json['permissions']);
+    } else if (json['permissions'] is Map) {
+      final map = json['permissions'] as Map;
+      perms = map.entries.where((e) => e.value == true).map((e) => e.key.toString()).toList();
     }
 
     return AdminAccountModel(
@@ -94,6 +108,8 @@ class AdminAccountModel {
       status: json['status'] ?? (json['isActive'] == 1 || json['isActive'] == true ? 'active' : 'suspended'),
       permissions: perms,
       restaurantId: json['restaurantId'] ?? 'food_fight_hq',
+      branchId: json['branchId']?.toString(),
+      parentAdminId: json['parentAdminId']?.toString(),
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       lastLoginAt: json['lastLoginAt'] != null

@@ -65,8 +65,17 @@ class MenuProvider extends ChangeNotifier {
     watchMenuItems();
   }
 
+  String? _currentBranchId;
+
+  String? get currentBranchId => _currentBranchId;
+
   /// Real-time listener for Firestore menu collection
-  void watchMenuItems({String? categoryId, bool activeOnly = false}) {
+  void watchMenuItems({
+    String? categoryId,
+    bool activeOnly = false,
+    String? branchId,
+  }) {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -75,6 +84,7 @@ class MenuProvider extends ChangeNotifier {
     _subscription = MenuService.watchMenuItems(
       categoryId: categoryId,
       activeOnly: activeOnly,
+      branchId: branchId,
     ).listen(
       (data) {
         _menuItems = data;
@@ -92,13 +102,17 @@ class MenuProvider extends ChangeNotifier {
   }
 
   /// Manual fetch
-  Future<void> fetchMenuItems({String? categoryId}) async {
+  Future<void> fetchMenuItems({String? categoryId, String? branchId}) async {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _menuItems = await MenuService.getMenuItems(categoryId: categoryId);
+      _menuItems = await MenuService.getMenuItems(
+        categoryId: categoryId,
+        branchId: branchId,
+      );
       _isLoading = false;
       notifyListeners();
     } catch (e) {

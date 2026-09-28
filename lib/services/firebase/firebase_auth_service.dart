@@ -305,7 +305,7 @@ class FirebaseAuthService implements IAuthService {
       name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
       email: firebaseUser.email ?? '',
       phone: '',
-      role: (firebaseUser.email?.toLowerCase().contains('admin') ?? false) ? 'admin' : 'customer',
+      role: 'customer',
       isActive: true,
       createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
       updatedAt: DateTime.now(),

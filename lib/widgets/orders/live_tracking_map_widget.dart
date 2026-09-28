@@ -86,8 +86,8 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget>
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: hasActiveGps
-                          ? Colors.green.shade700
-                          : (widget.isOutForDelivery ? AppColors.primary : Colors.blueGrey),
+                          ? AppColors.success
+                          : (widget.isOutForDelivery ? AppColors.primary : AppColors.textSecondary),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -262,7 +262,7 @@ class _MapGridPainter extends CustomPainter {
     canvas.drawCircle(start, 4, restInner);
 
     // Destination Marker (End)
-    final destPaint = Paint()..color = Colors.red.shade700;
+    final destPaint = Paint()..color = AppColors.error;
     canvas.drawCircle(end, 10, destPaint);
     final destInner = Paint()..color = Colors.white;
     canvas.drawCircle(end, 5, destInner);

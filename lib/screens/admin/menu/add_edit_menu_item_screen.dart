@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/models/menu_item_model.dart';
@@ -6,6 +7,7 @@ import 'package:food_fight/models/category_model.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/providers/menu_provider.dart';
 import 'package:food_fight/providers/category_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:food_fight/services/supabase/supabase_image_storage_service.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
@@ -194,7 +196,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Items with multiple sizes must have at least 2 variants.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
     }
@@ -218,7 +220,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
     if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please select a category'), backgroundColor: Colors.red),
+            content: Text('Please select a category'), backgroundColor: AppColors.error),
       );
       return;
     }
@@ -228,7 +230,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select an item photo before saving.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -241,7 +243,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please provide at least 2 size/portion variants.'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
         return;
@@ -261,7 +263,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Variant #${i + 1} is missing a label (e.g. Small, Medium).'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
           return;
@@ -271,7 +273,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Duplicate variant label "$label". Labels must be unique.'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
           return;
@@ -282,7 +284,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Variant "$label" has an invalid price.'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
           return;
@@ -313,7 +315,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Add-on "$name" must have a valid non-negative price.'),
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
               ),
             );
             return;
@@ -389,6 +391,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
       }
 
       final prepTime = int.tryParse(_prepTimeCtrl.text.trim()) ?? 25;
+      final currentAdminBranchId = context.read<AuthProvider>().currentUser?.branchId;
 
       final itemToSave = MenuItemModel(
         id: widget.item?.id ?? '',
@@ -407,6 +410,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         rating: widget.item?.rating ?? 4.8,
         variants: _hasVariants ? variantsToSave : null,
         addons: addonsToSave,
+        branchId: widget.item?.branchId ?? currentAdminBranchId,
         createdAt: widget.item?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -425,7 +429,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
             content: Text(widget.item == null
                 ? 'Menu item created!'
                 : 'Menu item updated!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -443,7 +447,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -499,11 +503,11 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                           MainAxisAlignment.center,
                                       children: [
                                         Icon(Icons.check_circle_rounded,
-                                            color: Colors.green, size: 48),
+                                            color: AppColors.success, size: 48),
                                         SizedBox(height: 8),
                                         Text('New photo selected from device',
                                             style: TextStyle(
-                                                color: Colors.green,
+                                                color: AppColors.success,
                                                 fontWeight: FontWeight.bold)),
                                       ],
                                     ),
@@ -751,13 +755,13 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade50,
+                            color: AppColors.success,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             'Selling Price: Rs. ${_calculatedFinalPrice.toStringAsFixed(0)}',
                             style: TextStyle(
-                                color: Colors.green.shade800,
+                                color: AppColors.success,
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -826,7 +830,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   if (_variantEntries.length > 2)
                                     IconButton(
                                       icon: const Icon(Icons.delete_outline,
-                                          color: Colors.red, size: 20),
+                                          color: AppColors.error, size: 20),
                                       onPressed: () => _removeVariantEntry(idx),
                                       tooltip: 'Remove variant',
                                       padding: EdgeInsets.zero,
@@ -1064,7 +1068,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                               subtitle: const Text(
                                   'Shows hot/spicy badge to customers'),
                               value: _isSpicy,
-                              activeThumbColor: Colors.red,
+                              activeThumbColor: AppColors.error,
                               onChanged: (val) =>
                                   setState(() => _isSpicy = val),
                             ),
@@ -1076,7 +1080,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                               subtitle:
                                   const Text('Shows green veg indicator'),
                               value: _isVeg,
-                              activeThumbColor: Colors.green,
+                              activeThumbColor: AppColors.success,
                               onChanged: (val) => setState(() => _isVeg = val),
                             ),
                             const Divider(height: 1),
@@ -1087,7 +1091,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                               subtitle: const Text(
                                   'Highlighted in home deals & promotions'),
                               value: _isFeatured,
-                              activeThumbColor: Colors.amber.shade800,
+                              activeThumbColor: AppColors.warning,
                               onChanged: (val) =>
                                   setState(() => _isFeatured = val),
                             ),

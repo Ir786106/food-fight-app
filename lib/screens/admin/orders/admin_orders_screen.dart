@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/providers/order_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
@@ -20,6 +21,7 @@ class AdminOrdersScreen extends StatefulWidget {
 class _AdminOrdersScreenState extends State<AdminOrdersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String? _lastBranchId;
 
   static const List<Map<String, String>> _tabs = [
     {'title': 'All', 'status': 'all'},
@@ -36,9 +38,21 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrderProvider>().watchAdminOrders();
-    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<OrderProvider>().watchAdminOrders(branchId: branchId);
+        }
+      });
+    }
   }
 
   @override

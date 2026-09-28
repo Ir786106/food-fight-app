@@ -4,19 +4,21 @@ class UserModel {
   static const String roleCustomer = 'customer';
   static const String roleAdmin = 'admin';
   static const String roleSuperAdmin = 'super_admin';
-  static const String roleRider = 'rider';
+  static const String roleRider = 'delivery_rider';
 
   final String id;
   final String name;
   final String email;
   final String phone;
-  final String role; // 'customer', 'admin', 'super_admin', 'rider'
+  final String role; // 'customer', 'admin', 'super_admin', 'delivery_rider'
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? profileImage;
   final String? password;
   final List<String>? permissions;
+  final String? branchId;
+  final String? parentAdminId;
 
   UserModel({
     required this.id,
@@ -30,13 +32,33 @@ class UserModel {
     this.profileImage,
     this.password,
     this.permissions,
+    this.branchId,
+    this.parentAdminId,
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
   bool get isSuperAdmin => role.toLowerCase() == 'super_admin';
   bool get isAdmin => role.toLowerCase() == 'admin' || isSuperAdmin;
   bool get isCustomer => role.toLowerCase() == 'customer';
-  bool get isRider => role.toLowerCase() == 'rider';
+  bool get isRider =>
+      role.toLowerCase() == 'delivery_rider' || role.toLowerCase() == 'rider';
+
+  /// Whether this account is a Sub-Admin under a parent Branch Admin
+  bool get isSubAdmin =>
+      role.toLowerCase() == roleAdmin &&
+      parentAdminId != null &&
+      parentAdminId!.isNotEmpty;
+
+  /// Check granular permission for Admin/Sub-Admin
+  bool can(String permission) {
+    if (isSuperAdmin) return true;
+    if (!isAdmin) return false;
+    // Primary Branch Admin has all permissions under their branch
+    if (parentAdminId == null || parentAdminId!.isEmpty) return true;
+    // Sub-Admin is checked against granted permission list
+    if (permissions == null || permissions!.isEmpty) return false;
+    return permissions!.contains(permission);
+  }
 
   UserModel copyWith({
     String? id,
@@ -50,6 +72,8 @@ class UserModel {
     String? profileImage,
     String? password,
     List<String>? permissions,
+    String? branchId,
+    String? parentAdminId,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -63,6 +87,8 @@ class UserModel {
       profileImage: profileImage ?? this.profileImage,
       password: password ?? this.password,
       permissions: permissions ?? this.permissions,
+      branchId: branchId ?? this.branchId,
+      parentAdminId: parentAdminId ?? this.parentAdminId,
     );
   }
 
@@ -79,6 +105,8 @@ class UserModel {
       'profileImage': profileImage,
       if (password != null) 'password': password,
       if (permissions != null) 'permissions': permissions,
+      if (branchId != null) 'branchId': branchId,
+      if (parentAdminId != null) 'parentAdminId': parentAdminId,
     };
   }
 
@@ -100,6 +128,8 @@ class UserModel {
       profileImage: json['profileImage'],
       password: json['password'],
       permissions: parsedPermissions,
+      branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
+      parentAdminId: json['parentAdminId']?.toString() ?? json['parent_admin_id']?.toString(),
     );
   }
 }

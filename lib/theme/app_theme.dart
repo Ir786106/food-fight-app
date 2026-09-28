@@ -1,57 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Food Fight brand colors.
-/// "Food" side = warm orange/red (appetite, energy)
-/// "Fight" side = deep charcoal/black (bold, punchy)
+/// Unified Food Fight brand color scheme.
+/// Primary: Food Fight Yellow (#FFC700)
+/// Secondary / Dark: Dark Brown / Chocolate (#3C1810)
+/// Surface: White (#FFFFFF)
+/// Background: Cream / Warm Neutral (#FAF6F0)
+/// Text: Dark Neutral / Black (#2E1A11)
 class AppColors {
-  // Primary brand accents
-  static const Color primary = Color(0xFFFF3D2E); // Fiery red-orange
-  static const Color primaryDark = Color(0xFFD8281B);
-  static const Color primaryLight = Color(0xFFFF6F59);
-  static const Color secondary = Color(0xFF1C1C24); // Fight charcoal black
-  static const Color accent = Color(0xFFFFB300); // Golden amber
+  // Food Fight Unified Palette
+  static const Color primaryYellow = Color(0xFFFFC700);
+  static const Color darkBrown = Color(0xFF3C1810);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color cream = Color(0xFFFAF6F0);
+  static const Color lightCream = Color(0xFFF3ECE4);
+  static const Color textPrimary = Color(0xFF2E1A11);
+  static const Color textSecondary = Color(0xFF7C6961);
+  static const Color textMuted = Color(0xFFA09088);
+  static const Color border = Color(0xFFE8DFD8);
+  static const Color divider = Color(0xFFE8DFD8);
 
-  // Light theme tokens
-  static const Color background = Color(0xFFF7F7FA);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF0F0F5);
-  static const Color textPrimary = Color(0xFF1C1C24);
-  static const Color textSecondary = Color(0xFF7A7A85);
-  static const Color divider = Color(0xFFEAEAEF);
+  // Primary & secondary aliases
+  static const Color primary = primaryYellow;
+  static const Color primaryDark = Color(0xFFE5B000);
+  static const Color primaryLight = Color(0xFFFFD54F);
+  static const Color secondary = darkBrown;
+  static const Color accent = Color(0xFF4A1A12);
 
-  // Dark theme tokens
-  static const Color darkBackground = Color(0xFF111115);
-  static const Color darkSurface = Color(0xFF1A1A22);
-  static const Color darkSurfaceElevated = Color(0xFF23232E);
-  static const Color darkTextPrimary = Color(0xFFF7F7FA);
-  static const Color darkTextSecondary = Color(0xFFA2A2B0);
-  static const Color darkDivider = Color(0xFF282834);
+  // Background & surfaces
+  static const Color background = cream;
+  static const Color surface = white;
+  static const Color surfaceVariant = lightCream;
 
-  // Status tokens
+  // Dark theme tokens (Deep Chocolate / Near-black)
+  static const Color darkBackground = Color(0xFF170F0B);
+  static const Color darkSurface = Color(0xFF231812);
+  static const Color darkSurfaceElevated = Color(0xFF2E2018);
+  static const Color darkTextPrimary = Color(0xFFFAF6F0);
+  static const Color darkTextSecondary = Color(0xFFA6968E);
+  static const Color darkDivider = Color(0xFF382921);
+
+  // Status tokens (semantic only)
   static const Color success = Color(0xFF2ECC71);
   static const Color error = Color(0xFFE74C3C);
   static const Color warning = Color(0xFFF39C12);
-  static const Color info = Color(0xFF3498DB);
+  static const Color info = Color(0xFF3C1810);
 }
 
 class AppTheme {
   /// Light Theme
   static ThemeData get lightTheme {
     const colorScheme = ColorScheme.light(
-      primary: AppColors.primary,
-      onPrimary: Colors.white,
-      primaryContainer: Color(0xFFFFEBE8),
-      onPrimaryContainer: Color(0xFFB32014),
-      secondary: AppColors.secondary,
+      primary: AppColors.primaryYellow,
+      onPrimary: AppColors.darkBrown,
+      primaryContainer: AppColors.lightCream,
+      onPrimaryContainer: AppColors.darkBrown,
+      secondary: AppColors.darkBrown,
       onSecondary: Colors.white,
-      secondaryContainer: Color(0xFFE8E8EE),
-      onSecondaryContainer: Color(0xFF1C1C24),
+      secondaryContainer: AppColors.lightCream,
+      onSecondaryContainer: AppColors.darkBrown,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
       surfaceContainerHighest: AppColors.surfaceVariant,
       onSurfaceVariant: AppColors.textSecondary,
-      outline: Color(0xFFD4D4DF),
+      outline: AppColors.border,
       outlineVariant: AppColors.divider,
       error: AppColors.error,
       onError: Colors.white,
@@ -63,7 +75,7 @@ class AppTheme {
       brightness: Brightness.light,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
-      primaryColor: AppColors.primary,
+      primaryColor: AppColors.primaryYellow,
       cardColor: AppColors.surface,
       dividerColor: AppColors.divider,
       textTheme: GoogleFonts.poppinsTextTheme().apply(
@@ -92,8 +104,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.primaryYellow,
+          foregroundColor: AppColors.darkBrown,
           minimumSize: const Size(64, 50),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -107,8 +119,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.divider, width: 1.2),
+          foregroundColor: AppColors.darkBrown,
+          side: const BorderSide(color: AppColors.darkBrown, width: 1.2),
           minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -133,7 +145,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.primaryYellow, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -146,8 +158,8 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        selectedItemColor: AppColors.primaryYellow,
+        unselectedItemColor: AppColors.darkBrown,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         showUnselectedLabels: true,
@@ -158,19 +170,19 @@ class AppTheme {
   /// Dark Theme
   static ThemeData get darkTheme {
     const colorScheme = ColorScheme.dark(
-      primary: AppColors.primary,
-      onPrimary: Colors.white,
-      primaryContainer: Color(0xFF4A100B),
-      onPrimaryContainer: Color(0xFFFFD5CE),
-      secondary: Color(0xFFFF9E80),
-      onSecondary: Color(0xFF1C1C24),
-      secondaryContainer: Color(0xFF2C2836),
-      onSecondaryContainer: Color(0xFFEDEBF5),
+      primary: AppColors.primaryYellow,
+      onPrimary: AppColors.darkBrown,
+      primaryContainer: Color(0xFF2E2018),
+      onPrimaryContainer: AppColors.primaryYellow,
+      secondary: AppColors.darkBrown,
+      onSecondary: Colors.white,
+      secondaryContainer: Color(0xFF2E2018),
+      onSecondaryContainer: AppColors.darkTextPrimary,
       surface: AppColors.darkSurface,
       onSurface: AppColors.darkTextPrimary,
       surfaceContainerHighest: AppColors.darkSurfaceElevated,
       onSurfaceVariant: AppColors.darkTextSecondary,
-      outline: Color(0xFF383848),
+      outline: Color(0xFF382921),
       outlineVariant: AppColors.darkDivider,
       error: AppColors.error,
       onError: Colors.white,
@@ -182,7 +194,7 @@ class AppTheme {
       brightness: Brightness.dark,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.darkBackground,
-      primaryColor: AppColors.primary,
+      primaryColor: AppColors.primaryYellow,
       cardColor: AppColors.darkSurface,
       dividerColor: AppColors.darkDivider,
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData(brightness: Brightness.dark).textTheme).apply(
@@ -192,7 +204,7 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkBackground,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
         titleTextStyle: GoogleFonts.poppins(
@@ -203,34 +215,36 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkSurface,
-        elevation: 0,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.35),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.darkDivider),
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0x18FFFFFF), width: 0.8),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(64, 50),
+          backgroundColor: AppColors.primaryYellow,
+          foregroundColor: AppColors.darkBrown,
+          minimumSize: const Size(64, 52),
+          elevation: 2,
+          shadowColor: AppColors.primaryYellow.withValues(alpha: 0.35),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: GoogleFonts.poppins(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
-          elevation: 0,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.darkTextPrimary,
           side: const BorderSide(color: AppColors.darkDivider, width: 1.2),
-          minimumSize: const Size(64, 48),
+          minimumSize: const Size(64, 50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: GoogleFonts.poppins(
             fontSize: 15,
@@ -243,19 +257,19 @@ class AppTheme {
         fillColor: AppColors.darkSurface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.darkDivider),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.darkDivider),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primaryYellow, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         hintStyle: GoogleFonts.poppins(
@@ -265,10 +279,10 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: AppColors.primaryYellow,
         unselectedItemColor: AppColors.darkTextSecondary,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0,
         showUnselectedLabels: true,
       ),
     );

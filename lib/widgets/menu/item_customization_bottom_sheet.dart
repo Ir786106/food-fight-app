@@ -508,6 +508,55 @@ class _ItemCustomizationBottomSheetState
                         'Add to Cart • Rs. ${_currentTotalPrice.toStringAsFixed(0)}',
                     onPressed: () {
                       final cart = context.read<CartProvider>();
+                      if (cart.isDifferentBranch(food.branchId)) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            title: const Text('Start New Order?'),
+                            content: const Text(
+                              'Your cart contains items from a different branch. Adding this item will start a fresh cart for this branch.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  cart.clearCart();
+                                  cart.addToCart(
+                                    food,
+                                    quantity: _quantity,
+                                    note: _noteCtrl.text.trim().isEmpty
+                                        ? null
+                                        : _noteCtrl.text.trim(),
+                                    selectedVariant: _selectedVariant,
+                                    selectedSize: _selectedVariant?.label,
+                                    selectedAddons: _selectedAddons.toList(),
+                                  );
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('${food.name} added to new cart!'),
+                                      backgroundColor: AppColors.secondary,
+                                      duration: const Duration(milliseconds: 1000),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Start New Cart'),
+                              ),
+                            ],
+                          ),
+                        );
+                        return;
+                      }
+
                       cart.addToCart(
                         food,
                         quantity: _quantity,

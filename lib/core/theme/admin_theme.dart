@@ -2,35 +2,35 @@ import 'package:flutter/material.dart';
 
 /// Admin Theme Colors & Styling (Consistent with reference repository patterns)
 class AdminTheme {
-  static const Color primaryBlue = Color(0xFF0D47A1);
-  static const Color secondaryBlue = Color(0xFF1976D2);
-  static const Color accentCyan = Color(0xFF00B4D8);
-  static const Color background = Color(0xFFF8F9FA);
+  static const Color primaryBlue = Color(0xFF3C1810); // Food Fight Dark Brown
+  static const Color secondaryBlue = Color(0xFF2E1A11); // Food Fight Deep Dark Brown
+  static const Color accentCyan = Color(0xFFFFC700); // Food Fight Yellow
+  static const Color background = Color(0xFFFAF6F0); // Warm Cream Neutral
   static const Color cardBg = Colors.white;
-  static const Color textDark = Color(0xFF1E293B);
-  static const Color textMuted = Color(0xFF64748B);
+  static const Color textDark = Color(0xFF2E1A11); // Dark Neutral / Black
+  static const Color textMuted = Color(0xFF7C6961); // Muted Dark Neutral
 
   static Color getBackground(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF111115)
+        ? const Color(0xFF170F0B)
         : background;
   }
 
   static Color getCardBg(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1A1A22)
+        ? const Color(0xFF231812)
         : cardBg;
   }
 
   static Color getTextDark(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFF7F7FA)
+        ? const Color(0xFFFAF6F0)
         : textDark;
   }
 
   static Color getTextMuted(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFA2A2B0)
+        ? const Color(0xFFA6968E)
         : textMuted;
   }
 

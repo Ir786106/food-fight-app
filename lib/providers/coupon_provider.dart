@@ -17,6 +17,10 @@ class CouponProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  String? _currentBranchId;
+
+  String? get currentBranchId => _currentBranchId;
+
   CouponProvider() {
     init();
   }
@@ -26,13 +30,14 @@ class CouponProvider extends ChangeNotifier {
   }
 
   /// Real-time listener for coupons
-  void watchCoupons() {
+  void watchCoupons({String? branchId}) {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     _subscription?.cancel();
-    _subscription = CouponService.watchCoupons().listen(
+    _subscription = CouponService.watchCoupons(branchId: branchId).listen(
       (data) {
         _coupons = data;
         _isLoading = false;
@@ -49,13 +54,14 @@ class CouponProvider extends ChangeNotifier {
   }
 
   /// Manual fetch
-  Future<void> fetchCoupons() async {
+  Future<void> fetchCoupons({String? branchId}) async {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _coupons = await CouponService.getCoupons();
+      _coupons = await CouponService.getCoupons(branchId: branchId);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -118,8 +124,16 @@ class CouponProvider extends ChangeNotifier {
   }
 
   /// Validate coupon for cart
-  Future<CouponValidationResult> validateCoupon(String code, double subtotal) async {
-    return await CouponService.validateCoupon(code, subtotal);
+  Future<CouponValidationResult> validateCoupon(
+    String code,
+    double subtotal, {
+    String? branchId,
+  }) async {
+    return await CouponService.validateCoupon(
+      code,
+      subtotal,
+      branchId: branchId ?? _currentBranchId,
+    );
   }
 
   @override

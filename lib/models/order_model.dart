@@ -50,6 +50,7 @@ class OrderModel {
   final String customerName;
   final String customerPhone;
   final String restaurantName;
+  final String? branchId;
 
   OrderModel({
     required this.id,
@@ -73,6 +74,7 @@ class OrderModel {
     this.customerName = 'Guest Customer',
     this.customerPhone = '',
     required this.restaurantName,
+    this.branchId,
   });
 
   String get statusLabel {
@@ -121,6 +123,7 @@ class OrderModel {
       'customerName': customerName,
       'customerPhone': customerPhone,
       'restaurantName': restaurantName,
+      if (branchId != null) 'branchId': branchId,
     };
   }
 
@@ -156,6 +159,7 @@ class OrderModel {
       customerName: json['customerName']?.toString() ?? json['customer_name']?.toString() ?? 'Guest Customer',
       customerPhone: json['customerPhone']?.toString() ?? json['customer_phone']?.toString() ?? '',
       restaurantName: json['restaurantName']?.toString() ?? json['restaurant_name']?.toString() ?? '',
+      branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
     );
   }
 
@@ -181,6 +185,7 @@ class OrderModel {
     String? customerName,
     String? customerPhone,
     String? restaurantName,
+    String? branchId,
   }) {
     return OrderModel(
       id: id ?? this.id,
@@ -204,6 +209,7 @@ class OrderModel {
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       restaurantName: restaurantName ?? this.restaurantName,
+      branchId: branchId ?? this.branchId,
     );
   }
 

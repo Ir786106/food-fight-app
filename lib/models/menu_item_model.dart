@@ -98,6 +98,7 @@ class MenuItemModel {
   final String? imageUrl;
   final String categoryId;
   final String? restaurantId;
+  final String? branchId;
   final bool isActive;
   final bool isFeatured;
   final bool isVeg;
@@ -120,6 +121,7 @@ class MenuItemModel {
     this.imageUrl,
     required this.categoryId,
     this.restaurantId,
+    this.branchId,
     this.isActive = true,
     this.isFeatured = false,
     this.isVeg = true,
@@ -193,6 +195,7 @@ class MenuItemModel {
       'imageUrl': imageUrl,
       'categoryId': categoryId,
       'restaurantId': restaurantId,
+      if (branchId != null) 'branchId': branchId,
       'isActive': isActive ? 1 : 0,
       'isFeatured': isFeatured ? 1 : 0,
       'isVeg': isVeg ? 1 : 0,
@@ -245,6 +248,7 @@ class MenuItemModel {
       imageUrl: json['imageUrl'] ?? json['image_url'],
       categoryId: json['categoryId'] ?? json['category_id'] ?? '',
       restaurantId: json['restaurantId'] ?? json['restaurant_id'],
+      branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
       isActive: json['isActive'] == 1 || json['isActive'] == true,
       isFeatured: json['isFeatured'] == 1 || json['isFeatured'] == true,
       isVeg: json['isVeg'] == 1 || json['isVeg'] == true,
@@ -272,6 +276,7 @@ class MenuItemModel {
     String? imageUrl,
     String? categoryId,
     String? restaurantId,
+    String? branchId,
     bool? isActive,
     bool? isFeatured,
     bool? isVeg,
@@ -294,6 +299,7 @@ class MenuItemModel {
       imageUrl: imageUrl ?? this.imageUrl,
       categoryId: categoryId ?? this.categoryId,
       restaurantId: restaurantId ?? this.restaurantId,
+      branchId: branchId ?? this.branchId,
       isActive: isActive ?? this.isActive,
       isFeatured: isFeatured ?? this.isFeatured,
       isVeg: isVeg ?? this.isVeg,

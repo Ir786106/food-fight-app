@@ -122,9 +122,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFFF3D2E), // Fiery red
-                    Color(0xFFFF6F3C), // Warm orange
-                    Color(0xFFFF9038), // Golden flame
+                    AppColors.secondary,
+                    Color(0xFF2E1A11),
+                    Color(0xFF230F0A),
                   ],
                 ),
               ),
@@ -234,7 +234,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         BoxShadow(
                           color: isDark
                               ? Colors.black.withValues(alpha: 0.4)
-                              : const Color(0xFF1C1C24).withValues(alpha: 0.08),
+                              : AppColors.darkBrown.withValues(alpha: 0.08),
                           blurRadius: 28,
                           offset: const Offset(0, 14),
                         ),

@@ -159,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _buildInfoTile(String title, String trailingText) {
+  Widget _buildInfoTile(String title, String trailingText, {VoidCallback? onTap}) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -187,9 +187,114 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(color: colorScheme.onSurfaceVariant))
               : Icon(Icons.chevron_right,
                   color: colorScheme.onSurfaceVariant, size: 20),
-          onTap: () {},
+          onTap: onTap ?? () {
+            if (title == 'Terms of Service') {
+              _showDocumentSheet('Terms of Service', _termsOfServiceContent);
+            } else if (title == 'Privacy Policy') {
+              _showDocumentSheet('Privacy Policy', _privacyPolicyContent);
+            } else if (title == 'App Version') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Food Fight v1.0.0 is running the latest build')),
+              );
+            }
+          },
         ),
       ),
     );
   }
+
+  void _showDocumentSheet(String title, String content) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1D1D26),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Text(
+                    content,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static const String _termsOfServiceContent = '''
+1. Acceptance of Terms
+By downloading, accessing, or using Food Fight, you agree to comply with and be bound by these Terms of Service. If you do not agree, please refrain from using our application.
+
+2. Ordering & Payment
+- All orders placed via Food Fight are subject to kitchen acceptance and stock availability.
+- Prices displayed include applicable taxes. Delivery fees may vary depending on destination zone and surge conditions.
+- We support Cash on Delivery (COD) and tokenized online payment methods. Payment details are encrypted and never stored in plain text.
+
+3. Delivery & Fulfillment
+- Estimated delivery times are provided as approximations and may fluctuate due to traffic, adverse weather, or peak order volumes.
+- Customers must provide an accurate delivery address and active phone number for the delivery rider.
+
+4. Cancellation & Refund Policy
+- Orders may be cancelled within the initial preparation grace window.
+- Once food preparation has begun, cancellations may be restricted or subject to a partial fee.
+- Refunds for cancelled prepaid orders are processed back to the original funding source within 3–5 business days.
+
+5. Code of Conduct
+Users agree not to misuse promotional codes, harass delivery personnel or restaurant staff, or attempt unauthorized platform access. Food Fight reserves the right to suspend accounts violating these standards.
+''';
+
+  static const String _privacyPolicyContent = '''
+1. Information We Collect
+We collect personal information necessary to fulfill your food delivery orders:
+- Account Information: Name, email address, phone number.
+- Location Data: Delivery address and geographic coordinates to route delivery riders.
+- Order History: Items purchased, coupon applications, and kitchen ratings.
+
+2. How We Use Information
+Your data is strictly utilized to:
+- Process, dispatch, and track your food deliveries.
+- Provide order status alerts and system notifications.
+- Optimize kitchen recommendations and prevent fraudulent transactions.
+
+3. Payment Data Security
+Credit card and mobile wallet transactions are processed via secure, PCI-DSS compliant payment gateways. Food Fight never retains sensitive card verification numbers (CVV) on our servers.
+
+4. Location Permissions
+Location access is utilized exclusively while using the app to identify nearby partner kitchens and estimate precise arrival times. You may manage location permissions via your device settings at any time.
+
+5. Data Retention & Deletion
+You retain the right to request deletion of your account and associated personal information by contacting support@foodfight.pk or through the in-app Help Center.
+''';
 }

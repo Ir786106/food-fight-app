@@ -15,6 +15,7 @@ class FoodModel {
   final double rating;
   final int prepTimeMinutes;
   final String restaurantId;
+  final String? branchId;
   final bool isSpicy;
   final bool isVeg;
 
@@ -32,6 +33,7 @@ class FoodModel {
     this.rating = 4.8,
     this.prepTimeMinutes = 25,
     this.restaurantId = 'food_fight_hq',
+    this.branchId,
     this.isSpicy = false,
     this.isVeg = true,
   });
@@ -87,6 +89,7 @@ class FoodModel {
       'rating': rating,
       'prepTimeMinutes': prepTimeMinutes,
       'restaurantId': restaurantId,
+      if (branchId != null) 'branchId': branchId,
       'isSpicy': isSpicy,
       'isVeg': isVeg,
     };
@@ -138,6 +141,7 @@ class FoodModel {
       rating: SafeConvert.toDouble(json['rating'], 4.8),
       prepTimeMinutes: SafeConvert.toInt(json['prepTimeMinutes'], 25),
       restaurantId: json['restaurantId']?.toString() ?? 'food_fight_hq',
+      branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
       isSpicy: json['isSpicy'] == true || json['isSpicy'] == 1,
       isVeg: json['isVeg'] == null ? true : (json['isVeg'] == true || json['isVeg'] == 1),
     );
@@ -158,6 +162,7 @@ class FoodModel {
       rating: item.rating > 0 ? item.rating : 4.8,
       prepTimeMinutes: item.prepTimeMinutes,
       restaurantId: item.restaurantId ?? 'food_fight_hq',
+      branchId: item.branchId,
       isSpicy: item.isSpicy,
       isVeg: item.isVeg,
     );

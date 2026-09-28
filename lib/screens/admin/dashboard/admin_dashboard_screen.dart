@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_constants.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
@@ -6,6 +7,7 @@ import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/admin/stat_card.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 import 'package:food_fight/providers/admin_dashboard_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/screens/admin/orders/order_detail_modal.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
@@ -13,14 +15,40 @@ import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  bool _initialized = false;
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (!_initialized || _lastBranchId != branchId) {
+      _initialized = true;
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<AdminDashboardProvider>().watchDashboardData(branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
+    final auth = context.watch<AuthProvider>();
+    final user = auth.currentUser;
 
     return PopScope(
       canPop: false,
@@ -89,12 +117,24 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'Admin Portal',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Admin Portal',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  Text(
+                    user?.branchId != null ? 'Branch: ${user!.branchId}' : 'All Branches (HQ)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                  ),
+                ],
               ),
             ),
           ],
@@ -171,9 +211,9 @@ class AdminDashboardScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: isDark ? 0.2 : 0.1),
+                            color: AppColors.success.withValues(alpha: isDark ? 0.2 : 0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.withValues(alpha: isDark ? 0.4 : 0.3)),
+                            border: Border.all(color: AppColors.success.withValues(alpha: isDark ? 0.4 : 0.3)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -182,7 +222,7 @@ class AdminDashboardScreen extends StatelessWidget {
                                 width: 8,
                                 height: 8,
                                 decoration: const BoxDecoration(
-                                  color: Colors.green,
+                                  color: AppColors.success,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -190,7 +230,7 @@ class AdminDashboardScreen extends StatelessWidget {
                               const Text(
                                 'Kitchen Live',
                                 style: TextStyle(
-                                  color: Colors.green,
+                                  color: AppColors.success,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),
@@ -223,7 +263,7 @@ class AdminDashboardScreen extends StatelessWidget {
                               title: "Today's Revenue",
                               value: 'Rs. ${dashboard.todaySales.toStringAsFixed(0)}',
                               icon: Icons.monetization_on_rounded,
-                              color: Colors.green.shade600,
+                              color: AppColors.success,
                               subtitle: 'Week: Rs. ${dashboard.weeklySales.toStringAsFixed(0)}',
                               onTap: () => Navigator.of(context).pushNamed('/admin/reports'),
                             ),
@@ -239,7 +279,7 @@ class AdminDashboardScreen extends StatelessWidget {
                               title: 'Active Riders',
                               value: '${dashboard.activeRidersCount}',
                               icon: Icons.two_wheeler_rounded,
-                              color: Colors.teal.shade600,
+                              color: AppColors.primaryYellow,
                               subtitle: 'Online Fleet',
                               onTap: () => Navigator.of(context).pushNamed('/admin/delivery-areas'),
                             ),
@@ -247,7 +287,7 @@ class AdminDashboardScreen extends StatelessWidget {
                               title: 'New Customers',
                               value: '${dashboard.newCustomersCount}',
                               icon: Icons.people_alt_rounded,
-                              color: Colors.purple.shade600,
+                              color: AppColors.accent,
                               subtitle: 'Active Registered',
                               onTap: () => Navigator.of(context).pushNamed('/admin/customers'),
                             ),
@@ -373,7 +413,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             context: context,
                             title: 'Categories',
                             icon: Icons.category_rounded,
-                            color: Colors.indigo,
+                            color: AppColors.primaryYellow,
                             onTap: () => Navigator.of(context).pushNamed('/admin/categories'),
                           ),
                         ),
@@ -383,7 +423,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             context: context,
                             title: 'Coupons & Deals',
                             icon: Icons.local_offer_rounded,
-                            color: Colors.pink,
+                            color: AppColors.primaryDark,
                             onTap: () => Navigator.of(context).pushNamed('/admin/coupons'),
                           ),
                         ),
@@ -397,7 +437,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             context: context,
                             title: 'Delivery Zones',
                             icon: Icons.map_rounded,
-                            color: Colors.purple.shade600,
+                            color: AppColors.accent,
                             onTap: () => Navigator.of(context).pushNamed('/admin/delivery-areas'),
                           ),
                         ),
@@ -407,7 +447,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             context: context,
                             title: 'Sales & Reports',
                             icon: Icons.analytics_rounded,
-                            color: Colors.teal.shade700,
+                            color: AdminTheme.primaryBlue,
                             onTap: () => Navigator.of(context).pushNamed('/admin/reports'),
                           ),
                         ),
@@ -495,7 +535,7 @@ class AdminDashboardScreen extends StatelessWidget {
                                         const SizedBox(height: 2),
                                         Row(
                                           children: [
-                                            const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+                                            const Icon(Icons.star_rounded, size: 14, color: AppColors.warning),
                                             const SizedBox(width: 2),
                                             Text(
                                               item.rating.toStringAsFixed(1),

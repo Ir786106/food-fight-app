@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/providers/delivery_area_provider.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
@@ -19,6 +21,22 @@ class ManageDeliveryAreasScreen extends StatefulWidget {
 
 class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<DeliveryAreaProvider>().watchAreas(branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -119,6 +137,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                         setDialogState(() => isSaving = true);
                         try {
                           final provider = context.read<DeliveryAreaProvider>();
+                          final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
 
                           if (area == null) {
                             await provider.createArea(DeliveryAreaModel(
@@ -127,6 +146,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                               deliveryCharge: charge,
                               description: descCtrl.text.trim(),
                               isActive: true,
+                              branchId: currentBranchId,
                               createdAt: DateTime.now(),
                               updatedAt: DateTime.now(),
                             ));
@@ -137,6 +157,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                               deliveryCharge: charge,
                               description: descCtrl.text.trim(),
                               isActive: area.isActive,
+                              branchId: area.branchId ?? currentBranchId,
                               createdAt: area.createdAt,
                               updatedAt: DateTime.now(),
                             ));
@@ -147,7 +168,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
                             );
                           }
                         }
@@ -181,7 +202,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
               final success = await context.read<DeliveryAreaProvider>().deleteArea(area.id);
@@ -368,7 +389,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                             value: 'edit',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit_rounded, size: 18, color: Colors.blue),
+                                                Icon(Icons.edit_rounded, size: 18, color: AppColors.darkBrown),
                                                 SizedBox(width: 8),
                                                 Text('Edit'),
                                               ],
@@ -378,9 +399,9 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                             value: 'delete',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.delete_rounded, size: 18, color: Colors.red),
+                                                Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
                                                 SizedBox(width: 8),
-                                                Text('Delete', style: TextStyle(color: Colors.red)),
+                                                Text('Delete', style: TextStyle(color: AppColors.error)),
                                               ],
                                             ),
                                           ),

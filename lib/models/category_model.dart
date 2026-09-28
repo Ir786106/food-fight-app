@@ -10,6 +10,7 @@ class CategoryModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? restaurantId;
+  final String? branchId;
 
   CategoryModel({
     required this.id,
@@ -21,6 +22,7 @@ class CategoryModel {
     required this.createdAt,
     required this.updatedAt,
     this.restaurantId,
+    this.branchId,
   });
 
   Map<String, dynamic> toJson() {
@@ -34,6 +36,7 @@ class CategoryModel {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'restaurantId': restaurantId,
+      if (branchId != null) 'branchId': branchId,
     };
   }
 
@@ -48,6 +51,7 @@ class CategoryModel {
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       restaurantId: json['restaurantId']?.toString() ?? json['restaurant_id']?.toString(),
+      branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
     );
   }
 }

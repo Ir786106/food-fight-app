@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/providers/menu_provider.dart';
@@ -11,6 +12,7 @@ import 'package:food_fight/widgets/common/network_image_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/services/menu_seed_service.dart';
+import 'package:food_fight/providers/auth_provider.dart';
 import 'add_edit_menu_item_screen.dart';
 
 class ManageMenuScreen extends StatefulWidget {
@@ -22,6 +24,23 @@ class ManageMenuScreen extends StatefulWidget {
 
 class _ManageMenuScreenState extends State<ManageMenuScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  String? _lastBranchId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    if (_lastBranchId != branchId) {
+      _lastBranchId = branchId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<MenuProvider>().watchMenuItems(branchId: branchId);
+          context.read<CategoryProvider>().watchCategories(branchId: branchId);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -43,7 +62,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
               final success = await context.read<MenuProvider>().deleteMenuItem(item.id, imageUrl: item.imageUrl);
@@ -101,14 +120,14 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
               content: Text(
                 'Successfully seeded ${result['categoriesCount']} categories and ${result['itemsCount']} menu items!',
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error seeding menu: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Error seeding menu: $e'), backgroundColor: AppColors.error),
           );
         }
       }
@@ -324,7 +343,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                         margin: const EdgeInsets.only(left: 6),
                                                         decoration: BoxDecoration(
-                                                          color: Colors.amber.withValues(alpha: 0.2),
+                                                          color: AppColors.warning.withValues(alpha: 0.2),
                                                           borderRadius: BorderRadius.circular(4),
                                                         ),
                                                         child: const Text(
@@ -332,7 +351,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                                                           style: TextStyle(
                                                             fontSize: 9.5,
                                                             fontWeight: FontWeight.w800,
-                                                            color: Colors.amber,
+                                                            color: AppColors.warning,
                                                           ),
                                                         ),
                                                       ),
@@ -372,13 +391,13 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                                                       Container(
                                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                         decoration: BoxDecoration(
-                                                          color: Colors.purple.withValues(alpha: 0.1),
+                                                          color: AdminTheme.primaryBlue.withValues(alpha: 0.1),
                                                           borderRadius: BorderRadius.circular(4),
                                                         ),
                                                         child: Text(
                                                           '${item.variants?.length ?? 0} Sizes',
                                                           style: const TextStyle(
-                                                            color: Colors.purple,
+                                                            color: AdminTheme.primaryBlue,
                                                             fontSize: 10,
                                                             fontWeight: FontWeight.bold,
                                                           ),
@@ -416,7 +435,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                                                     value: 'edit',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.edit_rounded, size: 18, color: Colors.blue),
+                                                        Icon(Icons.edit_rounded, size: 18, color: AppColors.darkBrown),
                                                         SizedBox(width: 8),
                                                         Text('Edit Item'),
                                                       ],
@@ -426,9 +445,9 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                                                     value: 'delete',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.delete_rounded, size: 18, color: Colors.red),
+                                                        Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
                                                         SizedBox(width: 8),
-                                                        Text('Delete', style: TextStyle(color: Colors.red)),
+                                                        Text('Delete', style: TextStyle(color: AppColors.error)),
                                                       ],
                                                     ),
                                                   ),

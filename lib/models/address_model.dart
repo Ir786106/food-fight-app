@@ -54,4 +54,31 @@ class AddressModel {
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }
+
+  AddressModel copyWith({
+    String? id,
+    String? userId,
+    String? label,
+    String? details,
+    String? iconType,
+    double? latitude,
+    double? longitude,
+    bool? isDefault,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return AddressModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      label: label ?? this.label,
+      details: details ?? this.details,
+      iconType: iconType ?? this.iconType,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      isDefault: isDefault ?? this.isDefault,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
+

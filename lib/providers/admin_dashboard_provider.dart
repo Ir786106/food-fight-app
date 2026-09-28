@@ -62,16 +62,22 @@ class AdminDashboardProvider extends ChangeNotifier {
   List<OrderModel> get recentOrders => List.unmodifiable(_recentOrders);
   List<MenuItemModel> get popularItems => List.unmodifiable(_popularItems);
 
-  AdminDashboardProvider() {
-    init();
-  }
+  String? _currentBranchId;
+  String? get currentBranchId => _currentBranchId;
+
+  AdminDashboardProvider();
 
   void init() {
     watchDashboardData();
   }
 
-  /// Watch live dashboard data across Firestore collections
-  void watchDashboardData() {
+  Future<void> refresh() async {
+    watchDashboardData(branchId: _currentBranchId);
+  }
+
+  /// Watch live dashboard data across Firestore collections, optionally scoped by branchId
+  void watchDashboardData({String? branchId}) {
+    _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -81,11 +87,17 @@ class AdminDashboardProvider extends ChangeNotifier {
     _ordersSubscription = _firestore
         .collection(FirestoreCollections.orders)
         .orderBy('createdAt', descending: true)
-        .limit(150)
+        .limit(200)
         .snapshots()
         .listen(
       (snapshot) {
-        _processOrders(snapshot.docs);
+        final docs = (_currentBranchId != null && _currentBranchId!.isNotEmpty)
+            ? snapshot.docs.where((d) {
+                final bId = d.data()['branchId']?.toString();
+                return bId == null || bId == _currentBranchId;
+              }).toList()
+            : snapshot.docs;
+        _processOrders(docs);
         _isLoading = false;
         notifyListeners();
       },
@@ -154,11 +166,15 @@ class AdminDashboardProvider extends ChangeNotifier {
         .snapshots()
         .listen(
       (snapshot) {
-        final items = snapshot.docs.map((doc) {
+        var items = snapshot.docs.map((doc) {
           final data = doc.data();
           data['id'] = doc.id;
           return MenuItemModel.fromJson(data);
         }).toList();
+
+        if (_currentBranchId != null && _currentBranchId!.isNotEmpty) {
+          items = items.where((i) => i.branchId == null || i.branchId == _currentBranchId).toList();
+        }
 
         final popular = items.where((i) => i.isPopular).toList();
         if (popular.isNotEmpty) {
@@ -260,11 +276,6 @@ class AdminDashboardProvider extends ChangeNotifier {
     _cancelledOrdersCount = cancelledAcc;
 
     _recentOrders = parsedOrders.take(10).toList();
-  }
-
-  /// Force refresh
-  Future<void> refresh() async {
-    watchDashboardData();
   }
 
   @override

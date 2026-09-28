@@ -12,6 +12,7 @@ class AdminAccountProvider extends ChangeNotifier {
   String _searchQuery = '';
   String _roleFilter = 'all'; // 'all', 'admin', 'staff', 'super_admin'
   String _statusFilter = 'all'; // 'all', 'active', 'suspended', 'deactivated'
+  String _branchFilter = 'all'; // 'all' or branchId
   StreamSubscription<List<AdminAccountModel>>? _subscription;
 
   List<AdminAccountModel> get admins => List.unmodifiable(_admins);
@@ -20,6 +21,7 @@ class AdminAccountProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   String get roleFilter => _roleFilter;
   String get statusFilter => _statusFilter;
+  String get branchFilter => _branchFilter;
 
   List<AdminAccountModel> get filteredAdmins {
     return _admins.where((a) {
@@ -30,14 +32,13 @@ class AdminAccountProvider extends ChangeNotifier {
 
       final matchesRole = _roleFilter == 'all' || a.role == _roleFilter;
       final matchesStatus = _statusFilter == 'all' || a.status == _statusFilter;
+      final matchesBranch = _branchFilter == 'all' || a.branchId == _branchFilter;
 
-      return matchesSearch && matchesRole && matchesStatus;
+      return matchesSearch && matchesRole && matchesStatus && matchesBranch;
     }).toList();
   }
 
-  AdminAccountProvider() {
-    init();
-  }
+  AdminAccountProvider();
 
   void init() {
     watchAdminAccounts();
@@ -78,6 +79,11 @@ class AdminAccountProvider extends ChangeNotifier {
 
   void setStatusFilter(String status) {
     _statusFilter = status;
+    notifyListeners();
+  }
+
+  void setBranchFilter(String branchId) {
+    _branchFilter = branchId;
     notifyListeners();
   }
 

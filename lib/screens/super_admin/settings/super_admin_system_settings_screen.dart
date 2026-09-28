@@ -4,6 +4,7 @@ import 'package:food_fight/models/admin/system_settings_model.dart';
 import 'package:food_fight/providers/super_admin_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/super_admin_theme.dart';
+import 'package:food_fight/theme/app_theme.dart';
 import 'package:food_fight/widgets/super_admin/super_admin_drawer.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/core/utils/validator_utils.dart';
@@ -104,14 +105,14 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Global system settings updated and synchronized! 🎉'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(provider.errorMessage ?? 'Failed to update settings'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -184,7 +185,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                         ? 'Store is OPEN: Accepting incoming customer food orders'
                         : 'Store is CLOSED: Orders paused across customer app',
                     value: _isStoreOpen,
-                    activeColor: Colors.green,
+                    activeColor: AppColors.success,
                     cardBg: cardBg,
                     isDark: isDark,
                     onChanged: (val) => setState(() => _isStoreOpen = val),
@@ -196,7 +197,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                         ? 'MAINTENANCE ACTIVE: Only Super Admins can access services'
                         : 'NORMAL MODE: All users and customers have standard access',
                     value: _maintenanceMode,
-                    activeColor: Colors.orange,
+                    activeColor: AppColors.warning,
                     cardBg: cardBg,
                     isDark: isDark,
                     onChanged: (val) => setState(() => _maintenanceMode = val),
@@ -357,7 +358,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                     title: 'Push Notifications System',
                     subtitle: 'Send real-time order status notifications to users',
                     value: _pushNotifications,
-                    activeColor: Colors.teal,
+                    activeColor: AppColors.primaryYellow,
                     cardBg: cardBg,
                     isDark: isDark,
                     onChanged: (val) => setState(() => _pushNotifications = val),
@@ -367,7 +368,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                     title: 'Automated Email Receipts & Alerts',
                     subtitle: 'Dispatch email order confirmations and admin alerts',
                     value: _emailNotifications,
-                    activeColor: Colors.teal,
+                    activeColor: AppColors.primaryYellow,
                     cardBg: cardBg,
                     isDark: isDark,
                     onChanged: (val) => setState(() => _emailNotifications = val),
@@ -377,7 +378,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                     title: 'SMS Alerts & Order Updates',
                     subtitle: 'Send automated SMS notifications to customers on order progress',
                     value: _smsNotifications,
-                    activeColor: Colors.teal,
+                    activeColor: AppColors.primaryYellow,
                     cardBg: cardBg,
                     isDark: isDark,
                     onChanged: (val) => setState(() => _smsNotifications = val),
