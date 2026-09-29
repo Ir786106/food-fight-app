@@ -476,12 +476,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: steps.map((s) {
-            return Text(
-              s,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurfaceVariant,
+            return Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  s,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             );
           }).toList(),

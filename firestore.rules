@@ -4,17 +4,21 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =========================================================================
-    // HELPER FUNCTIONS & ROLE DEFINITIONS
+    // 0. AUTHENTICATION & SECURE ROLE HELPERS (DO NOT TRUST CLIENT-PROVIDED ROLE)
     // =========================================================================
     function isAuthenticated() {
-      return request.auth != null;
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function currentUserId() {
+      return request.auth.uid;
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function userDocExists() {
+    function existingUser() {
       return isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
@@ -23,207 +27,384 @@ service cloud.firestore {
     }
 
     function getUserRole() {
-      return userDocExists() ? getUserData().role : '';
+      return existingUser() ? getUserData().get('role', '') : '';
     }
 
     function isSuperAdmin() {
       return isAuthenticated() && (
-        (request.auth.token != null && request.auth.token.role == 'super_admin') ||
-        (getUserRole() == 'super_admin')
+        (request.auth.token != null && request.auth.token.get('role', '') == 'super_admin') ||
+        getUserRole() == 'super_admin'
       );
     }
 
     function isAdmin() {
       return isAuthenticated() && (
         isSuperAdmin() ||
-        (request.auth.token != null && (request.auth.token.role == 'admin' || request.auth.token.role == 'staff')) ||
-        (getUserRole() == 'admin' || getUserRole() == 'staff')
+        (request.auth.token != null && (request.auth.token.get('role', '') == 'admin' || request.auth.token.get('role', '') == 'staff')) ||
+        getUserRole() == 'admin' ||
+        getUserRole() == 'staff'
       );
     }
 
-    function isRider() {
+    function isStaff() {
+      return isAdmin();
+    }
+
+    function isDeliveryRider() {
       return isAuthenticated() && (
-        (request.auth.token != null && request.auth.token.role == 'rider') ||
-        (getUserRole() == 'rider')
+        (request.auth.token != null && (request.auth.token.get('role', '') == 'delivery_rider' || request.auth.token.get('role', '') == 'rider')) ||
+        getUserRole() == 'delivery_rider' ||
+        getUserRole() == 'rider'
       );
     }
 
-    // =========================================================================
-    // 1. USERS & ACCOUNTS
-    // =========================================================================
-    // Customers can read and update their own document.
-    // Admins and Super Admins can list and manage all user accounts.
-    match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || isRider());
-      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow delete: if isSuperAdmin();
+    function isCustomer() {
+      return isAuthenticated() && (
+        getUserRole() == 'customer' ||
+        getUserRole() == ''
+      );
+    }
 
-      // -----------------------------------------------------------------------
-      // PAYMENT METHODS SUBCOLLECTION
-      // -----------------------------------------------------------------------
-      // Customers can manage their own saved payment methods.
-      // Admins can read (for support/debugging).
+    function isSubAdmin() {
+      return existingUser() && getUserData().get('parentAdminId', null) != null;
+    }
+
+    function canManage(perm) {
+      return isSuperAdmin() || (
+        isAdmin() && (
+          !isSubAdmin() ||
+          (getUserData().get('permissions', {}).get(perm, false) == true)
+        )
+      );
+    }
+
+    function incomingRole() {
+      return request.resource.data.get('role', '');
+    }
+
+    function existingRole() {
+      return resource.data.get('role', '');
+    }
+
+    function getOrder(orderId) {
+      return get(/databases/$(database)/documents/orders/$(orderId)).data;
+    }
+
+    // =========================================================================
+    // 1. BRANCHES & MULTI-LOCATION
+    // =========================================================================
+    match /branches/{branchId} {
+      allow read: if true;
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (isAdmin() && getUserData().get('branchId', '') == branchId);
+      allow delete: if isSuperAdmin();
+    }
+
+    // =========================================================================
+    // 2. RESTAURANTS
+    // =========================================================================
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || canManage('restaurants');
+    }
+
+    // =========================================================================
+    // 3. USERS & ACCOUNTS (STRICT ROLE PRIVILEGES)
+    // =========================================================================
+    match /users/{userId} {
+      // Read: Users can read their own profile. Admins can read all profiles for admin queries.
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+
+      // Create:
+      // - Customer self-signup: only allowed with role == 'customer' and no elevated flags
+      // - Admin: can create staff/customer, CANNOT create super_admin
+      // - Super Admin: full creation rights
+      allow create: if (
+        isSuperAdmin() ||
+        (
+          isAdmin() &&
+          !isSubAdmin() &&
+          incomingRole() != 'super_admin'
+        ) ||
+        (
+          isOwner(userId) &&
+          (incomingRole() == 'customer' || incomingRole() == '') &&
+          request.resource.data.get('permissions', null) == null &&
+          request.resource.data.get('isAdmin', false) == false &&
+          request.resource.data.get('isSuperAdmin', false) == false
+        )
+      );
+
+      // Update:
+      // - Super Admin: full update rights
+      // - Admin: manage users/staff (cannot modify super_admin, cannot promote to super_admin)
+      // - Customer: can update only safe profile fields (cannot change role, status, branch, permissions)
+      allow update: if (
+        isSuperAdmin() ||
+        (
+          isAdmin() &&
+          (!isSubAdmin() || canManage('customers')) &&
+          existingRole() != 'super_admin' &&
+          incomingRole() != 'super_admin'
+        ) ||
+        (
+          isOwner(userId) &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'role', 'permissions', 'status', 'isActive', 'isAdmin', 'isSuperAdmin',
+            'branchId', 'parentAdminId', 'createdAt'
+          ])
+        )
+      );
+
+      // Delete: Super Admin or self-account deletion
+      allow delete: if isSuperAdmin() || isOwner(userId);
+
+      // Saved payment methods subcollection
       match /payment_methods/{methodId} {
         allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-        allow create: if isAuthenticated() && isOwner(userId);
-        allow update: if isAuthenticated() && isOwner(userId);
+        allow create, update: if isAuthenticated() && isOwner(userId);
         allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
       }
     }
 
     // =========================================================================
-    // 2. CUSTOMER SAVED ADDRESSES
+    // 4. CUSTOMER SAVED ADDRESSES
     // =========================================================================
-    // List: Customers can list only their own addresses (query must filter by userId).
-    // Admin can list all addresses for support.
-    // Single-doc read/write guarded by userId ownership or admin role.
     match /addresses/{addressId} {
-      // For list queries: allow if user is admin, or if the query filters by userId == caller
-      // For single-doc reads: allow if userId matches caller or admin
-      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
+      allow read: if isAdmin() || (isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid));
       allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid
+      );
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     // =========================================================================
-    // 3. CATEGORIES & MENU ITEMS
+    // 5. CATEGORIES & MENU ITEMS
     // =========================================================================
-    // Public read so anyone can view food menu. Admin & Super Admin write.
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if canManage('categories');
     }
 
     match /menuItems/{menuItemId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if canManage('menu');
     }
 
     match /menu_items/{menuItemId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if canManage('menu');
     }
 
     // =========================================================================
-    // 4. ORDERS & LIFECYCLE
+    // 6. ORDERS & LIFECYCLE
     // =========================================================================
-    // - Customers can read and create their own orders.
-    // - Customers can update (cancel) their pending order within allowed window.
-    // - Admins and Super Admins have full access to manage and advance orders.
-    // - Assigned Riders can read and update orders assigned to them.
     match /orders/{orderId} {
-      allow read: if isAdmin() || isRider() ||
+      // Read:
+      // - Admin/Staff: all orders
+      // - Customer: their own orders (supports where('customerId', isEqualTo: auth.uid))
+      // - Delivery Rider: assigned orders (supports where('riderId', isEqualTo: auth.uid))
+      allow read: if isAdmin() ||
                      (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
-                     (isAuthenticated() && resource.data.riderId == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.customerId == request.auth.uid || isAdmin());
-      allow update: if isAdmin() || isRider() ||
-                       (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
-                       (isAuthenticated() && resource.data.riderId == request.auth.uid);
+                     (isDeliveryRider() && (
+                       resource.data.riderId == request.auth.uid ||
+                       resource.data.get('rider_id', '') == request.auth.uid
+                     ));
+
+      // Create:
+      // - Admin/Staff can place orders on behalf
+      // - Customer can only create an order with their own customerId
+      allow create: if isAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.customerId == request.auth.uid
+      );
+
+      // Update:
+      // - Admin/Staff: can update order statuses, assign riders, update financials
+      // - Customer: can only cancel their own order (cannot alter prices or items)
+      // - Delivery Rider: can only update delivery status & cancellation reason (cannot modify financials or items)
+      allow update: if canManage('orders') ||
+        (
+          isAuthenticated() &&
+          resource.data.customerId == request.auth.uid &&
+          request.resource.data.customerId == request.auth.uid &&
+          request.resource.data.total == resource.data.total &&
+          request.resource.data.subtotal == resource.data.subtotal &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancellationReason', 'updatedAt']) &&
+          request.resource.data.status == 'cancelled'
+        ) ||
+        (
+          isDeliveryRider() &&
+          (resource.data.riderId == request.auth.uid || resource.data.get('rider_id', '') == request.auth.uid) &&
+          request.resource.data.customerId == resource.data.customerId &&
+          request.resource.data.total == resource.data.total &&
+          request.resource.data.subtotal == resource.data.subtotal &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'cancellationReason'])
+        );
+
       allow delete: if isSuperAdmin();
 
-      // Tracking subcollection for live GPS updates during delivery
+      // Live GPS tracking subcollection
       match /tracking/{trackingId} {
-        allow read: if isAuthenticated();
-        allow write: if isRider() || isAdmin();
+        allow read: if isAdmin() ||
+                       (isAuthenticated() && getOrder(orderId).customerId == request.auth.uid) ||
+                       (isDeliveryRider() && getOrder(orderId).riderId == request.auth.uid);
+        allow write: if isAdmin() || (
+          isDeliveryRider() &&
+          getOrder(orderId).riderId == request.auth.uid &&
+          request.resource.data.riderId == request.auth.uid
+        );
       }
     }
 
     match /orderItems/{itemId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if canManage('orders');
     }
 
     // =========================================================================
-    // 5. DELIVERY AREAS & RIDERS
+    // 7. DELIVERY AREAS
     // =========================================================================
     match /deliveryAreas/{areaId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if canManage('delivery_areas');
     }
 
     match /delivery_areas/{areaId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if canManage('delivery_areas');
     }
 
+    // =========================================================================
+    // 8. RIDERS & FLEET MANAGEMENT
+    // =========================================================================
     match /riders/{riderId} {
-      allow read: if isAuthenticated() && (isAdmin() || isOwner(riderId) ||
-                     (resource != null && resource.data.userId == request.auth.uid));
-      allow create: if isAdmin();
-      allow update: if isAdmin() || isOwner(riderId) || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      // Read: Admin or the rider themselves
+      allow read: if isAdmin() || (
+        isDeliveryRider() && (
+          isOwner(riderId) ||
+          (resource != null && resource.data.userId == request.auth.uid)
+        )
+      );
+
+      // Create: Staff with riders permission
+      allow create: if canManage('riders');
+
+      // Update: Staff, or delivery rider updating only safe operational status
+      allow update: if canManage('riders') || (
+        isDeliveryRider() &&
+        (isOwner(riderId) || (resource != null && resource.data.userId == request.auth.uid)) &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'isOnline', 'isActive', 'updatedAt', 'currentLocation',
+          'latitude', 'longitude', 'heading', 'speed'
+        ])
+      );
+
       allow delete: if isSuperAdmin();
     }
 
     match /riderAssignments/{assignmentId} {
-      allow read: if isAuthenticated() && (isAdmin() || isRider() || (resource != null && resource.data.riderId == request.auth.uid));
-      allow write: if isAdmin() || isRider();
+      allow read: if isAdmin() || (isDeliveryRider() && resource.data.riderId == request.auth.uid);
+      allow create: if canManage('riders');
+      allow update: if canManage('riders') || (
+        isDeliveryRider() &&
+        resource.data.riderId == request.auth.uid &&
+        request.resource.data.riderId == resource.data.riderId &&
+        request.resource.data.orderId == resource.data.orderId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'deliveredAt', 'pickedUpAt'])
+      );
+      allow delete: if isSuperAdmin();
     }
 
     match /rider_locations/{riderId} {
       allow read: if isAuthenticated();
-      allow write: if isRider() || isAdmin() || isOwner(riderId);
+      allow write: if isAdmin() || (
+        isDeliveryRider() &&
+        isOwner(riderId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'latitude', 'longitude', 'heading', 'speed', 'activeOrderId', 'isOnline', 'updatedAt'
+        ])
+      );
     }
 
     // =========================================================================
-    // 6. COUPONS & PROMOTIONS
+    // 9. COUPONS & PROMOTIONS
     // =========================================================================
     match /coupons/{couponId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if canManage('coupons');
     }
 
     // =========================================================================
-    // 7. PLATFORM SETTINGS & CONFIGURATION
+    // 10. SYSTEM SETTINGS
     // =========================================================================
-    // Read: All authenticated and public users (store open/closed, delivery rules)
-    // Write: Admin and Super Admin
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin();
     }
 
     // =========================================================================
-    // 8. SYSTEM AUDIT & ACTIVITY LOGS
+    // 11. AUDIT LOGS (IMMUTABLE LOGS)
     // =========================================================================
-    // Read: Admin and Super Admin
-    // Create: Any authenticated user (app event logging)
-    // Update/Delete: Super Admin only
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated();
+      allow create: if isAdmin();
       allow update, delete: if isSuperAdmin();
     }
 
     // =========================================================================
-    // 9. REVIEWS
+    // 12. REVIEWS
     // =========================================================================
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid
+      );
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    // =========================================================================
+    // 13. NOTIFICATIONS
+    // =========================================================================
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (
+        isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
+      );
+      allow create: if isAdmin() || (
+        isAuthenticated() && request.resource.data.userId == request.auth.uid
+      );
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt', 'updatedAt'])
+      );
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    // =========================================================================
+    // 14. FAVORITES
+    // =========================================================================
+    match /favorites/{favoriteId} {
+      allow read: if isAdmin() || (
+        isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
+      );
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     // =========================================================================
-    // 10. NOTIFICATIONS
+    // DEFAULT DENY FOR EVERYTHING ELSE
     // =========================================================================
-    // Customers can read their own notifications (query must filter by userId).
-    // Admins can read all and write (send notifications).
-    match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
-      allow write: if isAdmin();
-    }
-
-    // =========================================================================
-    // 11. FAVORITES
-    // =========================================================================
-    // Customers can read/write their own favorites (query must filter by userId).
-    // Admins can read all.
-    match /favorites/{favoriteId} {
-      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
-      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow update, delete: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

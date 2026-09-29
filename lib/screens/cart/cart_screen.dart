@@ -3,7 +3,6 @@ import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_theme.dart';
 import '../../widgets/common/network_image_view.dart';
 import '../../widgets/common/responsive_layout.dart';
 

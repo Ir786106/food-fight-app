@@ -48,7 +48,8 @@ class OrderProvider extends ChangeNotifier {
     if (customerId.isEmpty) return;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    // Defer the initial notification to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     _customerOrdersSub?.cancel();
     _customerOrdersSub = OrderService.watchCustomerOrders(customerId).listen(
@@ -71,7 +72,8 @@ class OrderProvider extends ChangeNotifier {
   void watchAdminOrders({String? status, String? branchId}) {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    // Defer to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     _adminOrdersSub?.cancel();
     _adminOrdersSub = OrderService.watchAllOrders(status: status, branchId: branchId).listen(

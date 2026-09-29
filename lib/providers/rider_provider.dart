@@ -23,7 +23,8 @@ class RiderProvider extends ChangeNotifier {
   void watchAllRiders() {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    // Defer to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     _ridersSub?.cancel();
     _ridersSub = RiderService.watchAllRiders().listen(
@@ -45,7 +46,8 @@ class RiderProvider extends ChangeNotifier {
     if (riderId.isEmpty) return;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    // Defer to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     _deliveriesSub?.cancel();
     _deliveriesSub = RiderService.watchRiderDeliveries(riderId).listen(

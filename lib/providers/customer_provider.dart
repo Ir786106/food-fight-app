@@ -36,7 +36,8 @@ class CustomerProvider extends ChangeNotifier {
     if (branchId != null) _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    // Defer to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     _subscription?.cancel();
     _subscription = CustomerService.watchCustomers(

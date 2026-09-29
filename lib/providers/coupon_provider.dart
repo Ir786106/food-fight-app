@@ -34,7 +34,8 @@ class CouponProvider extends ChangeNotifier {
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    // Defer to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     _subscription?.cancel();
     _subscription = CouponService.watchCoupons(branchId: branchId).listen(
