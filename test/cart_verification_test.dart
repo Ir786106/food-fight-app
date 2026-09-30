@@ -31,7 +31,7 @@ void main() {
       rating: 4.9,
       prepTimeMinutes: 25,
       restaurantId: 'rest-1',
-      variants: [
+      variants: const [
         MenuVariant(label: 'Small', price: 550.0),
         MenuVariant(label: 'Medium', price: 850.0),
         MenuVariant(label: 'Large', price: 1250.0),
@@ -47,7 +47,7 @@ void main() {
       rating: 4.7,
       prepTimeMinutes: 20,
       restaurantId: 'rest-1',
-      variants: [
+      variants: const [
         MenuVariant(label: 'Quarter', price: 300.0),
         MenuVariant(label: 'Half', price: 580.0),
         MenuVariant(label: 'Full', price: 1100.0),

@@ -27,7 +27,7 @@ void main() {
       rating: 4.9,
       prepTimeMinutes: 25,
       restaurantId: 'rest_01',
-      variants: [
+      variants: const [
         MenuVariant(label: 'Medium', price: 850.0),
         MenuVariant(label: 'Large', price: 1200.0),
       ],

@@ -1,47 +1,48 @@
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
-/// Admin Theme Colors & Styling (Consistent with reference repository patterns)
+/// Admin Theme Colors & Styling (Consumes AppColors single source of truth)
 class AdminTheme {
-  static const Color primaryBlue = Color(0xFF3C1810); // Food Fight Dark Brown
-  static const Color secondaryBlue = Color(0xFF2E1A11); // Food Fight Deep Dark Brown
-  static const Color accentCyan = Color(0xFFFFC700); // Food Fight Yellow
-  static const Color background = Color(0xFFFAF6F0); // Warm Cream Neutral
-  static const Color cardBg = Colors.white;
-  static const Color textDark = Color(0xFF2E1A11); // Dark Neutral / Black
-  static const Color textMuted = Color(0xFF7C6961); // Muted Dark Neutral
+  static const Color primaryBlue = AppColors.brandMaroon;
+  static const Color secondaryBlue = AppColors.maroonDeep;
+  static const Color accentCyan = AppColors.brandYellow;
+  static const Color background = AppColors.background;
+  static const Color cardBg = AppColors.surface;
+  static const Color textDark = AppColors.textPrimary;
+  static const Color textMuted = AppColors.textSecondary;
 
   static Color getBackground(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF170F0B)
+        ? AppColors.darkBackground
         : background;
   }
 
   static Color getCardBg(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF231812)
+        ? AppColors.darkSurface
         : cardBg;
   }
 
   static Color getTextDark(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFFAF6F0)
+        ? AppColors.darkTextPrimary
         : textDark;
   }
 
   static Color getTextMuted(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFA6968E)
+        ? AppColors.darkTextSecondary
         : textMuted;
   }
 
-  // Status colors
-  static const Color statusPending = Color(0xFFF59E0B);
-  static const Color statusAccepted = Color(0xFF3B82F6);
-  static const Color statusPreparing = Color(0xFF8B5CF6);
-  static const Color statusReady = Color(0xFF06B6D4);
-  static const Color statusOutForDelivery = Color(0xFFEA580C);
-  static const Color statusDelivered = Color(0xFF10B981);
-  static const Color statusCancelled = Color(0xFFEF4444);
+  // Status colors mapped to AppColors
+  static const Color statusPending = AppColors.statusPending;
+  static const Color statusAccepted = AppColors.statusAccepted;
+  static const Color statusPreparing = AppColors.statusPreparing;
+  static const Color statusReady = AppColors.statusReady;
+  static const Color statusOutForDelivery = AppColors.statusOutForDelivery;
+  static const Color statusDelivered = AppColors.statusDelivered;
+  static const Color statusCancelled = AppColors.statusCancelled;
 
   static Color getStatusColor(String status) {
     switch (status.toLowerCase()) {

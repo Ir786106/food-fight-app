@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:food_fight/core/theme/admin_theme.dart';
+import '../constants/app_colors.dart';
+import 'admin_theme.dart';
 
-/// Super Admin Visual Theme - Premium Deep Purple / Gold / Obsidian accents
+/// Super Admin Visual Theme - Consumes AppColors single source of truth
 class SuperAdminTheme {
-  static const Color primary = Color(0xFF3C1810); // Food Fight Dark Brown
-  static const Color secondary = Color(0xFF2E1A11); // Food Fight Deep Dark Brown
-  static const Color accentGold = Color(0xFFFFC700); // Food Fight Yellow
-  static const Color accentCyan = Color(0xFFFFC700); // Food Fight Yellow
-  static const Color background = Color(0xFFFAF6F0); // Warm Cream Neutral
-  static const Color darkBackground = Color(0xFF170F0B); // Deep Roasted Chocolate
-  static const Color darkCardBg = Color(0xFF231812); // Dark Chocolate Card
-  static const Color cardBg = Colors.white;
+  static const Color primary = AppColors.brandMaroon;
+  static const Color secondary = AppColors.maroonDeep;
+  static const Color accentGold = AppColors.brandYellow;
+  static const Color accentCyan = AppColors.brandYellow;
+  static const Color background = AppColors.background;
+  static const Color darkBackground = AppColors.darkBackground;
+  static const Color darkCardBg = AppColors.darkSurface;
+  static const Color cardBg = AppColors.surface;
 
   static Color getBackground(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
