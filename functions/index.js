@@ -297,3 +297,88 @@ exports.createPaymentIntent = functions.https.onCall(async (data, context) => {
     status: "requires_confirmation",
   };
 });
+
+/**
+ * Real-time Chat Trigger: onChatMessageCreated
+ * Dispatches FCM Push Notifications to customer or branch admin staff when a message is posted.
+ */
+exports.onChatMessageCreated = functions.firestore
+  .document("chats/{chatId}/messages/{messageId}")
+  .onCreate(async (snap, context) => {
+    const message = snap.data();
+    const { chatId } = context.params;
+
+    const chatDoc = await db.collection("chats").doc(chatId).get();
+    if (!chatDoc.exists) return null;
+    const chat = chatDoc.data();
+
+    const settings = await getSystemSettings();
+    if (settings.pushNotificationsEnabled === false) return null;
+
+    const isCustomerSender = message.senderRole === "customer";
+    const senderName = message.senderName || "Food Fight";
+    const messagePreview = message.text && message.text.trim().length > 0
+      ? message.text
+      : (message.type === "image" ? "Sent a photo" : "Sent a message");
+
+    try {
+      if (isCustomerSender) {
+        // Notify branch admin & sub-admins with 'chats' permission
+        const branchId = chat.branchId;
+        const adminsSnapshot = await db.collection("users")
+          .where("role", "in", ["admin", "super_admin", "staff"])
+          .get();
+
+        const tokens = [];
+        adminsSnapshot.forEach((doc) => {
+          const u = doc.data();
+          const matchesBranch = u.role === "super_admin" || u.branchId === branchId;
+          const hasPermission = u.role === "super_admin" ||
+            !u.parentAdminId ||
+            (Array.isArray(u.permissions) && u.permissions.includes("chats")) ||
+            (u.permissions && u.permissions.chats === true);
+
+          if (matchesBranch && hasPermission && u.fcmToken) {
+            tokens.push(u.fcmToken);
+          }
+        });
+
+        if (tokens.length > 0) {
+          await admin.messaging().sendEachForMulticast({
+            tokens,
+            notification: {
+              title: `Support: ${senderName}`,
+              body: messagePreview,
+            },
+            data: {
+              type: "chat",
+              chatId: chatId,
+              orderId: chat.orderId || "",
+            },
+          });
+        }
+      } else {
+        // Notify Customer
+        const customerDoc = await db.collection("users").doc(chat.customerId).get();
+        if (customerDoc.exists && customerDoc.data().fcmToken) {
+          const customerToken = customerDoc.data().fcmToken;
+          await admin.messaging().send({
+            token: customerToken,
+            notification: {
+              title: "Food Fight Support",
+              body: messagePreview,
+            },
+            data: {
+              type: "chat",
+              chatId: chatId,
+              orderId: chat.orderId || "",
+            },
+          });
+        }
+      }
+    } catch (pushErr) {
+      console.error("Push notification error in onChatMessageCreated:", pushErr);
+    }
+    return null;
+  });
+

@@ -56,4 +56,25 @@ class FirestoreFields {
   static const String fieldMinOrder = 'minimumOrder';
   static const String fieldMaxDiscount = 'maximumDiscount';
   static const String fieldValidUntil = 'validUntil';
+
+  // Real-time Chat fields
+  static const String fieldBranchId = 'branchId';
+  static const String fieldCustomerName = 'customerName';
+  static const String fieldCustomerPhone = 'customerPhone';
+  static const String fieldOrderId = 'orderId';
+  static const String fieldChatType = 'type';
+  static const String fieldLastMessage = 'lastMessage';
+  static const String fieldLastMessageAt = 'lastMessageAt';
+  static const String fieldLastSenderRole = 'lastSenderRole';
+  static const String fieldUnreadForAdmin = 'unreadForAdmin';
+  static const String fieldUnreadForCustomer = 'unreadForCustomer';
+  static const String fieldAssignedAdminId = 'assignedAdminId';
+
+  // Chat Message fields
+  static const String fieldSenderId = 'senderId';
+  static const String fieldSenderRole = 'senderRole';
+  static const String fieldSenderName = 'senderName';
+  static const String fieldText = 'text';
+  static const String fieldMessageType = 'type';
+  static const String fieldReadBy = 'readBy';
 }

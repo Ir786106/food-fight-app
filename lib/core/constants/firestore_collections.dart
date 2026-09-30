@@ -29,4 +29,8 @@ class FirestoreCollections {
   static const String favorites = 'favorites';
   static const String settings = 'settings';
   static const String auditLogs = 'auditLogs';
+
+  // Real-time Chat
+  static const String chats = 'chats';
+  static const String messages = 'messages';
 }

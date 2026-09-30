@@ -73,7 +73,8 @@ service cloud.firestore {
       return isSuperAdmin() || (
         isAdmin() && (
           !isSubAdmin() ||
-          (getUserData().get('permissions', {}).get(perm, false) == true)
+          (getUserData().get('permissions', {}).get(perm, false) == true) ||
+          (getUserData().get('permissions', []).hasAny([perm]))
         )
       );
     }
@@ -398,6 +399,70 @@ service cloud.firestore {
       );
       allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    // =========================================================================
+    // 15. REAL-TIME CUSTOMER <-> ADMIN CHAT
+    // =========================================================================
+    function isChatParticipant(chatData) {
+      return isAuthenticated() && (
+        chatData.customerId == request.auth.uid ||
+        isSuperAdmin() ||
+        (isAdmin() && canManage('chats') && (chatData.branchId == getUserData().get('branchId', '') || getUserData().get('branchId', '') == ''))
+      );
+    }
+
+    match /chats/{chatId} {
+      allow read: if isChatParticipant(resource.data);
+
+      allow create: if isAuthenticated() && (
+        (isCustomer() && request.resource.data.customerId == request.auth.uid && request.resource.data.status == 'open') ||
+        isAdmin()
+      );
+
+      allow update: if isAuthenticated() && isChatParticipant(resource.data) && (
+        isSuperAdmin() ||
+        (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'lastMessage', 'lastMessageAt', 'lastSenderRole', 'unreadForAdmin', 'unreadForCustomer', 'status', 'assignedAdminId', 'updatedAt'
+        ])) ||
+        (isCustomer() &&
+          resource.data.customerId == request.auth.uid &&
+          request.resource.data.customerId == resource.data.customerId &&
+          request.resource.data.branchId == resource.data.branchId &&
+          request.resource.data.get('assignedAdminId', null) == resource.data.get('assignedAdminId', null) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'lastMessage', 'lastMessageAt', 'lastSenderRole', 'unreadForAdmin', 'unreadForCustomer', 'status', 'updatedAt'
+          ])
+        )
+      );
+
+      allow delete: if isSuperAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isChatParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data);
+
+        allow create: if isAuthenticated() &&
+          isChatParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data) &&
+          request.resource.data.senderId == request.auth.uid &&
+          (
+            (isCustomer() && request.resource.data.senderRole == 'customer') ||
+            (isSuperAdmin() && (request.resource.data.senderRole == 'super_admin' || request.resource.data.senderRole == 'admin')) ||
+            (isAdmin() && request.resource.data.senderRole == 'admin')
+          ) &&
+          (
+            request.resource.data.type in ['text', 'image', 'system']
+          ) &&
+          (
+            request.resource.data.type != 'text' ||
+            (request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000)
+          );
+
+        allow update: if isAuthenticated() &&
+          isChatParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
+
+        allow delete: if isSuperAdmin();
+      }
     }
 
     // =========================================================================
