@@ -895,12 +895,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
   }
 
   Widget _dishReviewTile(String author, String rating, String comment, String date) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D1D26),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -908,20 +912,29 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(author, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Colors.white)),
-              Text(date, style: const TextStyle(fontSize: 11, color: Colors.white38)),
+              Text(
+                author,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: colorScheme.onSurface),
+              ),
+              Text(
+                date,
+                style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+              ),
             ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.star_rounded, color: AppColors.accent, size: 14),
+              const Icon(Icons.star_rounded, color: AppColors.mustard, size: 14),
               const SizedBox(width: 4),
-              Text(rating, style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 12)),
+              Text(
+                rating,
+                style: const TextStyle(color: AppColors.mustard, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(comment, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+          Text(comment, style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );

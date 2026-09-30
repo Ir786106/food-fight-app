@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import '../../theme/app_theme.dart';
 import '../../models/address_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/address_provider.dart';
@@ -95,10 +94,13 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF121217),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121217),
         elevation: 0,
         title: const Text('Add New Address', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
       ),
@@ -110,9 +112,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Address Type',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white70),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -134,20 +136,26 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primary : const Color(0xFF1D1D26),
+                            color: isSelected
+                                ? AppColors.brandYellow
+                                : (isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isSelected ? AppColors.primary : Colors.white12,
+                              color: isSelected ? AppColors.brandYellow : (isDark ? AppColors.darkBorder : AppColors.border),
                             ),
                           ),
                           child: Row(
                             children: [
-                              Icon(_typeIcons[type], size: 16, color: isSelected ? Colors.white : Colors.white70),
+                              Icon(
+                                _typeIcons[type],
+                                size: 16,
+                                color: isSelected ? AppColors.brandMaroon : colorScheme.onSurfaceVariant,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 type,
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.white70,
+                                  color: isSelected ? AppColors.brandMaroon : colorScheme.onSurface,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -178,22 +186,22 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 const SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1D1D26),
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                   ),
                   child: SwitchListTile(
-                    title: const Text(
+                    title: Text(
                       'Set as default address',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                     ),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Use this address automatically for future orders',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     ),
                     value: _isDefault,
-                    activeThumbColor: AppColors.primary,
-                    activeTrackColor: AppColors.primary.withValues(alpha: 0.35),
+                    activeThumbColor: AppColors.brandMaroon,
+                    activeTrackColor: AppColors.yellowSoft,
                     onChanged: (val) => setState(() => _isDefault = val),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   ),

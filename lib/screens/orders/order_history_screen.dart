@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/order_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/admin/status_badge.dart';
@@ -90,6 +91,27 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       appBar: AppBar(
         title: const Text('My Orders 🥊'),
         elevation: 0,
+        actions: [
+          Consumer<ChatProvider>(
+            builder: (context, chatProv, _) {
+              final unread = chatProv.totalUnreadForCustomer;
+              return IconButton(
+                tooltip: 'Support Chat',
+                icon: Badge(
+                  isLabelVisible: unread > 0,
+                  label: Text(
+                    '$unread',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  backgroundColor: AppColors.brandMaroon,
+                  child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.brandMaroon),
+                ),
+                onPressed: () => Navigator.pushNamed(context, '/chat'),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -303,9 +325,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                           onRefresh: () async => orderProvider.watchCustomerOrders(customerId),
                           child: pastOrders.isEmpty
                               ? ListView(
-                                  children: [
+                                  children: const [
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 80),
+                                      padding: EdgeInsets.only(top: 80),
                                       child: EmptyStateView(
                                         icon: Icons.history_rounded,
                                         title: 'No Past Orders',

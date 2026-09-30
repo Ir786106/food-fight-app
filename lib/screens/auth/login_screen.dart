@@ -99,24 +99,17 @@ class _LoginScreenState extends State<LoginScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Tall Branded Hero Header with Gradient
+            // Branded Yellow Header Curve
             Container(
               width: double.infinity,
               height: size.height * 0.34 > 240 ? size.height * 0.34 : 240,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.secondary,
-                    Color(0xFF2E1A11),
-                    Color(0xFF230F0A),
-                  ],
-                ),
+                color: AppColors.brandYellow,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
               ),
               child: SafeArea(
                 bottom: false,
@@ -131,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppColors.yellowSoft.withValues(alpha: 0.5),
                         ),
                       ),
                     ),
@@ -143,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 120,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: AppColors.yellowPressed.withValues(alpha: 0.3),
                         ),
                       ),
                     ),
@@ -156,13 +149,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 90,
-                              height: 90,
+                              width: 88,
+                              height: 88,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.20),
+                                    color: Colors.black.withValues(alpha: 0.12),
                                     blurRadius: 16,
                                     offset: const Offset(0, 6),
                                   ),
@@ -171,8 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: ClipOval(
                                 child: Image.asset(
                                   AppConstants.logoPath,
-                                  width: 90,
-                                  height: 90,
+                                  width: 88,
+                                  height: 88,
                                   fit: BoxFit.contain,
                                   filterQuality: FilterQuality.high,
                                 ),
@@ -184,17 +177,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
-                                color: Colors.white,
+                                color: AppColors.brandMaroon,
                                 letterSpacing: 1.2,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
+                            const Text(
                               'Flavors that punch above the rest',
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withValues(alpha: 0.92),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.maroonDeep,
                               ),
                             ),
                           ],

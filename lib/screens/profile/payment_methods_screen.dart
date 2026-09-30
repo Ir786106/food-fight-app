@@ -269,12 +269,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                 createdAt: DateTime.now(),
                               );
 
+                              final messenger = ScaffoldMessenger.of(context);
                               final ok = await context.read<PaymentMethodProvider>().addMethod(newMethod);
                               if (ctx.mounted) {
                                 Navigator.pop(ctx);
                               }
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   SnackBar(
                                     content: Text(ok
                                         ? 'Payment method safely tokenized and saved!'

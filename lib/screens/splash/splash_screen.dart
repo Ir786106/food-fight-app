@@ -225,26 +225,26 @@ class _SplashScreenState extends State<SplashScreen>
                         opacity: _taglineFade,
                         child: SlideTransition(
                           position: _taglineSlide,
-                          child: Column(
+                          child: const Column(
                             children: [
                               Text(
                                 AppConstants.appTagline,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.darkBrown,
+                                style: TextStyle(
+                                  color: AppColors.brandMaroon,
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
                                 ),
                               ),
-                              const SizedBox(height: 36),
-                              const SizedBox(
+                              SizedBox(height: 36),
+                              SizedBox(
                                 width: 26,
                                 height: 26,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.darkBrown,
+                                    AppColors.brandMaroon,
                                   ),
                                 ),
                               ),

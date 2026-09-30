@@ -144,6 +144,22 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  /// Get order synchronously from local cached list
+  OrderModel? getOrderById(String orderId) {
+    try {
+      return _customerOrders.firstWhere((o) => o.id == orderId);
+    } catch (_) {
+      try {
+        return _adminOrders.firstWhere((o) => o.id == orderId);
+      } catch (_) {
+        return _currentOrder?.id == orderId ? _currentOrder : null;
+      }
+    }
+  }
+
+  /// Fetch order by ID from backend
+  Future<OrderModel?> fetchOrderById(String orderId) => getOrder(orderId);
+
   /// Get order by ID
   Future<OrderModel?> getOrder(String orderId) async {
     try {

@@ -67,6 +67,8 @@ class CartProvider extends ChangeNotifier {
     return t > 0 ? t : 0.0;
   }
 
+  double get totalPrice => total;
+
   bool isInCart(String foodId) => _items.any((i) => i.food.id == foodId);
 
   int getQuantity(String foodId) {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/address_provider.dart';
 
@@ -44,25 +43,28 @@ class _AddressScreenState extends State<AddressScreen> {
     final addressProvider = context.watch<AddressProvider>();
     final addresses = addressProvider.addresses;
     final isLoading = addressProvider.isLoading;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121217),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121217),
         elevation: 0,
         title: const Text('Delivery Addresses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.brandYellow,
+        foregroundColor: AppColors.brandMaroon,
         onPressed: () async {
           await Navigator.of(context).pushNamed('/add-address');
         },
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Add New', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add_rounded, color: AppColors.brandMaroon),
+        label: const Text('Add New', style: TextStyle(color: AppColors.brandMaroon, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: isLoading && addresses.isEmpty
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? const Center(child: CircularProgressIndicator(color: AppColors.brandMaroon))
             : addresses.isEmpty
                 ? Center(
                     child: Padding(
@@ -72,22 +74,22 @@ class _AddressScreenState extends State<AddressScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(22),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
+                            decoration: const BoxDecoration(
+                              color: AppColors.yellowSoft,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.location_off_outlined, size: 52, color: AppColors.primary),
+                            child: const Icon(Icons.location_off_outlined, size: 52, color: AppColors.brandMaroon),
                           ),
                           const SizedBox(height: 18),
-                          const Text(
+                          Text(
                             'No Addresses Saved',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Add your home or office address for fast, 1-tap checkout.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                           ),
                         ],
                       ),
@@ -102,16 +104,16 @@ class _AddressScreenState extends State<AddressScreen> {
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1D1D26),
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
                             color: address.isDefault
-                                ? AppColors.primary.withValues(alpha: 0.5)
-                                : Colors.white.withValues(alpha: 0.07),
+                                ? AppColors.brandYellow
+                                : (isDark ? AppColors.darkBorder : AppColors.border),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -124,12 +126,12 @@ class _AddressScreenState extends State<AddressScreen> {
                               width: 46,
                               height: 46,
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.14),
+                                color: AppColors.yellowSoft,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
                                 _getIconForType(address.iconType),
-                                color: AppColors.primary,
+                                color: AppColors.brandMaroon,
                                 size: 22,
                               ),
                             ),
@@ -142,23 +144,23 @@ class _AddressScreenState extends State<AddressScreen> {
                                     children: [
                                       Text(
                                         address.label,
-                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Colors.white),
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: colorScheme.onSurface),
                                       ),
                                       if (address.isDefault) ...[
                                         const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: AppColors.primary.withValues(alpha: 0.18),
+                                            color: AppColors.yellowSoft,
                                             borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                                            border: Border.all(color: AppColors.brandYellow),
                                           ),
                                           child: const Text(
                                             'DEFAULT',
                                             style: TextStyle(
                                               fontSize: 9.5,
                                               fontWeight: FontWeight.w800,
-                                              color: AppColors.primary,
+                                              color: AppColors.brandMaroon,
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -169,14 +171,14 @@ class _AddressScreenState extends State<AddressScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     address.details,
-                                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
                                   ),
                                 ],
                               ),
                             ),
                             if (!address.isDefault && userId.isNotEmpty)
                               IconButton(
-                                icon: const Icon(Icons.star_outline_rounded, color: Colors.white38, size: 20),
+                                icon: Icon(Icons.star_outline_rounded, color: colorScheme.onSurfaceVariant, size: 20),
                                 tooltip: 'Set as Default',
                                 onPressed: () async {
                                   await addressProvider.setDefaultAddress(userId, address.id);
@@ -197,14 +199,14 @@ class _AddressScreenState extends State<AddressScreen> {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
-                                    backgroundColor: const Color(0xFF1D1D26),
-                                    title: const Text('Delete Address?', style: TextStyle(color: Colors.white)),
+                                    backgroundColor: colorScheme.surface,
+                                    title: Text('Delete Address?', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                                     content: Text('Are you sure you want to remove "${address.label}"?',
-                                        style: const TextStyle(color: AppColors.textSecondary)),
+                                        style: TextStyle(color: colorScheme.onSurfaceVariant)),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(ctx, false),
-                                        child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+                                        child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
                                       ),
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),

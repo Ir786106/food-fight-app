@@ -109,24 +109,17 @@ class _SignupScreenState extends State<SignupScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Tall Branded Hero Header with Gradient
+            // Branded Yellow Header Curve
             Container(
               width: double.infinity,
               height: size.height * 0.30 > 220 ? size.height * 0.30 : 220,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.secondary,
-                    Color(0xFF2E1A11),
-                    Color(0xFF230F0A),
-                  ],
-                ),
+                color: AppColors.brandYellow,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
               ),
               child: SafeArea(
                 bottom: false,
@@ -137,7 +130,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       top: 10,
                       left: 12,
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brandMaroon),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),
@@ -151,7 +144,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         height: 130,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppColors.yellowSoft.withValues(alpha: 0.5),
                         ),
                       ),
                     ),
@@ -170,7 +163,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.20),
+                                    color: Colors.black.withValues(alpha: 0.12),
                                     blurRadius: 16,
                                     offset: const Offset(0, 6),
                                   ),
@@ -192,17 +185,17 @@ class _SignupScreenState extends State<SignupScreen> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
-                                color: Colors.white,
+                                color: AppColors.brandMaroon,
                                 letterSpacing: 1.2,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
+                            const Text(
                               'Create an account to start ordering',
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withValues(alpha: 0.92),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.maroonDeep,
                               ),
                             ),
                           ],

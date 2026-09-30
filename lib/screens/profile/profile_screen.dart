@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -55,11 +56,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             backgroundColor: colorScheme.surface,
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.lock_reset_rounded, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text('Change Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                const Icon(Icons.lock_reset_rounded, color: AppColors.brandMaroon),
+                const SizedBox(width: 8),
+                Text('Change Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colorScheme.onSurface)),
               ],
             ),
             content: Form(
@@ -96,10 +97,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
+                child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.brandYellow,
+                  foregroundColor: AppColors.brandMaroon,
+                ),
                 onPressed: isSaving
                     ? null
                     : () async {
@@ -120,8 +124,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }
                       },
                 child: isSaving
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Update Password'),
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: AppColors.brandMaroon, strokeWidth: 2))
+                    : const Text('Update Password', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -133,11 +137,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showPromoCodesDialog(BuildContext context) {
     final couponProvider = context.read<CouponProvider>();
     final activeCoupons = couponProvider.activeCoupons;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1D1D26),
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -156,12 +163,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.local_offer_outlined, color: AppColors.primary, size: 22),
+                    child: const Icon(Icons.local_offer_outlined, color: AppColors.brandMaroon, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Available Promo Codes',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -172,16 +179,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Column(
                       children: [
-                        Icon(Icons.local_offer_outlined, color: Colors.white.withValues(alpha: 0.25), size: 48),
+                        Icon(Icons.local_offer_outlined, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4), size: 48),
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           'No Active Promo Codes',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
+                        Text(
                           'Check back soon or tune in during fight events for exclusive discounts!',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -202,9 +209,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF272734),
+                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                     ),
                     child: Row(
                       children: [
@@ -219,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 15,
-                                      color: AppColors.primary,
+                                      color: AppColors.brandMaroon,
                                       letterSpacing: 0.6,
                                     ),
                                   ),
@@ -227,7 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.15),
+                                      color: AppColors.brandYellow,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -235,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       style: const TextStyle(
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w800,
-                                        color: AppColors.primary,
+                                        color: AppColors.brandMaroon,
                                       ),
                                     ),
                                   ),
@@ -244,13 +251,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 descText,
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.copy_rounded, color: Colors.white70, size: 18),
+                          icon: Icon(Icons.copy_rounded, color: colorScheme.onSurfaceVariant, size: 18),
                           tooltip: 'Copy Code',
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: coupon.code));
@@ -258,7 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Promo "${coupon.code}" copied to clipboard!'),
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: AppColors.brandMaroon,
                               ),
                             );
                           },
@@ -276,11 +283,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showReferAndEarnDialog(BuildContext context) {
     const referralCode = 'FIGHT-WIN200';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1D1D26),
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -298,33 +308,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: AppColors.primary.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary, size: 30),
+              child: const Icon(Icons.card_giftcard_rounded, color: AppColors.brandMaroon, size: 30),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Invite Friends, Get Rs. 200!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Share your code with friends. When they place their first order, you both get Rs. 200 off your next feast!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.4),
             ),
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF272734),
+                color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), style: BorderStyle.solid),
+                border: Border.all(color: AppColors.brandMaroon.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     referralCode,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 1.2),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: 1.2),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -333,12 +343,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Referral code copied! Share with friends.'),
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: AppColors.brandMaroon,
                         ),
                       );
                     },
-                    icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
-                    label: const Text('COPY', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.brandMaroon),
+                    label: const Text('COPY', style: TextStyle(color: AppColors.brandMaroon, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -352,10 +362,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
   void _showHelpCenterDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1D1D26),
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -376,12 +390,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.headset_mic_outlined, color: AppColors.primary, size: 22),
+                  child: const Icon(Icons.headset_mic_outlined, color: AppColors.brandMaroon, size: 22),
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   'Food Fight Help Center',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                 ),
               ],
             ),
@@ -396,53 +410,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: const Icon(Icons.call_outlined, color: AppColors.success, size: 20),
               ),
-              title: const Text('24/7 Support Hotline', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
-              subtitle: const Text('0800-FOODFIGHT (Toll-Free)', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              onTap: () {
+              title: Text('24/7 Support Hotline', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+              subtitle: Text('0800-FOODFIGHT (Toll-Free)', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
+              onTap: () async {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Dialing Support Helpline: 0800-3663344...')),
-                );
+                final uri = Uri(scheme: 'tel', path: '08003663344');
+                try {
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  } else {
+                    await Clipboard.setData(const ClipboardData(text: '08003663344'));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Hotline phone copied to clipboard!')),
+                      );
+                    }
+                  }
+                } catch (_) {
+                  await Clipboard.setData(const ClipboardData(text: '08003663344'));
+                }
               },
             ),
-            const Divider(color: Colors.white10),
+            Divider(color: isDark ? AppColors.darkDivider : AppColors.divider),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryYellow.withValues(alpha: 0.15),
+                  color: AppColors.brandYellow.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.primaryYellow, size: 20),
+                child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.brandMaroon, size: 20),
               ),
-              title: const Text('Live Support Chat', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
-              subtitle: const Text('Instant answers from our delivery team', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              title: Text('Live Support Chat', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+              subtitle: Text('Real-time chat with restaurant support', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
               onTap: () {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Connecting to Food Fight live support representative...')),
-                );
+                Navigator.pushNamed(context, '/chat');
               },
             ),
-            const Divider(color: Colors.white10),
+            Divider(color: isDark ? AppColors.darkDivider : AppColors.divider),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryYellow.withValues(alpha: 0.15),
+                  color: AppColors.info.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.mail_outline_rounded, color: AppColors.primaryYellow, size: 20),
+                child: const Icon(Icons.mail_outline_rounded, color: AppColors.info, size: 20),
               ),
-              title: const Text('Email Support', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
-              subtitle: const Text('support@foodfight.pk', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              onTap: () {
+              title: Text('Email Support', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+              subtitle: Text('support@foodfight.pk', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
+              onTap: () async {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening mail to support@foodfight.pk')),
+                final uri = Uri(
+                  scheme: 'mailto',
+                  path: 'support@foodfight.pk',
+                  queryParameters: {'subject': 'Food Fight Customer Support Inquiry'},
                 );
+                try {
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  } else {
+                    await Clipboard.setData(const ClipboardData(text: 'support@foodfight.pk'));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Support email copied to clipboard!')),
+                      );
+                    }
+                  }
+                } catch (_) {
+                  await Clipboard.setData(const ClipboardData(text: 'support@foodfight.pk'));
+                }
               },
             ),
           ],
@@ -463,16 +506,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ordersCount = orderProvider.customerOrders.length;
     final favoritesCount = cartProvider.favorites.length;
     final addressesCount = context.watch<AddressProvider>().addresses.length;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121217),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121217),
         elevation: 0,
         title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+            icon: const Icon(Icons.edit_outlined, color: AppColors.brandMaroon),
             tooltip: 'Edit Profile Info',
             onPressed: () => Navigator.of(context).pushNamed('/edit-profile'),
           ),
@@ -488,12 +533,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1D1D26),
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.35),
+                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -509,7 +554,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: 72,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 2),
+                            border: Border.all(color: AppColors.brandYellow, width: 2),
                           ),
                           child: ClipOval(
                             child: user?.profileImage != null && user!.profileImage!.isNotEmpty
@@ -520,14 +565,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     fallbackIcon: Icons.person,
                                   )
                                 : Container(
-                                    color: AppColors.primary.withValues(alpha: 0.15),
+                                    color: AppColors.yellowSoft,
                                     alignment: Alignment.center,
                                     child: Text(
                                       (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : '🥊',
                                       style: const TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.w800,
-                                        color: AppColors.primary,
+                                        color: AppColors.brandMaroon,
                                       ),
                                     ),
                                   ),
@@ -541,7 +586,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(5),
                               decoration: const BoxDecoration(
-                                color: AppColors.primary,
+                                color: AppColors.brandMaroon,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 13),
@@ -557,17 +602,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             user?.name.isNotEmpty == true ? user!.name : 'Foodie Fighter',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             user?.email ?? 'No email linked',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -575,8 +620,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 2),
                             Text(
                               user!.phone,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
                                 fontSize: 12,
                               ),
                             ),
@@ -587,9 +632,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: (user?.isAdmin == true || user?.isRider == true)
-                                      ? AppColors.darkBrown
-                                      : AppColors.primaryYellow,
+                                  color: AppColors.yellowSoft,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -598,10 +641,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       : (user?.isAdmin == true
                                           ? 'RESTAURANT ADMIN'
                                           : (user?.isRider == true ? 'RIDER' : 'FOODIE CHAMPION')),
-                                  style: TextStyle(
-                                    color: (user?.isAdmin == true || user?.isRider == true)
-                                        ? Colors.white
-                                        : AppColors.darkBrown,
+                                  style: const TextStyle(
+                                    color: AppColors.maroonDeep,
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.5,
@@ -628,7 +669,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       count: ordersCount.toString(),
                       label: 'Orders',
                       icon: Icons.receipt_long_outlined,
-                      accentColor: AppColors.primary,
+                      accentColor: AppColors.brandMaroon,
                       onTap: () => Navigator.of(context).pushNamed('/order-history'),
                     ),
                   ),
@@ -639,7 +680,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       count: favoritesCount.toString(),
                       label: 'Favorites',
                       icon: Icons.favorite_outline_rounded,
-                      accentColor: AppColors.error,
+                      accentColor: AppColors.tomato,
                       onTap: () => Navigator.of(context).pushNamed('/favorites'),
                     ),
                   ),
@@ -668,14 +709,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: 'Change name, phone and profile photo',
                   onTap: () => Navigator.of(context).pushNamed('/edit-profile'),
                 ),
-                const Divider(height: 1, color: Colors.white10, indent: 56),
+                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.location_on_outlined,
                   title: 'Saved Delivery Addresses',
                   subtitle: '$addressesCount saved addresses (Home, Work)',
                   onTap: () => Navigator.of(context).pushNamed('/addresses'),
                 ),
-                const Divider(height: 1, color: Colors.white10, indent: 56),
+                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.credit_card_outlined,
                   title: 'Payment Methods',
@@ -693,10 +734,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.local_offer_outlined,
                   title: 'Promo Codes & Vouchers',
                   subtitle: 'View discounts & special coupon codes',
-                  trailingBadge: '3 ACTIVE',
+                  trailingBadge: 'ACTIVE',
                   onTap: () => _showPromoCodesDialog(context),
                 ),
-                const Divider(height: 1, color: Colors.white10, indent: 56),
+                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.card_giftcard_outlined,
                   title: 'Refer & Earn',
@@ -717,21 +758,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: 'Push notifications & order alerts',
                   onTap: () => Navigator.of(context).pushNamed('/notifications'),
                 ),
-                const Divider(height: 1, color: Colors.white10, indent: 56),
+                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.headset_mic_outlined,
                   title: 'Help Center',
-                  subtitle: 'FAQs, contact support & live helpline',
+                  subtitle: 'Real-time chat, FAQs & helpline',
                   onTap: () => _showHelpCenterDialog(context),
                 ),
-                const Divider(height: 1, color: Colors.white10, indent: 56),
+                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.lock_outline_rounded,
                   title: 'Change Password',
                   subtitle: 'Send password security update link',
                   onTap: () => _showChangePasswordDialog(context),
                 ),
-                const Divider(height: 1, color: Colors.white10, indent: 56),
+                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
@@ -750,26 +791,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.admin_panel_settings_rounded,
                       title: 'Restaurant Admin Portal',
                       subtitle: 'Orders, menu, categories & kitchen console',
-                      iconColor: AppColors.primaryYellow,
+                      iconColor: AppColors.brandMaroon,
                       onTap: () => Navigator.of(context).pushNamed('/admin/dashboard'),
                     ),
                   if (auth.isSuperAdmin) ...[
-                    const Divider(height: 1, color: Colors.white10, indent: 56),
+                    Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                     _buildMenuItem(
                       icon: Icons.shield_rounded,
                       title: 'Super Admin HQ Console',
                       subtitle: 'Platform analytics, staff & system audit logs',
-                      iconColor: AppColors.primaryYellow,
+                      iconColor: AppColors.brandMaroon,
                       onTap: () => Navigator.of(context).pushNamed('/super-admin/dashboard'),
                     ),
                   ],
                   if (user?.isRider == true || auth.isAdmin) ...[
-                    const Divider(height: 1, color: Colors.white10, indent: 56),
+                    Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                     _buildMenuItem(
                       icon: Icons.moped_rounded,
                       title: 'Rider Delivery Mode',
                       subtitle: 'Active deliveries, pickup & dispatch map',
-                      iconColor: AppColors.primaryYellow,
+                      iconColor: AppColors.brandMaroon,
                       onTap: () => Navigator.of(context).pushNamed('/rider/dashboard'),
                     ),
                   ],
@@ -787,17 +828,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        backgroundColor: const Color(0xFF1D1D26),
+                        backgroundColor: colorScheme.surface,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        title: const Text('Sign Out', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        content: const Text(
+                        title: Text('Sign Out', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                        content: Text(
                           'Are you sure you want to sign out from Food Fight?',
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
                           ),
                           FilledButton(
                             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
@@ -837,12 +878,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               const SizedBox(height: 20),
-              const Center(
+              Center(
                 child: Text(
-                  'Food Fight v1.0.1 • Near-black Dark Edition',
+                  'Food Fight v1.2.0 • Premium Fast-Food Experience',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white30,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -862,8 +903,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color accentColor,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Material(
-      color: const Color(0xFF1D1D26),
+      color: colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -872,7 +917,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
           ),
           child: Column(
             children: [
@@ -880,18 +925,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 6),
               Text(
                 count,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -903,37 +948,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(left: 6, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.8,
-          color: Colors.white38,
+          color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
         ),
       ),
     );
   }
 
   Widget _buildCardGroup(List<Widget> children) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Material(
-        color: const Color(0xFF1D1D26),
+        color: colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -951,30 +1003,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Color? iconColor,
     String? trailingBadge,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (iconColor ?? AppColors.primary).withValues(alpha: 0.12),
+          color: (iconColor ?? AppColors.brandMaroon).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: iconColor ?? AppColors.primary, size: 20),
+        child: Icon(icon, color: iconColor ?? AppColors.brandMaroon, size: 20),
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w700,
           fontSize: 14,
-          color: Colors.white,
+          color: colorScheme.onSurface,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11.5,
-          color: AppColors.textSecondary,
+          color: colorScheme.onSurfaceVariant,
         ),
       ),
       trailing: Row(
@@ -984,7 +1039,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.18),
+                color: AppColors.brandYellow,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -992,13 +1047,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: const TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  color: AppColors.brandMaroon,
                 ),
               ),
             ),
             const SizedBox(width: 8),
           ],
-          const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: Colors.white38),
+          Icon(Icons.arrow_forward_ios_rounded, size: 13, color: colorScheme.onSurfaceVariant),
         ],
       ),
     );

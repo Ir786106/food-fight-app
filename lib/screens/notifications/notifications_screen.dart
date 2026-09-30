@@ -67,17 +67,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final notifications = notifProvider.notifications;
     final isLoading = notifProvider.isLoading;
     final userId = auth.currentUser?.id ?? '';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
         elevation: 0,
         title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
           if (notifications.isNotEmpty && notifProvider.unreadCount > 0)
             IconButton(
-              icon: const Icon(Icons.done_all_rounded, color: AppColors.primary),
+              icon: const Icon(Icons.done_all_rounded, color: AppColors.brandMaroon),
               tooltip: 'Mark All as Read',
               onPressed: () async {
                 if (userId.isNotEmpty) {
@@ -92,21 +94,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           if (notifications.isNotEmpty)
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.white70),
-              color: const Color(0xFF1D1D26),
+              icon: Icon(Icons.more_vert, color: colorScheme.onSurface),
+              color: colorScheme.surface,
               onSelected: (val) async {
                 if (val == 'clear_all' && userId.isNotEmpty) {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      backgroundColor: const Color(0xFF1D1D26),
-                      title: const Text('Clear All Notifications?', style: TextStyle(color: Colors.white)),
-                      content: const Text('Are you sure you want to remove all notifications?',
-                          style: TextStyle(color: AppColors.textSecondary)),
+                      backgroundColor: colorScheme.surface,
+                      title: Text('Clear All Notifications?', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                      content: Text('Are you sure you want to remove all notifications?',
+                          style: TextStyle(color: colorScheme.onSurfaceVariant)),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+                          child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
@@ -199,20 +201,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             if (!n.isRead) {
                               notifProvider.markAsRead(n.id);
                             }
+                            final refId = n.referenceId;
+                            if (n.type == 'chat' ||
+                                refId?.startsWith('chat_') == true ||
+                                refId?.startsWith('order_') == true) {
+                              Navigator.pushNamed(context, '/chat', arguments: refId);
+                            } else if (refId != null && refId.isNotEmpty) {
+                              Navigator.pushNamed(context, '/order-tracking', arguments: refId);
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1D1D26),
+                              color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: !n.isRead
-                                    ? AppColors.primary.withValues(alpha: 0.4)
-                                    : Colors.white.withValues(alpha: 0.07),
+                                    ? AppColors.brandYellow
+                                    : (isDark ? AppColors.darkBorder : AppColors.border),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.25),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -244,7 +254,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 14,
-                                                color: n.isRead ? Colors.white70 : Colors.white,
+                                                color: n.isRead ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
                                               ),
                                             ),
                                           ),
@@ -253,7 +263,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                               width: 8,
                                               height: 8,
                                               decoration: const BoxDecoration(
-                                                color: AppColors.primary,
+                                                color: AppColors.brandYellow,
                                                 shape: BoxShape.circle,
                                               ),
                                             ),
@@ -264,14 +274,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         n.message,
                                         style: TextStyle(
                                           fontSize: 12.5,
-                                          color: n.isRead ? Colors.white38 : AppColors.textSecondary,
+                                          color: n.isRead
+                                              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
+                                              : colorScheme.onSurfaceVariant,
                                           height: 1.4,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
                                         _formatTime(n.createdAt),
-                                        style: const TextStyle(fontSize: 11, color: Colors.white30),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                        ),
                                       ),
                                     ],
                                   ),

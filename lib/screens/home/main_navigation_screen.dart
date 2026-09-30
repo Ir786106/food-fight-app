@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/app_colors.dart';
 import '../../providers/cart_provider.dart';
-import '../../theme/app_theme.dart';
 import 'home_screen.dart';
-import '../search/search_screen.dart';
 import '../orders/order_history_screen.dart';
+import '../favorites/favorites_screen.dart';
 import '../profile/profile_screen.dart';
-import '../cart/cart_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -32,6 +31,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Future<bool> _showExitConfirmationDialog() async {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     final result = await showDialog<bool>(
       context: context,
@@ -42,11 +42,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.14),
+              decoration: const BoxDecoration(
+                color: AppColors.yellowSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.exit_to_app_rounded, color: AppColors.primary, size: 22),
+              child: const Icon(
+                Icons.exit_to_app_rounded,
+                color: AppColors.brandMaroon,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
@@ -54,7 +58,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
-                color: colorScheme.onSurface,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               ),
             ),
           ],
@@ -63,7 +67,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           'Are you sure you want to exit the app?',
           style: TextStyle(
             fontSize: 14,
-            color: colorScheme.onSurfaceVariant,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           ),
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -73,20 +77,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             child: Text(
               'Stay',
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.brandYellow,
+              foregroundColor: AppColors.brandMaroon,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              minimumSize: const Size(100, 44),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text(
               'Exit App',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -125,17 +131,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    final mediaWidth = MediaQuery.sizeOf(context).width;
-    final isCompact = mediaWidth < 640;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final tabViews = const [
+    // 4 Primary tabs (Template architecture)
+    const tabViews = [
       HomeScreen(),
-      SearchScreen(),
-      CartScreen(),
       OrderHistoryScreen(),
+      FavoritesScreen(),
       ProfileScreen(),
     ];
 
@@ -143,71 +147,139 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) => _handleBackInvocation(didPop),
       child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: tabViews,
-        ),
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            margin: EdgeInsets.fromLTRB(16, 0, 16, isCompact ? 10 : 14),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        body: Stack(
+          children: [
+            IndexedStack(
+              index: _currentIndex,
+              children: tabViews,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: _onTabTapped,
-                type: BottomNavigationBarType.fixed,
-                selectedItemColor: AppColors.primary,
-                selectedIconTheme: const IconThemeData(color: AppColors.primary, size: 24),
-                unselectedItemColor: colorScheme.onSurfaceVariant,
-                unselectedIconTheme: IconThemeData(color: colorScheme.onSurfaceVariant, size: 22),
-                backgroundColor: colorScheme.surface,
-                elevation: 0,
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  color: AppColors.primary,
+
+            // Floating Mini Cart Bar when cart has items
+            if (cart.itemCount > 0 && _currentIndex != 1)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 84,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pushNamed('/cart'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandMaroon,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.maroonDeep.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.yellowSoft,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.shopping_bag_rounded,
+                            color: AppColors.brandMaroon,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${cart.itemCount} item${cart.itemCount > 1 ? 's' : ''} in cart',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                'Rs. ${cart.totalPrice.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: AppColors.brandYellow,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Text(
+                          'View Cart',
+                          style: TextStyle(
+                            color: AppColors.brandYellow,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: AppColors.brandYellow,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 11,
-                ),
-                items: [
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.home_outlined),
-                    activeIcon: Icon(Icons.home_rounded),
+              ),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? AppColors.darkDivider : AppColors.divider,
+                width: 1,
+              ),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A2A1415),
+                blurRadius: 12,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  _buildNavTabItem(
+                    index: 0,
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
                     label: 'Home',
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.search_rounded),
-                    activeIcon: Icon(Icons.search_rounded),
-                    label: 'Search',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: _buildCartNavIcon(count: cart.itemCount),
-                    activeIcon: _buildCartNavIcon(count: cart.itemCount, selected: true),
-                    label: 'Cart',
-                  ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.receipt_long_outlined),
-                    activeIcon: Icon(Icons.receipt_long_rounded),
+                  _buildNavTabItem(
+                    index: 1,
+                    icon: Icons.receipt_long_outlined,
+                    activeIcon: Icons.receipt_long_rounded,
                     label: 'Orders',
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.person_outline_rounded),
-                    activeIcon: Icon(Icons.person_rounded),
+                  _buildNavTabItem(
+                    index: 2,
+                    icon: Icons.favorite_border_rounded,
+                    activeIcon: Icons.favorite_rounded,
+                    label: 'My List',
+                    badgeCount: cart.favorites.length,
+                  ),
+                  _buildNavTabItem(
+                    index: 3,
+                    icon: Icons.person_outline_rounded,
+                    activeIcon: Icons.person_rounded,
                     label: 'Profile',
                   ),
                 ],
@@ -219,48 +291,85 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildCartNavIcon({required int count, bool selected = false}) {
-    final icon = Icon(
-      selected ? Icons.shopping_bag_rounded : Icons.shopping_bag_outlined,
-      color: selected ? AppColors.primary : Theme.of(context).colorScheme.onSurfaceVariant,
-      size: selected ? 24 : 22,
-    );
+  Widget _buildNavTabItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    int badgeCount = 0,
+  }) {
+    final isSelected = _currentIndex == index;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    if (count <= 0) return icon;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        icon,
-        Positioned(
-          right: -8,
-          top: -4,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.4),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onTabTapped(index),
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSelected ? 16 : 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? (isDark ? AppColors.darkSurfaceElevated : AppColors.yellowSoft)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    isSelected ? activeIcon : icon,
+                    size: 22,
+                    color: isSelected
+                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                        : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+                  ),
                 ),
+                if (badgeCount > 0)
+                  Positioned(
+                    right: 4,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      decoration: const BoxDecoration(
+                        color: AppColors.tomato,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
               ],
             ),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                    : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

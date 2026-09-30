@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../core/constants/app_colors.dart';
 
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -37,7 +37,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,27 +47,30 @@ class _CustomTextFieldState extends State<CustomTextField> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 7),
         TextFormField(
           controller: widget.controller,
           obscureText: _obscure,
           keyboardType: widget.keyboardType,
           validator: widget.validator,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: TextStyle(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
               fontSize: 13.5,
             ),
             filled: true,
-            fillColor: colorScheme.surface,
+            fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
             prefixIcon: Icon(
               widget.icon,
-              color: colorScheme.onSurfaceVariant,
+              color: AppColors.brandMaroon,
               size: 20,
             ),
             suffixIcon: widget.isPassword
@@ -76,32 +79,32 @@ class _CustomTextFieldState extends State<CustomTextField> {
                       _obscure
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: colorScheme.onSurfaceVariant,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       size: 20,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   )
                 : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-              ),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-              ),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppColors.brandMaroon, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.error),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
           ),
         ),

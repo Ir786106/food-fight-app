@@ -252,8 +252,8 @@ class _CartScreenState extends State<CartScreen> {
                                           );
                                         },
                                         borderRadius: BorderRadius.circular(8),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(4),
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4),
                                           child: Icon(
                                             Icons.delete_outline_rounded,
                                             size: 20,

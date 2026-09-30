@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/order_model.dart';
 import '../../providers/order_provider.dart';
 import '../../theme/app_theme.dart';
@@ -20,6 +21,36 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   OrderModel? _initialOrder;
   bool _initialized = false;
   bool _isCancelling = false;
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+    final uri = Uri(scheme: 'tel', path: cleanPhone);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        await Clipboard.setData(ClipboardData(text: cleanPhone));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Phone number $cleanPhone copied to clipboard.'),
+              backgroundColor: AppColors.brandMaroon,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      await Clipboard.setData(ClipboardData(text: cleanPhone));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Phone $cleanPhone copied to clipboard.'),
+            backgroundColor: AppColors.brandMaroon,
+          ),
+        );
+      }
+    }
+  }
 
   static const List<Map<String, dynamic>> _coreTrackingSteps = [
     {
@@ -161,13 +192,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Clipboard.setData(const ClipboardData(text: '+923001234567'));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Kitchen phone +92 300 1234567 copied to clipboard & dialer ready!'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
+                  _makePhoneCall('+923001234567');
                 },
               ),
               const Divider(height: 16),
@@ -180,138 +205,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.primary, size: 20),
+                  child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.brandMaroon, size: 20),
                 ),
                 title: const Text('Live Support Chat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                subtitle: const Text('Chat with customer service agent', style: TextStyle(fontSize: 12)),
+                subtitle: const Text('Chat in real-time with Food Fight admin', style: TextStyle(fontSize: 12)),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
                 onTap: () {
                   Navigator.pop(ctx);
-                  _showSupportChatSheet(context);
+                  Navigator.pushNamed(context, '/chat', arguments: order.id);
                 },
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showSupportChatSheet(BuildContext context) {
-    final messages = [
-      {'sender': 'agent', 'text': 'Hello! Thanks for reaching out to Food Fight Support. How can we help with your order today?', 'time': 'Just now'},
-    ];
-    final textCtrl = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1D1D26),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (chatCtx) => StatefulBuilder(
-        builder: (ctx, setChatState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SizedBox(
-            height: 420,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Food Fight Live Agent (Active)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const Divider(height: 20),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: messages.length,
-                    itemBuilder: (_, i) {
-                      final m = messages[i];
-                      final isUser = m['sender'] == 'user';
-                      return Align(
-                        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isUser ? AppColors.primary : const Color(0xFF272734),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Text(
-                            m['text']!,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: textCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13.5),
-                        decoration: InputDecoration(
-                          hintText: 'Type your message...',
-                          hintStyle: const TextStyle(color: Colors.white38),
-                          filled: true,
-                          fillColor: const Color(0xFF121217),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      style: IconButton.styleFrom(backgroundColor: AppColors.primary),
-                      onPressed: () {
-                        final txt = textCtrl.text.trim();
-                        if (txt.isNotEmpty) {
-                          setChatState(() {
-                            messages.add({'sender': 'user', 'text': txt, 'time': 'Now'});
-                            textCtrl.clear();
-                          });
-                          Future.delayed(const Duration(milliseconds: 900), () {
-                            if (ctx.mounted) {
-                              setChatState(() {
-                                messages.add({
-                                  'sender': 'agent',
-                                  'text': 'We have noted your request and our dispatch team has been notified. We will ensure prompt resolution!',
-                                  'time': 'Now',
-                                });
-                              });
-                            }
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -383,15 +287,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 14),
-                  ...reasons.map((r) => RadioListTile<String>(
-                        value: r,
-                        groupValue: selectedReason,
-                        title: Text(r, style: const TextStyle(fontSize: 13.5)),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        activeColor: AppColors.error,
-                        onChanged: (val) => setModalState(() => selectedReason = val!),
-                      )),
+                  RadioGroup<String>(
+                    groupValue: selectedReason,
+                    onChanged: (val) {
+                      if (val != null) {
+                        setModalState(() => selectedReason = val);
+                      }
+                    },
+                    child: Column(
+                      children: reasons
+                          .map((r) => RadioListTile<String>(
+                                value: r,
+                                title: Text(r, style: const TextStyle(fontSize: 13.5)),
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                                activeColor: AppColors.error,
+                              ))
+                          .toList(),
+                    ),
+                  ),
                   if (selectedReason == 'Other reason') ...[
                     const SizedBox(height: 8),
                     TextFormField(
@@ -422,10 +336,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                       ? otherCtrl.text.trim()
                                       : selectedReason;
 
+                                  final orderProv = context.read<OrderProvider>();
+                                  final messenger = ScaffoldMessenger.of(context);
                                   setState(() => _isCancelling = true);
                                   Navigator.pop(ctx);
 
-                                  final ok = await context.read<OrderProvider>().updateOrderStatus(
+                                  final ok = await orderProv.updateOrderStatus(
                                         order.id,
                                         OrderStatus.cancelled,
                                         cancellationReason: finalReason,
@@ -433,7 +349,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
                                   if (mounted) {
                                     setState(() => _isCancelling = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    messenger.showSnackBar(
                                       SnackBar(
                                         content: Text(ok
                                             ? 'Order cancelled successfully.'
@@ -645,14 +561,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           ),
                           // Call Button
                           InkWell(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Calling delivery champion ($riderDisplayPhone)... 📞'),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            },
+                            onTap: () => _makePhoneCall(riderDisplayPhone),
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
                               padding: const EdgeInsets.all(12),
@@ -818,27 +727,45 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     ),
                   const SizedBox(height: 20),
 
-                  // 4. "Get Help" Action & Actions Bar (Spec benchmark)
+                  // 4. "Chat with Support" & "Get Help" Action Bar
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showGetHelpModal(context, order),
-                          icon: const Icon(Icons.help_outline_rounded, size: 18),
-                          label: const Text('Get Help'),
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.brandMaroon,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id),
+                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                          label: const Text('Chat with Support', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.brandMaroon,
+                          side: const BorderSide(color: AppColors.brandMaroon, width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: () => _showGetHelpModal(context, order),
+                        child: const Icon(Icons.help_outline_rounded, size: 20),
+                      ),
                       if (canCancel) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.error,
-                            ),
-                            onPressed: () => _showCancellationDialog(context, order),
-                            icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white),
-                            label: const Text('Cancel Order', style: TextStyle(color: Colors.white)),
+                        const SizedBox(width: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
+                          onPressed: () => _showCancellationDialog(context, order),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          label: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ],

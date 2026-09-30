@@ -23,7 +23,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
   String _searchQuery = '';
-  String _selectedFilter = 'All';
+  final _selectedFilter = 'All';
 
   final List<String> _popularSearches = [
     'Burgers',

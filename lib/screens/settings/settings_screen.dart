@@ -79,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Text('About',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             const SizedBox(height: 14),
-            _buildInfoTile('App Version', '1.0.0'),
+            _buildInfoTile('App Version', '1.2.0'),
             _buildInfoTile('Terms of Service', ''),
             _buildInfoTile('Privacy Policy', ''),
           ],
@@ -194,7 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _showDocumentSheet('Privacy Policy', _privacyPolicyContent);
             } else if (title == 'App Version') {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Food Fight v1.0.0 is running the latest build')),
+                const SnackBar(content: Text('Food Fight v1.2.0 is running the latest build')),
               );
             }
           },
@@ -204,10 +204,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showDocumentSheet(String title, String content) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1D1D26),
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -226,7 +230,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: isDark ? Colors.white24 : colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -234,7 +238,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 16),
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 14),
               Expanded(
@@ -242,7 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: scrollController,
                   child: Text(
                     content,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.6),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13.5, height: 1.6),
                   ),
                 ),
               ),
