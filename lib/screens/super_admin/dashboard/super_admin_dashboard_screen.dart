@@ -645,7 +645,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               'Rs. ${branch.revenue.toStringAsFixed(0)}',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.success),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.success),
                             ),
                           ],
                         ),
@@ -667,7 +667,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               'Rs. ${branch.expenses.toStringAsFixed(0)}',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.warning),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.warning),
                             ),
                           ],
                         ),

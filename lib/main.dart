@@ -27,6 +27,7 @@ import 'providers/address_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/restaurant_provider.dart';
 import 'providers/branch_provider.dart';
+import 'providers/chat_provider.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
@@ -107,6 +108,8 @@ class FoodFightApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RestaurantProvider()),
 
         ChangeNotifierProvider(create: (_) => BranchProvider()),
+
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
 
         ChangeNotifierProvider.value(value: effectiveTheme),
       ],

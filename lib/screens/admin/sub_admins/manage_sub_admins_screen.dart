@@ -31,6 +31,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
     {'id': 'delivery_areas', 'label': 'Delivery Zones & Fees', 'icon': 'map'},
     {'id': 'riders', 'label': 'Fleet & Riders', 'icon': 'two_wheeler'},
     {'id': 'reports', 'label': 'Sales & Analytics', 'icon': 'insights'},
+    {'id': 'chats', 'label': 'Customer Support Chats', 'icon': 'chat'},
   ];
 
   @override
@@ -502,7 +503,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                                       child: Row(
                                         children: [
                                           Icon(admin.isActive ? Icons.block_rounded : Icons.check_circle_rounded, size: 18),
-                                          SizedBox(width: 8),
+                                          const SizedBox(width: 8),
                                           Text(admin.isActive ? 'Suspend Account' : 'Activate Account'),
                                         ],
                                       ),

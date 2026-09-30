@@ -8,6 +8,7 @@ import 'package:food_fight/widgets/admin/stat_card.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 import 'package:food_fight/providers/admin_dashboard_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
+import 'package:food_fight/providers/chat_provider.dart';
 import 'package:food_fight/screens/admin/orders/order_detail_modal.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
@@ -246,8 +247,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isNarrow = constraints.maxWidth < 400;
+                        final isVeryWide = constraints.maxWidth >= 1080;
                         final isWide = constraints.maxWidth >= 720;
-                        final crossAxisCount = isNarrow ? 1 : (isWide ? 4 : 2);
+                        final crossAxisCount = isNarrow ? 1 : (isVeryWide ? 5 : (isWide ? 3 : 2));
+                        final unreadChats = context.watch<ChatProvider>().totalAdminUnread;
 
                         return GridView(
                           shrinkWrap: true,
@@ -290,6 +293,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               color: AppColors.accent,
                               subtitle: 'Active Registered',
                               onTap: () => Navigator.of(context).pushNamed('/admin/customers'),
+                            ),
+                            StatCard(
+                              title: 'Unread Chats',
+                              value: '$unreadChats',
+                              icon: Icons.chat_rounded,
+                              color: AppColors.brandMaroon,
+                              subtitle: unreadChats > 0 ? 'Requires Attention' : 'All Inquiries Addressed',
+                              onTap: () => Navigator.of(context).pushNamed('/admin/chats'),
                             ),
                           ],
                         );

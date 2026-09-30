@@ -268,7 +268,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                 ? null
                                 : () async {
                                     Navigator.pop(ctx);
-                                    setState(() => _isUpdating = true);
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final nav = Navigator.of(context);
                                     final success = await provider.assignRider(
                                       orderId: widget.order.id,
                                       riderId: rider.id,
@@ -278,8 +279,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                     if (mounted) {
                                       setState(() => _isUpdating = false);
                                       if (success) {
-                                        Navigator.pop(context);
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        nav.pop();
+                                        messenger.showSnackBar(
                                           SnackBar(
                                             content: Text('Assigned order to ${rider.name}'),
                                             backgroundColor: AppColors.success,

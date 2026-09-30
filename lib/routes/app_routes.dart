@@ -30,6 +30,7 @@ import '../screens/address/add_address_screen.dart';
 import '../screens/profile/payment_methods_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/chat/customer_chat_screen.dart';
 
 // Fleet & Rider Screens
 import '../screens/admin/riders/manage_riders_screen.dart';
@@ -38,6 +39,7 @@ import '../screens/rider/rider_dashboard_screen.dart';
 // Admin Screens
 import '../screens/admin/dashboard/admin_dashboard_screen.dart';
 import '../screens/admin/orders/admin_orders_screen.dart';
+import '../screens/admin/chats/admin_chats_screen.dart';
 import '../screens/admin/menu/manage_menu_screen.dart';
 import '../screens/admin/menu/add_edit_menu_item_screen.dart';
 import '../screens/admin/categories/manage_categories_screen.dart';
@@ -98,6 +100,7 @@ class AppRoutes {
     '/payment-methods': (context) => const PaymentMethodsScreen(),
     '/notifications': (context) => const NotificationsScreen(),
     '/settings': (context) => const SettingsScreen(),
+    '/chat': (context) => const CustomerChatScreen(),
 
     // -------------------------------------------------------------------------
     // 2. Restaurant Admin Panel Routes (Protected by AdminRouteGuard)
@@ -105,6 +108,7 @@ class AppRoutes {
     // Requires authenticated user with 'admin' or 'super_admin' role
     '/admin/dashboard': (context) => const AdminRouteGuard(child: AdminDashboardScreen()),
     '/admin/orders': (context) => const AdminRouteGuard(requiredPermission: 'orders', child: AdminOrdersScreen()),
+    '/admin/chats': (context) => const AdminRouteGuard(requiredPermission: 'chats', child: AdminChatsScreen()),
     '/admin/menu': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: ManageMenuScreen()),
     '/admin/menu/add': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: AddEditMenuItemScreen()),
     '/admin/categories': (context) => const AdminRouteGuard(requiredPermission: 'categories', child: ManageCategoriesScreen()),

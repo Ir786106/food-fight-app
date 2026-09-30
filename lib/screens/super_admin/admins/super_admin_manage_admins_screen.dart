@@ -103,7 +103,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('1. Branch Location Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: SuperAdminTheme.primary)),
+                      const Text('1. Branch Location Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: SuperAdminTheme.primary)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: branchNameCtrl,
@@ -163,7 +163,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                       const SizedBox(height: 18),
                       const Divider(height: 1),
                       const SizedBox(height: 12),
-                      Text('2. Initial Branch Administrator Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: SuperAdminTheme.primary)),
+                      const Text('2. Initial Branch Administrator Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: SuperAdminTheme.primary)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: adminNameCtrl,
@@ -241,11 +241,15 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                       createdAt: DateTime.now(),
                       updatedAt: DateTime.now(),
                     );
+                    // Capture providers before async operations
+                    final authProv = context.read<AuthProvider>();
+                    final adminAccProv = context.read<AdminAccountProvider>();
+                    final currentUserName = authProv.currentUser?.name;
+
                     await BranchService.createBranch(branch);
 
                     // 2. Create Branch Admin account
-                    final currentUserName = context.read<AuthProvider>().currentUser?.name;
-                    await context.read<AdminAccountProvider>().createAdminAccount(
+                    await adminAccProv.createAdminAccount(
                       AdminAccountModel(
                         id: '',
                         name: adminNameCtrl.text.trim(),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_constants.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/providers/auth_provider.dart';
+import 'package:food_fight/providers/chat_provider.dart';
 import 'package:food_fight/theme/theme_provider.dart';
 
 /// Admin Navigation Drawer organized into structured functional sections
@@ -165,14 +166,23 @@ class AdminDrawer extends StatelessWidget {
                   ],
 
                   // ORDER MANAGEMENT (guarded)
-                  if (user == null || user.can('orders')) ...[
+                  if (user == null || user.can('orders') || user.can('chats')) ...[
                     _buildSectionHeader('ORDER MANAGEMENT', colorScheme),
-                    _buildItem(
-                      context,
-                      title: 'Orders & Dispatch',
-                      icon: Icons.receipt_long_rounded,
-                      route: '/admin/orders',
-                    ),
+                    if (user == null || user.can('orders'))
+                      _buildItem(
+                        context,
+                        title: 'Orders & Dispatch',
+                        icon: Icons.receipt_long_rounded,
+                        route: '/admin/orders',
+                      ),
+                    if (user == null || user.can('chats'))
+                      _buildItem(
+                        context,
+                        title: 'Customer Chats',
+                        icon: Icons.chat_rounded,
+                        route: '/admin/chats',
+                        badgeCount: context.watch<ChatProvider>().totalAdminUnread,
+                      ),
                   ],
 
                   // CUSTOMER MANAGEMENT (guarded)
@@ -356,6 +366,7 @@ class AdminDrawer extends StatelessWidget {
     required IconData icon,
     required String route,
     Color? color,
+    int? badgeCount,
   }) {
     final isSelected = currentRoute == route;
     final colorScheme = Theme.of(context).colorScheme;
@@ -377,6 +388,23 @@ class AdminDrawer extends StatelessWidget {
                 : (color ?? colorScheme.onSurfaceVariant),
             size: 20,
           ),
+          trailing: badgeCount != null && badgeCount > 0
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandYellow,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      color: AppColors.brandMaroon,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                )
+              : null,
           title: Text(
             title,
             style: TextStyle(
