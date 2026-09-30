@@ -2,6 +2,35 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.2.0+3] — 2026-09-30
+
+### Brand Design System & Color Tokens (Part 1)
+- **Single Source of Truth**: Established `lib/core/constants/app_colors.dart` as the sole design system palette token repository. Removed duplicate definitions in `lib/theme/app_theme.dart`.
+- **Authentic Brand Palette**: Sampled directly from `food_fight_logo.png` & `food_fight_logo_icon.png`:
+  - Brand Yellow (`#FFD505` / `#FFD500`) for primary buttons, highlights, chips, and selected states.
+  - Brand Maroon / Brown (`#6D2123` / `#5A1E1B`) for authoritative typography, headings, secondary actions, and outlines.
+  - Neutrals: Warm cream background (`#FAF7F2` / `#FFF8E7`), clean surface cards (`#FFFFFF`), muted containers (`#F3EEE6` / `#FFF1C9`), borders (`#E7DFD3` / `#F0E3C0`), and text hierarchy (`#2A1415`, `#6B5B58`, `#8F807C`).
+  - Fast-food Accents: Tomato/Ketchup Red (`#D9482B` / `#E63B2E`), Mustard/Cheese Orange (`#CC9419` / `#F28C28`), Lettuce Green (`#4C8C2B` / `#3FA34D`).
+  - Semantic & Lifecycle: Built `AppStatusColors` ThemeExtension supporting all 9 order lifecycle statuses with icon and soft tint pairings.
+- **Accessibility & Contrast**: Verified WCAG 2.1 AA compliance across all main pairs (e.g., Maroon on Brand Yellow > 7:1, White on Maroon > 9:1, TextPrimary on Background > 12:1). Added automated test suite `test/wcag_contrast_test.dart`.
+- **Default Light Theme**: Changed default mode in `lib/theme/theme_provider.dart` to `ThemeMode.light`. Polished dark mode remains toggleable in Settings.
+- **Zero Hardcoded Customer Colors**: Completely replaced legacy hardcoded hex values (`0xFF121217`, `0xFF1D1D26`, `0xFF272734`) with semantic theme tokens across all customer screens.
+
+### Customer Panel Redesign (Part 2)
+- **4-Tab Navigation & Layout Hierarchy**: Modern bottom navigation (Home, Orders, My List, Profile) with per-tab Navigator preservation, back-button PopScope, and floating cart badge.
+- **Home & Restaurant Experience**: Branch selector across all 5 branches driving live menus, dynamic categories, Firestore promotional carousels, and opening hour statuses. Restaurant Detail screen upgraded with Order, Review, and Information tabs plus sticky mini-cart.
+- **Real Phone & Email Actions**: Replaced fake snackbar rows with real phone dialer (`tel:`) via `url_launcher` on Order Tracking and Profile, and real `mailto:` email support.
+- **Empty States & Micro-Animations**: Enhanced `EmptyStateView`, `LoadingIndicator`, and shimmer skeletons for smooth, professional loading states.
+
+### Real-Time Customer ↔ Admin Chat System (Part 3)
+- **Data Model & Firestore Collections**: Added `chats/{chatId}` and `chats/{chatId}/messages/{messageId}` with deterministic IDs (`order_{orderId}`, `support_{customerId}_{branchId}`).
+- **Customer Chat UI (`/chat`)**: Full-screen chat featuring order context cards with tracking navigation, brand-styled bubbles (Brand Yellow for customer, White surface for admin), quick reply chips, Supabase image attachments, auto-scroll, and resolved banner with 1-tap reopen.
+- **Admin Chat Management (`/admin/chats`)**: Responsive split-view console (adaptive list and thread views), canned quick responses, "View Order" modal inspection, assignment toggles, and status workflow (Open, Pending, Resolved).
+- **Branch Scoping & Role Security**: Branch owners and sub-admins with `chats` permission strictly see only their branch's conversations; Super Admin monitors all branches.
+- **Security Rules & Cloud Functions**: Deployed least-privilege Firestore rules (Section 15), composite indexes, and Cloud Function trigger `onChatMessageCreated` for real-time FCM notifications.
+
+---
+
 ## [1.1.0+2] — 2026-09-26
 
 ### Critical Bug Fixes (Priority 0)

@@ -1,10 +1,66 @@
-# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Management App
+# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Management App (v1.2.0+3)
 
-A complete, production-grade Flutter food ordering and platform management application for **Food Fight Restaurant**, featuring three distinct panels with role-based access control:
+A complete, production-grade Flutter food ordering and platform management application for **Food Fight Restaurant**, featuring four distinct panels with role-based access control:
 
-1. **Customer Storefront**: Dynamic menu browsing with multi-size variants & extras, keyword search & category filters, real-time cart with coupon codes & delivery zone pricing, Cash on Delivery checkout, 6-stage live order tracking timeline, and customer order history.
-2. **Restaurant Admin Panel**: Live KPI dashboard (sales, order pipeline, active staff/riders, top dishes), Category CRUD, Menu management with multi-size variants & Supabase photo uploads, real-time order processing (advancing status / cancellation with reason), customer management with lifetime spend metrics, delivery zones CRUD, coupon discount codes, and sales reports.
-3. **Platform Super Admin Panel**: Platform-wide intelligence (master kitchen open/closed switch, maintenance mode, system totals), Admin account provisioning & granular permission controls, global configuration management, and full-spectrum audit & activity logs.
+1. **Customer Storefront**: Fast-food ordering UX with 4-tab bottom navigation, multi-branch selector across 5 locations, category chips with real icons, dynamic promotional carousels, size variants & sauce customization, cart with coupons, Cash on Delivery checkout, 6-stage live GPS order tracking, and real-time customer-to-admin support chat.
+2. **Restaurant Admin Panel**: Live KPI dashboard with unread chat badges, split-view Customer Chat console with canned responses and order modal inspection, Category CRUD, Menu management with multi-size variants & Supabase photo uploads, real-time order processing, customer management, delivery zones, coupon codes, and sales reports.
+3. **Platform Super Admin Panel**: Platform-wide intelligence (master kitchen open/closed switch, maintenance mode, system totals), Admin account provisioning & granular sub-admin permission controls (`chats`, `orders`, `menu`, etc.), global configuration management, and full-spectrum audit & activity logs.
+4. **Delivery Rider Panel**: Dedicated rider console for active delivery tasks, status transitions (`pickedUp`, `outForDelivery`, `delivered`), and real-time GPS location broadcasting.
+
+---
+
+## 🎨 Brand Design System (Sampled from Real Brand Logo)
+
+Food Fight follows an authoritative, appetizing fast-food brand identity sampled directly from `food_fight_logo.png` & `food_fight_logo_icon.png`:
+
+| Token Name | Light Theme Hex | Dark Theme Hex | Role & Usage Guidelines |
+| --- | --- | --- | --- |
+| `brandYellow` | `#FFD505` (`#FFD500`) | `#FFD505` | Primary buttons, active tabs, selected chips, badges |
+| `yellowPressed` | `#E6BF00` | `#CCA800` | Pressed / hover state of brand yellow |
+| `yellowSoft` | `#FFF3B8` | `#332B10` | Tinted containers, selected chip backgrounds |
+| `yellowTint` | `#FFFAE0` | `#231E0D` | Subtle highlight rows, order context cards |
+| `brandMaroon` (`brandBrown`) | `#6D2123` (`#5A1E1B`) | `#FFFFFF` / `#FFD505` | Headings, app bar titles, outline buttons, text on yellow |
+| `maroonDeep` | `#4A1517` | `#1A0809` | Dark headers, gradients, pressed maroon |
+| `background` (`cream`) | `#FAF7F2` (`#FFF8E7`) | `#140C0B` (`#1A0F0D`) | Scaffold background |
+| `surface` | `#FFFFFF` | `#1E1211` (`#26160F`) | Cards, sheets, dialogs, input fill |
+| `surfaceMuted` (`lightCream`) | `#F3EEE6` (`#FFF1C9`) | `#2A1A18` (`#33201A`) | Unselected chips, input fill, skeleton base |
+| `border` | `#E7DFD3` (`#F0E3C0`) | `#3A2725` | Card borders, dividers, outlines |
+| `textPrimary` | `#2A1415` (`#2B1412`) | `#F7EFE6` (`#FFF8E7`) | Headings and primary body copy |
+| `textSecondary` | `#6B5B58` (`#7A6660`) | `#BCA9A3` | Subtitles, helper text, timestamps |
+| `textMuted` | `#8F807C` (`#A8988F`) | `#8F7C77` | Placeholders, captions only |
+| `tomato` (`ketchupRed`) | `#D9482B` (`#E63B2E`) | `#EF5350` | Discounts, favorite heart, sale ribbons |
+| `mustard` (`cheeseOrange`) | `#CC9419` (`#F28C28`) | `#FFB74D` | Rating stars, warnings, accents |
+| `lettuce` (`freshGreen`) | `#4C8C2B` (`#3FA34D`) | `#66BB6A` | Veg indicator, open status, success badges |
+
+### 60-30-10 Design & Accessibility Rules
+
+- **60% Neutrals**: `#FAF7F2` cream background and `#FFFFFF` white cards.
+- **30% Maroon/Brown**: Authoritative typography, secondary buttons, outline buttons, and iconography.
+- **10% Yellow & Accents**: Reserved for high-value CTAs, selected pill indicators, and discount tags.
+- **WCAG 2.1 AA Contrast**: All text/background pairs exceed required contrast ratios (Maroon on Yellow > 7:1, White on Maroon > 9:1, TextPrimary on Background > 12:1). Verified by `test/wcag_contrast_test.dart`.
+
+---
+
+## 💬 Real-Time Customer ↔ Admin Chat Architecture
+
+Food Fight includes a real-time messaging pipeline connecting customers directly with their chosen branch's administration:
+
+1. **Deterministic Channel IDs**:
+   - Order-linked: `order_{orderId}`
+   - General support: `support_{customerId}_{branchId}`
+2. **Customer Chat (`/chat`)**:
+   - Live order context card with 1-tap navigation to order tracking.
+   - Quick-reply chips ("Where is my order?", "Change address", "Wrong/missing item", "Cancel order").
+   - Brand message bubbles (Brand Yellow for customer, White surface for admin).
+   - Supabase photo upload for item verification and screenshots.
+   - Resolved conversation banner with 1-tap reopen functionality.
+3. **Admin Chat Console (`/admin/chats`)**:
+   - Responsive layout: mobile list/thread navigation; desktop/tablet dual-pane split view.
+   - Granular status management (`open`, `pending`, `resolved`).
+   - Canned quick responses and inline "View Order" modal.
+   - Branch scoping: Branch Admins and sub-admins with `chats` permission access only their branch's conversations.
+4. **Push & In-App Notifications**:
+   - Cloud Function `onChatMessageCreated` dispatches real-time FCM notifications.
 
 ---
 
@@ -12,11 +68,11 @@ A complete, production-grade Flutter food ordering and platform management appli
 
 - **Primary Backend (Application Data & Auth)**: **Firebase**
   - **Firebase Authentication**: Customer, Staff, Admin, and Super Admin authentication with Google Sign-In support.
-  - **Cloud Firestore**: Real-time streams and persistent collections for `users`, `categories`, `menuItems`, `orders`, `deliveryAreas`, `coupons`, `settings`, `audit_logs`, and `reviews`.
+  - **Cloud Firestore**: Real-time streams and persistent collections for `users`, `categories`, `menuItems`, `orders`, `chats`, `chats/{id}/messages`, `deliveryAreas`, `coupons`, `settings`, `audit_logs`, and `reviews`.
 - **Media & Image Storage**: **Supabase Storage**
-  - Product photos, category banners, and user media uploaded directly to the Supabase `food-images` bucket using public token access.
+  - Product photos, category banners, chat images, and user media uploaded directly to the Supabase `food-images` bucket using public token access.
 - **State Management**: **Provider (`provider` package)**
-  - Fully reactive architecture: `AuthProvider`, `CartProvider`, `CategoryProvider`, `MenuProvider`, `OrderProvider`, `CouponProvider`, `CustomerProvider`, `DeliveryAreaProvider`, `ReportProvider`, `AdminDashboardProvider`, `SuperAdminProvider`, `AdminAccountProvider`, and `AuditLogProvider`.
+  - Fully reactive architecture: `AuthProvider`, `CartProvider`, `ChatProvider`, `CategoryProvider`, `MenuProvider`, `OrderProvider`, `BranchProvider`, `CouponProvider`, `CustomerProvider`, `DeliveryAreaProvider`, `ReportProvider`, `AdminDashboardProvider`, `SuperAdminProvider`, `AdminAccountProvider`, and `AuditLogProvider`.
 - **Security & Route Guarding**:
   - Enforced role guards in `AppRoutes`: `AdminRouteGuard` (restricts to `admin` / `super_admin`) and `SuperAdminRouteGuard` (restricts to `super_admin`).
   - Sensitive files and credentials strictly excluded from version control via `.gitignore`.
