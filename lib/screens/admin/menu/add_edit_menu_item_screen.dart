@@ -328,6 +328,9 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
       }
     }
 
+    final menuProvider = context.read<MenuProvider>();
+    final currentAdminBranchId = context.read<AuthProvider>().currentUser?.branchId;
+
     setState(() => _isSaving = true);
 
     try {
@@ -391,8 +394,6 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
       }
 
       final prepTime = int.tryParse(_prepTimeCtrl.text.trim()) ?? 25;
-      final currentAdminBranchId = context.read<AuthProvider>().currentUser?.branchId;
-
       final itemToSave = MenuItemModel(
         id: widget.item?.id ?? '',
         name: _nameCtrl.text.trim(),
@@ -415,7 +416,6 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         updatedAt: DateTime.now(),
       );
 
-      final menuProvider = context.read<MenuProvider>();
       if (widget.item == null) {
         await menuProvider.createMenuItem(itemToSave);
       } else {
@@ -640,7 +640,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                     const SizedBox(height: 20),
 
                     // ==========================================
-                    // Multi-Size / Variants Toggle
+                    // Multi-Size / Variants Toggle & Templates (Phase 7)
                     // ==========================================
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -654,33 +654,81 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                               : Colors.grey.shade300,
                         ),
                       ),
-                      child: SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text(
-                          'Has multiple sizes / variants?',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14.5),
-                        ),
-                        subtitle: Text(
-                          _hasVariants
-                              ? 'Configuring per-size pricing (e.g. S/M/L, Quarter/Half/Full)'
-                              : 'Single flat price for this item',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
-                        ),
-                        value: _hasVariants,
-                        activeThumbColor: AdminTheme.primaryBlue,
-                        onChanged: (val) {
-                          setState(() {
-                            _hasVariants = val;
-                            if (_hasVariants && _variantEntries.isEmpty) {
-                              _variantEntries.add(VariantFormEntry(
-                                  label: 'Small', price: '399'));
-                              _variantEntries.add(VariantFormEntry(
-                                  label: 'Medium', price: '799'));
-                            }
-                          });
-                        },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Has multiple sizes / variants?',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14.5),
+                            ),
+                            subtitle: Text(
+                              _hasVariants
+                                  ? 'Configuring per-size pricing (e.g. S/M/L, Quarter/Half/Full)'
+                                  : 'Single flat price for this item',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade600),
+                            ),
+                            value: _hasVariants,
+                            activeThumbColor: AdminTheme.primaryBlue,
+                            onChanged: (val) {
+                              setState(() {
+                                _hasVariants = val;
+                                if (_hasVariants && _variantEntries.isEmpty) {
+                                  _variantEntries.add(VariantFormEntry(
+                                      label: 'Small', price: '399'));
+                                  _variantEntries.add(VariantFormEntry(
+                                      label: 'Medium', price: '799'));
+                                }
+                              });
+                            },
+                          ),
+                          if (_hasVariants) ...[
+                            const Divider(height: 16),
+                            const Text(
+                              'Apply Size Set Template:',
+                              style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: AdminTheme.primaryBlue),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ActionChip(
+                                  avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
+                                  label: const Text('4 Sizes (S, M, L, XL)', style: TextStyle(fontSize: 12)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _variantEntries.clear();
+                                      _variantEntries.add(VariantFormEntry(label: 'Small', price: '450'));
+                                      _variantEntries.add(VariantFormEntry(label: 'Medium', price: '850'));
+                                      _variantEntries.add(VariantFormEntry(label: 'Large', price: '1350'));
+                                      _variantEntries.add(VariantFormEntry(label: 'XL', price: '1850'));
+                                    });
+                                  },
+                                ),
+                                ActionChip(
+                                  avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
+                                  label: const Text('3 Sizes (M, L, XL)', style: TextStyle(fontSize: 12)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _variantEntries.clear();
+                                      _variantEntries.add(VariantFormEntry(label: 'Medium', price: '850'));
+                                      _variantEntries.add(VariantFormEntry(label: 'Large', price: '1350'));
+                                      _variantEntries.add(VariantFormEntry(label: 'XL', price: '1850'));
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                          ],
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -760,7 +808,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                           ),
                           child: Text(
                             'Selling Price: Rs. ${_calculatedFinalPrice.toStringAsFixed(0)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: AppColors.success,
                                 fontWeight: FontWeight.bold),
                           ),
@@ -946,7 +994,36 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ActionChip(
+                          avatar: const Icon(Icons.layers_outlined, size: 15, color: AdminTheme.primaryBlue),
+                          label: const Text('+ Extra Toppings Set', style: TextStyle(fontSize: 11.5)),
+                          onPressed: () {
+                            setState(() {
+                              _addonEntries.add(AddonFormEntry(name: 'Extra Mozzarella Cheese', price: '150'));
+                              _addonEntries.add(AddonFormEntry(name: 'Smoked Chicken Chunks', price: '180'));
+                              _addonEntries.add(AddonFormEntry(name: 'Jalapeno & Mushrooms', price: '100'));
+                            });
+                          },
+                        ),
+                        ActionChip(
+                          avatar: const Icon(Icons.soup_kitchen_outlined, size: 15, color: AdminTheme.primaryBlue),
+                          label: const Text('+ Extra Dips Set', style: TextStyle(fontSize: 11.5)),
+                          onPressed: () {
+                            setState(() {
+                              _addonEntries.add(AddonFormEntry(name: 'Garlic Mayo Dip', price: '70'));
+                              _addonEntries.add(AddonFormEntry(name: 'Chipotle Ranch Dip', price: '80'));
+                              _addonEntries.add(AddonFormEntry(name: 'Ghost Pepper Hot Sauce', price: '90'));
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     if (_addonEntries.isEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(

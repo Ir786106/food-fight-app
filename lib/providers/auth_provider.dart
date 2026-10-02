@@ -3,9 +3,10 @@ import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/firebase/firebase_auth_service.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Authentication state provider for role-based access & user session
-class AuthProvider extends ChangeNotifier {
+class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
   final FirebaseAuthService _authService = FirebaseAuthService();
 
   UserModel? _currentUser;

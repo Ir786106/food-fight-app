@@ -49,17 +49,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('demo credentials bootstrapped automatically in local AuthService', () async {
+  test('AuthService allows user signup and subsequent login', () async {
     SharedPreferences.setMockInitialValues({});
     final auth = AuthService();
 
-    final error = await auth.login(
-      email: AuthService.demoEmail,
-      password: AuthService.demoPassword,
+    final signUpError = await auth.signUp(
+      name: 'Test Customer',
+      email: 'customer@foodfight.test',
+      phone: '+923001234567',
+      password: 'SecurePassword123!',
     );
 
-    expect(error, isNull);
+    expect(signUpError, isNull);
     expect(auth.isLoggedIn, isTrue);
-    expect(auth.currentUser?.email, AuthService.demoEmail);
+    expect(auth.currentUser?.email, 'customer@foodfight.test');
+
+    await auth.logout();
+    expect(auth.isLoggedIn, isFalse);
+
+    final loginError = await auth.login(
+      email: 'customer@foodfight.test',
+      password: 'SecurePassword123!',
+    );
+
+    expect(loginError, isNull);
+    expect(auth.isLoggedIn, isTrue);
+    expect(auth.currentUser?.name, 'Test Customer');
   });
 }

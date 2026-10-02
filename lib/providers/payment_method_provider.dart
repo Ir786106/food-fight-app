@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/payment_method_model.dart';
 import '../services/payment_method_service.dart';
+import '../core/utils/safe_change_notifier.dart';
 
-class PaymentMethodProvider extends ChangeNotifier {
+class PaymentMethodProvider extends ChangeNotifier with SafeChangeNotifier {
   List<PaymentMethodModel> _methods = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -22,7 +23,7 @@ class PaymentMethodProvider extends ChangeNotifier {
     if (userId.isEmpty) return;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     _sub?.cancel();
     _sub = PaymentMethodService.watchPaymentMethods(userId).listen(

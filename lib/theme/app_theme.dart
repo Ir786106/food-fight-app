@@ -12,7 +12,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     const colorScheme = ColorScheme.light(
       primary: AppColors.brandYellow,
-      onPrimary: AppColors.brandMaroon,
+      onPrimary: AppColors.onYellow,
       primaryContainer: AppColors.yellowSoft,
       onPrimaryContainer: AppColors.maroonDeep,
       secondary: AppColors.brandMaroon,
@@ -122,15 +122,23 @@ class AppTheme {
       primaryColor: AppColors.brandYellow,
       cardColor: AppColors.surface,
       dividerColor: AppColors.divider,
+      fontFamilyFallback: const [
+        'Noto Sans',
+        'Noto Color Emoji',
+        'Apple Color Emoji',
+        'Segoe UI Emoji',
+        'Roboto',
+        'sans-serif',
+      ],
       textTheme: textTheme,
       extensions: const [
         AppStatusColors.light,
       ],
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.brandMaroon,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 1.5,
         centerTitle: false,
         iconTheme: const IconThemeData(color: AppColors.brandMaroon),
         titleTextStyle: GoogleFonts.poppins(
@@ -144,7 +152,7 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
         shadowColor: const Color(0x0F2A1415),
@@ -152,17 +160,17 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandYellow,
-          foregroundColor: AppColors.brandMaroon,
+          foregroundColor: AppColors.onYellow,
           disabledBackgroundColor: AppColors.surfaceMuted,
           disabledForegroundColor: AppColors.textMuted,
-          minimumSize: const Size(64, 52),
+          minimumSize: const Size(64, 56),
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: GoogleFonts.poppins(
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -292,22 +300,22 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.brandYellow;
-          return AppColors.textMuted;
+          if (states.contains(WidgetState.selected)) return AppColors.brandMaroon;
+          return AppColors.textSecondary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.brandMaroon;
+          if (states.contains(WidgetState.selected)) return AppColors.brandYellow;
           return AppColors.border;
         }),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.brandMaroon;
+          if (states.contains(WidgetState.selected)) return AppColors.brandYellow;
           return Colors.transparent;
         }),
-        checkColor: const WidgetStatePropertyAll(AppColors.brandYellow),
-        side: const BorderSide(color: AppColors.border, width: 1.5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        checkColor: const WidgetStatePropertyAll(AppColors.brandMaroon),
+        side: const BorderSide(color: AppColors.border, width: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       ),
     );
   }
@@ -387,15 +395,23 @@ class AppTheme {
       primaryColor: AppColors.brandYellow,
       cardColor: AppColors.darkSurface,
       dividerColor: AppColors.darkDivider,
+      fontFamilyFallback: const [
+        'Noto Sans',
+        'Noto Color Emoji',
+        'Apple Color Emoji',
+        'Segoe UI Emoji',
+        'Roboto',
+        'sans-serif',
+      ],
       textTheme: textTheme,
       extensions: const [
         AppStatusColors.dark,
       ],
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkSurface,
+        backgroundColor: AppColors.darkBackground,
         foregroundColor: AppColors.darkTextPrimary,
         elevation: 0,
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: 1.5,
         centerTitle: false,
         iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
         titleTextStyle: GoogleFonts.poppins(
@@ -409,23 +425,23 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.darkBorder, width: 1),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandYellow,
-          foregroundColor: AppColors.maroonDeep,
+          foregroundColor: AppColors.onYellow,
           disabledBackgroundColor: AppColors.darkSurfaceElevated,
           disabledForegroundColor: AppColors.darkTextMuted,
-          minimumSize: const Size(64, 52),
+          minimumSize: const Size(64, 56),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: GoogleFonts.poppins(
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),

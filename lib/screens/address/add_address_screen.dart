@@ -149,13 +149,13 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                               Icon(
                                 _typeIcons[type],
                                 size: 16,
-                                color: isSelected ? AppColors.brandMaroon : colorScheme.onSurfaceVariant,
+                                color: isSelected ? AppColors.onYellow : colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 type,
                                 style: TextStyle(
-                                  color: isSelected ? AppColors.brandMaroon : colorScheme.onSurface,
+                                  color: isSelected ? AppColors.onYellow : colorScheme.onSurface,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -200,8 +200,10 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                       style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     ),
                     value: _isDefault,
-                    activeThumbColor: AppColors.brandMaroon,
-                    activeTrackColor: AppColors.yellowSoft,
+                    activeTrackColor: AppColors.brandYellow,
+                    activeThumbColor: AppColors.onYellow,
+                    inactiveTrackColor: isDark ? AppColors.darkBorder : AppColors.border,
+                    inactiveThumbColor: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     onChanged: (val) => setState(() => _isDefault = val),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   ),
@@ -210,7 +212,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 CustomButton(
                   text: _isSaving ? 'Saving Address...' : 'Save Address',
                   isLoading: _isSaving,
-                  onPressed: _isSaving ? () {} : _handleSave,
+                  onPressed: _isSaving ? null : _handleSave,
                 ),
               ],
             ),

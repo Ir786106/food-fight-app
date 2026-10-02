@@ -279,11 +279,11 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                           // Grid Layout for Tablet/Desktop
                           return GridView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisExtent: 140,
+                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 440,
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
+                              childAspectRatio: 2.3,
                             ),
                             itemCount: riders.length,
                             itemBuilder: (ctx, i) => _buildRiderCard(context, riders[i]),

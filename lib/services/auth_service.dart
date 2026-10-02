@@ -18,10 +18,6 @@ class AuthService extends ChangeNotifier {
   static const String _usersKey = 'ff_users';
   static const String _currentUserKey = 'ff_current_user';
 
-  static const bool demoAuthEnabled = true;
-  static const String demoEmail = 'demo@example.com';
-  static const String demoPassword = 'demo123';
-
   static String normalizeEmail(String email) {
     return email.trim().toLowerCase();
   }
@@ -33,26 +29,6 @@ class AuthService extends ChangeNotifier {
     if (userJson != null) {
       _currentUser = UserModel.fromJson(jsonDecode(userJson));
       notifyListeners();
-    }
-  }
-
-  Future<void> seedDemoAccountIfNeeded() async {
-    final users = await _getAllUsers();
-    final normalizedDemoEmail = normalizeEmail(demoEmail);
-    final exists = users.any((u) => normalizeEmail(u.email) == normalizedDemoEmail);
-
-    if (!exists) {
-      final demoUser = UserModel(
-        id: 'demo-user',
-        name: 'Demo Customer',
-        email: normalizedDemoEmail,
-        phone: '+923001234567',
-        password: demoPassword,
-        profileImage: null,
-      );
-
-      users.add(demoUser);
-      await _saveAllUsers(users);
     }
   }
 
@@ -115,7 +91,6 @@ class AuthService extends ChangeNotifier {
   }) async {
     final normalizedEmail = normalizeEmail(email);
     _setLoading(true);
-    await seedDemoAccountIfNeeded();
     await Future.delayed(const Duration(milliseconds: 700));
 
     final users = await _getAllUsers();

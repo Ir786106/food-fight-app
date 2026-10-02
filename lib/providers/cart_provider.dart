@@ -7,9 +7,11 @@ import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/models/coupon_model.dart';
 import 'package:food_fight/services/coupon_service.dart';
 import 'package:food_fight/services/order_service.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
+import 'package:food_fight/models/deal_model.dart';
 
 /// Provider for managing customer shopping cart, delivery area, coupons, and checkout
-class CartProvider extends ChangeNotifier {
+class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   final List<CartItemModel> _items = [];
   final List<FoodModel> _favorites = [];
   DeliveryAreaModel? _selectedArea;
@@ -18,6 +20,8 @@ class CartProvider extends ChangeNotifier {
   bool _isFreeDelivery = false;
   String? _couponError;
   String? _branchId;
+  int _tokensToRedeem = 0;
+  double _tokenValue = 1.0;
 
   List<CartItemModel> get items => List.unmodifiable(_items);
   List<FoodModel> get favorites => List.unmodifiable(_favorites);
@@ -27,6 +31,9 @@ class CartProvider extends ChangeNotifier {
   bool get isFreeDelivery => _isFreeDelivery;
   String? get couponError => _couponError;
   String? get branchId => _branchId ?? (_items.isNotEmpty ? _items.first.food.branchId : null);
+  int get tokensToRedeem => _tokensToRedeem;
+  double get tokenValue => _tokenValue;
+  double get loyaltyDiscount => (_tokensToRedeem * _tokenValue).clamp(0.0, subtotal);
 
   void setBranchId(String? id) {
     _branchId = id;
@@ -63,11 +70,52 @@ class CartProvider extends ChangeNotifier {
   }
 
   double get total {
-    final t = subtotal + deliveryFee - _couponDiscount;
+    final discount = loyaltyDiscount > 0 ? loyaltyDiscount : _couponDiscount;
+    final t = subtotal + deliveryFee - discount;
     return t > 0 ? t : 0.0;
   }
 
   double get totalPrice => total;
+
+  /// Apply loyalty tokens for discount at checkout
+  void applyTokens(int tokens, {double tokenValue = 1.0}) {
+    _tokensToRedeem = tokens;
+    _tokenValue = tokenValue;
+    notifyListeners();
+  }
+
+  /// Remove tokens
+  void clearTokens() {
+    _tokensToRedeem = 0;
+    notifyListeners();
+  }
+
+  /// Add a pre-configured deal / bundle directly to cart with deal price applied
+  void addDealToCart(DealModel deal) {
+    final bundleDesc = deal.bundleItems.isNotEmpty
+        ? deal.bundleItems.map((b) => '${b.quantity}x ${b.name}').join(', ')
+        : deal.description;
+
+    final dealFood = FoodModel(
+      id: 'deal_${deal.id}',
+      name: deal.title,
+      description: bundleDesc,
+      price: deal.dealPrice,
+      imageEmoji: '🎁',
+      imageUrl: deal.imageUrl,
+      category: 'Deals',
+      branchId: deal.branchId,
+      rating: 5.0,
+      prepTimeMinutes: 25,
+      restaurantId: 'rest-1',
+    );
+
+    addToCart(
+      dealFood,
+      quantity: 1,
+      selectedSize: 'Bundle Deal',
+    );
+  }
 
   bool isInCart(String foodId) => _items.any((i) => i.food.id == foodId);
 
@@ -210,6 +258,7 @@ class CartProvider extends ChangeNotifier {
     _isFreeDelivery = false;
     _couponError = null;
     _branchId = null;
+    _tokensToRedeem = 0;
     notifyListeners();
   }
 
@@ -289,13 +338,15 @@ class CartProvider extends ChangeNotifier {
     String? branchId,
   }) async {
     final effectiveBranchId = branchId ?? this.branchId;
+    final effectiveDiscount = loyaltyDiscount > 0 ? loyaltyDiscount : _couponDiscount;
+
     final order = OrderModel(
       id: '',
       orderNumber: OrderService.generateOrderNumber(),
       branchId: effectiveBranchId,
       items: List.from(_items),
       subtotal: subtotal,
-      discount: _couponDiscount,
+      discount: effectiveDiscount,
       deliveryCharge: deliveryFee,
       total: total,
       paymentMethod: paymentMethod,
@@ -308,30 +359,13 @@ class CartProvider extends ChangeNotifier {
       customerName: customerName,
       customerPhone: customerPhone,
       restaurantName: restaurantName,
+      tokensUsed: _tokensToRedeem,
+      tokensDiscount: loyaltyDiscount,
     );
 
     final generatedId = await OrderService.placeOrder(order);
 
-    final savedOrder = OrderModel(
-      id: generatedId,
-      orderNumber: order.orderNumber,
-      branchId: effectiveBranchId,
-      items: order.items,
-      subtotal: order.subtotal,
-      discount: order.discount,
-      deliveryCharge: order.deliveryCharge,
-      total: order.total,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
-      status: order.status,
-      deliveryAddress: order.deliveryAddress,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      customerId: order.customerId,
-      customerName: order.customerName,
-      customerPhone: order.customerPhone,
-      restaurantName: order.restaurantName,
-    );
+    final savedOrder = order.copyWith(id: generatedId);
 
     clearCart();
     return savedOrder;

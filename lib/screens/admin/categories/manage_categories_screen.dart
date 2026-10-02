@@ -191,6 +191,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                     : () async {
                         if (!formKey.currentState!.validate()) return;
 
+                        final provider = context.read<CategoryProvider>();
+                        final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
+
                         setDialogState(() => isSaving = true);
                         try {
                           String? finalImageUrl = imageUrl;
@@ -205,9 +208,6 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           final orderNum = int.tryParse(orderController.text.trim()) ?? 0;
                           final name = nameController.text.trim();
                           final desc = descController.text.trim();
-
-                          final provider = context.read<CategoryProvider>();
-                          final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
 
                           if (category == null) {
                             await provider.createCategory(CategoryModel(

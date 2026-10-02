@@ -129,6 +129,13 @@ class AppColors {
   static const Color riderColor = brandYellow;
   static const Color staffColor = brandMaroon;
   static const Color adminColor = brandMaroon;
+  static const Color onYellow = maroonDeep;
+  static const Color onYellowDark = maroonDeep;
+  static const Color amberDark = Color(0xFF8A5A00);
+  static const Color darkAmberDark = brandYellow;
+  static const Color darkYellowSoft = Color(0xFF332B10);
+  static const Color ctaDark = Color(0xFF2A1415);
+  static const Color cardDark = darkSurface;
 
   static Color withAlpha(Color color, double alpha) =>
       color.withValues(alpha: alpha);

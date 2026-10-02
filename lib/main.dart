@@ -28,6 +28,10 @@ import 'providers/notification_provider.dart';
 import 'providers/restaurant_provider.dart';
 import 'providers/branch_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/deal_provider.dart';
+import 'providers/loyalty_provider.dart';
+import 'providers/review_provider.dart';
+import 'providers/option_template_provider.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
@@ -110,6 +114,14 @@ class FoodFightApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BranchProvider()),
 
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+
+        ChangeNotifierProvider(create: (_) => DealProvider()),
+
+        ChangeNotifierProvider(create: (_) => LoyaltyProvider()),
+
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
+
+        ChangeNotifierProvider(create: (_) => OptionTemplateProvider()),
 
         ChangeNotifierProvider.value(value: effectiveTheme),
       ],

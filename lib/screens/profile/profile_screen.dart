@@ -5,11 +5,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
 import '../../providers/cart_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/constants/app_colors.dart';
 import '../../widgets/common/network_image_view.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../core/constants/app_dimens.dart';
 import '../../providers/address_provider.dart';
-import '../../providers/coupon_provider.dart';
+import '../../providers/loyalty_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -22,21 +23,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _watchedUserId;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CouponProvider>().fetchCoupons();
-    });
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final user = context.read<AuthProvider>().currentUser;
     if (user != null && user.id != _watchedUserId) {
       _watchedUserId = user.id;
-      context.read<AddressProvider>().watchAddresses(user.id);
-      context.read<OrderProvider>().watchCustomerOrders(user.id);
+      final userId = user.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<AddressProvider>().watchAddresses(userId);
+        context.read<OrderProvider>().watchCustomerOrders(userId);
+        context.read<LoyaltyProvider>().watchAccount(userId);
+      });
     }
   }
 
@@ -134,9 +132,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showPromoCodesDialog(BuildContext context) {
-    final couponProvider = context.read<CouponProvider>();
-    final activeCoupons = couponProvider.activeCoupons;
+  void _showLoyaltyTransactionsSheet(BuildContext context) {
+    final loyalty = context.read<LoyaltyProvider>();
+    final txs = loyalty.transactions;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -149,46 +147,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.65,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) => ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(22),
             children: [
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: AppColors.brandYellow.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.local_offer_outlined, color: AppColors.brandMaroon, size: 22),
+                    child: const Icon(Icons.stars_rounded, color: AppColors.brandMaroon, size: 24),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    'Available Promo Codes',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Loyalty Tokens History',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                        ),
+                        Text(
+                          'Balance: ${loyalty.balance} Tokens (Rs. ${loyalty.balance.toStringAsFixed(0)})',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.brandMaroon),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              if (activeCoupons.isEmpty)
+              if (txs.isEmpty)
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 36),
                     child: Column(
                       children: [
-                        Icon(Icons.local_offer_outlined, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4), size: 48),
+                        Icon(Icons.stars_outlined, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4), size: 50),
                         const SizedBox(height: 12),
                         Text(
-                          'No Active Promo Codes',
+                          'No Token Activity Yet',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Check back soon or tune in during fight events for exclusive discounts!',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
+                          'Earn 1 token for every Rs. 100 spent on delivered orders!\nUse tokens at checkout for instant cash discounts.',
+                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -196,79 +208,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 )
               else
-                ...activeCoupons.map((coupon) {
-                  final discountText = coupon.type == 'percentage'
-                      ? '${coupon.value.toInt()}% OFF'
-                      : 'Rs. ${coupon.value.toInt()} OFF';
-                  final descText = coupon.description ??
-                      (coupon.minimumOrder > 0
-                          ? 'Min. order Rs. ${coupon.minimumOrder.toInt()}'
-                          : 'Valid on all orders');
+                ...txs.map((tx) {
+                  final isPositive = tx.isCredit;
+                  final icon = tx.type == 'bonus'
+                      ? Icons.card_giftcard_rounded
+                      : (tx.type == 'earn' ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded);
+                  final color = isPositive ? AppColors.success : AppColors.brandMaroon;
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                     ),
                     child: Row(
                       children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icon, color: color, size: 20),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    coupon.code,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: AppColors.brandMaroon,
-                                      letterSpacing: 0.6,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.brandYellow,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      discountText,
-                                      style: const TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.brandMaroon,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
                               Text(
-                                descText,
-                                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                                tx.description.isNotEmpty ? tx.description : tx.type.toUpperCase(),
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: colorScheme.onSurface),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${tx.createdAt.day}/${tx.createdAt.month}/${tx.createdAt.year} • Balance: ${tx.balanceAfter}',
+                                style: TextStyle(fontSize: 11.5, color: colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.copy_rounded, color: colorScheme.onSurfaceVariant, size: 18),
-                          tooltip: 'Copy Code',
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: coupon.code));
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Promo "${coupon.code}" copied to clipboard!'),
-                                backgroundColor: AppColors.brandMaroon,
-                              ),
-                            );
-                          },
+                        Text(
+                          '${isPositive ? '+' : '-'}${tx.amount}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: color,
+                          ),
                         ),
                       ],
                     ),
@@ -281,8 +269,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showReferAndEarnDialog(BuildContext context) {
-    const referralCode = 'FIGHT-WIN200';
+  void _showLoyaltyInfoDialog(BuildContext context) {
+    final loyalty = context.read<LoyaltyProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -301,65 +289,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+              Container(
+                width: 60,
+                height: 60,
+                decoration: const BoxDecoration(
+                  color: AppColors.brandYellow,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.stars_rounded, color: AppColors.brandMaroon, size: 34),
               ),
-              child: const Icon(Icons.card_giftcard_rounded, color: AppColors.brandMaroon, size: 30),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Invite Friends, Get Rs. 200!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Share your code with friends. When they place their first order, you both get Rs. 200 off your next feast!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.4),
-            ),
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.brandMaroon.withValues(alpha: 0.3)),
+              const SizedBox(height: 14),
+              Text(
+                'Food Fight Loyalty Program',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    referralCode,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: 1.2),
+              const SizedBox(height: 8),
+              Text(
+                'Current Balance: ${loyalty.balance} Tokens (Worth Rs. ${loyalty.balance.toStringAsFixed(0)})',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.brandMaroon),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    _buildLoyaltyRuleRow(Icons.card_giftcard_rounded, 'Welcome Bonus', 'Get 50 bonus tokens right when you sign up!'),
+                    const Divider(height: 20),
+                    _buildLoyaltyRuleRow(Icons.fastfood_rounded, 'Earn on Every Order', 'Earn 1 token for every Rs. 100 on delivered orders.'),
+                    const Divider(height: 20),
+                    _buildLoyaltyRuleRow(Icons.payments_rounded, 'Cash Value', '1 Token = Rs. 1 discount. Redeem anytime at checkout!'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.brandYellow,
+                    foregroundColor: AppColors.brandMaroon,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(const ClipboardData(text: referralCode));
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Referral code copied! Share with friends.'),
-                          backgroundColor: AppColors.brandMaroon,
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.brandMaroon),
-                    label: const Text('COPY', style: TextStyle(color: AppColors.brandMaroon, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showLoyaltyTransactionsSheet(context);
+                  },
+                  child: const Text('View Token Transaction History', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildLoyaltyRuleRow(IconData icon, String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.brandMaroon, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+              const SizedBox(height: 2),
+              Text(desc, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   void _showHelpCenterDialog(BuildContext context) {
     final theme = Theme.of(context);
@@ -568,11 +578,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: AppColors.yellowSoft,
                                     alignment: Alignment.center,
                                     child: Text(
-                                      (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : '🥊',
-                                      style: const TextStyle(
+                                      (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'F',
+                                      style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.w800,
-                                        color: AppColors.brandMaroon,
+                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                       ),
                                     ),
                                   ),
@@ -586,10 +596,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(5),
                               decoration: const BoxDecoration(
-                                color: AppColors.brandMaroon,
+                                color: AppColors.brandYellow,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 13),
+                              child: const Icon(Icons.camera_alt_rounded, color: AppColors.onYellow, size: 13),
                             ),
                           ),
                         ),
@@ -727,23 +737,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 18),
 
-              // Group 2: Promotions & Perks
-              _buildSectionHeader('REWARDS & DISCOUNTS'),
+              // Group 2: Loyalty Rewards
+              _buildSectionHeader('LOYALTY & REWARDS'),
               _buildCardGroup([
                 _buildMenuItem(
-                  icon: Icons.local_offer_outlined,
-                  title: 'Promo Codes & Vouchers',
-                  subtitle: 'View discounts & special coupon codes',
-                  trailingBadge: 'ACTIVE',
-                  onTap: () => _showPromoCodesDialog(context),
+                  icon: Icons.stars_rounded,
+                  title: 'Food Fight Loyalty Tokens',
+                  subtitle: '${context.watch<LoyaltyProvider>().balance} Tokens (Rs. ${context.watch<LoyaltyProvider>().balance.toStringAsFixed(0)} cash value)',
+                  trailingBadge: '${context.watch<LoyaltyProvider>().balance} PTS',
+                  iconColor: AppColors.brandMaroon,
+                  onTap: () => _showLoyaltyInfoDialog(context),
                 ),
                 Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
-                  icon: Icons.card_giftcard_outlined,
-                  title: 'Refer & Earn',
-                  subtitle: 'Give Rs. 200, Get Rs. 200 off',
-                  trailingBadge: 'REWARD',
-                  onTap: () => _showReferAndEarnDialog(context),
+                  icon: Icons.history_rounded,
+                  title: 'Token Activity History',
+                  subtitle: 'Earned and redeemed token statements',
+                  trailingBadge: 'HISTORY',
+                  onTap: () => _showLoyaltyTransactionsSheet(context),
                 ),
               ]),
 
@@ -887,7 +898,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimens.navBarScrollPadding),
             ],
           ),
         ),
@@ -1005,6 +1016,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return ListTile(
       onTap: onTap,
@@ -1039,15 +1051,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.brandYellow,
+                color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.5)),
               ),
               child: Text(
                 trailingBadge,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.brandMaroon,
+                  color: isDark ? AppColors.brandYellow : AppColors.onYellow,
                 ),
               ),
             ),

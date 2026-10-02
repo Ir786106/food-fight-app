@@ -4,9 +4,10 @@ import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/models/food_model.dart';
 import 'package:food_fight/services/menu_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing Menu Items across Customer and Admin panels
-class MenuProvider extends ChangeNotifier {
+class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
   List<MenuItemModel> _menuItems = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -78,8 +79,7 @@ class MenuProvider extends ChangeNotifier {
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = MenuService.watchMenuItems(

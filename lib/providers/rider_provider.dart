@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/rider_model.dart';
 import '../models/order_model.dart';
 import '../services/rider_service.dart';
+import '../core/utils/safe_change_notifier.dart';
 
-class RiderProvider extends ChangeNotifier {
+class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
   List<RiderModel> _riders = [];
   List<OrderModel> _assignedDeliveries = [];
   bool _isLoading = false;
@@ -23,8 +24,7 @@ class RiderProvider extends ChangeNotifier {
   void watchAllRiders() {
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _ridersSub?.cancel();
     _ridersSub = RiderService.watchAllRiders().listen(
@@ -46,8 +46,7 @@ class RiderProvider extends ChangeNotifier {
     if (riderId.isEmpty) return;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _deliveriesSub?.cancel();
     _deliveriesSub = RiderService.watchRiderDeliveries(riderId).listen(

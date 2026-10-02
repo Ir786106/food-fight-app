@@ -105,7 +105,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   Text(
                     _otpVerified
                         ? 'Create a new password for $email'
-                        : 'Enter the 4-digit code sent to $email (offline demo: use any 4 digits)',
+                        : 'Enter the 4-digit verification code sent to $email',
                     style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,

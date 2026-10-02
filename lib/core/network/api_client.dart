@@ -11,9 +11,9 @@ class ApiClient {
   ApiClient._internal() {
     _dio = Dio(
       BaseOptions(
-        connectTimeout: Duration(seconds: 30),
-        receiveTimeout: Duration(seconds: 30),
-        sendTimeout: Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
         responseType: ResponseType.json,
       ),
     );
@@ -22,15 +22,12 @@ class ApiClient {
     _dio?.interceptors.addAll([
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          print('Request: ${options.method} ${options.uri}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print('Response: ${response.statusCode} ${response.requestOptions.uri}');
           return handler.next(response);
         },
         onError: (error, handler) {
-          print('Error: ${error.response?.statusCode ?? 'UNKNOWN'} ${error.requestOptions.uri}');
           return handler.next(error);
         },
       ),

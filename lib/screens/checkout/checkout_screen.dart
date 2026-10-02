@@ -8,9 +8,12 @@ import '../../models/delivery_area_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/network_image_view.dart';
+import '../../widgets/custom_button.dart';
 import '../../models/address_model.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/branch_provider.dart';
+import '../../providers/loyalty_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -105,6 +108,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         branchId: branchId,
       );
 
+      // Redeem loyalty tokens atomically if used
+      if (cart.tokensToRedeem > 0 && mounted) {
+        await context.read<LoyaltyProvider>().redeemTokens(
+              userId: customerId,
+              tokensToRedeem: cart.tokensToRedeem,
+              orderId: placedOrder.id,
+            );
+      }
+
       if (!mounted) return;
       setState(() => _isPlacingOrder = false);
 
@@ -182,7 +194,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Checkout 🥊'),
+        title: const Text('Checkout'),
         elevation: 0,
       ),
       body: SafeArea(
@@ -217,14 +229,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 });
                               }
                             },
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.add_rounded, color: AppColors.primary, size: 18),
-                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.add_rounded,
+                                  color: isDark ? AppColors.brandYellow : AppColors.amberDark,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 4),
                                 Text(
                                   'Add New',
                                   style: TextStyle(
-                                    color: AppColors.primary,
+                                    color: isDark ? AppColors.brandYellow : AppColors.amberDark,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
@@ -262,12 +278,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   margin: const EdgeInsets.only(right: 10),
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.primary : colorScheme.surface,
+                                    color: isSelected ? AppColors.brandYellow : colorScheme.surface,
                                     borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.yellowPressed
+                                          : colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: isSelected
-                                            ? AppColors.primary.withValues(alpha: 0.35)
+                                            ? AppColors.brandYellow.withValues(alpha: 0.35)
                                             : Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
@@ -279,14 +300,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     children: [
                                       Icon(
                                         icon,
-                                        color: isSelected ? Colors.white : AppColors.primary,
+                                        color: isSelected
+                                            ? AppColors.onYellow
+                                            : (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
                                         size: 16,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
                                         addr.label,
                                         style: TextStyle(
-                                          color: isSelected ? Colors.white : colorScheme.onSurface,
+                                          color: isSelected ? AppColors.onYellow : colorScheme.onSurface,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13,
                                         ),
@@ -349,7 +372,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'House / Apartment #, Street, Block, Nearby Landmark...',
-                          prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.primary),
+                          prefixIcon: Icon(
+                            Icons.location_on_outlined,
+                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                          ),
                           filled: true,
                           fillColor: colorScheme.surface,
                           border: OutlineInputBorder(
@@ -413,7 +439,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         'Rs. ${area.deliveryCharge.toStringAsFixed(0)}',
-                                        style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                          color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -429,12 +458,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                             borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.brandYellow.withValues(alpha: 0.3),
+                            ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Standard Express Delivery: Rs. 150 (Citywide)',
-                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       const SizedBox(height: 24),
@@ -462,14 +497,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.primary
+                                    ? AppColors.brandYellow
                                     : colorScheme.outlineVariant.withValues(alpha: 0.5),
                                 width: isSelected ? 1.8 : 1,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: isSelected
-                                      ? AppColors.primary.withValues(alpha: 0.15)
+                                      ? AppColors.brandYellow.withValues(alpha: 0.15)
                                       : Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 3),
@@ -483,13 +518,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? AppColors.primary.withValues(alpha: 0.15)
+                                        ? AppColors.brandYellow.withValues(alpha: 0.18)
                                         : colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(
                                     opt['icon'] as IconData,
-                                    color: isSelected ? AppColors.primary : colorScheme.onSurfaceVariant,
+                                    color: isSelected
+                                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                        : colorScheme.onSurfaceVariant,
                                     size: 22,
                                   ),
                                 ),
@@ -519,7 +556,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ),
                                 Icon(
                                   isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                                  color: isSelected ? AppColors.primary : colorScheme.onSurfaceVariant,
+                                  color: isSelected
+                                      ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                      : colorScheme.onSurfaceVariant,
                                   size: 22,
                                 ),
                               ],
@@ -529,9 +568,101 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       }),
                       const SizedBox(height: 24),
 
-                      // 4. Order Summary Breakdown (Identical in style to Cart's)
+                      // 4. Items in Order Breakdown (Reference F)
                       Text(
-                        'Order Summary',
+                        'Items in Order (${cart.itemCount})',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: cart.items.length,
+                          separatorBuilder: (_, __) => Divider(
+                            height: 16,
+                            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                          ),
+                          itemBuilder: (context, idx) {
+                            final item = cart.items[idx];
+                            final hasVariant = item.selectedVariant != null ||
+                                (item.selectedSize != null && item.selectedSize!.isNotEmpty);
+                            return Row(
+                              children: [
+                                NetworkImageView(
+                                  imageUrl: item.food.imageUrl,
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 12,
+                                  fallbackEmoji: item.food.imageEmoji,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.food.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      if (hasVariant)
+                                        Text(
+                                          'Size: ${item.selectedVariant?.label ?? item.selectedSize}',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      Text(
+                                        'Qty: ${item.quantity}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // 5. Order Summary Breakdown
+                      Text(
+                        'Fee Breakdown',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -569,12 +700,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               cart.isFreeDelivery ? 'FREE' : 'Rs. ${cart.deliveryFee.toStringAsFixed(0)}',
                               color: cart.isFreeDelivery ? AppColors.success : null,
                             ),
-                            if (cart.couponDiscount > 0) ...[
+                            if (cart.loyaltyDiscount > 0) ...[
                               const SizedBox(height: 8),
                               _summaryRow(
                                 context,
-                                'Coupon Discount (${cart.appliedCoupon?.code})',
-                                '- Rs. ${cart.couponDiscount.toStringAsFixed(0)}',
+                                'Loyalty Tokens (${cart.tokensToRedeem} redeemed)',
+                                '- Rs. ${cart.loyaltyDiscount.toStringAsFixed(0)}',
                                 color: AppColors.success,
                               ),
                             ],
@@ -596,7 +727,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
 
-      // Sticky "Place Order" / "Confirmation" Button
+      // Sticky "Place Order" Action Bar
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
@@ -628,33 +759,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'Rs. ${cart.total.toStringAsFixed(0)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
+                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                     ),
                   ),
                 ],
               ),
               const SizedBox(width: 18),
               Expanded(
-                child: ElevatedButton.icon(
+                child: CustomButton(
+                  text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+                  isLoading: _isPlacingOrder,
+                  icon: Icons.check_circle_outline_rounded,
                   onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
-                  icon: _isPlacingOrder
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
-                  label: Text(
-                    _isPlacingOrder ? 'Placing Order...' : 'Place Order',
-                    style: const TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -666,6 +785,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _summaryRow(BuildContext context, String label, String value, {bool isBold = false, Color? color}) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -688,7 +808,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               fontSize: isBold ? 18 : 13.5,
               fontWeight: FontWeight.w900,
-              color: color ?? (isBold ? AppColors.primary : colorScheme.onSurface),
+              color: color ?? (isBold ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon) : colorScheme.onSurface),
             ),
           ),
         ),

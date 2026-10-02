@@ -38,8 +38,8 @@ class DeliveryAreaModel {
     return DeliveryAreaModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      deliveryCharge: SafeConvert.toDouble(json['deliveryCharge'] ?? json['delivery_fee']),
-      isActive: json['isActive'] == 1 || json['isActive'] == true,
+      deliveryCharge: SafeConvert.toDouble(json['deliveryCharge'] ?? json['delivery_fee'] ?? json['deliveryFee']),
+      isActive: json['isActive'] == 1 || json['isActive'] == true || json['isActive'] == null,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       description: json['description']?.toString(),

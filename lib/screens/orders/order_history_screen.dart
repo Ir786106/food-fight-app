@@ -10,6 +10,9 @@ import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/orders/order_speed_dial_fab.dart';
+import '../../core/constants/app_dimens.dart';
+import '../../core/constants/app_colors.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -88,8 +91,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      floatingActionButton: const OrderSpeedDialFab(),
       appBar: AppBar(
-        title: const Text('My Orders 🥊'),
+        title: const Text('My Orders'),
         elevation: 0,
         actions: [
           Consumer<ChatProvider>(
@@ -126,17 +130,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: AppColors.primary,
+                color: AppColors.brandYellow,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.35),
+                    color: AppColors.brandYellow.withValues(alpha: 0.35),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              labelColor: Colors.white,
+              labelColor: AppColors.onYellow,
               unselectedLabelColor: colorScheme.onSurfaceVariant,
               labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
@@ -204,7 +208,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                   ],
                                 )
                               : ListView.separated(
-                                  padding: const EdgeInsets.all(20),
+                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, AppDimens.navBarScrollPadding),
                                   itemCount: currentOrders.length,
                                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                                   itemBuilder: (context, index) {
@@ -284,16 +288,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                         ),
                                                         Text(
                                                           'Rs. ${order.total.toStringAsFixed(0)}',
-                                                          style: const TextStyle(
+                                                          style: TextStyle(
                                                             fontWeight: FontWeight.w900,
                                                             fontSize: 16,
-                                                            color: AppColors.primary,
+                                                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                                           ),
                                                         ),
                                                       ],
                                                     ),
                                                     ElevatedButton.icon(
                                                       style: ElevatedButton.styleFrom(
+                                                        backgroundColor: AppColors.brandYellow,
+                                                        foregroundColor: AppColors.onYellow,
                                                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                                         minimumSize: const Size(0, 36),
                                                         shape: RoundedRectangleBorder(
@@ -305,7 +311,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                         arguments: order,
                                                       ),
                                                       icon: const Icon(Icons.location_searching_rounded, size: 14),
-                                                      label: const Text('Track Live', style: TextStyle(fontSize: 12.5)),
+                                                      label: const Text('Track Live', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
                                                     ),
                                                   ],
                                                 ),
@@ -337,7 +343,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                   ],
                                 )
                               : ListView.separated(
-                                  padding: const EdgeInsets.all(20),
+                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, AppDimens.navBarScrollPadding),
                                   itemCount: pastOrders.length,
                                   separatorBuilder: (_, __) => const SizedBox(height: 14),
                                   itemBuilder: (context, index) {
@@ -414,10 +420,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                   children: [
                                                     Text(
                                                       'Total: Rs. ${order.total.toStringAsFixed(0)}',
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontWeight: FontWeight.w900,
                                                         fontSize: 15.5,
-                                                        color: AppColors.primary,
+                                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                                       ),
                                                     ),
                                                     Row(
@@ -483,12 +489,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isPassed
-                      ? AppColors.primary
-                      : (isCurrent ? AppColors.primary : colorScheme.surfaceContainerHighest),
-                  border: isCurrent ? Border.all(color: Colors.white, width: 2) : null,
+                      ? AppColors.brandYellow
+                      : (isCurrent ? AppColors.brandYellow : colorScheme.surfaceContainerHighest),
+                  border: isCurrent ? Border.all(color: AppColors.brandMaroon, width: 2) : null,
                 ),
                 child: isPassed && !isCurrent
-                    ? const Icon(Icons.check, size: 12, color: Colors.white)
+                    ? const Icon(Icons.check, size: 12, color: AppColors.onYellow)
                     : null,
               );
             }

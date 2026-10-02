@@ -18,19 +18,19 @@ class StoragePaths {
 
   // Combined paths
   static String getMenuPath(String filename) =>
-      '${menuImagesPath}$filename';
+      '$menuImagesPath$filename';
   static String getCategoryPath(String filename) =>
-      '${categoryImagesPath}$filename';
+      '$categoryImagesPath$filename';
   static String getUserPath(String filename) =>
-      '${userImagesPath}$filename';
+      '$userImagesPath$filename';
   static String getRiderPath(String filename) =>
-      '${riderImagesPath}$filename';
+      '$riderImagesPath$filename';
   static String getBannerPath(String filename) =>
-      '${bannerImagesPath}$filename';
+      '$bannerImagesPath$filename';
   static String getOfferPath(String filename) =>
-      '${offerImagesPath}$filename';
+      '$offerImagesPath$filename';
   static String getReviewPath(String filename) =>
-      '${reviewImagesPath}$filename';
+      '$reviewImagesPath$filename';
   static String getVideoPath(String filename) =>
-      '${videosPath}$filename';
+      '$videosPath$filename';
 }

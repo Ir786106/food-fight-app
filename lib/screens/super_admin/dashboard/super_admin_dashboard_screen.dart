@@ -176,16 +176,15 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isWide = constraints.maxWidth >= 720;
-                        final crossAxisCount = isWide ? 4 : 2;
 
                         return GridView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisExtent: 125,
+                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 260,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
+                            childAspectRatio: isWide ? 1.75 : 1.5,
                           ),
                           children: [
                             StatCard(
@@ -241,16 +240,15 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isWide = constraints.maxWidth >= 720;
-                        final crossAxisCount = isWide ? 4 : 2;
 
                         return GridView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisExtent: 125,
+                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 260,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
+                            childAspectRatio: isWide ? 1.75 : 1.5,
                           ),
                           children: [
                             StatCard(

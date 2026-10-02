@@ -33,13 +33,11 @@ class AppException implements Exception {
 /// Exception for authentication errors
 class AuthenticationException extends AppException {
   AuthenticationException({
-    required String message,
+    required super.message,
     String? code,
-    dynamic originalException,
+    super.originalException,
   }) : super(
-          message: message,
           code: code ?? 'auth_error',
-          originalException: originalException,
         );
 
   factory AuthenticationException.fromDioError(DioException dioException) {
@@ -117,13 +115,11 @@ class AuthenticationException extends AppException {
 /// Exception for network errors
 class NetworkException extends AppException {
   NetworkException({
-    required String message,
+    required super.message,
     String? code,
-    dynamic originalException,
+    super.originalException,
   }) : super(
-          message: message,
           code: code ?? 'network_error',
-          originalException: originalException,
         );
 
   factory NetworkException.fromDioError(DioException dioException) {
@@ -162,13 +158,11 @@ class NetworkException extends AppException {
 /// Exception for permission errors
 class PermissionException extends AppException {
   PermissionException({
-    required String message,
+    required super.message,
     String? code,
-    dynamic originalException,
+    super.originalException,
   }) : super(
-          message: message,
           code: code ?? 'permission_error',
-          originalException: originalException,
         );
 }
 
@@ -177,27 +171,23 @@ class ValidationException extends AppException {
   final List<String> fieldErrors;
 
   ValidationException({
-    required String message,
+    required super.message,
     this.fieldErrors = const [],
     String? code,
-    dynamic originalException,
+    super.originalException,
   }) : super(
-          message: message,
           code: code ?? 'validation_error',
-          originalException: originalException,
         );
 }
 
 /// Exception for storage errors
 class StorageException extends AppException {
   StorageException({
-    required String message,
+    required super.message,
     String? code,
-    dynamic originalException,
+    super.originalException,
   }) : super(
-          message: message,
           code: code ?? 'storage_error',
-          originalException: originalException,
         );
 
   factory StorageException.fromSupabase(dynamic error) {
@@ -227,12 +217,10 @@ class StorageException extends AppException {
 /// Exception for data not found
 class DataNotFoundException extends AppException {
   DataNotFoundException({
-    required String message,
+    required super.message,
     String? code,
-    dynamic originalException,
+    super.originalException,
   }) : super(
-          message: message,
           code: code ?? 'not_found',
-          originalException: originalException,
         );
 }

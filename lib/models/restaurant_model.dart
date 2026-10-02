@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 class RestaurantModel {
   final String id;
   final String name;
@@ -44,13 +46,9 @@ class RestaurantModel {
       name: json['name']?.toString() ?? 'Partner Kitchen',
       imageEmoji: json['imageEmoji']?.toString() ?? '🍽️',
       cuisine: json['cuisine']?.toString() ?? 'Multi-Cuisine & Fast Food',
-      rating: (json['rating'] is num) ? (json['rating'] as num).toDouble() : 4.8,
-      deliveryTimeMinutes: (json['deliveryTimeMinutes'] is num)
-          ? (json['deliveryTimeMinutes'] as num).toInt()
-          : 25,
-      deliveryFee: (json['deliveryFee'] is num)
-          ? (json['deliveryFee'] as num).toDouble()
-          : 0.0,
+      rating: SafeConvert.toDouble(json['rating'], 4.8),
+      deliveryTimeMinutes: SafeConvert.toInt(json['deliveryTimeMinutes'], 25),
+      deliveryFee: SafeConvert.toDouble(json['deliveryFee'], 0.0),
       address: json['address']?.toString() ?? 'Central Market, Sector B',
       isFeatured: json['isFeatured'] == 1 || json['isFeatured'] == true,
       isOpen: json['isOpen'] == 1 || json['isOpen'] == true || json['isOpen'] == null,

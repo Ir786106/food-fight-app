@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/theme_provider.dart';
+import '../../core/constants/app_colors.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,26 +17,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSwitchTile(String title, String subtitle, bool value,
       ValueChanged<bool> onChanged) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
         ),
         child: SwitchListTile(
-          title: Text(title,
-              style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: colorScheme.onSurface)),
-          subtitle: Text(subtitle,
-              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+          ),
           value: value,
-          activeThumbColor: colorScheme.primary,
-          activeTrackColor: colorScheme.primary.withValues(alpha: 0.34),
+          activeTrackColor: AppColors.brandYellow,
+          activeThumbColor: AppColors.onYellow,
+          inactiveTrackColor: isDark ? AppColors.darkBorder : AppColors.border,
+          inactiveThumbColor: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           onChanged: onChanged,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         ),
@@ -46,16 +57,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Settings'),
+        elevation: 0,
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text('Preferences',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-            const SizedBox(height: 14),
+            Text(
+              'PREFERENCES',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                letterSpacing: 0.8,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
             _buildSwitchTile(
               'Push Notifications',
               'Get notified about order updates',
@@ -76,10 +100,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               (v) => setState(() => _locationAccess = v),
             ),
             const SizedBox(height: 20),
-            const Text('About',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-            const SizedBox(height: 14),
-            _buildInfoTile('App Version', '1.2.0'),
+            Text(
+              'ABOUT & LEGAL',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                letterSpacing: 0.8,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildInfoTile('App Version', '1.3.0+4 (Production Release)'),
             _buildInfoTile('Terms of Service', ''),
             _buildInfoTile('Privacy Policy', ''),
           ],
@@ -89,7 +120,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildThemeTile(ThemeProvider themeProvider) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     final modes = <ThemeMode, String>{
       ThemeMode.light: 'Light',
       ThemeMode.dark: 'Dark',
@@ -98,11 +132,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,9 +144,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             'Theme',
             style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                color: colorScheme.onSurface),
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -124,20 +159,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return ChoiceChip(
                 label: Text(entry.value),
                 selected: isSelected,
-                avatar: Icon(_themeIconFor(mode), size: 18),
+                avatar: Icon(
+                  _themeIconFor(mode),
+                  size: 18,
+                  color: isSelected ? AppColors.onYellow : colorScheme.onSurfaceVariant,
+                ),
                 showCheckmark: false,
                 side: BorderSide(
                   color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.outlineVariant,
+                      ? AppColors.yellowPressed
+                      : (isDark ? AppColors.darkBorder : AppColors.border),
                 ),
-                selectedColor: colorScheme.primaryContainer,
+                selectedColor: AppColors.brandYellow,
                 backgroundColor: colorScheme.surface,
                 labelStyle: TextStyle(
-                  color: isSelected
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurface,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppColors.onYellow : colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                 ),
                 onSelected: (_) => themeProvider.setThemeMode(mode),
               );
@@ -160,14 +197,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildInfoTile(String title, String trailingText, {VoidCallback? onTap}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: ListTile(
@@ -183,8 +223,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           trailing: trailingText.isNotEmpty
-              ? Text(trailingText,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant))
+              ? Text(
+                  trailingText,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
               : Icon(Icons.chevron_right,
                   color: colorScheme.onSurfaceVariant, size: 20),
           onTap: onTap ?? () {
@@ -258,47 +303,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   static const String _termsOfServiceContent = '''
-1. Acceptance of Terms
-By downloading, accessing, or using Food Fight, you agree to comply with and be bound by these Terms of Service. If you do not agree, please refrain from using our application.
+Welcome to Food Fight! By using our platform and ordering delicious meals, you agree to our Terms of Service.
 
-2. Ordering & Payment
-- All orders placed via Food Fight are subject to kitchen acceptance and stock availability.
-- Prices displayed include applicable taxes. Delivery fees may vary depending on destination zone and surge conditions.
-- We support Cash on Delivery (COD) and tokenized online payment methods. Payment details are encrypted and never stored in plain text.
+1. Ordering & Fulfillment
+All orders placed via Food Fight are dispatched from our verified local partner kitchens. Estimated delivery times are approximations influenced by real-time traffic and kitchen volume.
 
-3. Delivery & Fulfillment
-- Estimated delivery times are provided as approximations and may fluctuate due to traffic, adverse weather, or peak order volumes.
-- Customers must provide an accurate delivery address and active phone number for the delivery rider.
+2. Pricing & Payments
+Prices listed reflect current kitchen menu rates. Payment may be executed via Cash on Delivery or approved card/e-wallet methods.
 
-4. Cancellation & Refund Policy
-- Orders may be cancelled within the initial preparation grace window.
-- Once food preparation has begun, cancellations may be restricted or subject to a partial fee.
-- Refunds for cancelled prepaid orders are processed back to the original funding source within 3–5 business days.
+3. Cancellations & Refunds
+Cancellations are accepted within 10 minutes of order placement prior to kitchen preparation commencement.
 
-5. Code of Conduct
-Users agree not to misuse promotional codes, harass delivery personnel or restaurant staff, or attempt unauthorized platform access. Food Fight reserves the right to suspend accounts violating these standards.
+4. Account Security
+You are responsible for maintaining the confidentiality of your credentials and linked communication channels.
 ''';
 
   static const String _privacyPolicyContent = '''
-1. Information We Collect
-We collect personal information necessary to fulfill your food delivery orders:
-- Account Information: Name, email address, phone number.
-- Location Data: Delivery address and geographic coordinates to route delivery riders.
-- Order History: Items purchased, coupon applications, and kitchen ratings.
+At Food Fight, your privacy and data security are paramount.
 
-2. How We Use Information
-Your data is strictly utilized to:
-- Process, dispatch, and track your food deliveries.
-- Provide order status alerts and system notifications.
-- Optimize kitchen recommendations and prevent fraudulent transactions.
+1. Data Collection
+We collect account information (name, contact number, delivery address) necessary to fulfill your orders safely.
 
-3. Payment Data Security
-Credit card and mobile wallet transactions are processed via secure, PCI-DSS compliant payment gateways. Food Fight never retains sensitive card verification numbers (CVV) on our servers.
-
-4. Location Permissions
+2. Location Data
 Location access is utilized exclusively while using the app to identify nearby partner kitchens and estimate precise arrival times. You may manage location permissions via your device settings at any time.
 
-5. Data Retention & Deletion
-You retain the right to request deletion of your account and associated personal information by contacting support@foodfight.pk or through the in-app Help Center.
+3. Security
+All transactions and communication channels are encrypted with industry-standard protocols.
 ''';
 }

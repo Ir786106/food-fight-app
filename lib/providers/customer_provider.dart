@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/customer_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing customer list and stats in Admin panel
-class CustomerProvider extends ChangeNotifier {
+class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
   List<UserModel> _customers = [];
   final Map<String, Map<String, dynamic>> _customerStats = {};
   bool _isLoading = false;
@@ -36,8 +37,7 @@ class CustomerProvider extends ChangeNotifier {
     if (branchId != null) _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = CustomerService.watchCustomers(

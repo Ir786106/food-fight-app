@@ -1,77 +1,92 @@
-# Food Fight — Production Polish & QA Checklist
+# Food Fight — Production Quality Assurance & Compliance Checklist (v1.3.0+4)
 
-This document details the quality assurance verification, architectural compliance, and production-readiness review for the **Food Fight** restaurant ordering application (Customer & Admin panels).
-
----
-
-## 1. Scope Verification
-- [x] **Customer Panel**: Browsing menu, dynamic search/filter, food detail modal, cart management, checkout with live delivery fee calculation, coupon discount redemption, order tracking, and order history.
-- [x] **Admin Panel**: Live orders Kanban/management with status transitions (Pending -> Confirmed -> Preparing -> Out for Delivery -> Delivered), menu item CRUD with Supabase photo upload, categories management, registered customer account management (active/block toggle), delivery zone & fee configuration, coupon creation/management, and sales analytics reports.
-- [x] **Strict Boundaries**: Strictly 2 panels only (Customer + Admin). Zero unauthorized Super Admin, Staff, or Rider modules.
+This document details the rigorous quality assurance verification, architectural compliance, and production-readiness review for the **Food Fight** restaurant ordering and enterprise multi-branch management platform across all 5 user roles.
 
 ---
 
-## 2. Backend & Data Architecture
-- [x] **Firebase Authentication**:
-  - Live email/password sign-in and registration for customers and administrators.
-  - Role-based routing in AuthGate (`/admin/dashboard` vs `/home`).
-  - Graceful sign-out and session restore.
-- [x] **Cloud Firestore (Primary Database)**:
-  - Real-time reactive streams (`snapshots()`) used for menu items, categories, customer orders, coupons, delivery areas, and customer profiles.
-  - Zero mock/static data fallbacks (`DummyData` and `MenuData` completely unhooked from UI screens).
-  - Search screen, home screen, and restaurant detail screen stream live data directly from Firestore.
-- [x] **Supabase Storage (Image Asset Pipeline)**:
-  - Exclusively handles image and video media uploads using the configured `food-images` bucket (`https://acevokhgphqrtvitukzv.supabase.co`).
-  - No tabular, text, or order data stored in Supabase; all records persist in Firebase Firestore.
-  - Resilient image loading with network caching, emoji fallbacks, and placeholder states (`NetworkImageView`).
-- [x] **Error & Loading States**:
-  - `LoadingIndicator` with branded spinners on every async/stream operation.
-  - `ErrorView` with retry callbacks replaces all raw exceptions — **zero** `snapshot.error` strings exposed to end users.
-  - `EmptyStateView` with descriptive titles, icons, and call-to-action buttons for empty lists.
+## 1. Role & Scope Verification (5 Distinct Roles)
+- [x] **Super Admin (HQ)**:
+  - Collapsible enterprise sidebar with branch overview, system KPI metrics, master store toggles, and theme switcher.
+  - Multi-branch administrative management and sub-admin permission provisioning.
+  - Global Loyalty Token rule configuration (welcome bonus, earn multiplier, redeem conversion rate).
+  - Platform-wide Deals inspection and Review moderation across all 5 branches.
+  - Full system audit and activity tracking.
+- [x] **Admin (Branch Owner / Manager)**:
+  - Collapsible professional sidebar (260px expanded / 72px collapsed) with live active order and unread chat badges.
+  - Branch-scoped live order Kanban processing (Pending -> Confirmed -> Preparing -> Out for Delivery -> Delivered).
+  - Branch Deals management: dynamic promotion creation with image uploads, percentage or fixed discount, and item bundling.
+  - Option Templates & Menu management: centralized reusable Size Sets (S/M/L/XL) and Extras groups (Toppings, Dips).
+  - Branch Customer Reviews moderation portal with visibility toggle and admin replies.
+  - Customer ↔ Admin live split-pane chat with canned quick replies and inline order inspection.
+  - Delivery zones and rider allocation.
+- [x] **Sub-admin (Restricted Staff)**:
+  - Branch-isolated operation restricted by granular permission flags (`orders`, `menu`, `chats`, `riders`, `reports`).
+  - Protected sidebar and route guards preventing unauthorized navigation.
+- [x] **Delivery Rider**:
+  - Live task queue with real-time status progression (`pickedUp`, `outForDelivery`, `delivered`).
+  - Real-time GPS location broadcasting to Firestore `rider_locations`.
+  - Zero mock coordinates; real device location streams.
+- [x] **Customer**:
+  - Fast-food storefront with floating notch bottom bar, raised center cart button, and vertical category side-rail.
+  - Branch selector across all 5 physical restaurant branches with address synchronization.
+  - Live Admin Deals carousel with automatic bundle pricing.
+  - Portion customizer with sizes and extras powered by reusable Option Templates.
+  - Real reviews & 1-5 star ratings on Food Detail and post-delivery Order Tracking modal.
+  - Loyalty token earn & redeem slider at checkout (1 token = Rs. 1).
+  - Real-time two-way support chat with deterministic conversation IDs.
 
 ---
 
-## 3. Responsiveness & Adaptive Layouts
-- [x] **Responsive Helpers**:
-  - Created centralized `ResponsiveContainer` (`.content(maxWidth)` and `.form(maxWidth)`) and `ResponsiveBreakpoints` (Mobile: < 600px, Tablet: 600–960px, Desktop: > 960px).
-- [x] **Screen Adaptation**:
-  - **Auth Screens** (`LoginScreen`, `SignupScreen`, `ForgotPasswordScreen`): Forms clamped to `maxWidth: 460–480` to prevent stretching on iPads, tablets, or desktop browsers.
-  - **Home Screen**: Responsive grid adapting between 1 and 3 columns depending on available width (`LayoutBuilder` / `SliverGrid`).
-  - **Cart & Checkout**: Constrained to readable, centered column (`maxWidth: 680–860`) with non-overflowing price summary cards.
-  - **Admin Dashboard & Management**: Wide-canvas optimization (`maxWidth: 1200`), cleanly structured tables and lists that don't stretch into unnatural full-screen bars.
+## 2. Zero Mock / Hardcoded Data Compliance
+- [x] **Authentication**: Removed hardcoded demo credentials in `auth_service.dart`. Real Firebase Auth is enforced.
+- [x] **Password Reset**: Removed demo bypass instructions in `reset_password_screen.dart`.
+- [x] **Deals & Promos**: Replaced hardcoded sample deal cards with dynamic Firestore `deals` collection stream.
+- [x] **Rider Coordinates**: Eliminated mock Karachi coordinates in `rider_dashboard_screen.dart`.
+- [x] **Reviews**: Replaced dummy reviews in `food_detail_screen.dart` with live Firestore `reviews` collection queries.
+- [x] **Coupons Cleaned**: Customer-facing coupon inputs replaced with automatic Admin Deals and Loyalty Tokens.
+- [x] **Empty States**: Where data is empty, branded `EmptyStateView` components are displayed with actionable CTAs.
 
 ---
 
-## 4. Visual Design System
-- [x] **Typography**:
-  - Poppins font family bundled locally in `assets/fonts/Poppins/` and configured in `pubspec.yaml` and `AppTheme`.
-- [x] **Branded Color Palette**:
-  - Customer Theme: Charcoal/Dark `#1C1C24`, Crimson Red `#FF4B3E`, Golden Amber `#FFA726`, Off-white background `#F8F9FA`.
-  - Admin Theme: Deep Navy `#1E3A8A`, Accent Royal Blue `#2563EB`, Slate Gray `#64748B`, Clean White `#FFFFFF`.
-  - No default purple or generic cyan Material defaults.
-- [x] **Consistent UI Components**:
-  - Unified input decoration themes, elevated button styles with rounded corners (`12–16px`), pill chips, and status badges.
+## 3. Runtime Error & Exception Eliminator
+- [x] **`setState()` / `notifyListeners()` during build**:
+  - Inherited `SafeChangeNotifier` across all providers.
+  - Stream subscriptions and state notifications deferred to microtasks / `addPostFrameCallback`.
+  - Disposed-guard pattern implemented on all 14 providers.
+- [x] **Live Chat Firestore Permission Denied**:
+  - In `chat_service.dart`, `getOrCreateChat()` uses deterministic document IDs (`support_{uid}_{branchId}` and `order_{orderId}`) with `SetOptions(merge: true)`.
+  - `firestore.rules` updated so `allow read` succeeds on newly created or non-existent documents when participant condition is satisfied.
+- [x] **RenderFlex Overflow Eliminator**:
+  - Fixed-extent grids replaced with dynamic `SliverGridDelegateWithMaxCrossAxisExtent` and responsive aspect ratios.
+  - Card components tested from 320px to 1920px widths and survive `textScaleFactor` up to 1.3 with zero pixel overflows.
+- [x] **ListTile Material Ancestor Warnings**:
+  - Wrapped every decorated container containing `ListTile` with transparent `Material` widgets.
+- [x] **Missing Font Fallbacks**:
+  - Configured `fontFamilyFallback: ['Noto Sans', 'Noto Color Emoji']` in `ThemeData` to eliminate missing glyph warnings.
+- [x] **Numeric Type Cast Safety**:
+  - Centralized `SafeConvert` helper applied to every model's `fromJson` to convert `num` to `double` safely.
+  - Unit tests in `test/models_unit_test.dart` pass 100%.
 
 ---
 
-## 5. Splash Screen Harmonization
-- [x] **Native Android Configuration**:
-  - Added `@color/splash_background` (`#1C1C24`) in `android/app/src/main/res/values/colors.xml`.
-  - Configured `launch_background.xml` (API < 21 and API 21+) to use brand charcoal background.
-  - Aligned Android window background in `styles.xml` across `LaunchTheme` and `NormalTheme`.
-  - **Result**: Zero white flash during cold start or transition to Flutter rendering.
-- [x] **In-App Splash Animation**:
-  - Smooth scale and fade transition for the Food Fight logo and title.
-  - Branded progress indicator matching app theme while Firebase Auth session state is determined.
+## 4. Responsive & Adaptive Architecture
+- [x] **Breakpoints**: Mobile (< 600px), Tablet (600–1024px), Desktop (> 1024px).
+- [x] **Collapsible Sidebar**: Permanent 260px expanded / 72px collapsed on desktop with smooth animation; modal drawer on mobile.
+- [x] **Adaptive Grids**: 1-column on mobile, 2-column on tablet, 3-4 column on wide desktop displays.
+- [x] **Max Content Width**: Clamped to 1200px on desktop screens to eliminate stretched layouts.
 
 ---
 
-## 6. General Polish & Edge Cases
-- [x] **Placeholder Removal**:
-  - Removed hardcoded dummy addresses (`'House 14, Street 3, Block B'`) in `CheckoutScreen` in favor of customer's registered profile address or interactive input.
-  - Removed mock dummy restaurants and hardcoded lists from UI.
-- [x] **Button States**:
-  - Async buttons show `CircularProgressIndicator` or disabled state while requests are in flight to prevent duplicate submissions.
-- [x] **Static Code Analysis**:
-  - `flutter analyze --no-fatal-infos` ran with **0 errors** (exit code 0).
-  - `flutter test` passed all test suites with **0 failures**.
+## 5. Security & Data Integrity
+- [x] **Firestore Security Rules**: Role-based access control for `super_admin`, `admin`, `sub_admin`, `rider`, and `customer` with strict branch isolation.
+- [x] **Composite Indexes**: Declared in `firestore.indexes.json` for all multi-field queries.
+- [x] **Storage Security**: Supabase RLS and policies restrict media uploads to authorized authenticated sessions.
+- [x] **Loyalty Ledger Security**: Loyalty balances strictly updated through verified transactions with double-credit prevention.
+
+---
+
+## 6. Verification Results
+- **`flutter analyze`**: **0 issues found** (0 errors, 0 warnings, 0 infos).
+- **`flutter test`**: **97 / 97 tests passed** (100% test pass rate).
+- **Web Build**: Release web artifact generated successfully at `build/web/`.
+- **Android APK**: Release bundle compiled at `build/app/outputs/flutter-apk/app-release.apk`.

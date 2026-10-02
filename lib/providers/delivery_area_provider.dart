@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/services/delivery_area_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing delivery coverage areas & charges
-class DeliveryAreaProvider extends ChangeNotifier {
+class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
   List<DeliveryAreaModel> _areas = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -34,8 +35,7 @@ class DeliveryAreaProvider extends ChangeNotifier {
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = DeliveryAreaService.watchDeliveryAreas(

@@ -115,14 +115,9 @@ class ChatService implements IChatService {
     );
 
     final chatDocRef = _chatsRef.doc(chatId);
-    final docSnapshot = await chatDocRef.get();
-
-    if (docSnapshot.exists && docSnapshot.data() != null) {
-      return ChatModel.fromJson(docSnapshot.data()!, docSnapshot.id);
-    }
-
     final now = DateTime.now();
-    final newChat = ChatModel(
+
+    final fallbackChat = ChatModel(
       id: chatId,
       customerId: customerId,
       customerName: customerName,
@@ -141,9 +136,36 @@ class ChatService implements IChatService {
       updatedAt: now,
     );
 
-    await chatDocRef.set(newChat.toJson());
-    AppLogger.info('Created new chat channel: $chatId', tag: 'ChatService');
-    return newChat;
+    try {
+      // Set with merge ensures the document exists and creation does not depend on a prior read
+      await chatDocRef.set({
+        'id': chatId,
+        'customerId': customerId,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+        'branchId': branchId,
+        'orderId': orderId,
+        'orderNumber': orderNumber,
+        'type': (orderId != null && orderId.isNotEmpty) ? 'order' : type,
+        'status': 'open',
+        'lastMessage': '',
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'lastSenderRole': 'customer',
+        'unreadForAdmin': 0,
+        'unreadForCustomer': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      final docSnapshot = await chatDocRef.get();
+      if (docSnapshot.exists && docSnapshot.data() != null) {
+        return ChatModel.fromJson(docSnapshot.data()!, docSnapshot.id);
+      }
+    } catch (e) {
+      AppLogger.warn('getOrCreateChat: $e', tag: 'ChatService');
+    }
+
+    return fallbackChat;
   }
 
   @override

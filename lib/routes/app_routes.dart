@@ -48,6 +48,8 @@ import '../screens/admin/delivery_areas/manage_delivery_areas_screen.dart';
 import '../screens/admin/coupons/manage_coupons_screen.dart';
 import '../screens/admin/reports/sales_reports_screen.dart';
 import '../screens/admin/sub_admins/manage_sub_admins_screen.dart';
+import '../screens/admin/deals/manage_deals_screen.dart';
+import '../screens/admin/reviews/admin_reviews_screen.dart';
 
 // Super Admin Screens
 import '../screens/super_admin/dashboard/super_admin_dashboard_screen.dart';
@@ -116,6 +118,8 @@ class AppRoutes {
     '/admin/delivery-areas': (context) => const AdminRouteGuard(requiredPermission: 'delivery_areas', child: ManageDeliveryAreasScreen()),
     '/admin/riders': (context) => const AdminRouteGuard(requiredPermission: 'riders', child: ManageRidersScreen()),
     '/admin/coupons': (context) => const AdminRouteGuard(requiredPermission: 'coupons', child: ManageCouponsScreen()),
+    '/admin/deals': (context) => const AdminRouteGuard(child: ManageDealsScreen()),
+    '/admin/reviews': (context) => const AdminRouteGuard(child: AdminReviewsScreen()),
     '/admin/reports': (context) => const AdminRouteGuard(requiredPermission: 'reports', child: SalesReportsScreen()),
     '/admin/sub-admins': (context) => const AdminRouteGuard(blockSubAdmin: true, child: ManageSubAdminsScreen()),
 

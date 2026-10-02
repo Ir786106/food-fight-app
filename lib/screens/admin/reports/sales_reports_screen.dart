@@ -144,16 +144,15 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                   builder: (context, constraints) {
                     final isNarrow = constraints.maxWidth < 400;
                     final isWide = constraints.maxWidth >= 720;
-                    final crossAxisCount = isNarrow ? 1 : (isWide ? 4 : 2);
 
                     return GridView(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        mainAxisExtent: 130,
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 260,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
+                        childAspectRatio: isNarrow ? 2.1 : (isWide ? 1.75 : 1.5),
                       ),
                       children: [
                         StatCard(

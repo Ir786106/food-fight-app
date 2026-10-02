@@ -3,6 +3,9 @@ import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/loyalty_provider.dart';
+import '../../core/constants/app_colors.dart';
+import '../../widgets/custom_button.dart';
 import '../../widgets/common/network_image_view.dart';
 import '../../widgets/common/responsive_layout.dart';
 
@@ -14,35 +17,20 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final TextEditingController _couponCtrl = TextEditingController();
-  bool _isApplyingCoupon = false;
+  bool _useTokens = false;
 
   @override
-  void dispose() {
-    _couponCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _applyCoupon(CartProvider cart) async {
-    final code = _couponCtrl.text.trim();
-    if (code.isEmpty) return;
-
-    setState(() => _isApplyingCoupon = true);
-    final success = await cart.applyCoupon(code);
-    if (!mounted) return;
-    setState(() => _isApplyingCoupon = false);
-
-    if (success) {
-      _couponCtrl.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coupon applied successfully! 🎉'), backgroundColor: AppColors.success),
-      );
-    } else {
-      final err = cart.couponError ?? 'Invalid coupon code';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: AppColors.error),
-      );
-    }
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final user = auth.currentUser;
+        if (user != null) {
+          Provider.of<LoyaltyProvider>(context, listen: false).watchAccount(user.id);
+        }
+      } catch (_) {}
+    });
   }
 
   void _confirmClearCart(BuildContext context, CartProvider cart) {
@@ -105,7 +93,7 @@ class _CartScreenState extends State<CartScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('My Cart 🥊'),
+            const Text('My Cart'),
             if (cart.items.isNotEmpty) ...[
               const SizedBox(width: 8),
               Container(
@@ -176,7 +164,8 @@ class _CartScreenState extends State<CartScreen> {
                         const SizedBox(height: 28),
                         SizedBox(
                           width: 220,
-                          child: ElevatedButton(
+                          child: CustomButton(
+                            text: 'Browse Menu',
                             onPressed: () {
                               if (Navigator.of(context).canPop()) {
                                 Navigator.of(context).pop();
@@ -184,7 +173,6 @@ class _CartScreenState extends State<CartScreen> {
                                 Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
                               }
                             },
-                            child: const Text('Browse Menu 🍔'),
                           ),
                         ),
                       ],
@@ -428,10 +416,10 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                       Text(
                                         'Rs. ${item.totalPrice.toStringAsFixed(0)}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 16,
-                                          color: AppColors.primary,
+                                          color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                         ),
                                       ),
                                     ],
@@ -465,90 +453,127 @@ class _CartScreenState extends State<CartScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Promo Code Section
-                              if (cart.appliedCoupon == null) ...[
-                                Row(
+                              // Loyalty Tokens Redemption Section
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.brandYellow.withValues(alpha: isDark ? 0.12 : 0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppColors.brandYellow.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _couponCtrl,
-                                        textCapitalization: TextCapitalization.characters,
-                                        style: TextStyle(
-                                          color: colorScheme.onSurface,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w600,
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.brandYellow.withValues(alpha: 0.2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Text('🎁', style: TextStyle(fontSize: 18)),
                                         ),
-                                        decoration: InputDecoration(
-                                          hintText: 'Enter Promo Code (e.g. FIGHTBOGO)',
-                                          hintStyle: TextStyle(
-                                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                            fontSize: 12.5,
-                                          ),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                          filled: true,
-                                          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                            borderSide: BorderSide(color: colorScheme.outlineVariant),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                            borderSide: BorderSide(color: colorScheme.outlineVariant),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Food Fight Loyalty Rewards',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                context.watch<LoyaltyProvider>().balance > 0
+                                                    ? '${context.watch<LoyaltyProvider>().balance} tokens available (Rs. ${context.watch<LoyaltyProvider>().balance})'
+                                                    : 'Earn 1 token for every Rs. 100 on delivered orders!',
+                                                style: TextStyle(
+                                                  fontSize: 11.5,
+                                                  color: colorScheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ),
+                                        if (context.watch<LoyaltyProvider>().balance > 0)
+                                          Switch(
+                                            value: _useTokens,
+                                            activeThumbColor: AppColors.brandYellow,
+                                            onChanged: (val) {
+                                              setState(() => _useTokens = val);
+                                              if (val) {
+                                                final bal = context.read<LoyaltyProvider>().balance;
+                                                final maxRedeemable = bal.clamp(0, cart.subtotal.toInt());
+                                                cart.applyTokens(maxRedeemable);
+                                              } else {
+                                                cart.clearTokens();
+                                              }
+                                            },
+                                          ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 10),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    if (_useTokens && context.watch<LoyaltyProvider>().balance > 0) ...[
+                                      const SizedBox(height: 12),
+                                      const Divider(height: 1),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Redeem: ${cart.tokensToRedeem} Tokens',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                          ),
+                                          Text(
+                                            '- Rs. ${cart.loyaltyDiscount.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.success,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      onPressed: _isApplyingCoupon ? null : () => _applyCoupon(cart),
-                                      child: _isApplyingCoupon
-                                          ? const SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                            )
-                                          : const Text('Apply', style: TextStyle(fontWeight: FontWeight.w800)),
-                                    ),
+                                      if (context.watch<LoyaltyProvider>().balance > 1)
+                                        Slider(
+                                          value: cart.tokensToRedeem.toDouble().clamp(
+                                                1.0,
+                                                context
+                                                    .watch<LoyaltyProvider>()
+                                                    .balance
+                                                    .clamp(1, cart.subtotal.toInt())
+                                                    .toDouble(),
+                                              ),
+                                          min: 1.0,
+                                          max: context
+                                              .watch<LoyaltyProvider>()
+                                              .balance
+                                              .clamp(1, cart.subtotal.toInt())
+                                              .toDouble(),
+                                          divisions: context
+                                                      .watch<LoyaltyProvider>()
+                                                      .balance
+                                                      .clamp(1, cart.subtotal.toInt()) >
+                                                  1
+                                              ? context
+                                                  .watch<LoyaltyProvider>()
+                                                  .balance
+                                                  .clamp(1, cart.subtotal.toInt())
+                                              : 1,
+                                          activeColor: AppColors.brandYellow,
+                                          onChanged: (val) {
+                                            cart.applyTokens(val.toInt());
+                                          },
+                                        ),
+                                    ],
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-                              ] else ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.local_offer_rounded, color: AppColors.success, size: 18),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Coupon "${cart.appliedCoupon!.code}" applied!',
-                                          style: const TextStyle(
-                                            color: AppColors.success,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.close, size: 18, color: AppColors.error),
-                                        onPressed: () => cart.removeCoupon(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
+                              ),
+                              const SizedBox(height: 16),
 
                               // Separated Price Breakdown: Subtotal / Delivery Fee / Discount / Total
                               Text(
@@ -574,12 +599,12 @@ class _CartScreenState extends State<CartScreen> {
                                 cart.isFreeDelivery ? 'FREE' : 'Rs. ${cart.deliveryFee.toStringAsFixed(0)}',
                                 color: cart.isFreeDelivery ? AppColors.success : null,
                               ),
-                              if (cart.couponDiscount > 0) ...[
+                              if (cart.loyaltyDiscount > 0) ...[
                                 const SizedBox(height: 8),
                                 _summaryRow(
                                   context,
-                                  'Discount',
-                                  '- Rs. ${cart.couponDiscount.toStringAsFixed(0)}',
+                                  'Loyalty Tokens (${cart.tokensToRedeem} used)',
+                                  '- Rs. ${cart.loyaltyDiscount.toStringAsFixed(0)}',
                                   color: AppColors.success,
                                 ),
                               ],
@@ -635,24 +660,26 @@ class _CartScreenState extends State<CartScreen> {
                         const SizedBox(height: 2),
                         Text(
                           'Rs. ${cart.total.toStringAsFixed(0)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
+                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(width: 18),
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: CustomButton(
+                        text: 'Proceed to Checkout',
+                        icon: Icons.arrow_forward_rounded,
                         onPressed: () {
                           final auth = context.read<AuthProvider>();
                           if (!auth.isLoggedIn) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Please sign in to proceed to checkout'),
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: AppColors.brandMaroon,
                                 duration: Duration(seconds: 2),
                               ),
                             );
@@ -661,15 +688,6 @@ class _CartScreenState extends State<CartScreen> {
                           }
                           Navigator.of(context).pushNamed('/checkout');
                         },
-                        icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
-                        label: const Text(
-                          'Proceed to Checkout',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -704,7 +722,12 @@ class _CartScreenState extends State<CartScreen> {
             style: TextStyle(
               fontSize: isBold ? 18 : 13.5,
               fontWeight: FontWeight.w900,
-              color: color ?? (isBold ? AppColors.primary : colorScheme.onSurface),
+              color: color ??
+                  (isBold
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandYellow
+                          : AppColors.brandMaroon)
+                      : colorScheme.onSurface),
             ),
           ),
         ),

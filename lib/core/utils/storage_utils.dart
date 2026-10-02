@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Utility class for storage operations
 class StorageUtils {
-  static final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static const String _storagePrefix = 'ff_';
 
   // Shared Preferences helpers

@@ -247,19 +247,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isNarrow = constraints.maxWidth < 400;
-                        final isVeryWide = constraints.maxWidth >= 1080;
                         final isWide = constraints.maxWidth >= 720;
-                        final crossAxisCount = isNarrow ? 1 : (isVeryWide ? 5 : (isWide ? 3 : 2));
                         final unreadChats = context.watch<ChatProvider>().totalAdminUnread;
 
                         return GridView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisExtent: 130,
+                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 260,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
+                            childAspectRatio: isNarrow ? 2.1 : (isWide ? 1.75 : 1.5),
                           ),
                           children: [
                             StatCard(
@@ -322,16 +320,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isWide = constraints.maxWidth >= 720;
-                        final crossAxisCount = isWide ? 6 : 3;
 
                         return GridView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisExtent: 90,
+                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 170,
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10,
+                            childAspectRatio: isWide ? 1.4 : 1.2,
                           ),
                           children: [
                             _buildPipelineTile(

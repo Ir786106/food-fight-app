@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/utils/safe_change_notifier.dart';
 import '../models/address_model.dart';
 import '../services/address_service.dart';
 
-class AddressProvider extends ChangeNotifier {
+class AddressProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AddressModel> _addresses = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -23,7 +24,7 @@ class AddressProvider extends ChangeNotifier {
     if (userId.isEmpty) {
       _addresses = [];
       _isLoading = false;
-      notifyListeners();
+      notifyListenersPostFrame();
       return;
     }
 
@@ -34,7 +35,7 @@ class AddressProvider extends ChangeNotifier {
     _currentUserId = userId;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     _sub?.cancel();
     _sub = AddressService.watchAddresses(userId).listen(

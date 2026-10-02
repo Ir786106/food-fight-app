@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/admin_account_model.dart';
 import 'package:food_fight/services/super_admin_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing Admin and Staff accounts in Super Admin panel
-class AdminAccountProvider extends ChangeNotifier {
+class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AdminAccountModel> _admins = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -48,7 +49,7 @@ class AdminAccountProvider extends ChangeNotifier {
   void watchAdminAccounts() {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = SuperAdminService.watchAdminAccounts().listen(

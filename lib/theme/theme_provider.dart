@@ -6,6 +6,11 @@ class ThemeProvider extends ChangeNotifier {
   static const String _storageKey = 'ff_theme_mode';
 
   ThemeMode get themeMode => _themeMode;
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  void toggleTheme() {
+    setThemeMode(_themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+  }
 
   Future<void> loadThemeMode() async {
     try {

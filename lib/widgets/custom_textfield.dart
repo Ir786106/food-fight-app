@@ -1,24 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/app_dimens.dart';
 
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
   final String hint;
-  final IconData icon;
+  final IconData? icon;
   final bool isPassword;
   final TextInputType keyboardType;
+  final TextInputAction textInputAction;
+  final Iterable<String>? autofillHints;
   final String? Function(String?)? validator;
+  final ValueChanged<String>? onChanged;
+  final bool readOnly;
+  final Widget? suffixIcon;
+  final int maxLines;
+  final String? helperText;
 
   const CustomTextField({
     super.key,
     required this.controller,
     required this.label,
     required this.hint,
-    required this.icon,
+    this.icon,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
+    this.textInputAction = TextInputAction.next,
+    this.autofillHints,
     this.validator,
+    this.onChanged,
+    this.readOnly = false,
+    this.suffixIcon,
+    this.maxLines = 1,
+    this.helperText,
   });
 
   @override
@@ -42,69 +58,95 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        if (widget.label.isNotEmpty) ...[
+          Text(
+            widget.label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            ),
           ),
-        ),
-        const SizedBox(height: 7),
+          const SizedBox(height: 7),
+        ],
         TextFormField(
           controller: widget.controller,
-          obscureText: _obscure,
+          obscureText: widget.isPassword ? _obscure : false,
           keyboardType: widget.keyboardType,
+          textInputAction: widget.textInputAction,
+          autofillHints: widget.autofillHints,
           validator: widget.validator,
-          style: TextStyle(
+          onChanged: widget.onChanged,
+          readOnly: widget.readOnly,
+          maxLines: widget.maxLines,
+          style: GoogleFonts.inter(
             fontSize: 14,
             color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: TextStyle(
+            helperText: widget.helperText,
+            helperStyle: GoogleFonts.inter(
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-              fontSize: 13.5,
+              fontSize: 12,
+            ),
+            hintStyle: GoogleFonts.inter(
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              fontSize: 14,
             ),
             filled: true,
             fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-            prefixIcon: Icon(
-              widget.icon,
-              color: AppColors.brandMaroon,
-              size: 20,
-            ),
+            prefixIcon: widget.icon != null
+                ? Icon(
+                    widget.icon,
+                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    size: 20,
+                  )
+                : null,
             suffixIcon: widget.isPassword
                 ? IconButton(
                     icon: Icon(
-                      _obscure
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
+                      _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                       color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       size: 20,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   )
-                : null,
+                : widget.suffixIcon,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(AppDimens.radius14),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.border,
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(AppDimens.radius14),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.border,
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: AppColors.brandMaroon, width: 1.5),
+              borderRadius: BorderRadius.circular(AppDimens.radius14),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppDimens.radius14),
               borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppDimens.radius14),
               borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+            ),
+            errorStyle: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.error,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),

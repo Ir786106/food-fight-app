@@ -9,7 +9,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/branch_provider.dart';
 import '../../../providers/chat_provider.dart';
 import '../../../providers/order_provider.dart';
-import '../../../widgets/admin/admin_drawer.dart';
+import '../../../widgets/admin/admin_collapsible_sidebar.dart';
 import '../orders/order_detail_modal.dart';
 
 class AdminChatsScreen extends StatefulWidget {
@@ -241,7 +241,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
-      drawer: const AdminDrawer(currentRoute: '/admin/chats'),
+      drawer: const AdminCollapsibleSidebar(currentRoute: '/admin/chats'),
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
         elevation: 0,

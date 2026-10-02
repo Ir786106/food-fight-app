@@ -21,8 +21,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
   bool _isOnline = true;
   bool _isBroadcasting = false;
   Timer? _gpsTimer;
-  double _mockLat = 31.5204;
-  double _mockLng = 74.3587;
+  double _riderLat = 0.0;
+  double _riderLng = 0.0;
   String? _activeOrderId;
 
   @override
@@ -47,25 +47,23 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     super.dispose();
   }
 
-  void _startGpsBroadcast(String orderId, String riderId) {
+  void _startGpsBroadcast(String orderId, String riderId, [double lat = 0.0, double lng = 0.0]) {
     _stopGpsBroadcast();
     _activeOrderId = orderId;
+    _riderLat = lat;
+    _riderLng = lng;
     setState(() => _isBroadcasting = true);
 
-    // Periodically update GPS coordinates for the active order
-    _gpsTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
+    // Update GPS coordinates for the active order
+    _gpsTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
       if (!mounted) return;
-      // Simulate real movement heading towards destination
-      _mockLat += 0.0003;
-      _mockLng += 0.0002;
-
       await RiderLocationService.updateOrderRiderLocation(
         orderId: orderId,
         riderId: riderId,
-        latitude: _mockLat,
-        longitude: _mockLng,
-        speed: 28.5,
-        heading: 45.0,
+        latitude: _riderLat,
+        longitude: _riderLng,
+        speed: 0.0,
+        heading: 0.0,
       );
     });
   }

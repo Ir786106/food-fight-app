@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/system_settings_model.dart';
 import 'package:food_fight/services/super_admin_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for Super Admin Dashboard KPIs and global platform configuration
-class SuperAdminProvider extends ChangeNotifier {
+class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   Map<String, dynamic> _metrics = {
     'totalRestaurants': 1,
     'totalCustomers': 0,
@@ -29,6 +30,7 @@ class SuperAdminProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   int get totalRestaurants => _metrics['totalRestaurants'] as int? ?? 1;
+  int get totalBranches => totalRestaurants;
   int get totalCustomers => _metrics['totalCustomers'] as int? ?? 0;
   int get totalAdmins => _metrics['totalAdmins'] as int? ?? 0;
   int get totalStaff => _metrics['totalStaff'] as int? ?? 0;
@@ -51,7 +53,7 @@ class SuperAdminProvider extends ChangeNotifier {
   Future<void> loadMetrics() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     try {
       _metrics = await SuperAdminService.getPlatformMetrics();

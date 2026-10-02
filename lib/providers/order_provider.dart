@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/services/order_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider managing order state for Customer tracking and Admin order management
-class OrderProvider extends ChangeNotifier {
+class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
   List<OrderModel> _customerOrders = [];
   List<OrderModel> _adminOrders = [];
   OrderModel? _currentOrder;
@@ -42,14 +43,14 @@ class OrderProvider extends ChangeNotifier {
   int get outForDeliveryCount => _adminOrders.where((o) => o.status == OrderStatus.outForDelivery).length;
   int get deliveredCount => _adminOrders.where((o) => o.status == OrderStatus.delivered).length;
   int get cancelledCount => _adminOrders.where((o) => o.status == OrderStatus.cancelled).length;
+  int get activeOrdersCount => pendingCount + preparingCount + readyCount + outForDeliveryCount;
 
   /// Watch orders for a logged-in customer
   void watchCustomerOrders(String customerId) {
     if (customerId.isEmpty) return;
     _isLoading = true;
     _errorMessage = null;
-    // Defer the initial notification to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _customerOrdersSub?.cancel();
     _customerOrdersSub = OrderService.watchCustomerOrders(customerId).listen(
@@ -72,8 +73,7 @@ class OrderProvider extends ChangeNotifier {
   void watchAdminOrders({String? status, String? branchId}) {
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _adminOrdersSub?.cancel();
     _adminOrdersSub = OrderService.watchAllOrders(status: status, branchId: branchId).listen(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:food_fight/core/constants/app_colors.dart';
 import 'package:food_fight/models/food_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/providers/cart_provider.dart';
@@ -67,6 +68,7 @@ class _ItemCustomizationBottomSheetState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final food = widget.food;
 
     return Container(
@@ -75,7 +77,7 @@ class _ItemCustomizationBottomSheetState
       ),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -199,17 +201,20 @@ class _ItemCustomizationBottomSheetState
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                              horizontal: 8, vertical: 2.5),
                           decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.12),
+                            color: AppColors.errorSoft,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.error.withValues(alpha: 0.35),
+                            ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Required',
                             style: TextStyle(
-                              color: colorScheme.primary,
+                              color: AppColors.error,
                               fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
@@ -242,14 +247,26 @@ class _ItemCustomizationBottomSheetState
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                isSelected
-                                    ? Icons.radio_button_checked
-                                    : Icons.radio_button_off,
-                                color: isSelected
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
-                                size: 20,
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.brandYellow : (isDark ? AppColors.darkBorder : AppColors.border),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Center(
+                                        child: Icon(
+                                          Icons.circle,
+                                          size: 8,
+                                          color: AppColors.onYellow,
+                                        ),
+                                      )
+                                    : null,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -288,7 +305,7 @@ class _ItemCustomizationBottomSheetState
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14.5,
-                                      color: colorScheme.primary,
+                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                     ),
                                   ),
                                   if (variant.discount > 0)
@@ -328,13 +345,16 @@ class _ItemCustomizationBottomSheetState
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.12),
+                            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isDark ? AppColors.darkBorder : AppColors.border,
+                            ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Optional',
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
@@ -374,14 +394,20 @@ class _ItemCustomizationBottomSheetState
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                isSelected
-                                    ? Icons.check_box_rounded
-                                    : Icons.check_box_outline_blank_rounded,
-                                color: isSelected
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
-                                size: 21,
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.brandYellow : (isDark ? AppColors.darkBorder : AppColors.border),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.check, size: 16, color: AppColors.onYellow)
+                                    : null,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -399,7 +425,7 @@ class _ItemCustomizationBottomSheetState
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13.5,
-                                  color: colorScheme.primary,
+                                  color: isDark ? AppColors.brandYellow : AppColors.amberDark,
                                 ),
                               ),
                             ],
@@ -460,11 +486,12 @@ class _ItemCustomizationBottomSheetState
             ),
             child: Row(
               children: [
-                // Quantity Stepper
+                // Quantity Stepper (Ref A: minus, count, yellow plus)
                 Container(
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(12),
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: colorScheme.outlineVariant.withValues(alpha: 0.6),
                     ),
@@ -472,40 +499,68 @@ class _ItemCustomizationBottomSheetState
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove, size: 18),
-                        onPressed: _quantity > 1
-                            ? () => setState(() => _quantity--)
-                            : null,
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          '$_quantity',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
+                      GestureDetector(
+                        onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.remove,
+                            size: 16,
+                            color: _quantity > 1
+                                ? colorScheme.onSurface
+                                : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add, size: 18),
-                        onPressed: () => setState(() => _quantity++),
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          '$_quantity',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _quantity++),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: AppColors.brandYellow,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.brandYellow.withValues(alpha: 0.4),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            size: 16,
+                            color: AppColors.onYellow,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
 
-                // Add to Cart Button
+                // Add to Bucket Dark Pill CTA (Ref A/C & Component Set)
                 Expanded(
-                  child: CustomButton(
-                    text:
-                        'Add to Cart • Rs. ${_currentTotalPrice.toStringAsFixed(0)}',
+                  child: CustomButton.darkCta(
+                    text: 'Add to bucket',
+                    priceBadge: 'Rs. ${_currentTotalPrice.toStringAsFixed(0)}',
                     onPressed: () {
                       final cart = context.read<CartProvider>();
                       if (cart.isDifferentBranch(food.branchId)) {
@@ -524,8 +579,8 @@ class _ItemCustomizationBottomSheetState
                               ),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppColors.brandYellow,
+                                  foregroundColor: AppColors.onYellow,
                                 ),
                                 onPressed: () {
                                   Navigator.pop(ctx);
@@ -544,7 +599,7 @@ class _ItemCustomizationBottomSheetState
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text('${food.name} added to new cart!'),
-                                      backgroundColor: AppColors.secondary,
+                                      backgroundColor: AppColors.brandMaroon,
                                       duration: const Duration(milliseconds: 1000),
                                     ),
                                   );
@@ -575,8 +630,8 @@ class _ItemCustomizationBottomSheetState
                           : '';
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${food.name}$variantSuffix added to cart!'),
-                          backgroundColor: AppColors.secondary,
+                          content: Text('${food.name}$variantSuffix added to bucket!'),
+                          backgroundColor: AppColors.brandMaroon,
                           duration: const Duration(milliseconds: 1000),
                         ),
                       );

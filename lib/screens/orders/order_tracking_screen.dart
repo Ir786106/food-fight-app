@@ -3,11 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/order_model.dart';
+import '../../models/review_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../providers/review_provider.dart';
+import '../../core/constants/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/admin/status_badge.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../widgets/common/empty_state_view.dart';
+import '../../widgets/custom_button.dart';
 import '../../widgets/orders/live_tracking_map_widget.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
@@ -54,21 +59,33 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   static const List<Map<String, dynamic>> _coreTrackingSteps = [
     {
-      'title': 'Order Confirmed',
-      'desc': 'Kitchen received and confirmed order',
+      'title': 'Order Placed',
+      'desc': 'Order submitted to restaurant',
       'icon': Icons.receipt_long_rounded,
       'status': OrderStatus.pending,
     },
     {
-      'title': 'Preparing',
-      'desc': 'Chefs are cooking fresh meal in the kitchen',
+      'title': 'Order Confirmed',
+      'desc': 'Kitchen received and confirmed order',
+      'icon': Icons.thumb_up_alt_rounded,
+      'status': OrderStatus.accepted,
+    },
+    {
+      'title': 'Preparing Food',
+      'desc': 'Chefs are cooking fresh meal',
       'icon': Icons.soup_kitchen_rounded,
       'status': OrderStatus.preparing,
     },
     {
-      'title': 'On the Way',
-      'desc': 'Delivery champion is en route with your meal',
-      'icon': Icons.delivery_dining_rounded,
+      'title': 'Order Ready',
+      'desc': 'Meal packed and awaiting rider',
+      'icon': Icons.inventory_2_rounded,
+      'status': OrderStatus.ready,
+    },
+    {
+      'title': 'Out for Delivery',
+      'desc': 'Delivery champion is on the way',
+      'icon': Icons.two_wheeler_rounded,
       'status': OrderStatus.outForDelivery,
     },
     {
@@ -95,28 +112,72 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   int _getTimelineStepIndex(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-      case OrderStatus.accepted:
         return 0;
-      case OrderStatus.preparing:
-      case OrderStatus.ready:
+      case OrderStatus.accepted:
         return 1;
+      case OrderStatus.preparing:
+        return 2;
+      case OrderStatus.ready:
+        return 3;
       case OrderStatus.assigned:
       case OrderStatus.pickedUp:
       case OrderStatus.outForDelivery:
-        return 2;
+        return 4;
       case OrderStatus.delivered:
-        return 3;
+        return 5;
       case OrderStatus.cancelled:
         return -1;
     }
   }
 
   String _formatStepTime(DateTime baseTime, int stepIndex) {
-    final stepTime = baseTime.add(Duration(minutes: stepIndex * 8));
+    final stepTime = baseTime.add(Duration(minutes: stepIndex * 6));
     final hour = stepTime.hour % 12 == 0 ? 12 : stepTime.hour % 12;
     final minute = stepTime.minute.toString().padLeft(2, '0');
     final period = stepTime.hour >= 12 ? 'PM' : 'AM';
     return '$hour:$minute $period';
+  }
+
+  String _statusHeadline(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Order Placed';
+      case OrderStatus.accepted:
+        return 'Order Confirmed!';
+      case OrderStatus.preparing:
+        return 'Kitchen is Cooking!';
+      case OrderStatus.ready:
+        return 'Order is Ready!';
+      case OrderStatus.assigned:
+      case OrderStatus.pickedUp:
+      case OrderStatus.outForDelivery:
+        return 'Your order is on the way!';
+      case OrderStatus.delivered:
+        return 'Order Delivered!';
+      case OrderStatus.cancelled:
+        return 'Order Cancelled';
+    }
+  }
+
+  String _statusSubheadline(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Waiting for the restaurant to accept';
+      case OrderStatus.accepted:
+        return 'The chefs have confirmed your meal';
+      case OrderStatus.preparing:
+        return 'Fresh food is being prepared right now';
+      case OrderStatus.ready:
+        return 'Meal is packaged and awaiting pickup';
+      case OrderStatus.assigned:
+      case OrderStatus.pickedUp:
+      case OrderStatus.outForDelivery:
+        return 'Our express rider is en route to you';
+      case OrderStatus.delivered:
+        return 'Thank you for choosing Food Fight!';
+      case OrderStatus.cancelled:
+        return 'This order has been cancelled';
+    }
   }
 
   void _showGetHelpModal(BuildContext context, OrderModel order) {
@@ -154,10 +215,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
+                      color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.support_agent_rounded, color: AppColors.primary, size: 24),
+                    child: Icon(
+                      Icons.support_agent_rounded,
+                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -182,7 +247,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.12),
+                    color: AppColors.successSoft,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.phone_in_talk_rounded, color: AppColors.success, size: 20),
@@ -202,10 +267,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
+                    color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.brandMaroon, size: 20),
+                  child: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    size: 20,
+                  ),
                 ),
                 title: const Text('Live Support Chat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 subtitle: const Text('Chat in real-time with Food Fight admin', style: TextStyle(fontSize: 12)),
@@ -327,8 +396,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                        child: CustomButton.destructive(
+                          text: 'Confirm Cancel',
+                          isLoading: _isCancelling,
                           onPressed: _isCancelling
                               ? null
                               : () async {
@@ -359,7 +429,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                     );
                                   }
                                 },
-                          child: const Text('Confirm Cancel'),
                         ),
                       ),
                     ],
@@ -440,7 +509,78 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Live Map at the top with Route Line & ETA Badge (Spec benchmark)
+                  // 1. Top Hero Card (Reference G)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.brandYellow.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Icon(
+                            isDelivered
+                                ? Icons.check_circle_rounded
+                                : (isCancelled ? Icons.cancel_rounded : Icons.two_wheeler_rounded),
+                            color: isDelivered
+                                ? AppColors.success
+                                : (isCancelled
+                                    ? AppColors.error
+                                    : (isDark ? AppColors.brandYellow : AppColors.brandMaroon)),
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _statusHeadline(order.status),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                _statusSubheadline(order.status),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. Live Map Card (or Clean Placeholder) with ETA Badge
                   if (!isCancelled) ...[
                     Stack(
                       children: [
@@ -449,32 +589,32 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           deliveryAddress: order.deliveryAddress,
                           isOutForDelivery: order.status == OrderStatus.outForDelivery,
                         ),
-                        // ETA Badge Overlay
+                        // ETA Badge Overlay (onYellow text on brandYellow fill)
                         Positioned(
                           top: 14,
                           right: 14,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: AppColors.brandYellow,
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color: Color(0x33FFD505),
                                   blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                                  offset: Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.timer_rounded, color: Colors.white, size: 14),
+                                const Icon(Icons.timer_rounded, color: AppColors.onYellow, size: 14),
                                 const SizedBox(width: 4),
                                 Text(
                                   isDelivered ? 'Delivered' : 'ETA: 20–30 min',
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.onYellow,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -488,13 +628,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     const SizedBox(height: 20),
                   ],
 
-                  // 2. Rider Info Card (photo, name, vehicle, call button) once rider is assigned
+                  // 3. Rider Info Card
                   if (hasRider && !isCancelled) ...[
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
@@ -505,27 +648,20 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ),
                       child: Row(
                         children: [
-                          // Rider Photo / Avatar
                           Container(
-                            width: 52,
-                            height: 52,
+                            width: 50,
+                            height: 50,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.primary, Color(0xFFFF8E43)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
+                              border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.5)),
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
-                            child: const Center(
-                              child: Icon(Icons.person_rounded, color: Colors.white, size: 30),
+                            child: Center(
+                              child: Icon(
+                                Icons.person_rounded,
+                                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                size: 28,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -544,7 +680,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
-                                    const Icon(Icons.two_wheeler_rounded, size: 13, color: AppColors.primary),
+                                    Icon(
+                                      Icons.two_wheeler_rounded,
+                                      size: 13,
+                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Food Fight Express Champion',
@@ -565,8 +705,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.15),
+                              decoration: const BoxDecoration(
+                                color: AppColors.successSoft,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.phone_rounded, color: AppColors.success, size: 20),
@@ -578,7 +718,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     const SizedBox(height: 24),
                   ],
 
-                  // 3. Vertical Status Timeline (Order Confirmed → Preparing → On the Way → Delivered) with Timestamps
+                  // 4. Vertical Status Timeline (All 6 Stages, Reference G)
                   Text(
                     'Delivery Status Timeline',
                     style: TextStyle(
@@ -594,7 +734,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
+                        color: AppColors.errorSoft,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                       ),
@@ -619,6 +759,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
@@ -641,37 +784,45 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               Column(
                                 children: [
                                   Container(
-                                    width: 38,
-                                    height: 38,
+                                    width: 36,
+                                    height: 36,
                                     decoration: BoxDecoration(
                                       color: isCompleted
-                                          ? AppColors.success
+                                          ? AppColors.brandYellow
                                           : (isCurrent
-                                              ? AppColors.primary
+                                              ? AppColors.brandYellow
                                               : colorScheme.surfaceContainerHighest),
                                       shape: BoxShape.circle,
+                                      border: isCurrent
+                                          ? Border.all(
+                                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                              width: 2.5,
+                                            )
+                                          : null,
                                       boxShadow: isCurrent
-                                          ? [
+                                          ? const [
                                               BoxShadow(
-                                                color: AppColors.primary.withValues(alpha: 0.4),
+                                                color: Color(0x33FFD505),
                                                 blurRadius: 8,
-                                                offset: const Offset(0, 2),
+                                                offset: Offset(0, 2),
                                               ),
                                             ]
                                           : null,
                                     ),
                                     child: Icon(
                                       step['icon'] as IconData,
-                                      size: 18,
-                                      color: (isCompleted || isCurrent) ? Colors.white : colorScheme.onSurfaceVariant,
+                                      size: 17,
+                                      color: (isCompleted || isCurrent)
+                                          ? AppColors.onYellow
+                                          : colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   if (index < _coreTrackingSteps.length - 1)
                                     Container(
                                       width: 2.5,
-                                      height: 38,
+                                      height: 36,
                                       color: isCompleted
-                                          ? AppColors.success
+                                          ? AppColors.brandYellow
                                           : colorScheme.outlineVariant.withValues(alpha: 0.5),
                                     ),
                                 ],
@@ -679,7 +830,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.only(top: 2),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -690,7 +841,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                             step['title'] as String,
                                             style: TextStyle(
                                               fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
-                                              fontSize: 14.5,
+                                              fontSize: 14,
                                               color: isPending
                                                   ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
                                                   : colorScheme.onSurface,
@@ -702,12 +853,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                               style: TextStyle(
                                                 fontSize: 11.5,
                                                 fontWeight: FontWeight.w600,
-                                                color: isCurrent ? AppColors.primary : colorScheme.onSurfaceVariant,
+                                                color: isCurrent
+                                                    ? (isDark ? AppColors.brandYellow : AppColors.amberDark)
+                                                    : colorScheme.onSurfaceVariant,
                                               ),
                                             ),
                                         ],
                                       ),
-                                      const SizedBox(height: 3),
+                                      const SizedBox(height: 2),
                                       Text(
                                         step['desc'] as String,
                                         style: TextStyle(
@@ -727,58 +880,52 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     ),
                   const SizedBox(height: 20),
 
-                  // 4. "Chat with Support" & "Get Help" Action Bar
+                  // 5. Action Row: Primary Maroon Chat + Outlined Help + Outline-Error Cancel
                   Row(
                     children: [
                       Expanded(
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.brandMaroon,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
+                        child: CustomButton.darkCta(
+                          text: 'Chat with Support',
+                          icon: Icons.chat_bubble_outline_rounded,
                           onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id),
-                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                          label: const Text('Chat with Support', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(width: 10),
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.brandMaroon,
-                          side: const BorderSide(color: AppColors.brandMaroon, width: 1.5),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          foregroundColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                          side: BorderSide(
+                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         onPressed: () => _showGetHelpModal(context, order),
                         child: const Icon(Icons.help_outline_rounded, size: 20),
                       ),
                       if (canCancel) ...[
                         const SizedBox(width: 10),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
+                        CustomButton.destructive(
+                          text: 'Cancel',
+                          icon: Icons.close_rounded,
                           onPressed: () => _showCancellationDialog(context, order),
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                          label: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ],
                   ),
                   const SizedBox(height: 20),
 
-                  // Delivery Destination Card
+                  // 6. Delivery Destination Card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
@@ -792,10 +939,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
+                            color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 22),
+                          child: Icon(
+                            Icons.location_on_outlined,
+                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            size: 22,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -824,11 +975,175 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ],
                     ),
                   ),
+
+                  // 7. Sticky "Confirm Order Received" when delivered (Reference G)
+                  if (isDelivered) ...[
+                    const SizedBox(height: 20),
+                    CustomButton(
+                      text: 'Order Received - Leave Review',
+                      icon: Icons.rate_review_outlined,
+                      onPressed: () => _showReviewOrderModal(context, order),
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showReviewOrderModal(BuildContext context, OrderModel order) {
+    int selectedRating = 5;
+    final commentCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (bottomSheetCtx, setModalState) {
+          final theme = Theme.of(bottomSheetCtx);
+          final colorScheme = theme.colorScheme;
+          final isDark = theme.brightness == Brightness.dark;
+
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(bottomSheetCtx).viewInsets.bottom + 24,
+              left: 24,
+              right: 24,
+              top: 24,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Icon(Icons.stars_rounded, color: AppColors.brandYellow, size: 44),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Rate Your Food Fight Experience',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Order #${order.orderNumber} • ${order.branchId}',
+                    style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (idx) {
+                      final star = idx + 1;
+                      return IconButton(
+                        iconSize: 36,
+                        onPressed: () => setModalState(() => selectedRating = star),
+                        icon: Icon(
+                          star <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                          color: AppColors.mustard,
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: commentCtrl,
+                    maxLines: 3,
+                    maxLength: 250,
+                    decoration: InputDecoration(
+                      hintText: 'Tell us how the food tasted, delivery speed, packing...',
+                      filled: true,
+                      fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brandYellow,
+                        foregroundColor: AppColors.brandMaroon,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              setModalState(() => isSubmitting = true);
+                              final auth = context.read<AuthProvider>();
+                              final reviewProv = context.read<ReviewProvider>();
+                              final user = auth.currentUser;
+
+                              // Submit reviews for the first item in order
+                              if (order.items.isNotEmpty && user != null) {
+                                final firstItem = order.items.first;
+                                await reviewProv.submitReview(
+                                  ReviewModel(
+                                    id: '',
+                                    itemId: firstItem.food.id,
+                                    branchId: order.branchId,
+                                    userId: user.id,
+                                    userName: user.name.isNotEmpty ? user.name : 'Foodie Champion',
+                                    userAvatar: user.profileImage,
+                                    rating: selectedRating.toDouble(),
+                                    reviewText: commentCtrl.text.trim(),
+                                    orderId: order.id,
+                                    createdAt: DateTime.now(),
+                                    updatedAt: DateTime.now(),
+                                  ),
+                                );
+                              }
+
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Thank you! Your verified review has been published.'),
+                                    backgroundColor: AppColors.success,
+                                  ),
+                                );
+                              }
+                            },
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brandMaroon),
+                            )
+                          : const Text(
+                              'Submit Review & Claim Tokens',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

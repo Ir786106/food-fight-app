@@ -4,6 +4,7 @@ import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/food_card.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../core/constants/app_dimens.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -20,7 +21,7 @@ class FavoritesScreen extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Saved Favorites ❤️'),
+            const Text('Saved Favorites'),
             if (favorites.isNotEmpty) ...[
               const SizedBox(width: 8),
               Container(
@@ -92,7 +93,7 @@ class FavoritesScreen extends StatelessWidget {
                                 Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
                               }
                             },
-                            child: const Text('Discover Food 🍔'),
+                            child: const Text('Discover Food'),
                           ),
                         ),
                       ],
@@ -100,7 +101,7 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, AppDimens.navBarScrollPadding),
                   itemCount: favorites.length,
                   itemBuilder: (context, index) {
                     final food = favorites[index];

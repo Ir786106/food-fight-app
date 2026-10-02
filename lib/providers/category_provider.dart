@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/category_model.dart';
 import 'package:food_fight/services/category_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider managing Category state for Admin & Customer panels
-class CategoryProvider extends ChangeNotifier {
+class CategoryProvider extends ChangeNotifier with SafeChangeNotifier {
   List<CategoryModel> _categories = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -34,8 +35,7 @@ class CategoryProvider extends ChangeNotifier {
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = CategoryService.watchCategories(

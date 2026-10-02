@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/coupon_model.dart';
 import 'package:food_fight/services/coupon_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing Coupons in Admin and Customer checkout
-class CouponProvider extends ChangeNotifier {
+class CouponProvider extends ChangeNotifier with SafeChangeNotifier {
   List<CouponModel> _coupons = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -34,8 +35,7 @@ class CouponProvider extends ChangeNotifier {
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = CouponService.watchCoupons(branchId: branchId).listen(

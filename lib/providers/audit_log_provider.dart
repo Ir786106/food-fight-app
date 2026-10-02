@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/audit_log_model.dart';
 import 'package:food_fight/services/super_admin_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for monitoring system-wide audit logs
-class AuditLogProvider extends ChangeNotifier {
+class AuditLogProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AuditLogModel> _logs = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -31,7 +32,7 @@ class AuditLogProvider extends ChangeNotifier {
   void watchLogs() {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     _subscription?.cancel();
     _subscription = SuperAdminService.watchAuditLogs(

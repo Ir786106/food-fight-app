@@ -169,9 +169,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     final activeChat = chatProv.activeChat;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         titleSpacing: 0,
@@ -185,13 +184,13 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.yellowSoft,
+                color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.brandYellow, width: 1.5),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.support_agent_rounded,
-                color: AppColors.brandMaroon,
+                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                 size: 24,
               ),
             ),
@@ -201,12 +200,12 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Food Fight Support',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.brandMaroon,
+                      color: colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -269,7 +268,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: colorScheme.outlineVariant, height: 1),
+          child: Container(color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6), height: 1),
         ),
       ),
       body: SafeArea(
@@ -282,8 +281,10 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
             if (activeChat != null && activeChat.status == 'resolved')
               _buildResolvedBanner(activeChat),
 
-            // 3. Error Banner if sending failed
-            if (chatProv.sendErrorMessage != null)
+            // 3. Error Banner ONLY on real failure (Audit 12: not on first open)
+            if (chatProv.sendErrorMessage != null &&
+                chatProv.sendErrorMessage != 'No active chat session.' &&
+                activeChat != null)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -306,10 +307,10 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                 ),
               ),
 
-            // 4. Message List
+            // 4. Message List or Silent Skeleton Loader
             Expanded(
-              child: chatProv.isLoadingMessages
-                  ? const Center(child: CircularProgressIndicator())
+              child: (chatProv.isLoadingMessages || (activeChat == null && chatProv.isLoadingChats))
+                  ? _buildSkeletonLoader()
                   : chatProv.activeMessages.isEmpty
                       ? _buildEmptyChatView()
                       : ListView.builder(
@@ -333,8 +334,9 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                         ),
             ),
 
-            // 5. Quick-Reply Chips (Visible when chat is open)
-            if (activeChat?.status != 'resolved') _buildQuickRepliesBar(),
+            // 5. Quick-Reply Chips (Audit 12: show in bottom strip ONLY when messages exist and not resolved)
+            if (activeChat?.status != 'resolved' && chatProv.activeMessages.isNotEmpty)
+              _buildQuickRepliesBar(),
 
             // 6. Composer Input Bar
             _buildInputBar(activeChat),
@@ -344,10 +346,58 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     );
   }
 
+  Widget _buildSkeletonLoader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 200,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              width: 160,
+              height: 42,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 240,
+              height: 56,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderContextCard(OrderModel order) {
     final statusInfo = AppStatusColors.of(context).forStatus(order.status);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
@@ -378,18 +428,18 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                   children: [
                     Text(
                       'Order #${order.orderNumber.isNotEmpty ? order.orderNumber : order.id.substring(0, 6)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: AppColors.brandMaroon,
+                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                       ),
                     ),
                     Text(
                       'Rs. ${order.total.toStringAsFixed(0)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
-                        color: AppColors.brandMaroon,
+                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                       ),
                     ),
                   ],
@@ -421,17 +471,21 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                           arguments: order.id,
                         );
                       },
-                      child: const Row(
+                      child: Row(
                         children: [
                           Text(
                             'Track Order',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.brandMaroon,
+                              color: isDark ? AppColors.brandYellow : AppColors.amberDark,
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.brandMaroon),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 10,
+                            color: isDark ? AppColors.brandYellow : AppColors.amberDark,
+                          ),
                         ],
                       ),
                     ),
@@ -446,6 +500,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
   }
 
   Widget _buildResolvedBanner(dynamic activeChat) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
@@ -471,8 +527,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
           ),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.brandMaroon,
-              side: const BorderSide(color: AppColors.brandMaroon, width: 1.2),
+              foregroundColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+              side: BorderSide(color: isDark ? AppColors.brandYellow : AppColors.brandMaroon, width: 1.2),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -497,6 +553,9 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
   }
 
   Widget _buildEmptyChatView() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -505,32 +564,32 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(
-                color: AppColors.yellowSoft,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.chat_bubble_outline_rounded,
-                color: AppColors.brandMaroon,
+                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                 size: 38,
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'How can we help you today?',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: AppColors.brandMaroon,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Our team is ready to help with orders, deliveries, branch info or feedback.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
                 height: 1.4,
               ),
             ),
@@ -541,9 +600,19 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
               alignment: WrapAlignment.center,
               children: _quickReplies.map((reply) {
                 return ActionChip(
-                  label: Text(reply, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.brandMaroon)),
-                  backgroundColor: AppColors.yellowTint,
-                  side: const BorderSide(color: AppColors.brandYellow, width: 1),
+                  label: Text(
+                    reply,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.brandYellow : AppColors.onYellow,
+                    ),
+                  ),
+                  backgroundColor: isDark ? AppColors.darkYellowSoft : AppColors.brandYellow,
+                  side: BorderSide(
+                    color: isDark ? AppColors.brandYellow : AppColors.yellowPressed,
+                    width: 1,
+                  ),
                   onPressed: () => _handleSendMessage(customText: reply),
                 );
               }).toList(),
@@ -555,6 +624,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
   }
 
   Widget _buildQuickRepliesBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 38,
       margin: const EdgeInsets.only(bottom: 6),
@@ -568,15 +639,18 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
           return ActionChip(
             label: Text(
               reply,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: AppColors.brandMaroon,
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.brandYellow : AppColors.onYellow,
               ),
             ),
-            backgroundColor: AppColors.yellowSoft,
-            side: BorderSide.none,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            backgroundColor: isDark ? AppColors.darkYellowSoft : AppColors.brandYellow,
+            side: BorderSide(
+              color: isDark ? AppColors.brandYellow : AppColors.yellowPressed,
+              width: 1,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             onPressed: () => _handleSendMessage(customText: reply),
           );
         },
@@ -587,6 +661,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
   Widget _buildMessageBubble(ChatMessageModel msg, bool isLatest) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final isCustomer = msg.isCustomer;
     final timeStr = DateFormat('h:mm a').format(msg.createdAt);
 
@@ -618,7 +693,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
         decoration: BoxDecoration(
           color: isCustomer
               ? AppColors.brandYellow
-              : (isDark ? AppColors.darkSurfaceElevated : AppColors.surface),
+              : (isDark ? AppColors.darkSurfaceElevated : colorScheme.surface),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -626,11 +701,11 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
             bottomRight: Radius.circular(isCustomer ? 4 : 16),
           ),
           border: isCustomer
-              ? null
+              ? Border.all(color: AppColors.yellowPressed)
               : Border.all(color: isDark ? AppColors.darkBorder : AppColors.border, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -645,10 +720,10 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   msg.senderName.isNotEmpty ? msg.senderName : 'Food Fight Support',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.brandMaroon,
+                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                   ),
                 ),
               ),
@@ -666,7 +741,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                       if (progress == null) return child;
                       return Container(
                         height: 160,
-                        color: Colors.grey.shade200,
+                        color: isDark ? Colors.white12 : Colors.grey.shade200,
                         child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                       );
                     },
@@ -683,8 +758,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                   height: 1.35,
                   fontWeight: FontWeight.w500,
                   color: isCustomer
-                      ? AppColors.brandMaroon
-                      : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                      ? AppColors.onYellow
+                      : colorScheme.onSurface,
                 ),
               ),
 
@@ -700,7 +775,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: isCustomer
-                        ? AppColors.brandMaroon.withValues(alpha: 0.7)
+                        ? AppColors.onYellow.withValues(alpha: 0.75)
                         : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                   ),
                 ),
@@ -710,8 +785,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                     Icons.done_all_rounded,
                     size: 13,
                     color: msg.readBy.length > 1
-                        ? AppColors.brandMaroon
-                        : AppColors.brandMaroon.withValues(alpha: 0.45),
+                        ? AppColors.onYellow
+                        : AppColors.onYellow.withValues(alpha: 0.5),
                   ),
                 ],
               ],
@@ -726,20 +801,21 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     final now = DateTime.now();
     final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
     final dateStr = isToday ? 'Today' : DateFormat('MMM d, yyyy').format(date);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 14),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         dateStr,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
         ),
       ),
     );
@@ -761,12 +837,16 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6))),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.photo_camera_back_outlined, color: AppColors.brandMaroon, size: 24),
+            icon: Icon(
+              Icons.photo_camera_back_outlined,
+              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+              size: 24,
+            ),
             tooltip: 'Attach Photo',
             onPressed: _handleAttachImage,
           ),
@@ -791,7 +871,22 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.darkBorder : AppColors.border,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.darkBorder : AppColors.border,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    width: 1.5,
+                  ),
                 ),
               ),
               onSubmitted: (_) => _handleSendMessage(),
@@ -802,14 +897,18 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _isComposing ? AppColors.brandMaroon : AppColors.surfaceMuted,
+              color: _isComposing
+                  ? AppColors.brandYellow
+                  : (isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted),
               shape: BoxShape.circle,
             ),
             child: IconButton(
               icon: Icon(
                 Icons.send_rounded,
                 size: 20,
-                color: _isComposing ? AppColors.brandYellow : AppColors.textMuted,
+                color: _isComposing
+                    ? AppColors.onYellow
+                    : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
               ),
               onPressed: _isComposing ? () => _handleSendMessage() : null,
             ),

@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/cart_provider.dart';
+import '../../widgets/navigation/floating_nav_bar.dart';
+import '../../widgets/cart/floating_cart_bar.dart';
 import 'home_screen.dart';
 import '../orders/order_history_screen.dart';
-import '../favorites/favorites_screen.dart';
+import '../cart/cart_screen.dart';
+import '../chat/customer_chat_screen.dart';
 import '../profile/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -18,9 +21,20 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   final List<int> _tabHistory = [0];
+  bool _isNavVisible = true;
+
+  // Per-tab navigator keys to preserve per-tab Navigator back-button behavior
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
+    5,
+    (_) => GlobalKey<NavigatorState>(),
+  );
 
   void _onTabTapped(int index) {
-    if (_currentIndex == index) return;
+    if (_currentIndex == index) {
+      // Pop to first route in the current tab's navigator
+      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+      return;
+    }
     setState(() {
       _tabHistory.remove(index);
       _tabHistory.add(index);
@@ -85,14 +99,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brandYellow,
-              foregroundColor: AppColors.brandMaroon,
+              foregroundColor: AppColors.onYellow,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               minimumSize: const Size(100, 44),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text(
               'Exit App',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onYellow),
             ),
           ),
         ],
@@ -105,6 +119,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _handleBackInvocation(bool didPop) async {
     if (didPop) return;
 
+    // Check if the current tab's navigator can pop
+    final currentNavigatorState = _navigatorKeys[_currentIndex].currentState;
+    if (currentNavigatorState != null && currentNavigatorState.canPop()) {
+      currentNavigatorState.pop();
+      return;
+    }
+
+    // Otherwise back through tab history
     if (_tabHistory.length > 1) {
       setState(() {
         _tabHistory.removeLast();
@@ -128,246 +150,92 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
+  Widget _buildTabNavigator(int index, Widget rootScreen) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (routeSettings) {
+        return MaterialPageRoute(
+          settings: routeSettings,
+          builder: (context) => rootScreen,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isTablet = screenWidth >= 840;
 
-    // 4 Primary tabs (Template architecture)
-    const tabViews = [
-      HomeScreen(),
-      OrderHistoryScreen(),
-      FavoritesScreen(),
-      ProfileScreen(),
+    // 5 Navigation Tabs (Home | Orders | Cart | Chat | Profile)
+    final tabViews = [
+      _buildTabNavigator(0, const HomeScreen()),
+      _buildTabNavigator(1, const OrderHistoryScreen()),
+      _buildTabNavigator(2, const CartScreen()),
+      _buildTabNavigator(3, const CustomerChatScreen()),
+      _buildTabNavigator(4, const ProfileScreen()),
     ];
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) => _handleBackInvocation(didPop),
-      child: Scaffold(
-        body: Stack(
-          children: [
-            IndexedStack(
-              index: _currentIndex,
-              children: tabViews,
-            ),
-
-            // Floating Mini Cart Bar when cart has items
-            if (cart.itemCount > 0 && _currentIndex != 1)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 84,
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pushNamed('/cart'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandMaroon,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.maroonDeep.withValues(alpha: 0.35),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollUpdateNotification) {
+            // Hide on scroll down, show on scroll up
+            if (notification.scrollDelta != null) {
+              if (notification.scrollDelta! > 12 && _isNavVisible) {
+                setState(() => _isNavVisible = false);
+              } else if (notification.scrollDelta! < -12 && !_isNavVisible) {
+                setState(() => _isNavVisible = true);
+              }
+            }
+          }
+          return false;
+        },
+        child: Scaffold(
+          extendBody: true,
+          body: isTablet
+              ? Row(
+                  children: [
+                    FloatingNavBar(
+                      currentIndex: _currentIndex,
+                      onTabSelected: _onTabTapped,
+                      onCartSelected: () => _onTabTapped(2),
+                      isVisible: true,
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.yellowSoft,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.shopping_bag_rounded,
-                            color: AppColors.brandMaroon,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${cart.itemCount} item${cart.itemCount > 1 ? 's' : ''} in cart',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                'Rs. ${cart.totalPrice.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  color: AppColors.brandYellow,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Text(
-                          'View Cart',
-                          style: TextStyle(
-                            color: AppColors.brandYellow,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 13,
-                          color: AppColors.brandYellow,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: isDark ? AppColors.darkDivider : AppColors.divider,
-                width: 1,
-              ),
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0A2A1415),
-                blurRadius: 12,
-                offset: Offset(0, -2),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            child: SizedBox(
-              height: 64,
-              child: Row(
-                children: [
-                  _buildNavTabItem(
-                    index: 0,
-                    icon: Icons.home_outlined,
-                    activeIcon: Icons.home_rounded,
-                    label: 'Home',
-                  ),
-                  _buildNavTabItem(
-                    index: 1,
-                    icon: Icons.receipt_long_outlined,
-                    activeIcon: Icons.receipt_long_rounded,
-                    label: 'Orders',
-                  ),
-                  _buildNavTabItem(
-                    index: 2,
-                    icon: Icons.favorite_border_rounded,
-                    activeIcon: Icons.favorite_rounded,
-                    label: 'My List',
-                    badgeCount: cart.favorites.length,
-                  ),
-                  _buildNavTabItem(
-                    index: 3,
-                    icon: Icons.person_outline_rounded,
-                    activeIcon: Icons.person_rounded,
-                    label: 'Profile',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavTabItem({
-    required int index,
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
-    int badgeCount = 0,
-  }) {
-    final isSelected = _currentIndex == index;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () => _onTabTapped(index),
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isSelected ? 16 : 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark ? AppColors.darkSurfaceElevated : AppColors.yellowSoft)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    isSelected ? activeIcon : icon,
-                    size: 22,
-                    color: isSelected
-                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                        : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
-                  ),
-                ),
-                if (badgeCount > 0)
-                  Positioned(
-                    right: 4,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                      decoration: const BoxDecoration(
-                        color: AppColors.tomato,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '$badgeCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
+                    Expanded(
+                      child: IndexedStack(
+                        index: _currentIndex,
+                        children: tabViews,
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                    : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
-              ),
-            ),
-          ],
+                  ],
+                )
+              : Stack(
+                  children: [
+                    IndexedStack(
+                      index: _currentIndex,
+                      children: tabViews,
+                    ),
+
+                    // Floating Cart Bar (shows above nav bar on Home screen when cart has items)
+                    if (_currentIndex == 0 && cart.itemCount > 0)
+                      FloatingCartBar(
+                        onTap: () => _onTabTapped(2),
+                        bottomOffset: 94.0,
+                      ),
+                  ],
+                ),
+          bottomNavigationBar: isTablet
+              ? null
+              : FloatingNavBar(
+                  currentIndex: _currentIndex,
+                  onTabSelected: _onTabTapped,
+                  onCartSelected: () => _onTabTapped(2),
+                  isVisible: _isNavVisible,
+                ),
         ),
       ),
     );

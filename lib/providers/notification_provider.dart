@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
+import '../core/utils/safe_change_notifier.dart';
 
-class NotificationProvider extends ChangeNotifier {
+class NotificationProvider extends ChangeNotifier with SafeChangeNotifier {
   final NotificationService _service = NotificationService();
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
@@ -21,7 +22,7 @@ class NotificationProvider extends ChangeNotifier {
     if (userId.isEmpty) {
       _notifications = [];
       _isLoading = false;
-      notifyListeners();
+      notifyListenersPostFrame();
       return;
     }
 
@@ -32,8 +33,7 @@ class NotificationProvider extends ChangeNotifier {
     _currentUserId = userId;
     _isLoading = true;
     _errorMessage = null;
-    // Defer to avoid setState-during-build
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    notifyListenersPostFrame();
 
     _sub?.cancel();
     _sub = NotificationService.watchUserNotifications(userId).listen(

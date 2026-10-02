@@ -5,6 +5,7 @@ import 'package:food_fight/models/food_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/providers/cart_provider.dart';
+import 'package:food_fight/providers/loyalty_provider.dart';
 import 'package:food_fight/screens/cart/cart_screen.dart';
 
 void main() {
@@ -248,8 +249,11 @@ void main() {
 
       // Now pump CartScreen using the exact same shared provider
       await tester.pumpWidget(
-        ChangeNotifierProvider<CartProvider>.value(
-          value: cart,
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<CartProvider>.value(value: cart),
+            ChangeNotifierProvider<LoyaltyProvider>.value(value: LoyaltyProvider()),
+          ],
           child: const MaterialApp(
             home: CartScreen(),
           ),

@@ -5,9 +5,10 @@ import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for real-time Admin Dashboard KPIs, stats, and quick overview
-class AdminDashboardProvider extends ChangeNotifier {
+class AdminDashboardProvider extends ChangeNotifier with SafeChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = false;
@@ -80,7 +81,7 @@ class AdminDashboardProvider extends ChangeNotifier {
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     // 1. Listen to orders for sales & status counts
     _ordersSubscription?.cancel();

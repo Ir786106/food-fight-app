@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../models/branch_model.dart';
 import '../services/branch_service.dart';
 import '../core/utils/logger.dart';
+import '../core/utils/safe_change_notifier.dart';
 
 enum BranchSortField { revenue, orderCount, profit, name }
 typedef BranchSortOption = BranchSortField;
 
 /// Manages multi-branch states for Customer storefront, Admin branch-scoping, and Super Admin oversight
-class BranchProvider extends ChangeNotifier {
+class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   List<BranchModel> _branches = [];
   BranchModel? _selectedBranch;
   bool _isLoading = false;
@@ -34,7 +35,7 @@ class BranchProvider extends ChangeNotifier {
   /// Initialize real-time listener and seed default branches if necessary
   Future<void> init() async {
     _isLoading = true;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     try {
       await BranchService.seedInitialBranchesIfEmpty();

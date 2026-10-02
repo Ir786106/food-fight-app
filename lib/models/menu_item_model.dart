@@ -1,3 +1,5 @@
+import '../core/utils/safe_convert.dart';
+
 /// Model for a size or portion variant (e.g. Small, Medium, Large, Quarter, Half, 5 Pcs)
 class MenuVariant {
   final String label;
@@ -31,8 +33,8 @@ class MenuVariant {
   factory MenuVariant.fromJson(Map<String, dynamic> json) {
     return MenuVariant(
       label: (json['label'] ?? '').toString(),
-      price: (json['price'] ?? 0).toDouble(),
-      discount: (json['discount'] ?? 0).toDouble(),
+      price: SafeConvert.toDouble(json['price']),
+      discount: SafeConvert.toDouble(json['discount']),
       description: json['description']?.toString(),
     );
   }
@@ -72,7 +74,7 @@ class MenuAddon {
   factory MenuAddon.fromJson(Map<String, dynamic> json) {
     return MenuAddon(
       name: (json['name'] ?? '').toString(),
-      price: (json['price'] ?? 0).toDouble(),
+      price: SafeConvert.toDouble(json['price']),
     );
   }
 
@@ -242,9 +244,9 @@ class MenuItemModel {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      discount: (json['discount'] ?? 0).toDouble(),
-      finalPrice: (json['finalPrice'] ?? 0).toDouble(),
+      price: SafeConvert.toDouble(json['price']),
+      discount: SafeConvert.toDouble(json['discount']),
+      finalPrice: SafeConvert.toDouble(json['finalPrice']),
       imageUrl: json['imageUrl'] ?? json['image_url'],
       categoryId: json['categoryId'] ?? json['category_id'] ?? '',
       restaurantId: json['restaurantId'] ?? json['restaurant_id'],
@@ -253,16 +255,15 @@ class MenuItemModel {
       isFeatured: json['isFeatured'] == 1 || json['isFeatured'] == true,
       isVeg: json['isVeg'] == 1 || json['isVeg'] == true,
       isSpicy: json['isSpicy'] == 1 || json['isSpicy'] == true,
-      prepTimeMinutes: json['prepTimeMinutes'] ?? json['prep_time_minutes'] ?? 30,
-      rating: (json['rating'] ?? 0).toDouble(),
+      prepTimeMinutes: SafeConvert.toInt(json['prepTimeMinutes'] ?? json['prep_time_minutes'], 30),
+      rating: SafeConvert.toDouble(json['rating'], 4.8),
       variants: parsedVariants,
       addons: parsedAddons,
       sizePrices: json['sizePrices'] != null && json['sizePrices'] is Map
-          ? Map<String, double>.from(
-              (json['sizePrices'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toDouble())))
+          ? SafeConvert.toDoubleMap(json['sizePrices'])
           : null,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] ?? 0),
+      createdAt: SafeConvert.toDateTime(json['createdAt']),
+      updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }
 

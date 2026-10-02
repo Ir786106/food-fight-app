@@ -290,7 +290,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     ? GridView.builder(
                                         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                                           maxCrossAxisExtent: 440,
-                                          mainAxisExtent: 130,
+                                          childAspectRatio: 2.8,
                                           mainAxisSpacing: 12,
                                           crossAxisSpacing: 12,
                                         ),

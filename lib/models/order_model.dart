@@ -51,6 +51,8 @@ class OrderModel {
   final String customerPhone;
   final String restaurantName;
   final String? branchId;
+  final int tokensUsed;
+  final double tokensDiscount;
 
   OrderModel({
     required this.id,
@@ -73,8 +75,10 @@ class OrderModel {
     required this.customerId,
     this.customerName = 'Guest Customer',
     this.customerPhone = '',
-    required this.restaurantName,
+    this.restaurantName = 'Food Fight',
     this.branchId,
+    this.tokensUsed = 0,
+    this.tokensDiscount = 0.0,
   });
 
   String get statusLabel {
@@ -124,6 +128,8 @@ class OrderModel {
       'customerPhone': customerPhone,
       'restaurantName': restaurantName,
       if (branchId != null) 'branchId': branchId,
+      'tokensUsed': tokensUsed,
+      'tokensDiscount': tokensDiscount,
     };
   }
 
@@ -160,6 +166,8 @@ class OrderModel {
       customerPhone: json['customerPhone']?.toString() ?? json['customer_phone']?.toString() ?? '',
       restaurantName: json['restaurantName']?.toString() ?? json['restaurant_name']?.toString() ?? '',
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
+      tokensUsed: SafeConvert.toInt(json['tokensUsed']),
+      tokensDiscount: SafeConvert.toDouble(json['tokensDiscount']),
     );
   }
 
@@ -186,6 +194,8 @@ class OrderModel {
     String? customerPhone,
     String? restaurantName,
     String? branchId,
+    int? tokensUsed,
+    double? tokensDiscount,
   }) {
     return OrderModel(
       id: id ?? this.id,
@@ -210,6 +220,8 @@ class OrderModel {
       customerPhone: customerPhone ?? this.customerPhone,
       restaurantName: restaurantName ?? this.restaurantName,
       branchId: branchId ?? this.branchId,
+      tokensUsed: tokensUsed ?? this.tokensUsed,
+      tokensDiscount: tokensDiscount ?? this.tokensDiscount,
     );
   }
 

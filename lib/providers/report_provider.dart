@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/report_model.dart';
 import 'package:food_fight/services/report_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing sales reports and analytics
-class ReportProvider extends ChangeNotifier {
+class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
   ReportModel? _report;
   bool _isLoading = false;
   String? _errorMessage;
@@ -77,7 +78,7 @@ class ReportProvider extends ChangeNotifier {
     if (branchId != null) _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     try {
       _report = await ReportService.fetchSalesReport(

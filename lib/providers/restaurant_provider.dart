@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/restaurant_model.dart';
 import '../services/restaurant_service.dart';
+import '../core/utils/safe_change_notifier.dart';
 
-class RestaurantProvider extends ChangeNotifier {
+class RestaurantProvider extends ChangeNotifier with SafeChangeNotifier {
   List<RestaurantModel> _restaurants = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -19,7 +20,7 @@ class RestaurantProvider extends ChangeNotifier {
 
   Future<void> _init() async {
     _isLoading = true;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     try {
       await RestaurantService.ensureSeeded();

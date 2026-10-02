@@ -18,6 +18,7 @@ class FoodModel {
   final String? branchId;
   final bool isSpicy;
   final bool isVeg;
+  final bool isAvailable;
 
   FoodModel({
     required this.id,
@@ -36,6 +37,7 @@ class FoodModel {
     this.branchId,
     this.isSpicy = false,
     this.isVeg = true,
+    this.isAvailable = true,
   });
 
   /// True if item has selectable size or portion variants
@@ -92,6 +94,7 @@ class FoodModel {
       if (branchId != null) 'branchId': branchId,
       'isSpicy': isSpicy,
       'isVeg': isVeg,
+      'isAvailable': isAvailable,
     };
   }
 
@@ -144,6 +147,7 @@ class FoodModel {
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
       isSpicy: json['isSpicy'] == true || json['isSpicy'] == 1,
       isVeg: json['isVeg'] == null ? true : (json['isVeg'] == true || json['isVeg'] == 1),
+      isAvailable: json['isAvailable'] == null ? true : (json['isAvailable'] == true || json['isAvailable'] == 1),
     );
   }
 
@@ -165,6 +169,7 @@ class FoodModel {
       branchId: item.branchId,
       isSpicy: item.isSpicy,
       isVeg: item.isVeg,
+      isAvailable: item.isActive,
     );
   }
 }

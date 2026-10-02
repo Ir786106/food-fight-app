@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/restaurant_model.dart';
 import '../../models/food_model.dart';
-import '../../providers/cart_provider.dart';
 import '../../providers/menu_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/food_card.dart';
@@ -12,6 +11,7 @@ import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/cart/floating_cart_mini_pill.dart';
 
 class RestaurantDetailScreen extends StatefulWidget {
   const RestaurantDetailScreen({super.key});
@@ -79,7 +79,6 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               address: 'Food Fight HQ, Main Boulevard',
             );
 
-    final cart = context.watch<CartProvider>();
     final menuProvider = context.watch<MenuProvider>();
     final activeItems = menuProvider.activeItems;
     final theme = Theme.of(context);
@@ -387,65 +386,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         ),
       ),
 
-      // Sticky Bottom Bar for Cart
-      bottomNavigationBar: cart.items.isNotEmpty
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${cart.itemCount} items in cart',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Rs. ${cart.total.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).pushNamed('/cart'),
-                      icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
-                      label: const Text(
-                        'View Cart',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : null,
+      // Sticky Floating Mini Cart Pill (Ref A)
+      bottomNavigationBar: const FloatingCartMiniPill(),
     );
   }
 

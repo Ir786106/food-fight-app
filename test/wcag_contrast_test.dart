@@ -73,5 +73,35 @@ void main() {
       expect(ratio, greaterThanOrEqualTo(4.5),
           reason: 'Brand Yellow on Maroon Deep ratio was ${ratio.toStringAsFixed(2)}:1');
     });
+
+    test('onYellow (maroonDeep) on Brand Yellow exceeds 7:1 high contrast criteria', () {
+      final ratio = calculateContrastRatio(AppColors.onYellow, AppColors.brandYellow);
+      expect(ratio, greaterThanOrEqualTo(7.0),
+          reason: 'onYellow on Brand Yellow ratio was ${ratio.toStringAsFixed(2)}:1');
+    });
+
+    test('amberDark on Cream Background meets WCAG AA criteria (>= 4.5:1)', () {
+      final ratio = calculateContrastRatio(AppColors.amberDark, AppColors.background);
+      expect(ratio, greaterThanOrEqualTo(4.5),
+          reason: 'amberDark on Background ratio was ${ratio.toStringAsFixed(2)}:1');
+    });
+
+    test('amberDark on White Surface meets WCAG AA criteria (>= 4.5:1)', () {
+      final ratio = calculateContrastRatio(AppColors.amberDark, AppColors.surface);
+      expect(ratio, greaterThanOrEqualTo(4.5),
+          reason: 'amberDark on Surface ratio was ${ratio.toStringAsFixed(2)}:1');
+    });
+
+    test('brandMaroon on Cream Background exceeds 7:1 criteria', () {
+      final ratio = calculateContrastRatio(AppColors.brandMaroon, AppColors.background);
+      expect(ratio, greaterThanOrEqualTo(7.0),
+          reason: 'brandMaroon on Background ratio was ${ratio.toStringAsFixed(2)}:1');
+    });
+
+    test('White on ctaDark exceeds 12:1 criteria', () {
+      final ratio = calculateContrastRatio(Colors.white, AppColors.ctaDark);
+      expect(ratio, greaterThanOrEqualTo(12.0),
+          reason: 'White on ctaDark ratio was ${ratio.toStringAsFixed(2)}:1');
+    });
   });
 }

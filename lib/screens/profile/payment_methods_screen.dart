@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/payment_method_model.dart';
 import '../../providers/auth_provider.dart';
@@ -138,9 +139,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     TextFormField(
                       controller: cardNumberCtrl,
                       keyboardType: TextInputType.number,
-                      maxLength: 19,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        _CardNumberFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Card Number (16 digits) *',
+                        hintText: '0000 0000 0000 0000',
                         prefixIcon: Icon(Icons.credit_card_outlined),
                         counterText: '',
                       ),
@@ -151,10 +156,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: expiryCtrl,
-                            keyboardType: TextInputType.datetime,
-                            maxLength: 5,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              _CardExpiryFormatter(),
+                            ],
                             decoration: const InputDecoration(
                               labelText: 'Expiry (MM/YY) *',
+                              hintText: 'MM/YY',
                               prefixIcon: Icon(Icons.calendar_today_outlined),
                               counterText: '',
                             ),
@@ -165,10 +174,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           child: TextFormField(
                             controller: cvvCtrl,
                             keyboardType: TextInputType.number,
-                            maxLength: 4,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(4),
+                            ],
                             obscureText: true,
                             decoration: const InputDecoration(
                               labelText: 'CVV *',
+                              hintText: '•••',
                               prefixIcon: Icon(Icons.lock_outline),
                               counterText: '',
                             ),
@@ -201,7 +214,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     title: const Text('Set as default payment method', style: TextStyle(fontSize: 13.5)),
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.primary,
+                    activeColor: AppColors.brandYellow,
+                    checkColor: AppColors.onYellow,
                   ),
                   const SizedBox(height: 16),
 
@@ -210,8 +224,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.brandYellow,
+                        foregroundColor: AppColors.onYellow,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       onPressed: isTokenizing
@@ -289,7 +303,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(color: AppColors.onYellow, strokeWidth: 2),
                             )
                           : const Text('Save Payment Method', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     ),
@@ -399,10 +413,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
-                          style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.brandYellow,
+                            foregroundColor: AppColors.onYellow,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
                           onPressed: () => _showAddMethodModal(context, user.id),
-                          icon: const Icon(Icons.add_rounded),
-                          label: const Text('Add Payment Method'),
+                          icon: const Icon(Icons.add_rounded, color: AppColors.onYellow),
+                          label: const Text('Add Payment Method', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -454,7 +472,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ),
                         ],
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         leading: Container(
                           padding: const EdgeInsets.all(10),
@@ -485,12 +505,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary,
+                                  color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                                   borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.5)),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'DEFAULT',
-                                  style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                                  style: TextStyle(
+                                    color: isDark ? AppColors.brandYellow : AppColors.onYellow,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
                             ],
@@ -566,7 +591,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ],
                         ),
                       ),
-                    );
+                    ),
+                  );
                   }),
                 ],
               );
@@ -576,13 +602,50 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       ),
       floatingActionButton: user != null && paymentProvider.methods.isNotEmpty
           ? FloatingActionButton.extended(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.brandYellow,
+              foregroundColor: AppColors.onYellow,
               onPressed: () => _showAddMethodModal(context, user.id),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Method'),
+              icon: const Icon(Icons.add_rounded, color: AppColors.onYellow),
+              label: const Text('Add Method', style: TextStyle(fontWeight: FontWeight.bold)),
             )
           : null,
     );
   }
 }
+
+class _CardNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var text = newValue.text.replaceAll(' ', '');
+    if (text.length > 16) text = text.substring(0, 16);
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i > 0 && i % 4 == 0) buffer.write(' ');
+      buffer.write(text[i]);
+    }
+    final str = buffer.toString();
+    return TextEditingValue(
+      text: str,
+      selection: TextSelection.collapsed(offset: str.length),
+    );
+  }
+}
+
+class _CardExpiryFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var text = newValue.text.replaceAll('/', '');
+    if (text.length > 4) text = text.substring(0, 4);
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i == 2) buffer.write('/');
+      buffer.write(text[i]);
+    }
+    final str = buffer.toString();
+    return TextEditingValue(
+      text: str,
+      selection: TextSelection.collapsed(offset: str.length),
+    );
+  }
+}
+

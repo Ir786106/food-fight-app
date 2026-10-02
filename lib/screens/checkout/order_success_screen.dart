@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/order_model.dart';
+import '../../core/constants/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/common/network_image_view.dart';
+import '../../widgets/custom_button.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   const OrderSuccessScreen({super.key});
@@ -39,75 +42,85 @@ class OrderSuccessScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Celebratory Checkmark Icon with Glow
+                  // 1. Concentric Yellow Rings with Checkmark (Reference F)
                   Container(
-                    width: 110,
-                    height: 110,
+                    width: 104,
+                    height: 104,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.16),
+                      color: AppColors.brandYellow.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
                     ),
                     alignment: Alignment.center,
                     child: Container(
-                      width: 74,
-                      height: 74,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.brandYellow.withValues(alpha: 0.28),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        size: 46,
-                        color: Colors.white,
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          color: AppColors.brandYellow,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x33FFD505),
+                              blurRadius: 16,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 34,
+                          color: AppColors.onYellow,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
-                  // Celebratory Title
+                  // Celebratory Title (no raw emoji, Audit 16)
                   Text(
-                    'Your order has been placed successfully! 🎉',
+                    'Order Placed Successfully!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -0.4,
+                      letterSpacing: -0.3,
                       color: colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
-                  // Order ID badge
+                  // Order ID Pill (maroon text on yellowSoft, Audit 1)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: colorScheme.surface,
+                      color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-                          blurRadius: 8,
-                        ),
-                      ],
+                      border: Border.all(
+                        color: AppColors.brandYellow.withValues(alpha: 0.6),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.receipt_rounded, size: 15, color: AppColors.primary),
+                        Icon(
+                          Icons.receipt_rounded,
+                          size: 15,
+                          color: isDark ? AppColors.brandYellow : AppColors.onYellow,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Order ID: ${order.orderNumber}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
+                            color: isDark ? AppColors.brandYellow : AppColors.onYellow,
                           ),
                         ),
                       ],
@@ -115,16 +128,19 @@ class OrderSuccessScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Estimated Delivery Time Card
+                  // 2. Estimated Delivery Time Card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -136,10 +152,14 @@ class OrderSuccessScreen extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
+                            color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.timer_rounded, color: AppColors.primary, size: 24),
+                          child: Icon(
+                            Icons.timer_rounded,
+                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -169,7 +189,7 @@ class OrderSuccessScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.15),
+                            color: AppColors.successSoft,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -186,16 +206,105 @@ class OrderSuccessScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Order Summary breakdown card
+                  // 3. Items Ordered Card (Reference F)
+                  if (order.items.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Items Ordered',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ...order.items.map((item) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  NetworkImageView(
+                                    imageUrl: item.food.imageUrl,
+                                    width: 38,
+                                    height: 38,
+                                    borderRadius: 10,
+                                    fallbackEmoji: item.food.imageEmoji,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.displayName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                            color: colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Qty: ${item.quantity}',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // 4. Receipt & Fee Breakdown Card (Reference F)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -203,7 +312,13 @@ class OrderSuccessScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _row(context, 'Total Amount', 'Rs. ${order.total.toStringAsFixed(0)}', isBold: true),
+                        _row(
+                          context,
+                          'Total Amount',
+                          'Rs. ${order.total.toStringAsFixed(0)}',
+                          isBold: true,
+                          highlightValue: true,
+                        ),
                         const SizedBox(height: 10),
                         _row(context, 'Payment Method', order.paymentMethod.toUpperCase()),
                         const SizedBox(height: 10),
@@ -215,7 +330,7 @@ class OrderSuccessScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Notifications note
+                  // Notifications Note
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -236,32 +351,19 @@ class OrderSuccessScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // Action Buttons: "View Order Status" & "Continue Shopping"
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context)
-                          .pushReplacementNamed('/order-tracking', arguments: order),
-                      icon: const Icon(Icons.delivery_dining_rounded, color: Colors.white, size: 22),
-                      label: const Text(
-                        'View Order Status',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                    ),
+                  // 5. Action Buttons (Track Order + Continue Shopping)
+                  CustomButton(
+                    text: 'Track Order',
+                    icon: Icons.delivery_dining_rounded,
+                    onPressed: () => Navigator.of(context)
+                        .pushReplacementNamed('/order-tracking', arguments: order),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/home', (r) => false),
-                      child: const Text(
-                        'Continue Shopping',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                      ),
-                    ),
+                  CustomButton.outlined(
+                    text: 'Continue Shopping',
+                    icon: Icons.storefront_rounded,
+                    onPressed: () => Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/home', (r) => false),
                   ),
                 ],
               ),
@@ -272,8 +374,16 @@ class OrderSuccessScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(BuildContext context, String label, String value, {bool isMultiline = false, bool isBold = false}) {
+  Widget _row(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isMultiline = false,
+    bool isBold = false,
+    bool highlightValue = false,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
@@ -293,9 +403,11 @@ class OrderSuccessScreen extends StatelessWidget {
             value,
             textAlign: TextAlign.right,
             style: TextStyle(
-              fontSize: isBold ? 15 : 13,
+              fontSize: isBold ? 16 : 13,
               fontWeight: FontWeight.w700,
-              color: isBold ? AppColors.primary : colorScheme.onSurface,
+              color: highlightValue
+                  ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                  : colorScheme.onSurface,
             ),
           ),
         ),

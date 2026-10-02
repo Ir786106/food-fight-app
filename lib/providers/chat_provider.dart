@@ -9,9 +9,10 @@ import '../models/admin/audit_log_model.dart';
 import '../services/chat_service.dart';
 import '../services/notification_service.dart';
 import '../services/super_admin_service.dart';
+import '../core/utils/safe_change_notifier.dart';
 
 /// State management provider for Customer and Admin real-time chats.
-class ChatProvider extends ChangeNotifier {
+class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
   final ChatService _chatService;
   final NotificationService _notificationService;
 
@@ -73,7 +74,7 @@ class ChatProvider extends ChangeNotifier {
     _chatsSubscription?.cancel();
     _isLoadingChats = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     _chatsSubscription = _chatService.streamCustomerChats(customerId).listen(
       (chats) {
@@ -99,7 +100,7 @@ class ChatProvider extends ChangeNotifier {
     _chatsSubscription?.cancel();
     _isLoadingChats = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListenersPostFrame();
 
     _chatsSubscription = _chatService
         .streamBranchChats(

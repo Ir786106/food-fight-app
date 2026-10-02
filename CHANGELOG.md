@@ -2,6 +2,42 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.3.0+4] — 2026-09-30
+
+### Customer UI/UX Premium Redesign
+- **Floating Notch Bottom Navigation (`FloatingNotchNavBar`)**:
+  - Implemented custom pill-shaped floating bottom navigation bar with `CustomPainter` (`_NotchedPillPainter`).
+  - Elevated circular center action Cart button with live item-count badge counter and radiant ring halo (`_RingHaloPainter`).
+  - Active tab indicators with filled brand icon and soft indicator dot.
+  - Full light (pure white pill) and dark (near-black `#1E1211` pill) theme support with warm ambient drop shadows.
+  - Scaffold `extendBody: true` integration with scroll bottom clearance across all main tabs.
+  - Center button dedicates direct Cart access (`/cart`), eliminating duplicate mini cart bars on root tabs while preserving 4-tab `IndexedStack` and `_tabHistory`.
+- **Design Dimensions Tokens (`AppDimens`)**:
+  - Created `lib/core/constants/app_dimens.dart` defining 8-pt spacing grid, radii tokens (`radius8` through `radius28` and `radiusFull`), button heights, and soft warm shadow factories.
+- **Home Screen & Food Card Redesign**:
+  - Modularized `HomeScreen` from 1150 lines into dedicated components under `lib/widgets/home/` (`HomeHeader`, `HomeCategoryTabs`, `HomePromoCarousel`, `HomeFoodSection`).
+  - Two-tone bold typographic header ("Find your" / "favourite foods 🥊").
+  - Plain text category tabs with short rounded yellow underline indicator instead of heavy chips.
+  - Redesigned `FoodCard` supporting circular food photo with soft drop shadow, price contrast (WCAG AA compliant), rounded-square yellow add-to-bag button, and vertical overflowing card variant `FoodCard.vertical(...)`.
+  - Horizontal scrolling rails for "Popular" and "Recommended for you".
+- **Food Detail Screen Overhaul (`FoodDetailScreen`)**:
+  - Elevated circular Hero product image (diameter 230px) with multi-layer ambient drop shadow and `ClipOval` fallback emoji.
+  - Three-dots overflow menu (`PopupMenuButton`) with "Share Dish" and "Report Issue" actions.
+  - S/M/L rounded-square portion selector (selected = `brandYellow`, unselected = surface with subtle border) mapped dynamically to all `food.variants`.
+  - Responsive quantity stepper (− 1 +) with yellow plus button accent.
+  - Full-width dark pill "Add to bucket" sticky CTA with yellow bag icon block on the left and dynamic total price on the right.
+  - Polished `ItemCustomizationBottomSheet` with 28px top corners, drag handle, and yellow-plus stepper.
+- **Menu Screen Vertical Category Rail & View Toggle (`MenuScreen`)**:
+  - Yellow vertical category side rail (`CategorySideRail`) with curved notch/bump active indicator and circular ring accent.
+  - Permanent side rail on tablets and desktops (width ≥ 720px), collapsible with 1-tap animated toggle on mobile.
+  - 1-tap Grid / List view toggle (`FoodCard.vertical` grid vs `FoodCard` horizontal list).
+- **Orders Screen Speed-Dial FAB (`OrderSpeedDialFab`)**:
+  - Curved animated speed-dial FAB on `OrderHistoryScreen` with quick actions for "Track Order", "Support Chat", and "Order Again".
+- **Floating Cart Mini Pill (`FloatingCartMiniPill`)**:
+  - Reusable dark pill with yellow bag icon block, item count, and running total on sub-screens (`RestaurantDetailScreen`).
+- **Loading & Skeleton States**:
+  - Added theme-aware `FoodCardHorizontalSkeleton` and `FoodCardVerticalSkeleton` matching new card geometries.
+
 ## [1.2.0+3] — 2026-09-30
 
 ### Brand Design System & Color Tokens (Part 1)
@@ -79,3 +115,57 @@ All notable changes to the "Food Fight" food delivery platform are documented he
 - Deployed least-privilege `firestore.rules` and `storage.rules`.
 - Third-party API secrets (Stripe, Twilio, SendGrid) secured exclusively in Cloud Functions configuration.
 - Firebase App Check integration readiness configured.
+
+### Production Enterprise Upgrade — Phases 1 to 10 (v1.3.0+4)
+
+- **Phase 1: Zero Exceptions & Runtime Fixes**:
+  - Eliminated `setState`/`notifyListeners` during build using `SafeChangeNotifier` across all 14 providers.
+  - Resolved Chat permission-denied with deterministic IDs and `SetOptions(merge: true)`.
+  - Replaced fixed-extent grid layouts with dynamic `SliverGridDelegateWithMaxCrossAxisExtent` surviving 320px to 1920px.
+  - Wrapped 34 `ListTile` instances with transparent `Material` widgets to eliminate ink warnings.
+  - Added glyph fallbacks (`Noto Sans`, `Noto Color Emoji`) to eliminate missing font warnings.
+  - Eliminated all mock data from `auth_service.dart`, `rider_dashboard_screen.dart`, `reset_password_screen.dart`, and `food_detail_screen.dart`.
+  - Model safe conversions (`SafeConvert`) applied across all models with passing unit tests.
+
+- **Phase 2: Responsive & Adaptive Sidebar Architecture**:
+  - Implemented `AdminCollapsibleSidebar` and `SuperAdminCollapsibleSidebar` (260px expanded / 72px collapsed).
+  - Real-time badges for pending orders and unread customer messages.
+  - Built unified `AdminScaffold` and `SuperAdminScaffold` supporting adaptive viewports.
+
+- **Phase 3: Customer UI/UX Redesign**:
+  - Floating notch navigation bar with elevated center cart button and ring halo.
+  - Vertical yellow category side-rail with curved indicator.
+  - Real reviews from Firestore wired directly on Food Detail and post-delivery review dialog.
+
+- **Phase 4: Admin Deals Module**:
+  - Removed legacy coupon code inputs from customer storefront.
+  - Built full `DealModel`, `DealService`, `DealProvider`, and `ManageDealsScreen` for branch-scoped and platform-wide deals.
+  - Live customer Deals carousel with automatic bundle pricing.
+
+- **Phase 5: Loyalty Tokens System**:
+  - Built `LoyaltyModel`, `LoyaltyService`, and `LoyaltyProvider`.
+  - Automated welcome bonus (50 tokens) upon registration.
+  - 1 token earned per Rs. 100 spent on delivered orders.
+  - Interactive token redemption slider at checkout (1 token = Rs. 1).
+  - Full audit ledger in `loyaltyAccounts` and `loyaltyTransactions`.
+
+- **Phase 6: Reviews & Moderation**:
+  - Implemented `ReviewService`, `ReviewProvider`, and `AdminReviewsScreen`.
+  - Customer 1-5 star ratings and comments with live item aggregate calculations.
+  - Admin moderation portal with visibility toggling and administrative replies.
+
+- **Phase 7: Option Templates**:
+  - Centralized reusable size sets (4-size S/M/L/XL, 3-size M/L/XL, custom) and extras groups (Toppings, Dips).
+  - Linked to menu items without redundant re-entry.
+
+- **Phase 8 & 9: Security & Live Chat**:
+  - Branch-routed support chat with deterministic conversation IDs.
+  - Deployed comprehensive `firestore.rules` covering all 5 roles with branch isolation.
+  - Validated composite indexes in `firestore.indexes.json`.
+
+- **Phase 10: Verification & Build Artifacts**:
+  - `flutter analyze`: 0 issues found!
+  - `flutter test`: 97 / 97 tests passed!
+  - Release Web build generated at `build/web/`.
+  - Release Android APK generated at `build/app/outputs/flutter-apk/app-release.apk`.
+
