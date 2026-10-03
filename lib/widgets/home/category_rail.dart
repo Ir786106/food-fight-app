@@ -4,10 +4,6 @@ import '../../core/constants/app_colors.dart';
 import '../../models/category_model.dart';
 import 'rail_notch_painter.dart';
 
-/// Category Rail on the left edge following Reference A.
-/// Features a vertical yellow side rail, top Menu & Search buttons,
-/// scrollable category buttons from Firestore, an animated smooth notch
-/// on the right edge around the selected category, and a bottom filter button.
 class CategoryRail extends StatefulWidget {
   final List<CategoryModel> categories;
   final String selectedCategory;
@@ -95,8 +91,8 @@ class _CategoryRailState extends State<CategoryRail> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final railWidth = screenWidth < 360 ? 56.0 : 68.0;
-    final buttonSize = screenWidth < 360 ? 42.0 : 48.0;
+    final railWidth = screenWidth < 360 ? 64.0 : 74.0;
+    final buttonSize = screenWidth < 360 ? 48.0 : 54.0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final railColor = isDark ? AppColors.darkSurfaceElevated : AppColors.brandYellow;
@@ -323,19 +319,20 @@ class _CategoryRailState extends State<CategoryRail> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: iconColor, size: size * 0.44),
+                Icon(icon, color: iconColor, size: size * 0.38),
                 const SizedBox(height: 2),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Text(
-                    name.length > 7 ? '${name.substring(0, 6)}..' : name,
+                    name,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 9.0,
+                      fontSize: 8.5,
                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                       color: iconColor,
-                      height: 1.0,
+                      height: 1.05,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

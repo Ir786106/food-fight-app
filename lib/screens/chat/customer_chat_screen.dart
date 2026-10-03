@@ -24,6 +24,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isComposing = false;
   OrderModel? _linkedOrder;
+  String? _lastFailedText;
 
   static const List<String> _quickReplies = [
     'Where is my order?',
@@ -127,12 +128,17 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
       text: text,
     );
 
-    if (success && _scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
+    if (success) {
+      _lastFailedText = null;
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    } else {
+      _lastFailedText = text;
     }
   }
 
@@ -176,7 +182,13 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
         titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacementNamed('/home');
+            }
+          },
         ),
         title: Row(
           children: [
@@ -300,7 +312,7 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => _handleSendMessage(),
+                      onPressed: () => _handleSendMessage(customText: _lastFailedText),
                       child: const Text('Retry', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
                     ),
                   ],

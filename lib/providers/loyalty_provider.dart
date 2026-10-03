@@ -2,13 +2,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/utils/safe_change_notifier.dart';
 import '../models/loyalty_model.dart';
+import '../models/admin/system_settings_model.dart';
 import '../services/loyalty_service.dart';
+import '../services/super_admin_service.dart';
 
 class LoyaltyProvider extends ChangeNotifier with SafeChangeNotifier {
   final LoyaltyService _loyaltyService;
 
   LoyaltyProvider({LoyaltyService? loyaltyService})
-      : _loyaltyService = loyaltyService ?? LoyaltyService();
+      : _loyaltyService = loyaltyService ?? LoyaltyService() {
+    _initSettingsStream();
+  }
 
   LoyaltyAccount? _account;
   List<LoyaltyTransaction> _transactions = [];
@@ -17,11 +21,32 @@ class LoyaltyProvider extends ChangeNotifier with SafeChangeNotifier {
 
   StreamSubscription<LoyaltyAccount?>? _accountSub;
   StreamSubscription<List<LoyaltyTransaction>>? _txSub;
+  StreamSubscription<SystemSettingsModel>? _settingsSub;
   String? _currentUserId;
 
-  // Configurable rates (1 token = Rs 1, earn 1 token per Rs 100 spent)
+  // Dynamic rates from global_settings (defaults: 1 token = Rs 1, earn 1 token per Rs 100 spent, 50 welcome tokens)
   double tokenValueInCurrency = 1.0;
   int earnRateInCurrency = 100;
+  int welcomeBonusTokens = 50;
+
+  void _initSettingsStream() {
+    try {
+      _settingsSub = SuperAdminService.watchSystemSettings().listen((settings) {
+        tokenValueInCurrency = settings.loyaltyRedeemRate;
+        earnRateInCurrency = settings.loyaltyEarnRate;
+        welcomeBonusTokens = settings.welcomeTokens;
+        notifyListenersPostFrame();
+      });
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _accountSub?.cancel();
+    _txSub?.cancel();
+    _settingsSub?.cancel();
+    super.dispose();
+  }
 
   LoyaltyAccount? get account => _account;
   List<LoyaltyTransaction> get transactions => _transactions;
@@ -29,7 +54,6 @@ class LoyaltyProvider extends ChangeNotifier with SafeChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Start watching loyalty account & transactions for logged in customer
   void watchAccount(String userId) {
     if (userId.isEmpty) {
       _account = null;
@@ -70,9 +94,9 @@ class LoyaltyProvider extends ChangeNotifier with SafeChangeNotifier {
     );
   }
 
-  /// Credit welcome bonus
-  Future<void> creditWelcomeBonus(String userId, {int amount = 50}) async {
-    await _loyaltyService.creditWelcomeBonus(userId, amount: amount);
+  Future<void> creditWelcomeBonus(String userId, {int? amount}) async {
+    final bonus = amount ?? welcomeBonusTokens;
+    await _loyaltyService.creditWelcomeBonus(userId, amount: bonus);
   }
 
   /// Redeem tokens during checkout
@@ -125,12 +149,5 @@ class LoyaltyProvider extends ChangeNotifier with SafeChangeNotifier {
       orderId: orderId,
       tokensToRefund: tokensToRefund,
     );
-  }
-
-  @override
-  void dispose() {
-    _accountSub?.cancel();
-    _txSub?.cancel();
-    super.dispose();
   }
 }

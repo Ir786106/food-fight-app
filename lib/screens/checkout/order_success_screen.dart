@@ -12,21 +12,39 @@ class OrderSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rawOrder = ModalRoute.of(context)?.settings.arguments;
-    final order = rawOrder is OrderModel
-        ? rawOrder
-        : OrderModel(
-            id: '',
-            orderNumber: 'FF-LIVE',
-            items: const [],
-            subtotal: 0,
-            total: 0,
-            paymentMethod: 'Cash on Delivery',
-            deliveryAddress: 'Your specified address',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-            customerId: '',
-            restaurantName: 'Food Fight HQ',
-          );
+    if (rawOrder is! OrderModel) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Order Status'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.success),
+                const SizedBox(height: 16),
+                const Text('No Active Order Found', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Please visit your order history to track existing orders.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+                const SizedBox(height: 24),
+                CustomButton(
+                  text: 'Go to Home',
+                  icon: Icons.home_rounded,
+                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    final order = rawOrder;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;

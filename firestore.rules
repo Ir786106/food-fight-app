@@ -4,21 +4,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =========================================================================
-    // 0. AUTHENTICATION & SECURE ROLE HELPERS (DO NOT TRUST CLIENT-PROVIDED ROLE)
+    // HELPER FUNCTIONS & ROLE DEFINITIONS
     // =========================================================================
     function isAuthenticated() {
-      return request.auth != null && request.auth.uid != null;
-    }
-
-    function currentUserId() {
-      return request.auth.uid;
+      return request.auth != null;
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function existingUser() {
+    function userDocExists() {
       return isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
@@ -27,140 +23,57 @@ service cloud.firestore {
     }
 
     function getUserRole() {
-      return existingUser() ? getUserData().get('role', '') : '';
+      return userDocExists() ? getUserData().role : '';
+    }
+
+    function getUserBranchId() {
+      return userDocExists() ? getUserData().branchId : '';
     }
 
     function isSuperAdmin() {
       return isAuthenticated() && (
-        (request.auth.token != null && request.auth.token.get('role', '') == 'super_admin') ||
-        getUserRole() == 'super_admin'
+        (request.auth.token != null && request.auth.token.role == 'super_admin') ||
+        (getUserRole() == 'super_admin')
       );
     }
 
     function isAdmin() {
       return isAuthenticated() && (
         isSuperAdmin() ||
-        (request.auth.token != null && (request.auth.token.get('role', '') == 'admin' || request.auth.token.get('role', '') == 'staff')) ||
-        getUserRole() == 'admin' ||
-        getUserRole() == 'staff'
+        (request.auth.token != null && (request.auth.token.role == 'admin' || request.auth.token.role == 'sub_admin' || request.auth.token.role == 'staff')) ||
+        (getUserRole() == 'admin' || getUserRole() == 'sub_admin' || getUserRole() == 'staff')
       );
     }
 
-    function isStaff() {
-      return isAdmin();
-    }
-
-    function isDeliveryRider() {
+    function isRider() {
       return isAuthenticated() && (
-        (request.auth.token != null && (request.auth.token.get('role', '') == 'delivery_rider' || request.auth.token.get('role', '') == 'rider')) ||
-        getUserRole() == 'delivery_rider' ||
-        getUserRole() == 'rider'
+        (request.auth.token != null && request.auth.token.role == 'rider') ||
+        (getUserRole() == 'rider')
       );
     }
 
-    function isCustomer() {
+    // Branch isolation check: super admins have access to all branches;
+    // admins and sub-admins only have access to their assigned branch.
+    function isBranchAdmin(branchId) {
       return isAuthenticated() && (
-        getUserRole() == 'customer' ||
-        getUserRole() == ''
+        isSuperAdmin() ||
+        (isAdmin() && (branchId == null || branchId == '' || branchId == getUserBranchId()))
       );
     }
 
-    function isSubAdmin() {
-      return existingUser() && getUserData().get('parentAdminId', null) != null;
-    }
-
-    function canManage(perm) {
-      return isSuperAdmin() || (
-        isAdmin() && (
-          !isSubAdmin() ||
-          (getUserData().get('permissions', {}).get(perm, false) == true) ||
-          (getUserData().get('permissions', []).hasAny([perm]))
-        )
-      );
-    }
-
-    function incomingRole() {
-      return request.resource.data.get('role', '');
-    }
-
-    function existingRole() {
-      return resource.data.get('role', '');
-    }
-
-    function getOrder(orderId) {
-      return get(/databases/$(database)/documents/orders/$(orderId)).data;
-    }
-
     // =========================================================================
-    // 1. BRANCHES & MULTI-LOCATION
-    // =========================================================================
-    match /branches/{branchId} {
-      allow read: if true;
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (isAdmin() && getUserData().get('branchId', '') == branchId);
-      allow delete: if isSuperAdmin();
-    }
-
-    // =========================================================================
-    // 2. RESTAURANTS
-    // =========================================================================
-    match /restaurants/{restaurantId} {
-      allow read: if true;
-      allow write: if isSuperAdmin() || canManage('restaurants');
-    }
-
-    // =========================================================================
-    // 3. USERS & ACCOUNTS (STRICT ROLE PRIVILEGES)
+    // 1. USERS & ACCOUNTS
     // =========================================================================
     match /users/{userId} {
-      // Read: Users can read their own profile. Admins can read all profiles for admin queries.
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-
-      // Create:
-      // - Customer self-signup: only allowed with role == 'customer' and no elevated flags
-      // - Admin: can create staff/customer, CANNOT create super_admin
-      // - Super Admin: full creation rights
-      allow create: if (
-        isSuperAdmin() ||
-        (
-          isAdmin() &&
-          !isSubAdmin() &&
-          incomingRole() != 'super_admin'
-        ) ||
-        (
-          isOwner(userId) &&
-          (incomingRole() == 'customer' || incomingRole() == '') &&
-          request.resource.data.get('permissions', null) == null &&
-          request.resource.data.get('isAdmin', false) == false &&
-          request.resource.data.get('isSuperAdmin', false) == false
-        )
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || isRider());
+      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      // Prevent normal clients from changing their own role or sensitive fields
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isBlocked', 'tokens'])))
       );
+      allow delete: if isSuperAdmin();
 
-      // Update:
-      // - Super Admin: full update rights
-      // - Admin: manage users/staff (cannot modify super_admin, cannot promote to super_admin)
-      // - Customer: can update only safe profile fields (cannot change role, status, branch, permissions)
-      allow update: if (
-        isSuperAdmin() ||
-        (
-          isAdmin() &&
-          (!isSubAdmin() || canManage('customers')) &&
-          existingRole() != 'super_admin' &&
-          incomingRole() != 'super_admin'
-        ) ||
-        (
-          isOwner(userId) &&
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-            'role', 'permissions', 'status', 'isActive', 'isAdmin', 'isSuperAdmin',
-            'branchId', 'parentAdminId', 'createdAt'
-          ])
-        )
-      );
-
-      // Delete: Super Admin or self-account deletion
-      allow delete: if isSuperAdmin() || isOwner(userId);
-
-      // Saved payment methods subcollection
       match /payment_methods/{methodId} {
         allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
         allow create, update: if isAuthenticated() && isOwner(userId);
@@ -169,307 +82,218 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 4. CUSTOMER SAVED ADDRESSES
+    // 2. BRANCHES & RESTAURANTS
     // =========================================================================
-    match /addresses/{addressId} {
-      allow read: if isAdmin() || (isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid));
-      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isAdmin() || (
-        isAuthenticated() &&
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == request.auth.uid
-      );
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    match /branches/{branchId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // =========================================================================
-    // 5. CATEGORIES & MENU ITEMS
+    // 3. CUSTOMER SAVED ADDRESSES
+    // =========================================================================
+    match /addresses/{addressId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource == null ||
+        resource.data.userId == request.auth.uid
+      );
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAuthenticated() && (
+        isAdmin() ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    // =========================================================================
+    // 4. CATEGORIES, MENU ITEMS & OPTION TEMPLATES
     // =========================================================================
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if canManage('categories');
+      allow write: if isAdmin();
     }
 
     match /menuItems/{menuItemId} {
       allow read: if true;
-      allow write: if canManage('menu');
+      allow write: if isAdmin();
     }
 
     match /menu_items/{menuItemId} {
       allow read: if true;
-      allow write: if canManage('menu');
+      allow write: if isAdmin();
+    }
+
+    match /option_templates/{templateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /optionTemplates/{templateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // =========================================================================
+    // 5. DEALS MODULE (Replaces Coupons for Customers)
+    // =========================================================================
+    match /deals/{dealId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // =========================================================================
     // 6. ORDERS & LIFECYCLE
     // =========================================================================
     match /orders/{orderId} {
-      // Read:
-      // - Admin/Staff: all orders
-      // - Customer: their own orders (supports where('customerId', isEqualTo: auth.uid))
-      // - Delivery Rider: assigned orders (supports where('riderId', isEqualTo: auth.uid))
-      allow read: if isAdmin() ||
+      allow read: if isAdmin() || isRider() ||
                      (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
-                     (isDeliveryRider() && (
-                       resource.data.riderId == request.auth.uid ||
-                       resource.data.get('rider_id', '') == request.auth.uid
-                     ));
-
-      // Create:
-      // - Admin/Staff can place orders on behalf
-      // - Customer can only create an order with their own customerId
-      allow create: if isAdmin() || (
-        isAuthenticated() &&
-        request.resource.data.customerId == request.auth.uid
-      );
-
-      // Update:
-      // - Admin/Staff: can update order statuses, assign riders, update financials
-      // - Customer: can only cancel their own order (cannot alter prices or items)
-      // - Delivery Rider: can only update delivery status & cancellation reason (cannot modify financials or items)
-      allow update: if canManage('orders') ||
-        (
-          isAuthenticated() &&
-          resource.data.customerId == request.auth.uid &&
-          request.resource.data.customerId == request.auth.uid &&
-          request.resource.data.total == resource.data.total &&
-          request.resource.data.subtotal == resource.data.subtotal &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancellationReason', 'updatedAt']) &&
-          request.resource.data.status == 'cancelled'
-        ) ||
-        (
-          isDeliveryRider() &&
-          (resource.data.riderId == request.auth.uid || resource.data.get('rider_id', '') == request.auth.uid) &&
-          request.resource.data.customerId == resource.data.customerId &&
-          request.resource.data.total == resource.data.total &&
-          request.resource.data.subtotal == resource.data.subtotal &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'cancellationReason'])
-        );
-
+                     (isAuthenticated() && resource.data.riderId == request.auth.uid);
+      allow create: if isAuthenticated() && (request.resource.data.customerId == request.auth.uid || isAdmin());
+      allow update: if isAdmin() || isRider() ||
+                       (isAuthenticated() && resource.data.customerId == request.auth.uid);
       allow delete: if isSuperAdmin();
 
-      // Live GPS tracking subcollection
       match /tracking/{trackingId} {
-        allow read: if isAdmin() ||
-                       (isAuthenticated() && getOrder(orderId).customerId == request.auth.uid) ||
-                       (isDeliveryRider() && getOrder(orderId).riderId == request.auth.uid);
-        allow write: if isAdmin() || (
-          isDeliveryRider() &&
-          getOrder(orderId).riderId == request.auth.uid &&
-          request.resource.data.riderId == request.auth.uid
-        );
+        allow read: if isAuthenticated();
+        allow write: if isRider() || isAdmin();
       }
     }
 
     match /orderItems/{itemId} {
       allow read: if isAuthenticated();
-      allow write: if canManage('orders');
+      allow write: if isAdmin();
     }
 
     // =========================================================================
-    // 7. DELIVERY AREAS
-    // =========================================================================
-    match /deliveryAreas/{areaId} {
-      allow read: if true;
-      allow write: if canManage('delivery_areas');
-    }
-
-    match /delivery_areas/{areaId} {
-      allow read: if true;
-      allow write: if canManage('delivery_areas');
-    }
-
-    // =========================================================================
-    // 8. RIDERS & FLEET MANAGEMENT
+    // 7. RIDERS & FLEET TRACKING
     // =========================================================================
     match /riders/{riderId} {
-      // Read: Admin or the rider themselves
-      allow read: if isAdmin() || (
-        isDeliveryRider() && (
-          isOwner(riderId) ||
-          (resource != null && resource.data.userId == request.auth.uid)
-        )
-      );
-
-      // Create: Staff with riders permission
-      allow create: if canManage('riders');
-
-      // Update: Staff, or delivery rider updating only safe operational status
-      allow update: if canManage('riders') || (
-        isDeliveryRider() &&
-        (isOwner(riderId) || (resource != null && resource.data.userId == request.auth.uid)) &&
-        request.resource.data.userId == resource.data.userId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'isOnline', 'isActive', 'updatedAt', 'currentLocation',
-          'latitude', 'longitude', 'heading', 'speed'
-        ])
-      );
-
+      allow read: if isAuthenticated() && (isAdmin() || isOwner(riderId) ||
+                     (resource != null && resource.data.userId == request.auth.uid));
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isOwner(riderId) || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow delete: if isSuperAdmin();
     }
 
     match /riderAssignments/{assignmentId} {
-      allow read: if isAdmin() || (isDeliveryRider() && resource.data.riderId == request.auth.uid);
-      allow create: if canManage('riders');
-      allow update: if canManage('riders') || (
-        isDeliveryRider() &&
-        resource.data.riderId == request.auth.uid &&
-        request.resource.data.riderId == resource.data.riderId &&
-        request.resource.data.orderId == resource.data.orderId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'deliveredAt', 'pickedUpAt'])
-      );
-      allow delete: if isSuperAdmin();
+      allow read: if isAuthenticated() && (isAdmin() || isRider() || (resource != null && resource.data.riderId == request.auth.uid));
+      allow write: if isAdmin() || isRider();
     }
 
     match /rider_locations/{riderId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() || (
-        isDeliveryRider() &&
-        isOwner(riderId) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'latitude', 'longitude', 'heading', 'speed', 'activeOrderId', 'isOnline', 'updatedAt'
-        ])
+      allow write: if isRider() || isAdmin() || isOwner(riderId);
+    }
+
+    match /deliveryAreas/{areaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /delivery_areas/{areaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // =========================================================================
+    // 8. LOYALTY TOKENS (Account & Transactions)
+    // =========================================================================
+    match /loyaltyAccounts/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    match /loyaltyTransactions/{txId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource == null ||
+        resource.data.userId == request.auth.uid
       );
-    }
-
-    // =========================================================================
-    // 9. COUPONS & PROMOTIONS
-    // =========================================================================
-    match /coupons/{couponId} {
-      allow read: if true;
-      allow write: if canManage('coupons');
-    }
-
-    // =========================================================================
-    // 10. SYSTEM SETTINGS
-    // =========================================================================
-    match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-
-    // =========================================================================
-    // 11. AUDIT LOGS (IMMUTABLE LOGS)
-    // =========================================================================
-    match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        request.resource.data.userId == request.auth.uid
+      );
       allow update, delete: if isSuperAdmin();
     }
 
     // =========================================================================
-    // 12. REVIEWS
+    // 9. REVIEWS & RATINGS
     // =========================================================================
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin() || (
-        isAuthenticated() &&
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == request.auth.uid
-      );
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-    }
-
-    // =========================================================================
-    // 13. NOTIFICATIONS
-    // =========================================================================
-    match /notifications/{notificationId} {
-      allow read: if isAdmin() || (
-        isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
-      );
-      allow create: if isAdmin() || (
-        isAuthenticated() && request.resource.data.userId == request.auth.uid
-      );
-      allow update: if isAdmin() || (
-        isAuthenticated() &&
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt', 'updatedAt'])
-      );
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-    }
-
-    // =========================================================================
-    // 14. FAVORITES
-    // =========================================================================
-    match /favorites/{favoriteId} {
-      allow read: if isAdmin() || (
-        isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
-      );
-      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     // =========================================================================
-    // 15. REAL-TIME CUSTOMER <-> ADMIN CHAT
+    // 10. REAL-TIME CHAT (Customer <-> Admin per branch)
     // =========================================================================
-    function isChatParticipant(chatData) {
-      return isAuthenticated() && (
-        chatData.customerId == request.auth.uid ||
-        isSuperAdmin() ||
-        (isAdmin() && canManage('chats') && (chatData.branchId == getUserData().get('branchId', '') || getUserData().get('branchId', '') == ''))
-      );
-    }
-
     match /chats/{chatId} {
-      allow read: if isChatParticipant(resource.data);
-
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource == null ||
+        resource.data.customerId == request.auth.uid ||
+        (resource.data.assignedAdminId != null && resource.data.assignedAdminId == request.auth.uid) ||
+        chatId.matches('support_' + request.auth.uid + '_.*') ||
+        chatId.matches('order_.*')
+      );
       allow create: if isAuthenticated() && (
-        (isCustomer() && request.resource.data.customerId == request.auth.uid && request.resource.data.status == 'open') ||
-        isAdmin()
+        isAdmin() ||
+        (request.resource.data.customerId == request.auth.uid)
       );
-
-      allow update: if isAuthenticated() && isChatParticipant(resource.data) && (
-        isSuperAdmin() ||
-        (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'lastMessage', 'lastMessageAt', 'lastSenderRole', 'unreadForAdmin', 'unreadForCustomer', 'status', 'assignedAdminId', 'updatedAt'
-        ])) ||
-        (isCustomer() &&
-          resource.data.customerId == request.auth.uid &&
-          request.resource.data.customerId == resource.data.customerId &&
-          request.resource.data.branchId == resource.data.branchId &&
-          request.resource.data.get('assignedAdminId', null) == resource.data.get('assignedAdminId', null) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'lastMessage', 'lastMessageAt', 'lastSenderRole', 'unreadForAdmin', 'unreadForCustomer', 'status', 'updatedAt'
-          ])
-        )
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.customerId == request.auth.uid
       );
-
       allow delete: if isSuperAdmin();
 
       match /messages/{messageId} {
-        allow read: if isChatParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data);
-
-        allow create: if isAuthenticated() &&
-          isChatParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data) &&
-          request.resource.data.senderId == request.auth.uid &&
-          (
-            (isCustomer() && request.resource.data.senderRole == 'customer') ||
-            (isSuperAdmin() && (request.resource.data.senderRole == 'super_admin' || request.resource.data.senderRole == 'admin')) ||
-            (isAdmin() && request.resource.data.senderRole == 'admin')
-          ) &&
-          (
-            request.resource.data.type in ['text', 'image', 'system']
-          ) &&
-          (
-            request.resource.data.type != 'text' ||
-            (request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000)
-          );
-
-        allow update: if isAuthenticated() &&
-          isChatParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
-
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && (
+          isAdmin() ||
+          request.resource.data.senderId == request.auth.uid
+        );
+        allow update: if isAdmin();
         allow delete: if isSuperAdmin();
       }
     }
 
     // =========================================================================
-    // DEFAULT DENY FOR EVERYTHING ELSE
+    // 11. NOTIFICATIONS & FAVORITES
     // =========================================================================
-    match /{document=**} {
-      allow read, write: if false;
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
+      allow write: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
+    }
+
+    match /favorites/{favoriteId} {
+      allow read: if isAuthenticated() && (isAdmin() || (resource == null || resource.data.userId == request.auth.uid));
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // =========================================================================
+    // 12. PLATFORM SETTINGS & AUDIT LOGS
+    // =========================================================================
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isSuperAdmin();
     }
   }
 }

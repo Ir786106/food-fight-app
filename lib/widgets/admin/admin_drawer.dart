@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_constants.dart';
-import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/providers/chat_provider.dart';
 import 'package:food_fight/theme/theme_provider.dart';
@@ -32,7 +31,7 @@ class AdminDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AdminTheme.primaryBlue, AdminTheme.secondaryBlue],
+                  colors: [Color(0xFF800020), Color(0xFF4A0012)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -375,7 +374,7 @@ class AdminDrawer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1.5),
       child: Material(
         color: isSelected
-            ? AdminTheme.primaryBlue.withValues(alpha: 0.12)
+            ? AppColors.brandYellow.withValues(alpha: 0.16)
             : Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: ListTile(
@@ -384,7 +383,7 @@ class AdminDrawer extends StatelessWidget {
           leading: Icon(
             icon,
             color: isSelected
-                ? AdminTheme.primaryBlue
+                ? AppColors.brandYellow
                 : (color ?? colorScheme.onSurfaceVariant),
             size: 20,
           ),
@@ -409,9 +408,9 @@ class AdminDrawer extends StatelessWidget {
             title,
             style: TextStyle(
               color: isSelected
-                  ? AdminTheme.primaryBlue
+                  ? (Theme.of(context).brightness == Brightness.dark ? AppColors.brandYellow : AppColors.brandMaroon)
                   : (color ?? colorScheme.onSurface),
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
               fontSize: 13.5,
             ),
           ),

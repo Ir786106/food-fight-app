@@ -36,6 +36,7 @@ import 'providers/option_template_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'routes/app_routes.dart';
+import 'screens/common/not_found_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -138,6 +139,10 @@ class FoodFightApp extends StatelessWidget {
             initialRoute: '/splash',
 
             routes: AppRoutes.routes,
+            onUnknownRoute: (settings) => MaterialPageRoute(
+              settings: settings,
+              builder: (context) => NotFoundScreen(routeName: settings.name),
+            ),
           );
         },
       ),

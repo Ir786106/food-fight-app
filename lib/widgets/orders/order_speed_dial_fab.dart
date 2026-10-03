@@ -144,15 +144,15 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
           ),
           const SizedBox(height: 12),
 
-          // Main FAB Trigger
+          // Main FAB Trigger (Labeled Quick Action)
           GestureDetector(
             onTap: _toggle,
             child: Container(
-              width: 52,
-              height: 52,
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: AppColors.brandYellow,
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.brandYellow.withValues(alpha: 0.45),
@@ -161,14 +161,28 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
                   ),
                 ],
               ),
-              child: AnimatedRotation(
-                turns: _isOpen ? 0.375 : 0.0,
-                duration: const Duration(milliseconds: 220),
-                child: const Icon(
-                  Icons.bolt_rounded,
-                  color: AppColors.brandMaroon,
-                  size: 26,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedRotation(
+                    turns: _isOpen ? 0.375 : 0.0,
+                    duration: const Duration(milliseconds: 220),
+                    child: Icon(
+                      _isOpen ? Icons.close_rounded : Icons.headset_mic_rounded,
+                      color: AppColors.brandMaroon,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isOpen ? 'Close' : 'Support & Reorder',
+                    style: const TextStyle(
+                      color: AppColors.brandMaroon,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

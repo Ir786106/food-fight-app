@@ -578,11 +578,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 2. Filter by text tab (Popular, Recommended, New, All)
     if (_selectedTextTab == 'Popular') {
-      filteredByRail = filteredByRail.where((f) => f.rating >= 4.4).toList();
+      final pop = filteredByRail.where((f) => f.rating >= 4.0).toList();
+      filteredByRail = pop.isNotEmpty
+          ? pop
+          : (List<FoodModel>.from(filteredByRail)..sort((a, b) => b.rating.compareTo(a.rating)));
     } else if (_selectedTextTab == 'Recommended') {
       filteredByRail = filteredByRail.reversed.toList();
     } else if (_selectedTextTab == 'New') {
-      filteredByRail = filteredByRail.take(6).toList();
+      filteredByRail = filteredByRail.take(10).toList();
     }
 
     // 3. Filter by sheet options
@@ -749,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 // Loyalty tokens chip
                                 InkWell(
-                                  onTap: () => Navigator.of(context).pushNamed('/profile'),
+                                  onTap: () => Navigator.of(context).pushNamed('/loyalty'),
                                   borderRadius: BorderRadius.circular(16),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
@@ -946,7 +949,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   )
                                 : SizedBox(
-                                    height: 250,
+                                    height: 290,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
                                       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -984,12 +987,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
                                     ),
                                   ),
-                                  Text(
-                                    'See all',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                  GestureDetector(
+                                    onTap: () => Navigator.of(context).pushNamed('/menu'),
+                                    child: Text(
+                                      'See all',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -999,7 +1005,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SliverToBoxAdapter(child: SizedBox(height: 8)),
                           SliverToBoxAdapter(
                             child: SizedBox(
-                              height: 240,
+                              height: 290,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1037,11 +1043,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
                                     ),
                                   ),
-                                  Text(
-                                    '${effectivePopularFoods.length} items',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                                  GestureDetector(
+                                    onTap: () => Navigator.of(context).pushNamed('/menu'),
+                                    child: Text(
+                                      'See all',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1051,7 +1061,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SliverToBoxAdapter(child: SizedBox(height: 8)),
                           SliverToBoxAdapter(
                             child: SizedBox(
-                              height: 240,
+                              height: 290,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1074,7 +1084,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
 
                         // Bottom padding for scroll clearance above floating nav and cart pill
-                        const SliverToBoxAdapter(child: SizedBox(height: 110)),
+                        const SliverToBoxAdapter(child: SizedBox(height: 135)),
                       ],
                     ),
                   );

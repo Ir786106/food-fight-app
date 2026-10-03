@@ -10,6 +10,8 @@ import '../orders/order_history_screen.dart';
 import '../cart/cart_screen.dart';
 import '../chat/customer_chat_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../routes/app_routes.dart';
+import '../common/not_found_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -42,91 +44,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     });
   }
 
-  Future<bool> _showExitConfirmationDialog() async {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+  DateTime? _lastBackPressTime;
 
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        backgroundColor: colorScheme.surface,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: AppColors.yellowSoft,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.exit_to_app_rounded,
-                color: AppColors.brandMaroon,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Exit Food Fight?',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to exit the app?',
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-          ),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(
-              'Stay',
-              style: TextStyle(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brandYellow,
-              foregroundColor: AppColors.onYellow,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              minimumSize: const Size(100, 44),
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Exit App',
-              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onYellow),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    return result ?? false;
-  }
-
-  void _handleBackInvocation(bool didPop) async {
+  void _handleBackInvocation(bool didPop) {
     if (didPop) return;
 
-    // Check if the current tab's navigator can pop
+    // 1. Check if the current tab's navigator can pop a nested screen
     final currentNavigatorState = _navigatorKeys[_currentIndex].currentState;
     if (currentNavigatorState != null && currentNavigatorState.canPop()) {
       currentNavigatorState.pop();
       return;
     }
 
-    // Otherwise back through tab history
+    // 2. Otherwise back through tab history
     if (_tabHistory.length > 1) {
       setState(() {
         _tabHistory.removeLast();
@@ -135,6 +65,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
+    // 3. If on any tab other than Home, return to Home tab
     if (_currentIndex != 0) {
       setState(() {
         _currentIndex = 0;
@@ -144,19 +75,60 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
-    final shouldExit = await _showExitConfirmationDialog();
-    if (shouldExit && mounted) {
-      SystemNavigator.pop();
+    // 4. On root of Home tab: Double-back-to-exit with snackbar
+    final now = DateTime.now();
+    if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.exit_to_app_rounded, color: AppColors.brandMaroon, size: 20),
+              SizedBox(width: 10),
+              Text(
+                'Press back again to exit Food Fight',
+                style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.brandMaroon),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.brandYellow,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+        ),
+      );
+      return;
     }
+
+    // Back pressed within 2 seconds -> Exit app cleanly
+    SystemNavigator.pop();
   }
 
   Widget _buildTabNavigator(int index, Widget rootScreen) {
     return Navigator(
       key: _navigatorKeys[index],
       onGenerateRoute: (routeSettings) {
+        if (routeSettings.name == null || routeSettings.name == '/') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (context) => rootScreen,
+          );
+        }
+
+        final builder = AppRoutes.routes[routeSettings.name];
+        if (builder != null) {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: builder,
+          );
+        }
+
         return MaterialPageRoute(
           settings: routeSettings,
-          builder: (context) => rootScreen,
+          builder: (context) => NotFoundScreen(routeName: routeSettings.name),
         );
       },
     );

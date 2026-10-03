@@ -311,13 +311,17 @@ class _FloatingNavBarState extends State<FloatingNavBar>
                           height: centerBtnSize,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.brandMaroon,
+                            color: widget.currentIndex == 2
+                                ? AppColors.brandYellow
+                                : AppColors.brandMaroon,
                             boxShadow: [
-                              // Soft yellow glow ring at ~25% opacity
+                              // Soft yellow glow ring at ~28% opacity (enhanced when selected)
                               BoxShadow(
-                                color: AppColors.brandYellow.withValues(alpha: 0.28),
-                                blurRadius: 18,
-                                spreadRadius: 3,
+                                color: AppColors.brandYellow.withValues(
+                                  alpha: widget.currentIndex == 2 ? 0.45 : 0.28,
+                                ),
+                                blurRadius: widget.currentIndex == 2 ? 22 : 18,
+                                spreadRadius: widget.currentIndex == 2 ? 4 : 3,
                                 offset: const Offset(0, 2),
                               ),
                               // Soft dark shadow underneath
@@ -328,20 +332,24 @@ class _FloatingNavBarState extends State<FloatingNavBar>
                               ),
                             ],
                             border: Border.all(
-                              color: AppColors.brandYellow,
+                              color: widget.currentIndex == 2
+                                  ? AppColors.brandMaroon
+                                  : AppColors.brandYellow,
                               width: 2.5,
                             ),
                           ),
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.shopping_bag_rounded,
-                                color: AppColors.brandYellow,
+                                color: widget.currentIndex == 2
+                                    ? AppColors.brandMaroon
+                                    : AppColors.brandYellow,
                                 size: 28,
                               ),
 
-                              // Cart Count Badge (yellow circle with maroon number)
+                              // Cart Count Badge
                               if (cartCount > 0)
                                 Positioned(
                                   top: 1,
@@ -349,10 +357,14 @@ class _FloatingNavBarState extends State<FloatingNavBar>
                                   child: Container(
                                     padding: const EdgeInsets.all(3),
                                     decoration: BoxDecoration(
-                                      color: AppColors.brandYellow,
+                                      color: widget.currentIndex == 2
+                                          ? AppColors.brandMaroon
+                                          : AppColors.brandYellow,
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: AppColors.brandMaroon,
+                                        color: widget.currentIndex == 2
+                                            ? AppColors.brandYellow
+                                            : AppColors.brandMaroon,
                                         width: 1.5,
                                       ),
                                     ),
@@ -363,8 +375,10 @@ class _FloatingNavBarState extends State<FloatingNavBar>
                                     child: Center(
                                       child: Text(
                                         cartCount > 99 ? '99+' : '$cartCount',
-                                        style: const TextStyle(
-                                          color: AppColors.brandMaroon,
+                                        style: TextStyle(
+                                          color: widget.currentIndex == 2
+                                              ? AppColors.brandYellow
+                                              : AppColors.brandMaroon,
                                           fontWeight: FontWeight.w900,
                                           fontSize: 10,
                                           height: 1.1,

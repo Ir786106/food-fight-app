@@ -2,6 +2,52 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.4.0+5] — 2026-10-03
+
+### Root Cause Navigation & Architecture Fixes
+- **Tab Navigator Route Resolution (`MainNavigationScreen`)**:
+  - Fixed `_buildTabNavigator()` which previously returned `rootScreen` for all route names, causing nested `Navigator.pushNamed()` calls to loop and rebuild the current screen.
+  - Implemented proper route lookup via `AppRoutes.routes[settings.name]`, rendering the intended screen with `settings.arguments`.
+  - Added `NotFoundScreen` fallback for unknown routes on both per-tab navigator and top-level `MaterialApp.onUnknownRoute`.
+  - Set `rootNavigator: true` on logout, login, splash, and role guards (`AdminRouteGuard`, `SuperAdminRouteGuard`, `RiderRouteGuard`) to cleanly exit the customer tab shell.
+  - Implemented 2-second double-back-to-exit snackbar on the root of the Home tab and nested backstack popping for tabs.
+  - Center cart button in `FloatingNotchNavBar` now highlights with active yellow circle, maroon icon, and glowing halo when Cart tab is selected.
+
+### Real Firestore Integration & UI/UX Audit
+- **Home Screen & Category Rail**:
+  - `CategoryRail`: Responsive width (`64–74dp`), 2-line centered labels with ellipsis avoiding truncation.
+  - `ProductCard`: Increased horizontal card container heights from `240`/`250` to `290` to eliminate bottom button and price clipping.
+  - Connected "See all" buttons to `/menu`.
+  - Tapping loyalty gift pill navigates to `/loyalty`.
+- **Loyalty Program (`LoyaltyTokensScreen` & `/loyalty`)**:
+  - Created dedicated loyalty screen with live balance, dynamic tier badge (`Bronze Bite`, `Silver Snacker`, `Gold Gourmet`, `Foodie Champion`), earn/redeem rules, and real-time transaction history stream.
+  - Dynamic token economics loaded from `settings/global_settings` (`welcomeTokens`, `loyaltyEarnRate`, `loyaltyRedeemRate`).
+  - Automated welcome tokens credit on first sign-up and Google sign-in.
+- **Robust Argument Handling & Error Views**:
+  - `FoodDetailScreen`, `OrderTrackingScreen`, `RestaurantDetailScreen`, `OrderSuccessScreen`: Safely parse `ModalRoute` arguments (`FoodModel`, `OrderModel`, `RestaurantModel`, or IDs) and render friendly error states with back buttons instead of blank/crashing screens.
+- **Order Tracking & History (`OrderHistoryScreen` & `OrderTrackingScreen`)**:
+  - Corrected order status timeline mapping: `Pending (1) -> Confirmed (2) -> Preparing (3) -> On the Way (4) -> Delivered (5)`.
+  - Fixed item plural formatting (`1 item` vs `2 items`).
+  - Live GPS tracking map conditionally rendered only when a rider is assigned (`hasRider`), with "Assignment in progress" card otherwise.
+  - Replaced floating lightning FAB with labeled "Support & Reorder" quick action pill.
+- **Customer Chat Overhaul (`ChatService` & `CustomerChatScreen`)**:
+  - Fixed `ChatService.sendMessage` using `batch.set(chatRef, ..., SetOptions(merge: true))` preventing crashes when creating conversations.
+  - Retry button on failed messages now genuinely re-sends the failed message text.
+- **Cart Persistence (`CartProvider`)**:
+  - Added local serialization to `SharedPreferences` so customer carts survive app kills and restarts.
+- **Profile Screen Dynamics (`ProfileScreen`)**:
+  - Dynamic loyalty tier badge and live address count and labels.
+- **Admin Navigation (`AdminDrawer`)**:
+  - Redesigned header with brand maroon/yellow gradient and active item highlights.
+- **Backend & Security**:
+  - Cloud Functions: Server-side loyalty crediting on `delivered` status and refund on `cancelled` status in `functions/index.js`.
+  - Updated `firestore.rules` covering all 12 modules with branch isolation and role enforcement.
+  - Updated `firestore.indexes.json` with compound query indexes for orders, chats, deals, reviews, and loyalty transactions.
+  - Created `DatabaseSeeder` in `lib/core/scripts/seed_database.dart` for initializing global settings, branches, option templates, and user migration.
+- **Quality & Release**:
+  - `flutter analyze` completed with **0 issues** across the entire project.
+  - `flutter build apk --release` compiled successfully: `FoodFight_v1.4.0_release.apk` (64.0MB).
+
 ## [1.3.0+4] — 2026-09-30
 
 ### Customer UI/UX Premium Redesign

@@ -132,245 +132,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showLoyaltyTransactionsSheet(BuildContext context) {
-    final loyalty = context.read<LoyaltyProvider>();
-    final txs = loyalty.transactions;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.65,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (_, scrollController) => ListView(
-            controller: scrollController,
-            padding: const EdgeInsets.all(22),
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandYellow.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.stars_rounded, color: AppColors.brandMaroon, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Loyalty Tokens History',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-                        ),
-                        Text(
-                          'Balance: ${loyalty.balance} Tokens (Rs. ${loyalty.balance.toStringAsFixed(0)})',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.brandMaroon),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (txs.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 36),
-                    child: Column(
-                      children: [
-                        Icon(Icons.stars_outlined, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4), size: 50),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No Token Activity Yet',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Earn 1 token for every Rs. 100 spent on delivered orders!\nUse tokens at checkout for instant cash discounts.',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                ...txs.map((tx) {
-                  final isPositive = tx.isCredit;
-                  final icon = tx.type == 'bonus'
-                      ? Icons.card_giftcard_rounded
-                      : (tx.type == 'earn' ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded);
-                  final color = isPositive ? AppColors.success : AppColors.brandMaroon;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(icon, color: color, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                tx.description.isNotEmpty ? tx.description : tx.type.toUpperCase(),
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: colorScheme.onSurface),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '${tx.createdAt.day}/${tx.createdAt.month}/${tx.createdAt.year} • Balance: ${tx.balanceAfter}',
-                                style: TextStyle(fontSize: 11.5, color: colorScheme.onSurfaceVariant),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '${isPositive ? '+' : '-'}${tx.amount}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            color: color,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showLoyaltyInfoDialog(BuildContext context) {
-    final loyalty = context.read<LoyaltyProvider>();
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: const BoxDecoration(
-                  color: AppColors.brandYellow,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.stars_rounded, color: AppColors.brandMaroon, size: 34),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Food Fight Loyalty Program',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Current Balance: ${loyalty.balance} Tokens (Worth Rs. ${loyalty.balance.toStringAsFixed(0)})',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.brandMaroon),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
-                ),
-                child: Column(
-                  children: [
-                    _buildLoyaltyRuleRow(Icons.card_giftcard_rounded, 'Welcome Bonus', 'Get 50 bonus tokens right when you sign up!'),
-                    const Divider(height: 20),
-                    _buildLoyaltyRuleRow(Icons.fastfood_rounded, 'Earn on Every Order', 'Earn 1 token for every Rs. 100 on delivered orders.'),
-                    const Divider(height: 20),
-                    _buildLoyaltyRuleRow(Icons.payments_rounded, 'Cash Value', '1 Token = Rs. 1 discount. Redeem anytime at checkout!'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.brandYellow,
-                    foregroundColor: AppColors.brandMaroon,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _showLoyaltyTransactionsSheet(context);
-                  },
-                  child: const Text('View Token Transaction History', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoyaltyRuleRow(IconData icon, String title, String desc) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColors.brandMaroon, size: 22),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
-              const SizedBox(height: 2),
-              Text(desc, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   void _showHelpCenterDialog(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -515,7 +276,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final ordersCount = orderProvider.customerOrders.length;
     final favoritesCount = cartProvider.favorites.length;
-    final addressesCount = context.watch<AddressProvider>().addresses.length;
+    final addressProv = context.watch<AddressProvider>();
+    final addressesCount = addressProv.addresses.length;
+    final loyalty = context.watch<LoyaltyProvider>();
+    final totalEarned = loyalty.account?.totalEarned ?? loyalty.balance;
+
+    String customerTierBadge = 'BRONZE BITE';
+    if (totalEarned >= 2000) {
+      customerTierBadge = 'FOODIE CHAMPION';
+    } else if (totalEarned >= 1000) {
+      customerTierBadge = 'GOLD GOURMET';
+    } else if (totalEarned >= 400) {
+      customerTierBadge = 'SILVER SNACKER';
+    }
+
+    final addressLabels = addressProv.addresses.map((a) => a.label).where((l) => l.isNotEmpty).take(3).join(', ');
+    final addressSubtitle = addressesCount == 0
+        ? 'No saved addresses yet'
+        : '$addressesCount ${addressesCount == 1 ? "saved address" : "saved addresses"}${addressLabels.isNotEmpty ? " ($addressLabels)" : ""}';
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -650,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ? 'SUPER ADMIN'
                                       : (user?.isAdmin == true
                                           ? 'RESTAURANT ADMIN'
-                                          : (user?.isRider == true ? 'RIDER' : 'FOODIE CHAMPION')),
+                                          : (user?.isRider == true ? 'RIDER' : customerTierBadge)),
                                   style: const TextStyle(
                                     color: AppColors.maroonDeep,
                                     fontSize: 9.5,
@@ -723,7 +502,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.location_on_outlined,
                   title: 'Saved Delivery Addresses',
-                  subtitle: '$addressesCount saved addresses (Home, Work)',
+                  subtitle: addressSubtitle,
                   onTap: () => Navigator.of(context).pushNamed('/addresses'),
                 ),
                 Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
@@ -743,10 +522,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.stars_rounded,
                   title: 'Food Fight Loyalty Tokens',
-                  subtitle: '${context.watch<LoyaltyProvider>().balance} Tokens (Rs. ${context.watch<LoyaltyProvider>().balance.toStringAsFixed(0)} cash value)',
-                  trailingBadge: '${context.watch<LoyaltyProvider>().balance} PTS',
+                  subtitle: '${loyalty.balance} Tokens (Rs. ${(loyalty.balance * loyalty.tokenValueInCurrency).toStringAsFixed(0)} value • $customerTierBadge)',
+                  trailingBadge: '${loyalty.balance} PTS',
                   iconColor: AppColors.brandMaroon,
-                  onTap: () => _showLoyaltyInfoDialog(context),
+                  onTap: () => Navigator.of(context).pushNamed('/loyalty'),
                 ),
                 Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
@@ -754,7 +533,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Token Activity History',
                   subtitle: 'Earned and redeemed token statements',
                   trailingBadge: 'HISTORY',
-                  onTap: () => _showLoyaltyTransactionsSheet(context),
+                  onTap: () => Navigator.of(context).pushNamed('/loyalty'),
                 ),
               ]),
 
@@ -859,10 +638,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                     );
-                    if (confirm == true) {
+                    if (confirm == true && context.mounted) {
+                      context.read<CartProvider>().clearCart();
                       await auth.signOut();
                       if (context.mounted) {
-                        Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false);
+                        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (r) => false);
                       }
                     }
                   },

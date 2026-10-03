@@ -7,6 +7,7 @@ import 'package:food_fight/services/interfaces/auth_service_interface.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
+import 'package:food_fight/services/loyalty_service.dart';
 
 /// Firebase Authentication Service Implementation
 class FirebaseAuthService implements IAuthService {
@@ -67,6 +68,16 @@ class FirebaseAuthService implements IAuthService {
       // Write user document to Cloud Firestore
       await _usersCollection.doc(user.id).set(user.toJson());
       AppLogger.info('User signed up and saved to Firestore: ${user.email}', tag: 'FirebaseAuthService');
+
+      // Credit welcome tokens from global_settings
+      try {
+        final settingsDoc = await _firestore.collection('settings').doc('global_settings').get();
+        final bonus = (settingsDoc.data()?['welcomeTokens'] as num? ?? 50).toInt();
+        final loyalty = LoyaltyService(firestore: _firestore);
+        await loyalty.creditWelcomeBonus(user.id, amount: bonus);
+      } catch (e) {
+        AppLogger.warn('Could not credit welcome bonus on sign-up: $e', tag: 'FirebaseAuthService');
+      }
 
       return user;
     } on FirebaseAuthException catch (e) {
@@ -312,6 +323,17 @@ class FirebaseAuthService implements IAuthService {
     );
 
     await _usersCollection.doc(newUser.id).set(newUser.toJson(), SetOptions(merge: true));
+
+    // Credit welcome tokens on initial account creation if not yet credited
+    try {
+      final settingsDoc = await _firestore.collection('settings').doc('global_settings').get();
+      final bonus = (settingsDoc.data()?['welcomeTokens'] as num? ?? 50).toInt();
+      final loyalty = LoyaltyService(firestore: _firestore);
+      await loyalty.creditWelcomeBonus(newUser.id, amount: bonus);
+    } catch (e) {
+      AppLogger.warn('Could not credit welcome bonus for initial user record: $e', tag: 'FirebaseAuthService');
+    }
+
     return newUser;
   }
 

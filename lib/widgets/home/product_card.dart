@@ -122,7 +122,7 @@ class _ProductCardState extends State<ProductCard>
     final isAvailable = food.isAvailable;
     final effectiveHeroTag = widget.heroTag ?? 'food-${food.id}';
     final cardWidth = widget.width;
-    final photoDiameter = cardWidth * 0.70;
+    final photoDiameter = cardWidth * 0.62;
 
     final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
         (food.sizePrices != null && food.sizePrices!.length > 1);
@@ -139,7 +139,7 @@ class _ProductCardState extends State<ProductCard>
       label: '${food.name}, price $displayPrice',
       child: Container(
         width: cardWidth,
-        margin: const EdgeInsets.only(top: 24, bottom: 8, right: 14),
+        margin: const EdgeInsets.only(top: 18, bottom: 8, right: 14),
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
@@ -149,12 +149,12 @@ class _ProductCardState extends State<ProductCard>
               onTap: widget.onTap,
               child: Container(
                 width: cardWidth,
-                margin: EdgeInsets.only(top: photoDiameter * 0.40),
+                margin: EdgeInsets.only(top: photoDiameter * 0.35),
                 padding: EdgeInsets.fromLTRB(
                   12,
-                  (photoDiameter * 0.60) + 10,
+                  (photoDiameter * 0.65) + 6,
                   12,
-                  12,
+                  10,
                 ),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurface : AppColors.surface,

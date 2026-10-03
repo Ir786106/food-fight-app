@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_fight/models/cart_item_model.dart';
 import 'package:food_fight/models/food_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
@@ -12,6 +14,9 @@ import 'package:food_fight/models/deal_model.dart';
 
 /// Provider for managing customer shopping cart, delivery area, coupons, and checkout
 class CartProvider extends ChangeNotifier with SafeChangeNotifier {
+  static const _cartStorageKey = 'food_fight_cart_v1';
+  static const _branchStorageKey = 'food_fight_cart_branch_v1';
+
   final List<CartItemModel> _items = [];
   final List<FoodModel> _favorites = [];
   DeliveryAreaModel? _selectedArea;
@@ -22,6 +27,46 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _branchId;
   int _tokensToRedeem = 0;
   double _tokenValue = 1.0;
+
+  CartProvider() {
+    _loadCartFromPrefs();
+  }
+
+  Future<void> _loadCartFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _branchId = prefs.getString(_branchStorageKey);
+      final raw = prefs.getString(_cartStorageKey);
+      if (raw != null && raw.isNotEmpty) {
+        final list = jsonDecode(raw) as List;
+        _items.clear();
+        for (final item in list) {
+          if (item is Map<String, dynamic>) {
+            _items.add(CartItemModel.fromJson(item));
+          } else if (item is Map) {
+            _items.add(CartItemModel.fromJson(Map<String, dynamic>.from(item)));
+          }
+        }
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveCartToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_items.isEmpty) {
+        await prefs.remove(_cartStorageKey);
+        await prefs.remove(_branchStorageKey);
+      } else {
+        final encoded = jsonEncode(_items.map((i) => i.toJson()).toList());
+        await prefs.setString(_cartStorageKey, encoded);
+        if (_branchId != null) {
+          await prefs.setString(_branchStorageKey, _branchId!);
+        }
+      }
+    } catch (_) {}
+  }
 
   List<CartItemModel> get items => List.unmodifiable(_items);
   List<FoodModel> get favorites => List.unmodifiable(_favorites);
@@ -37,6 +82,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
 
   void setBranchId(String? id) {
     _branchId = id;
+    _saveCartToPrefs();
     notifyListeners();
   }
 
@@ -171,6 +217,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       _items.add(candidate);
     }
     _recalculateCoupon();
+    _saveCartToPrefs();
     notifyListeners();
   }
 
@@ -180,6 +227,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     if (index != -1) {
       _items[index].quantity++;
       _recalculateCoupon();
+      _saveCartToPrefs();
       notifyListeners();
     }
   }
@@ -194,6 +242,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
         _items.removeAt(index);
       }
       _recalculateCoupon();
+      _saveCartToPrefs();
       notifyListeners();
     }
   }
@@ -202,6 +251,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   void removeLine(String lineKey) {
     _items.removeWhere((i) => i.lineKey == lineKey);
     _recalculateCoupon();
+    _saveCartToPrefs();
     notifyListeners();
   }
 
@@ -216,6 +266,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     if (index != -1) {
       _items[index].quantity++;
       _recalculateCoupon();
+      _saveCartToPrefs();
       notifyListeners();
     }
   }
@@ -235,6 +286,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
         _items.removeAt(index);
       }
       _recalculateCoupon();
+      _saveCartToPrefs();
       notifyListeners();
     }
   }
@@ -248,6 +300,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       (i) => i.food.id == foodId && (selectedSize == null || i.selectedSize == selectedSize),
     );
     _recalculateCoupon();
+    _saveCartToPrefs();
     notifyListeners();
   }
 
@@ -259,6 +312,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     _couponError = null;
     _branchId = null;
     _tokensToRedeem = 0;
+    _saveCartToPrefs();
     notifyListeners();
   }
 

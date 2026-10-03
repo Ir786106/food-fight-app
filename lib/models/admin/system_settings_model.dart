@@ -18,6 +18,10 @@ class SystemSettingsModel {
   final bool pushNotificationsEnabled;
   final bool emailNotificationsEnabled;
   final bool smsNotificationsEnabled;
+  final int welcomeTokens;
+  final int loyaltyEarnRate; // Spend amount per token earned (e.g. 100 Rs)
+  final double loyaltyRedeemRate; // Currency value per token redeemed (e.g. 1.0 Rs)
+  final int minTokensToRedeem;
   final DateTime updatedAt;
 
   SystemSettingsModel({
@@ -37,6 +41,10 @@ class SystemSettingsModel {
     this.pushNotificationsEnabled = true,
     this.emailNotificationsEnabled = true,
     this.smsNotificationsEnabled = true,
+    this.welcomeTokens = 50,
+    this.loyaltyEarnRate = 100,
+    this.loyaltyRedeemRate = 1.0,
+    this.minTokensToRedeem = 10,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now();
 
@@ -57,6 +65,10 @@ class SystemSettingsModel {
     bool? pushNotificationsEnabled,
     bool? emailNotificationsEnabled,
     bool? smsNotificationsEnabled,
+    int? welcomeTokens,
+    int? loyaltyEarnRate,
+    double? loyaltyRedeemRate,
+    int? minTokensToRedeem,
     DateTime? updatedAt,
   }) {
     return SystemSettingsModel(
@@ -77,6 +89,10 @@ class SystemSettingsModel {
       pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       emailNotificationsEnabled: emailNotificationsEnabled ?? this.emailNotificationsEnabled,
       smsNotificationsEnabled: smsNotificationsEnabled ?? this.smsNotificationsEnabled,
+      welcomeTokens: welcomeTokens ?? this.welcomeTokens,
+      loyaltyEarnRate: loyaltyEarnRate ?? this.loyaltyEarnRate,
+      loyaltyRedeemRate: loyaltyRedeemRate ?? this.loyaltyRedeemRate,
+      minTokensToRedeem: minTokensToRedeem ?? this.minTokensToRedeem,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -99,6 +115,10 @@ class SystemSettingsModel {
       'pushNotificationsEnabled': pushNotificationsEnabled,
       'emailNotificationsEnabled': emailNotificationsEnabled,
       'smsNotificationsEnabled': smsNotificationsEnabled,
+      'welcomeTokens': welcomeTokens,
+      'loyaltyEarnRate': loyaltyEarnRate,
+      'loyaltyRedeemRate': loyaltyRedeemRate,
+      'minTokensToRedeem': minTokensToRedeem,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
   }
@@ -122,6 +142,10 @@ class SystemSettingsModel {
       pushNotificationsEnabled: json['pushNotificationsEnabled'] ?? true,
       emailNotificationsEnabled: json['emailNotificationsEnabled'] ?? true,
       smsNotificationsEnabled: json['smsNotificationsEnabled'] ?? true,
+      welcomeTokens: SafeConvert.toInt(json['welcomeTokens'], 50),
+      loyaltyEarnRate: SafeConvert.toInt(json['loyaltyEarnRate'], 100),
+      loyaltyRedeemRate: SafeConvert.toDouble(json['loyaltyRedeemRate'], 1.0),
+      minTokensToRedeem: SafeConvert.toInt(json['minTokensToRedeem'], 10),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );
   }

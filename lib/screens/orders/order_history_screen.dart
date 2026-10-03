@@ -52,17 +52,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   int _getProgressStep(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-      case OrderStatus.accepted:
         return 1;
+      case OrderStatus.accepted:
+        return 2;
       case OrderStatus.preparing:
       case OrderStatus.ready:
-        return 2;
+        return 3;
       case OrderStatus.assigned:
       case OrderStatus.pickedUp:
       case OrderStatus.outForDelivery:
-        return 3;
-      case OrderStatus.delivered:
         return 4;
+      case OrderStatus.delivered:
+        return 5;
       case OrderStatus.cancelled:
         return 0;
     }
@@ -257,7 +258,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                 ),
                                                 const SizedBox(height: 6),
                                                 Text(
-                                                  '${order.items.length} items • ${order.restaurantName}',
+                                                  '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'} • ${order.restaurantName}',
                                                   style: TextStyle(
                                                     color: colorScheme.onSurfaceVariant,
                                                     fontSize: 13,
@@ -461,7 +462,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   }
 
   Widget _buildHorizontalProgress(int currentStep, ColorScheme colorScheme) {
-    const steps = ['Confirmed', 'Preparing', 'On the Way', 'Delivered'];
+    const steps = ['Pending', 'Confirmed', 'Preparing', 'On the Way', 'Delivered'];
 
     return Column(
       children: [

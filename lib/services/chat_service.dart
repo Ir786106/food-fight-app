@@ -222,7 +222,7 @@ class ChatService implements IChatService {
       chatUpdates['unreadForCustomer'] = FieldValue.increment(1);
     }
 
-    batch.update(chatRef, chatUpdates);
+    batch.set(chatRef, chatUpdates, SetOptions(merge: true));
 
     await batch.commit();
     AppLogger.info('Sent message ${messageRef.id} in chat $chatId', tag: 'ChatService');

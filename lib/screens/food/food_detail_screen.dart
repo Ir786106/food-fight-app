@@ -41,12 +41,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is FoodModel && args.id != _watchedFoodId) {
-      _watchedFoodId = args.id;
-      final foodId = args.id;
+    String? foodId;
+    if (args is FoodModel) {
+      foodId = args.id;
+    } else if (args is MenuItemModel) {
+      foodId = args.id;
+    } else if (args is String) {
+      foodId = args;
+    }
+    if (foodId != null && foodId != _watchedFoodId) {
+      _watchedFoodId = foodId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<ReviewProvider>().watchItemReviews(foodId);
+        context.read<ReviewProvider>().watchItemReviews(foodId!);
       });
     }
   }
@@ -215,7 +222,68 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final food = ModalRoute.of(context)!.settings.arguments as FoodModel;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    FoodModel? food;
+    if (args is FoodModel) {
+      food = args;
+    } else if (args is MenuItemModel) {
+      food = FoodModel.fromMenuItem(args);
+    } else if (args is String) {
+      final menu = context.watch<MenuProvider>();
+      final item = menu.menuItems.where((i) => i.id == args).firstOrNull;
+      if (item != null) {
+        food = FoodModel.fromMenuItem(item);
+      }
+    }
+
+    if (food == null) {
+      final theme = Theme.of(context);
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: const Text('Dish Details'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.fastfood_outlined, size: 64, color: AppColors.textMuted),
+                const SizedBox(height: 16),
+                const Text(
+                  'Dish Not Found',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'The requested dish could not be loaded or is unavailable.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.brandYellow,
+                    foregroundColor: AppColors.brandMaroon,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Go Back'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final FoodModel foodItem = food;
     final cart = context.watch<CartProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -223,7 +291,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     final isFav = cart.isFavorite(food.id);
 
     if (!_initialized) {
-      if (food.hasVariants) {
+      if (food.hasVariants && food.variants!.isNotEmpty) {
         _selectedVariant = food.variants!.first;
       }
       _initialized = true;
@@ -336,7 +404,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       ),
                       onPressed: () {
                         HapticFeedback.lightImpact();
-                        cart.toggleFavorite(food);
+                        cart.toggleFavorite(foodItem);
                       },
                     ),
                   ),
@@ -370,8 +438,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                 icon: Icon(Icons.more_vert_rounded, color: colorScheme.onSurface, size: 20),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius14)),
                 onSelected: (val) {
-                  if (val == 'share') _shareDish(food);
-                  if (val == 'report') _reportDish(food);
+                  if (val == 'share') _shareDish(foodItem);
+                  if (val == 'report') _reportDish(foodItem);
                 },
                 itemBuilder: (ctx) => [
                   const PopupMenuItem(
@@ -409,7 +477,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
             // Large Circular Hero Product Image on soft cream plate (Ref A & Audit 11)
             Center(
               child: GestureDetector(
-                onTap: () => _openImagePreview(context, food),
+                onTap: () => _openImagePreview(context, foodItem),
                 child: Hero(
                   tag: 'food-${food.id}',
                   child: Container(
@@ -1056,7 +1124,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       if (menuProv == null) return const SizedBox.shrink();
 
                       final relatedItems = menuProv.activeItems
-                          .where((item) => item.id != food.id)
+                          .where((item) => item.id != foodItem.id)
                           .map((item) => FoodModel.fromMenuItem(item, categoryName: item.categoryId))
                           .take(5)
                           .toList();
@@ -1115,7 +1183,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => _handleAddToCart(food, cart, totalPrice),
+              onTap: () => _handleAddToCart(foodItem, cart, totalPrice),
               borderRadius: BorderRadius.circular(28),
               child: Container(
                 height: 56,

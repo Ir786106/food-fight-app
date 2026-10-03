@@ -11,7 +11,6 @@ import '../../core/constants/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/admin/status_badge.dart';
 import '../../widgets/common/responsive_layout.dart';
-import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/orders/live_tracking_map_widget.dart';
 
@@ -104,6 +103,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       if (args is OrderModel) {
         _initialOrder = args;
         context.read<OrderProvider>().watchOrder(args.id);
+      } else if (args is String) {
+        context.read<OrderProvider>().watchOrder(args);
       }
       _initialized = true;
     }
@@ -445,18 +446,42 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final orderProvider = context.watch<OrderProvider>();
-    final order = (orderProvider.currentOrder != null && orderProvider.currentOrder!.id == _initialOrder?.id)
+    final order = (orderProvider.currentOrder != null &&
+            (_initialOrder == null || orderProvider.currentOrder!.id == _initialOrder?.id))
         ? orderProvider.currentOrder!
         : _initialOrder;
 
     if (order == null) {
+      final theme = Theme.of(context);
       return Scaffold(
-        appBar: AppBar(title: const Text('Order Live Tracking')),
-        body: const Center(
-          child: EmptyStateView(
-            icon: Icons.receipt_long_rounded,
-            title: 'Order Not Found',
-            description: 'Unable to load live tracking information for this order.',
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: const Text('Order Live Tracking'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.receipt_long_rounded, size: 64, color: AppColors.textMuted),
+                const SizedBox(height: 16),
+                const Text('Order Not Found', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Unable to load live tracking information for this order.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.brandYellow, foregroundColor: AppColors.brandMaroon),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Go Back'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -469,14 +494,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final isDelivered = order.status == OrderStatus.delivered;
     final currentStepIndex = _getTimelineStepIndex(order.status);
 
-    final hasRider = (order.riderName != null && order.riderName!.isNotEmpty) ||
-        (order.status == OrderStatus.assigned ||
-            order.status == OrderStatus.pickedUp ||
-            order.status == OrderStatus.outForDelivery ||
-            order.status == OrderStatus.delivered);
-
-    final riderDisplayName = order.riderName ?? 'Farhan Ali';
-    final riderDisplayPhone = order.riderPhone ?? '+92 312 9876543';
+    final hasRider = (order.riderName != null && order.riderName!.trim().isNotEmpty);
+    final riderDisplayName = order.riderName ?? 'Assigning Champion...';
+    final riderDisplayPhone = order.riderPhone ?? '';
 
     // Cancellation window
     const int cancellationWindowMinutes = 10;
@@ -580,51 +600,94 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 2. Live Map Card (or Clean Placeholder) with ETA Badge
+                  // 2. Live Map Card (Only when rider is assigned)
                   if (!isCancelled) ...[
-                    Stack(
-                      children: [
-                        LiveTrackingMapWidget(
-                          orderId: order.id,
-                          deliveryAddress: order.deliveryAddress,
-                          isOutForDelivery: order.status == OrderStatus.outForDelivery,
-                        ),
-                        // ETA Badge Overlay (onYellow text on brandYellow fill)
-                        Positioned(
-                          top: 14,
-                          right: 14,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.brandYellow,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x33FFD505),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.timer_rounded, color: AppColors.onYellow, size: 14),
-                                const SizedBox(width: 4),
-                                Text(
-                                  isDelivered ? 'Delivered' : 'ETA: 20–30 min',
-                                  style: const TextStyle(
-                                    color: AppColors.onYellow,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
+                    if (hasRider)
+                      Stack(
+                        children: [
+                          LiveTrackingMapWidget(
+                            orderId: order.id,
+                            deliveryAddress: order.deliveryAddress,
+                            isOutForDelivery: order.status == OrderStatus.outForDelivery,
+                          ),
+                          // ETA Badge Overlay (onYellow text on brandYellow fill)
+                          Positioned(
+                            top: 14,
+                            right: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.brandYellow,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x33FFD505),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.timer_rounded, color: AppColors.onYellow, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isDelivered ? 'Delivered' : 'ETA: 20–30 min',
+                                    style: const TextStyle(
+                                      color: AppColors.onYellow,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+                        ],
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurfaceElevated : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                         ),
-                      ],
-                    ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.brandYellow.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.two_wheeler_rounded, color: AppColors.brandMaroon, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Rider Assignment in Progress',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Live GPS map will activate as soon as your rider picks up the order.',
+                                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 20),
                   ],
 
@@ -700,18 +763,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             ),
                           ),
                           // Call Button
-                          InkWell(
-                            onTap: () => _makePhoneCall(riderDisplayPhone),
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: const BoxDecoration(
-                                color: AppColors.successSoft,
-                                shape: BoxShape.circle,
+                          if (riderDisplayPhone.isNotEmpty)
+                            InkWell(
+                              onTap: () => _makePhoneCall(riderDisplayPhone),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.successSoft,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.phone_rounded, color: AppColors.success, size: 20),
                               ),
-                              child: const Icon(Icons.phone_rounded, color: AppColors.success, size: 20),
                             ),
-                          ),
                         ],
                       ),
                     ),

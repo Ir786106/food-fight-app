@@ -270,6 +270,82 @@ exports.onOrderStatusUpdated = functions.firestore
         await sendEmailNotification(customerEmail, `Food Fight: ${statusTitle}`, emailHtml);
       }
     }
+
+    // 4. Server-Side Automated Loyalty Management (Earn on Delivered, Refund on Cancelled)
+    if (newStatus === "delivered" && after.customerId) {
+      try {
+        const earnRate = Number(settings.loyaltyEarnRate || 100);
+        const totalAmount = Number(after.total || 0);
+        const tokensToEarn = Math.floor(totalAmount / earnRate);
+
+        if (tokensToEarn > 0) {
+          const accountRef = db.collection("loyaltyAccounts").doc(after.customerId);
+          const txRef = db.collection("loyaltyTransactions").doc();
+
+          await db.runTransaction(async (t) => {
+            const accDoc = await t.get(accountRef);
+            if (!accDoc.exists) {
+              t.set(accountRef, {
+                userId: after.customerId,
+                balance: tokensToEarn,
+                totalEarned: tokensToEarn,
+                totalRedeemed: 0,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              });
+            } else {
+              t.update(accountRef, {
+                balance: admin.firestore.FieldValue.increment(tokensToEarn),
+                totalEarned: admin.firestore.FieldValue.increment(tokensToEarn),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              });
+            }
+
+            t.set(txRef, {
+              id: txRef.id,
+              userId: after.customerId,
+              amount: tokensToEarn,
+              type: "earn",
+              orderId: orderId,
+              description: `Earned ${tokensToEarn} tokens for delivered order #${after.orderNumber}`,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          });
+          console.log(`Credited ${tokensToEarn} loyalty tokens to customer ${after.customerId} for delivered order ${orderId}`);
+        }
+      } catch (loyaltyErr) {
+        console.error(`Error processing loyalty rewards for delivered order ${orderId}:`, loyaltyErr);
+      }
+    } else if (newStatus === "cancelled" && after.customerId) {
+      try {
+        const tokensRedeemed = Number(after.tokensRedeemed || 0);
+        if (tokensRedeemed > 0) {
+          const accountRef = db.collection("loyaltyAccounts").doc(after.customerId);
+          const txRef = db.collection("loyaltyTransactions").doc();
+
+          await db.runTransaction(async (t) => {
+            t.update(accountRef, {
+              balance: admin.firestore.FieldValue.increment(tokensRedeemed),
+              totalRedeemed: admin.firestore.FieldValue.increment(-tokensRedeemed),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            t.set(txRef, {
+              id: txRef.id,
+              userId: after.customerId,
+              amount: tokensRedeemed,
+              type: "refund",
+              orderId: orderId,
+              description: `Refunded ${tokensRedeemed} redeemed tokens for cancelled order #${after.orderNumber}`,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          });
+          console.log(`Refunded ${tokensRedeemed} tokens to customer ${after.customerId} for cancelled order ${orderId}`);
+        }
+      } catch (refundErr) {
+        console.error(`Error refunding loyalty tokens for cancelled order ${orderId}:`, refundErr);
+      }
+    }
   });
 
 /**
@@ -297,88 +373,3 @@ exports.createPaymentIntent = functions.https.onCall(async (data, context) => {
     status: "requires_confirmation",
   };
 });
-
-/**
- * Real-time Chat Trigger: onChatMessageCreated
- * Dispatches FCM Push Notifications to customer or branch admin staff when a message is posted.
- */
-exports.onChatMessageCreated = functions.firestore
-  .document("chats/{chatId}/messages/{messageId}")
-  .onCreate(async (snap, context) => {
-    const message = snap.data();
-    const { chatId } = context.params;
-
-    const chatDoc = await db.collection("chats").doc(chatId).get();
-    if (!chatDoc.exists) return null;
-    const chat = chatDoc.data();
-
-    const settings = await getSystemSettings();
-    if (settings.pushNotificationsEnabled === false) return null;
-
-    const isCustomerSender = message.senderRole === "customer";
-    const senderName = message.senderName || "Food Fight";
-    const messagePreview = message.text && message.text.trim().length > 0
-      ? message.text
-      : (message.type === "image" ? "Sent a photo" : "Sent a message");
-
-    try {
-      if (isCustomerSender) {
-        // Notify branch admin & sub-admins with 'chats' permission
-        const branchId = chat.branchId;
-        const adminsSnapshot = await db.collection("users")
-          .where("role", "in", ["admin", "super_admin", "staff"])
-          .get();
-
-        const tokens = [];
-        adminsSnapshot.forEach((doc) => {
-          const u = doc.data();
-          const matchesBranch = u.role === "super_admin" || u.branchId === branchId;
-          const hasPermission = u.role === "super_admin" ||
-            !u.parentAdminId ||
-            (Array.isArray(u.permissions) && u.permissions.includes("chats")) ||
-            (u.permissions && u.permissions.chats === true);
-
-          if (matchesBranch && hasPermission && u.fcmToken) {
-            tokens.push(u.fcmToken);
-          }
-        });
-
-        if (tokens.length > 0) {
-          await admin.messaging().sendEachForMulticast({
-            tokens,
-            notification: {
-              title: `Support: ${senderName}`,
-              body: messagePreview,
-            },
-            data: {
-              type: "chat",
-              chatId: chatId,
-              orderId: chat.orderId || "",
-            },
-          });
-        }
-      } else {
-        // Notify Customer
-        const customerDoc = await db.collection("users").doc(chat.customerId).get();
-        if (customerDoc.exists && customerDoc.data().fcmToken) {
-          const customerToken = customerDoc.data().fcmToken;
-          await admin.messaging().send({
-            token: customerToken,
-            notification: {
-              title: "Food Fight Support",
-              body: messagePreview,
-            },
-            data: {
-              type: "chat",
-              chatId: chatId,
-              orderId: chat.orderId || "",
-            },
-          });
-        }
-      }
-    } catch (pushErr) {
-      console.error("Push notification error in onChatMessageCreated:", pushErr);
-    }
-    return null;
-  });
-

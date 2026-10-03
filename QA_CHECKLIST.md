@@ -1,4 +1,4 @@
-# Food Fight — Production Quality Assurance & Compliance Checklist (v1.3.0+4)
+# Food Fight — Production Quality Assurance & Compliance Checklist (v1.4.0+5)
 
 This document details the rigorous quality assurance verification, architectural compliance, and production-readiness review for the **Food Fight** restaurant ordering and enterprise multi-branch management platform across all 5 user roles.
 
