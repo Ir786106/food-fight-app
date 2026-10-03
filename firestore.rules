@@ -10,10 +10,6 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid != null;
     }
 
-    function currentUserId() {
-      return request.auth.uid;
-    }
-
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
@@ -51,10 +47,6 @@ service cloud.firestore {
       );
     }
 
-    function isStaff() {
-      return isAdmin();
-    }
-
     function isDeliveryRider() {
       return isAuthenticated() && (
         (request.auth.token != null && (
@@ -63,13 +55,6 @@ service cloud.firestore {
         )) ||
         getUserRole() == 'delivery_rider' ||
         getUserRole() == 'rider'
-      );
-    }
-
-    function isCustomer() {
-      return isAuthenticated() && (
-        getUserRole() == 'customer' ||
-        getUserRole() == ''
       );
     }
 
