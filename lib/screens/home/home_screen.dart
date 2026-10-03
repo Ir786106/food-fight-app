@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _promoTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted) return;
+      if (!_promoController.hasClients) return;
       final nextIndex = (_promoIndex + 1) % 3;
       _promoController.animateToPage(
         nextIndex,
@@ -566,10 +567,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final categories = categoryProvider.activeCategories;
     final catMap = {for (var c in categories) c.id: c.name};
 
-    final allFoods = menuProvider.activeItems.map((item) {
-      final catName = catMap[item.categoryId] ?? item.categoryId;
-      return FoodModel.fromMenuItem(item, categoryName: catName);
-    }).toList();
+    final seenIds = <String>{};
+    final allFoods = <FoodModel>[];
+    for (final item in menuProvider.activeItems) {
+      if (seenIds.add(item.id)) {
+        final catName = catMap[item.categoryId] ?? item.categoryId;
+        allFoods.add(FoodModel.fromMenuItem(item, categoryName: catName));
+      }
+    }
 
     // 1. Filter by category rail
     List<FoodModel> filteredByRail = _selectedRailCategory == 'All'
@@ -718,6 +723,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onTap: () => _openBranchSelectionSheet(context),
                                   borderRadius: BorderRadius.circular(16),
                                   child: Container(
+                                    constraints: const BoxConstraints(maxWidth: 125),
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                     decoration: BoxDecoration(
                                       color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
@@ -949,7 +955,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   )
                                 : SizedBox(
-                                    height: 290,
+                                    height: 324,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
                                       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1005,7 +1011,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SliverToBoxAdapter(child: SizedBox(height: 8)),
                           SliverToBoxAdapter(
                             child: SizedBox(
-                              height: 290,
+                              height: 324,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1061,7 +1067,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SliverToBoxAdapter(child: SizedBox(height: 8)),
                           SliverToBoxAdapter(
                             child: SizedBox(
-                              height: 290,
+                              height: 324,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 padding: const EdgeInsets.symmetric(horizontal: 14),

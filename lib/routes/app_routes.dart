@@ -137,6 +137,7 @@ class AppRoutes {
     // -------------------------------------------------------------------------
     // 4. Delivery Rider Console Routes (Protected by RiderRouteGuard)
     // -------------------------------------------------------------------------
+    '/rider': (context) => const RiderRouteGuard(child: RiderDashboardScreen()),
     '/rider/dashboard': (context) => const RiderRouteGuard(child: RiderDashboardScreen()),
   };
 }

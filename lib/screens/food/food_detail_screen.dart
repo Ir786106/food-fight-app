@@ -1391,23 +1391,30 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppColors.brandYellow,
-                    child: Text(
-                      (rev.userName != null && rev.userName!.isNotEmpty) ? rev.userName![0].toUpperCase() : 'U',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandMaroon, fontSize: 12),
+              Expanded(
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: AppColors.brandYellow,
+                      child: Text(
+                        (rev.userName != null && rev.userName!.isNotEmpty) ? rev.userName![0].toUpperCase() : 'U',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandMaroon, fontSize: 12),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    (rev.userName != null && rev.userName!.isNotEmpty) ? rev.userName! : 'Verified Foodie',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: colorScheme.onSurface),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        (rev.userName != null && rev.userName!.isNotEmpty) ? rev.userName! : 'Verified Foodie',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: colorScheme.onSurface),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 dateStr,
                 style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),

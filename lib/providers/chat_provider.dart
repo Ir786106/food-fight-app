@@ -83,6 +83,11 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _chatsSubscription?.cancel();
+          _chatsSubscription = null;
+          return;
+        }
         _isLoadingChats = false;
         _errorMessage = 'Failed to load chats: $e';
         AppLogger.error('Customer chats stream error: $e', tag: 'ChatProvider');
@@ -115,6 +120,11 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
             notifyListeners();
           },
           onError: (e) {
+            if (e.toString().contains('permission-denied')) {
+              _chatsSubscription?.cancel();
+              _chatsSubscription = null;
+              return;
+            }
             _isLoadingChats = false;
             _errorMessage = 'Failed to load admin chats: $e';
             AppLogger.error('Admin chats stream error: $e', tag: 'ChatProvider');
@@ -177,6 +187,11 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
         _chatService.markAsRead(chatId, userId, userRole);
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _messagesSubscription?.cancel();
+          _messagesSubscription = null;
+          return;
+        }
         _isLoadingMessages = false;
         _errorMessage = 'Failed to load conversation: $e';
         AppLogger.error('Messages stream error: $e', tag: 'ChatProvider');

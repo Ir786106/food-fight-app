@@ -169,7 +169,7 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   // FLEET & LOGISTICS
                   if (user == null || user.can('delivery_areas') || user.can('riders')) ...[
                     _buildSectionTitle('DELIVERY FLEET'),
-                    if (user == null || user.can('riders'))
+                    if (user == null || user.can('riders')) ...[
                       _buildNavItem(
                         title: 'Delivery Riders',
                         icon: Icons.delivery_dining_rounded,
@@ -177,6 +177,14 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                         activeBg: activeBg,
                         activeTextColor: activeTextColor,
                       ),
+                      _buildNavItem(
+                        title: 'Rider Console',
+                        icon: Icons.two_wheeler_rounded,
+                        route: '/rider/dashboard',
+                        activeBg: activeBg,
+                        activeTextColor: activeTextColor,
+                      ),
+                    ],
                     if (user == null || user.can('delivery_areas'))
                       _buildNavItem(
                         title: 'Delivery Areas & Rates',

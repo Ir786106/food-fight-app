@@ -5,6 +5,7 @@ class RiderModel {
   final String userId;
   final String name;
   final String phone;
+  final String? email;
   final String? profileImage;
   final String? riderId;
   final String? vehicleType;
@@ -21,6 +22,7 @@ class RiderModel {
     required this.userId,
     required this.name,
     required this.phone,
+    this.email,
     this.profileImage,
     this.riderId,
     this.vehicleType = 'Motorcycle',
@@ -39,6 +41,7 @@ class RiderModel {
       'userId': userId,
       'name': name,
       'phone': phone,
+      if (email != null && email!.isNotEmpty) 'email': email,
       'profileImage': profileImage,
       'riderId': riderId,
       'vehicleType': vehicleType,
@@ -58,6 +61,7 @@ class RiderModel {
       userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
+      email: json['email']?.toString(),
       profileImage: json['profileImage']?.toString(),
       riderId: json['riderId']?.toString() ?? json['rider_id']?.toString(),
       vehicleType: json['vehicleType']?.toString() ?? 'Motorcycle',

@@ -97,6 +97,8 @@ class _SplashScreenState extends State<SplashScreen>
           Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
         } else if (auth.isAdmin) {
           Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+        } else if (auth.isRider) {
+          Navigator.of(context).pushReplacementNamed('/rider/dashboard');
         } else {
           Navigator.of(context).pushReplacementNamed('/home');
         }
@@ -176,7 +178,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // Centered Logo & Brand Presentation
             Center(
               child: AnimatedBuilder(
                 animation: _controller,

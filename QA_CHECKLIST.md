@@ -5,6 +5,7 @@ This document details the rigorous quality assurance verification, architectural
 ---
 
 ## 1. Role & Scope Verification (5 Distinct Roles)
+
 - [x] **Super Admin (HQ)**:
   - Collapsible enterprise sidebar with branch overview, system KPI metrics, master store toggles, and theme switcher.
   - Multi-branch administrative management and sub-admin permission provisioning.
@@ -38,6 +39,7 @@ This document details the rigorous quality assurance verification, architectural
 ---
 
 ## 2. Zero Mock / Hardcoded Data Compliance
+
 - [x] **Authentication**: Removed hardcoded demo credentials in `auth_service.dart`. Real Firebase Auth is enforced.
 - [x] **Password Reset**: Removed demo bypass instructions in `reset_password_screen.dart`.
 - [x] **Deals & Promos**: Replaced hardcoded sample deal cards with dynamic Firestore `deals` collection stream.
@@ -49,6 +51,7 @@ This document details the rigorous quality assurance verification, architectural
 ---
 
 ## 3. Runtime Error & Exception Eliminator
+
 - [x] **`setState()` / `notifyListeners()` during build**:
   - Inherited `SafeChangeNotifier` across all providers.
   - Stream subscriptions and state notifications deferred to microtasks / `addPostFrameCallback`.
@@ -70,6 +73,7 @@ This document details the rigorous quality assurance verification, architectural
 ---
 
 ## 4. Responsive & Adaptive Architecture
+
 - [x] **Breakpoints**: Mobile (< 600px), Tablet (600–1024px), Desktop (> 1024px).
 - [x] **Collapsible Sidebar**: Permanent 260px expanded / 72px collapsed on desktop with smooth animation; modal drawer on mobile.
 - [x] **Adaptive Grids**: 1-column on mobile, 2-column on tablet, 3-4 column on wide desktop displays.
@@ -78,6 +82,7 @@ This document details the rigorous quality assurance verification, architectural
 ---
 
 ## 5. Security & Data Integrity
+
 - [x] **Firestore Security Rules**: Role-based access control for `super_admin`, `admin`, `sub_admin`, `rider`, and `customer` with strict branch isolation.
 - [x] **Composite Indexes**: Declared in `firestore.indexes.json` for all multi-field queries.
 - [x] **Storage Security**: Supabase RLS and policies restrict media uploads to authorized authenticated sessions.
@@ -86,6 +91,7 @@ This document details the rigorous quality assurance verification, architectural
 ---
 
 ## 6. Verification Results
+
 - **`flutter analyze`**: **0 issues found** (0 errors, 0 warnings, 0 infos).
 - **`flutter test`**: **97 / 97 tests passed** (100% test pass rate).
 - **Web Build**: Release web artifact generated successfully at `build/web/`.

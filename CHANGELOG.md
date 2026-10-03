@@ -5,6 +5,7 @@ All notable changes to the "Food Fight" food delivery platform are documented he
 ## [1.4.0+5] — 2026-10-03
 
 ### Root Cause Navigation & Architecture Fixes
+
 - **Tab Navigator Route Resolution (`MainNavigationScreen`)**:
   - Fixed `_buildTabNavigator()` which previously returned `rootScreen` for all route names, causing nested `Navigator.pushNamed()` calls to loop and rebuild the current screen.
   - Implemented proper route lookup via `AppRoutes.routes[settings.name]`, rendering the intended screen with `settings.arguments`.
@@ -14,6 +15,7 @@ All notable changes to the "Food Fight" food delivery platform are documented he
   - Center cart button in `FloatingNotchNavBar` now highlights with active yellow circle, maroon icon, and glowing halo when Cart tab is selected.
 
 ### Real Firestore Integration & UI/UX Audit
+
 - **Home Screen & Category Rail**:
   - `CategoryRail`: Responsive width (`64–74dp`), 2-line centered labels with ellipsis avoiding truncation.
   - `ProductCard`: Increased horizontal card container heights from `240`/`250` to `290` to eliminate bottom button and price clipping.
@@ -51,6 +53,7 @@ All notable changes to the "Food Fight" food delivery platform are documented he
 ## [1.3.0+4] — 2026-09-30
 
 ### Customer UI/UX Premium Redesign
+
 - **Floating Notch Bottom Navigation (`FloatingNotchNavBar`)**:
   - Implemented custom pill-shaped floating bottom navigation bar with `CustomPainter` (`_NotchedPillPainter`).
   - Elevated circular center action Cart button with live item-count badge counter and radiant ring halo (`_RingHaloPainter`).
@@ -87,6 +90,7 @@ All notable changes to the "Food Fight" food delivery platform are documented he
 ## [1.2.0+3] — 2026-09-30
 
 ### Brand Design System & Color Tokens (Part 1)
+
 - **Single Source of Truth**: Established `lib/core/constants/app_colors.dart` as the sole design system palette token repository. Removed duplicate definitions in `lib/theme/app_theme.dart`.
 - **Authentic Brand Palette**: Sampled directly from `food_fight_logo.png` & `food_fight_logo_icon.png`:
   - Brand Yellow (`#FFD505` / `#FFD500`) for primary buttons, highlights, chips, and selected states.
@@ -99,12 +103,14 @@ All notable changes to the "Food Fight" food delivery platform are documented he
 - **Zero Hardcoded Customer Colors**: Completely replaced legacy hardcoded hex values (`0xFF121217`, `0xFF1D1D26`, `0xFF272734`) with semantic theme tokens across all customer screens.
 
 ### Customer Panel Redesign (Part 2)
+
 - **4-Tab Navigation & Layout Hierarchy**: Modern bottom navigation (Home, Orders, My List, Profile) with per-tab Navigator preservation, back-button PopScope, and floating cart badge.
 - **Home & Restaurant Experience**: Branch selector across all 5 branches driving live menus, dynamic categories, Firestore promotional carousels, and opening hour statuses. Restaurant Detail screen upgraded with Order, Review, and Information tabs plus sticky mini-cart.
 - **Real Phone & Email Actions**: Replaced fake snackbar rows with real phone dialer (`tel:`) via `url_launcher` on Order Tracking and Profile, and real `mailto:` email support.
 - **Empty States & Micro-Animations**: Enhanced `EmptyStateView`, `LoadingIndicator`, and shimmer skeletons for smooth, professional loading states.
 
 ### Real-Time Customer ↔ Admin Chat System (Part 3)
+
 - **Data Model & Firestore Collections**: Added `chats/{chatId}` and `chats/{chatId}/messages/{messageId}` with deterministic IDs (`order_{orderId}`, `support_{customerId}_{branchId}`).
 - **Customer Chat UI (`/chat`)**: Full-screen chat featuring order context cards with tracking navigation, brand-styled bubbles (Brand Yellow for customer, White surface for admin), quick reply chips, Supabase image attachments, auto-scroll, and resolved banner with 1-tap reopen.
 - **Admin Chat Management (`/admin/chats`)**: Responsive split-view console (adaptive list and thread views), canned quick responses, "View Order" modal inspection, assignment toggles, and status workflow (Open, Pending, Resolved).
@@ -214,4 +220,3 @@ All notable changes to the "Food Fight" food delivery platform are documented he
   - `flutter test`: 97 / 97 tests passed!
   - Release Web build generated at `build/web/`.
   - Release Android APK generated at `build/app/outputs/flutter-apk/app-release.apk`.
-

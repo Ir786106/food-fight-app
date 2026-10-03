@@ -94,12 +94,12 @@ class RiderLocationService {
           .doc(orderId)
           .collection('tracking')
           .doc('rider_live')
-          .update({'isActive': false});
+          .set({'isActive': false}, SetOptions(merge: true));
 
-      await _firestore.collection('rider_locations').doc(riderId).update({
+      await _firestore.collection('rider_locations').doc(riderId).set({
         'activeOrderId': null,
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
       AppLogger.info('Stopped location broadcasting for order $orderId', tag: 'RiderLocationService');
     } catch (e) {
       AppLogger.error('Failed to stop broadcasting: $e', tag: 'RiderLocationService');

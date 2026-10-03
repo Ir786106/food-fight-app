@@ -132,6 +132,13 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                     activeBg: activeBg,
                     activeTextColor: activeTextColor,
                   ),
+                  _buildNavItem(
+                    title: 'Rider Console View',
+                    icon: Icons.delivery_dining_rounded,
+                    route: '/rider/dashboard',
+                    activeBg: activeBg,
+                    activeTextColor: activeTextColor,
+                  ),
 
                   _buildSectionTitle('GOVERNANCE & AUDIT'),
                   _buildNavItem(

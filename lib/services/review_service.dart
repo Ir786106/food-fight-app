@@ -17,15 +17,16 @@ class ReviewService implements IReviewService {
     try {
       final snapshot = await _reviewsRef
           .where('itemId', isEqualTo: itemId)
-          .where('isHidden', isEqualTo: false)
-          .orderBy('createdAt', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
+      final list = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return ReviewModel.fromJson(data);
-      }).toList();
+      }).where((r) => !r.isHidden).toList();
+
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
     } catch (e) {
       AppLogger.error('Error fetching reviews for $itemId: $e', tag: 'ReviewService');
       return [];
@@ -36,15 +37,16 @@ class ReviewService implements IReviewService {
     try {
       return _reviewsRef
           .where('itemId', isEqualTo: itemId)
-          .where('isHidden', isEqualTo: false)
-          .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) {
-        return snapshot.docs.map((doc) {
+        final list = snapshot.docs.map((doc) {
           final data = doc.data();
           data['id'] = doc.id;
           return ReviewModel.fromJson(data);
-        }).toList();
+        }).where((r) => !r.isHidden).toList();
+
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
       });
     } catch (e) {
       AppLogger.error('Error streaming reviews for item $itemId: $e', tag: 'ReviewService');
@@ -59,18 +61,10 @@ class ReviewService implements IReviewService {
     int limit,
   ) async {
     try {
-      final query = _reviewsRef
-          .where('itemId', isEqualTo: itemId)
-          .where('isHidden', isEqualTo: false)
-          .orderBy('createdAt', descending: true)
-          .limit(limit);
-
-      final snapshot = await query.get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return ReviewModel.fromJson(data);
-      }).toList();
+      final reviews = await getReviewsForItem(itemId);
+      final startIndex = page * limit;
+      if (startIndex >= reviews.length) return [];
+      return reviews.skip(startIndex).take(limit).toList();
     } catch (e) {
       AppLogger.error('Error in paginated reviews: $e', tag: 'ReviewService');
       return [];
@@ -186,16 +180,18 @@ class ReviewService implements IReviewService {
   /// Stream reviews for a specific branch (or all branches for Super Admin)
   Stream<List<ReviewModel>> streamBranchReviews({String? branchId}) {
     try {
-      Query<Map<String, dynamic>> query = _reviewsRef.orderBy('createdAt', descending: true);
+      Query<Map<String, dynamic>> query = _reviewsRef;
       if (branchId != null && branchId.isNotEmpty && branchId != 'all') {
         query = query.where('branchId', isEqualTo: branchId);
       }
       return query.snapshots().map((snapshot) {
-        return snapshot.docs.map((doc) {
+        final list = snapshot.docs.map((doc) {
           final data = doc.data();
           data['id'] = doc.id;
           return ReviewModel.fromJson(data);
         }).toList();
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
       });
     } catch (e) {
       AppLogger.error('Error streaming branch reviews: $e', tag: 'ReviewService');

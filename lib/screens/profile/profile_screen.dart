@@ -571,8 +571,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ]),
 
-              // Privileged Portals (if Admin or Rider)
-              if (auth.isAdmin || user?.isRider == true) ...[
+              // Privileged Portals (if Admin, Super Admin, or Rider)
+              if (auth.isAdmin || auth.isSuperAdmin || user?.isRider == true) ...[
                 const SizedBox(height: 18),
                 _buildSectionHeader('ROLE PORTALS'),
                 _buildCardGroup([
@@ -594,7 +594,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () => Navigator.of(context).pushNamed('/super-admin/dashboard'),
                     ),
                   ],
-                  if (user?.isRider == true || auth.isAdmin) ...[
+                  if (user?.isRider == true || auth.isAdmin || auth.isSuperAdmin) ...[
                     Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                     _buildMenuItem(
                       icon: Icons.moped_rounded,

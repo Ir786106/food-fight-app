@@ -196,10 +196,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Center(
                 child: Container(
                   width: 44,
@@ -289,7 +290,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   void _showCancellationDialog(BuildContext context, OrderModel order) {
@@ -314,18 +316,20 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           final colorScheme = theme.colorScheme;
           final isDark = theme.brightness == Brightness.dark;
 
-          return Container(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: SingleChildScrollView(
+          return SafeArea(
+            top: false,
+            child: Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+              ),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,6 +441,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ],
               ),
             ),
+            ),
           );
         },
       ),
@@ -494,8 +499,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final isDelivered = order.status == OrderStatus.delivered;
     final currentStepIndex = _getTimelineStepIndex(order.status);
 
-    final hasRider = (order.riderName != null && order.riderName!.trim().isNotEmpty);
-    final riderDisplayName = order.riderName ?? 'Assigning Champion...';
+    final hasRider = (order.riderId != null && order.riderId!.trim().isNotEmpty) ||
+        (order.riderName != null && order.riderName!.trim().isNotEmpty);
+    final riderDisplayName = (order.riderName != null && order.riderName!.trim().isNotEmpty)
+        ? order.riderName!
+        : 'Express Champion';
     final riderDisplayPhone = order.riderPhone ?? '';
 
     // Cancellation window
@@ -527,7 +535,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // 1. Top Hero Card (Reference G)
                   Container(
@@ -945,39 +953,70 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   const SizedBox(height: 20),
 
                   // 5. Action Row: Primary Maroon Chat + Outlined Help + Outline-Error Cancel
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomButton.darkCta(
-                          text: 'Chat with Support',
-                          icon: Icons.chat_bubble_outline_rounded,
-                          onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                          side: BorderSide(
-                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                            width: 1.5,
+                  if (canCancel)
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: CustomButton.darkCta(
+                            text: 'Chat Support',
+                            icon: Icons.chat_bubble_outline_rounded,
+                            onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        onPressed: () => _showGetHelpModal(context, order),
-                        child: const Icon(Icons.help_outline_rounded, size: 20),
-                      ),
-                      if (canCancel) ...[
-                        const SizedBox(width: 10),
-                        CustomButton.destructive(
-                          text: 'Cancel',
-                          icon: Icons.close_rounded,
-                          onPressed: () => _showCancellationDialog(context, order),
+                        const SizedBox(width: 8),
+                        IconButton.outlined(
+                          style: IconButton.styleFrom(
+                            foregroundColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            side: BorderSide(
+                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          tooltip: 'Help',
+                          onPressed: () => _showGetHelpModal(context, order),
+                          icon: const Icon(Icons.help_outline_rounded, size: 20),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: CustomButton.destructive(
+                            text: 'Cancel',
+                            icon: Icons.close_rounded,
+                            width: null,
+                            onPressed: () => _showCancellationDialog(context, order),
+                          ),
                         ),
                       ],
-                    ],
-                  ),
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomButton.darkCta(
+                            text: 'Chat with Support',
+                            icon: Icons.chat_bubble_outline_rounded,
+                            onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            side: BorderSide(
+                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: () => _showGetHelpModal(context, order),
+                          child: const Icon(Icons.help_outline_rounded, size: 20),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 20),
 
                   // 6. Delivery Destination Card
@@ -1073,61 +1112,68 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           final colorScheme = theme.colorScheme;
           final isDark = theme.brightness == Brightness.dark;
 
-          return Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(bottomSheetCtx).viewInsets.bottom + 24,
-              left: 24,
-              right: 24,
-              top: 24,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(10),
+          return SafeArea(
+            top: false,
+            child: Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomSheetCtx).viewInsets.bottom + 24,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Icon(Icons.stars_rounded, color: AppColors.brandYellow, size: 44),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Rate Your Food Fight Experience',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
+                    const SizedBox(height: 16),
+                    const Icon(Icons.stars_rounded, color: AppColors.brandYellow, size: 44),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Rate Your Food Fight Experience',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Order #${order.orderNumber} • ${order.branchId}',
-                    style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (idx) {
-                      final star = idx + 1;
-                      return IconButton(
-                        iconSize: 36,
-                        onPressed: () => setModalState(() => selectedRating = star),
-                        icon: Icon(
-                          star <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: AppColors.mustard,
-                        ),
-                      );
-                    }),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Order #${order.orderNumber} • ${order.branchId}',
+                      style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 6,
+                      children: List.generate(5, (idx) {
+                        final star = idx + 1;
+                        return InkWell(
+                          onTap: () => setModalState(() => selectedRating = star),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                            child: Icon(
+                              star <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                              color: AppColors.mustard,
+                              size: 38,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: commentCtrl,
@@ -1206,6 +1252,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ],
               ),
             ),
+          ),
           );
         },
       ),

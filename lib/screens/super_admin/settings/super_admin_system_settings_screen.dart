@@ -430,12 +430,14 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
     required bool isDark,
     required ValueChanged<bool> onChanged,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
+    return Material(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(14),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+        side: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade200),
       ),
+      clipBehavior: Clip.antiAlias,
       child: SwitchListTile(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
         subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: SuperAdminTheme.getTextMuted(context))),

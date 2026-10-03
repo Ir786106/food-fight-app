@@ -172,6 +172,8 @@ class CustomButton extends StatelessWidget {
                       Expanded(
                         child: Text(
                           text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w700,
                             fontSize: 15.5,
@@ -210,6 +212,7 @@ class CustomButton extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.error,
               side: const BorderSide(color: AppColors.error, width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppDimens.radius16),
               ),

@@ -16,8 +16,8 @@ class DealService {
     Query<Map<String, dynamic>> query = _dealsRef;
 
     if (branchId != null && branchId.isNotEmpty && branchId != 'all') {
-      // Allow deals specific to this branch or global deals (branchId is null or 'all')
-      query = query.where('branchId', whereIn: [branchId, null, '', 'all']);
+      // Allow deals specific to this branch or global deals (branchId is '' or 'all')
+      query = query.where('branchId', whereIn: [branchId, '', 'all']);
     }
 
     return query.snapshots().map((snapshot) {
@@ -25,11 +25,20 @@ class DealService {
         final data = doc.data();
         data['id'] = doc.id;
         return DealModel.fromJson(data);
+      }).where((d) {
+        if (branchId != null && branchId.isNotEmpty && branchId != 'all') {
+          final matches = d.branchId == null ||
+              d.branchId!.isEmpty ||
+              d.branchId == 'all' ||
+              d.branchId == branchId;
+          if (!matches) return false;
+        }
+        if (activeOnly) {
+          return d.isValidNow;
+        }
+        return true;
       }).toList();
 
-      if (activeOnly) {
-        return list.where((d) => d.isValidNow).toList();
-      }
       return list;
     });
   }
@@ -40,7 +49,7 @@ class DealService {
       Query<Map<String, dynamic>> query = _dealsRef.where('isActive', isEqualTo: true);
 
       if (branchId != null && branchId.isNotEmpty && branchId != 'all') {
-        query = query.where('branchId', whereIn: [branchId, null, '', 'all']);
+        query = query.where('branchId', whereIn: [branchId, '', 'all']);
       }
 
       final snapshot = await query.get();
@@ -50,7 +59,16 @@ class DealService {
             data['id'] = doc.id;
             return DealModel.fromJson(data);
           })
-          .where((d) => d.isValidNow)
+          .where((d) {
+            if (branchId != null && branchId.isNotEmpty && branchId != 'all') {
+              final matches = d.branchId == null ||
+                  d.branchId!.isEmpty ||
+                  d.branchId == 'all' ||
+                  d.branchId == branchId;
+              if (!matches) return false;
+            }
+            return d.isValidNow;
+          })
           .toList();
     } catch (e) {
       AppLogger.error('Failed to get active deals: $e', tag: 'DealService');

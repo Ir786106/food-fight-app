@@ -41,6 +41,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/.gradle/
+/android/.kotlin/
 /android/local.properties
 
 # Platform ephemeral files

@@ -84,12 +84,12 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
 
     if (user == null) return;
 
-    final isSuper = user.isSuperAdmin;
-    final branchId = user.branchId ?? '';
+    final isSuper = user.isSuperAdmin || (user.branchId == null || user.branchId!.isEmpty || user.branchId == 'all');
+    final branchId = _selectedBranchFilter ?? (user.branchId ?? '');
 
     chatProv.streamAdminChats(
-      isSuper ? (_selectedBranchFilter ?? '') : branchId,
-      isSuperAdmin: isSuper,
+      branchId,
+      isSuperAdmin: isSuper && (_selectedBranchFilter == null || _selectedBranchFilter!.isEmpty),
     );
   }
 
@@ -246,24 +246,24 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
         backgroundColor: colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
-        title: const Text(
+        title: Text(
           'Customer Support Chats',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: AppColors.brandMaroon,
+            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
             tooltip: 'Refresh Chats',
             onPressed: () => _initAdminChatStream(),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.brandMaroon,
+          labelColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
           unselectedLabelColor: colorScheme.onSurfaceVariant,
           indicatorColor: AppColors.brandYellow,
           indicatorWeight: 3,
@@ -299,6 +299,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final user = context.watch<AuthProvider>().currentUser;
     final branchProv = context.watch<BranchProvider>();
 
     return Column(
@@ -314,7 +315,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                 style: TextStyle(fontSize: 13.5, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Search customer, phone, order #...',
-                  prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.brandMaroon),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear_rounded, size: 18),
@@ -330,7 +331,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                   ),
                 ),
               ),
-              if (isSuper && branchProv.branches.isNotEmpty) ...[
+              if ((isSuper || (user?.branchId == null || user!.branchId!.isEmpty || user.branchId == 'all')) && branchProv.branches.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -392,25 +393,32 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                     final hasUnread = chat.unreadForAdmin > 0;
                     final timeStr = DateFormat('h:mm a').format(chat.lastMessageAt);
 
-                    return ListTile(
-                      selected: isSelected,
-                      selectedTileColor: AppColors.yellowSoft.withValues(alpha: 0.35),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      leading: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CircleAvatar(
-                            radius: 22,
-                            backgroundColor: hasUnread ? AppColors.brandYellow : AppColors.surfaceMuted,
-                            child: Text(
-                              chat.customerName.isNotEmpty ? chat.customerName[0].toUpperCase() : 'C',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.brandMaroon,
-                                fontSize: 16,
+                    return Material(
+                      color: isSelected
+                          ? (isDark ? AppColors.darkSurfaceElevated : AppColors.yellowSoft.withValues(alpha: 0.35))
+                          : Colors.transparent,
+                      child: ListTile(
+                        selected: isSelected,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        leading: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: hasUnread
+                                  ? AppColors.brandYellow
+                                  : (isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted),
+                              child: Text(
+                                chat.customerName.isNotEmpty ? chat.customerName[0].toUpperCase() : 'C',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: hasUnread
+                                      ? AppColors.onYellow
+                                      : (isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon),
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
                           if (hasUnread)
                             Positioned(
                               top: -2,
@@ -453,7 +461,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                             timeStr,
                             style: TextStyle(
                               fontSize: 11,
-                              color: hasUnread ? AppColors.brandMaroon : colorScheme.onSurfaceVariant,
+                              color: hasUnread
+                                  ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                  : colorScheme.onSurfaceVariant,
                               fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
@@ -484,15 +494,15 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.yellowSoft,
+                                    color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
                                     '#${chat.orderNumber ?? chat.orderId!.substring(0, 6)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.brandMaroon,
+                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                     ),
                                   ),
                                 ),
@@ -532,7 +542,8 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                         ],
                       ),
                       onTap: () => _selectChat(chat),
-                    );
+                    ),
+                  );
                   },
                 ),
         ),
@@ -544,6 +555,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final chat = _selectedChat;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     final chatProv = context.read<ChatProvider>();
@@ -566,10 +578,10 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
               children: [
                 Text(
                   chat.customerName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.brandMaroon,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
                   ),
                 ),
                 Text(
@@ -584,8 +596,8 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
         if (chat != null) ...[
           if (chat.status == 'resolved')
             TextButton.icon(
-              icon: const Icon(Icons.replay_rounded, size: 18, color: AppColors.brandMaroon),
-              label: const Text('Reopen', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandMaroon)),
+              icon: Icon(Icons.replay_rounded, size: 18, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+              label: Text('Reopen', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon)),
               onPressed: () {
                 chatProv.updateStatus(
                   'open',
@@ -640,22 +652,22 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
             color: isDark ? AppColors.darkSurfaceElevated : AppColors.yellowTint,
             child: Row(
               children: [
-                const Icon(Icons.receipt_long_rounded, color: AppColors.brandMaroon, size: 20),
+                Icon(Icons.receipt_long_rounded, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Linked to Order #${chat.orderNumber ?? chat.orderId}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: AppColors.brandMaroon,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
                     ),
                   ),
                 ),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.brandMaroon,
-                    side: const BorderSide(color: AppColors.brandMaroon, width: 1.2),
+                    foregroundColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    side: BorderSide(color: isDark ? AppColors.brandYellow : AppColors.brandMaroon, width: 1.2),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -712,7 +724,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
                             decoration: BoxDecoration(
                               color: isAdmin
-                                  ? AppColors.brandMaroon
+                                  ? (isDark ? AppColors.maroonDeep : AppColors.brandMaroon)
                                   : (isDark ? AppColors.darkSurfaceElevated : AppColors.surface),
                               borderRadius: BorderRadius.only(
                                 topLeft: const Radius.circular(14),
@@ -735,7 +747,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: isAdmin ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      color: isAdmin
+                                          ? AppColors.brandYellow
+                                          : (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
                                     ),
                                   ),
                                 ),
@@ -791,9 +805,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
             itemBuilder: (context, index) {
               final reply = _cannedReplies[index];
               return ActionChip(
-                label: Text(reply, style: const TextStyle(fontSize: 11.5, color: AppColors.brandMaroon)),
-                backgroundColor: AppColors.yellowSoft,
-                side: BorderSide.none,
+                label: Text(reply, style: TextStyle(fontSize: 11.5, color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon)),
+                backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.yellowSoft,
+                side: isDark ? const BorderSide(color: AppColors.darkBorder) : BorderSide.none,
                 onPressed: () => _handleAdminSend(customText: reply),
               );
             },
@@ -810,7 +824,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.photo_camera_back_outlined, color: AppColors.brandMaroon),
+                icon: Icon(Icons.photo_camera_back_outlined, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
                 tooltip: 'Attach Image',
                 onPressed: _handleAttachImage,
               ),
@@ -839,14 +853,18 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _isComposing ? AppColors.brandMaroon : AppColors.surfaceMuted,
+                  color: _isComposing
+                      ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                      : (isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: Icon(
                     Icons.send_rounded,
                     size: 20,
-                    color: _isComposing ? AppColors.brandYellow : AppColors.textMuted,
+                    color: _isComposing
+                        ? (isDark ? AppColors.brandMaroon : AppColors.brandYellow)
+                        : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                   ),
                   onPressed: _isComposing ? () => _handleAdminSend() : null,
                 ),
@@ -859,15 +877,16 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   }
 
   Widget _buildNoChatSelectedPlaceholder() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.chat_outlined, size: 64, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Select a conversation',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.brandMaroon),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
           ),
           const SizedBox(height: 6),
           Text(

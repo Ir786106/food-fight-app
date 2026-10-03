@@ -139,7 +139,7 @@ class _ProductCardState extends State<ProductCard>
       label: '${food.name}, price $displayPrice',
       child: Container(
         width: cardWidth,
-        margin: const EdgeInsets.only(top: 18, bottom: 8, right: 14),
+        margin: const EdgeInsets.only(top: 14, bottom: 6, right: 14),
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,

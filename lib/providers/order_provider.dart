@@ -61,6 +61,11 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _customerOrdersSub?.cancel();
+          _customerOrdersSub = null;
+          return;
+        }
         _isLoading = false;
         _errorMessage = 'Failed to load customer orders: $e';
         AppLogger.error('Customer orders watch error: $e', tag: 'OrderProvider');
@@ -84,6 +89,11 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _adminOrdersSub?.cancel();
+          _adminOrdersSub = null;
+          return;
+        }
         _isLoading = false;
         _errorMessage = 'Failed to load orders: $e';
         AppLogger.error('Admin orders watch error: $e', tag: 'OrderProvider');

@@ -46,6 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
       } else if (auth.isAdmin) {
         Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
+      } else if (auth.isRider) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/rider/dashboard', (r) => false);
       } else {
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
       }
@@ -76,6 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
       } else if (auth.isAdmin) {
         Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
+      } else if (auth.isRider) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/rider/dashboard', (r) => false);
       } else {
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
       }

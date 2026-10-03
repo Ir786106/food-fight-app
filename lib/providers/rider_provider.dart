@@ -8,16 +8,19 @@ import '../core/utils/safe_change_notifier.dart';
 class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
   List<RiderModel> _riders = [];
   List<OrderModel> _assignedDeliveries = [];
+  List<OrderModel> _completedDeliveries = [];
   bool _isLoading = false;
   String? _errorMessage;
 
   StreamSubscription<List<RiderModel>>? _ridersSub;
   StreamSubscription<List<OrderModel>>? _deliveriesSub;
+  StreamSubscription<List<OrderModel>>? _historySub;
 
   List<RiderModel> get riders => List.unmodifiable(_riders);
   List<RiderModel> get activeRiders => _riders.where((r) => r.isActive).toList();
   List<RiderModel> get onlineRiders => _riders.where((r) => r.isActive && r.isOnline).toList();
   List<OrderModel> get assignedDeliveries => List.unmodifiable(_assignedDeliveries);
+  List<OrderModel> get completedDeliveries => List.unmodifiable(_completedDeliveries);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -42,14 +45,14 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
     );
   }
 
-  void watchRiderDeliveries(String riderId) {
-    if (riderId.isEmpty) return;
+  void watchRiderDeliveries(String riderId, {String? riderPhone}) {
+    if (riderId.isEmpty && (riderPhone == null || riderPhone.isEmpty)) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListenersPostFrame();
 
     _deliveriesSub?.cancel();
-    _deliveriesSub = RiderService.watchRiderDeliveries(riderId).listen(
+    _deliveriesSub = RiderService.watchRiderDeliveries(riderId, riderPhone: riderPhone).listen(
       (orders) {
         _assignedDeliveries = orders;
         _isLoading = false;
@@ -62,11 +65,45 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
     );
+
+    _historySub?.cancel();
+    _historySub = RiderService.watchRiderHistory(riderId, riderPhone: riderPhone).listen(
+      (history) {
+        _completedDeliveries = history;
+        notifyListeners();
+      },
+      onError: (_) {},
+    );
   }
 
   Future<bool> createRider(RiderModel rider) async {
     try {
       await RiderService.createRider(rider);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> createRiderWithAuth({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    String? vehicleType,
+    String? vehicleNumber,
+  }) async {
+    try {
+      await RiderService.createRiderWithAuth(
+        name: name,
+        email: email,
+        password: password,
+        phone: phone,
+        vehicleType: vehicleType,
+        vehicleNumber: vehicleNumber,
+      );
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -133,6 +170,7 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
   void dispose() {
     _ridersSub?.cancel();
     _deliveriesSub?.cancel();
+    _historySub?.cancel();
     super.dispose();
   }
 }

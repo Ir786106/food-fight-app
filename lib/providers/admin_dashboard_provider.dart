@@ -103,6 +103,10 @@ class AdminDashboardProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          cancelSubscriptions();
+          return;
+        }
         _isLoading = false;
         _errorMessage = 'Failed to load order metrics: $e';
         AppLogger.error('Dashboard orders watch error: $e', tag: 'AdminDashboardProvider');
@@ -126,6 +130,10 @@ class AdminDashboardProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _ridersSubscription?.cancel();
+          return;
+        }
         _errorMessage = 'Failed to load riders count: $e';
         AppLogger.error('Dashboard riders watch error: $e', tag: 'AdminDashboardProvider');
         notifyListeners();
@@ -153,6 +161,10 @@ class AdminDashboardProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _customersSubscription?.cancel();
+          return;
+        }
         _errorMessage = 'Failed to load customer count: $e';
         AppLogger.error('Dashboard customers watch error: $e', tag: 'AdminDashboardProvider');
         notifyListeners();
@@ -279,12 +291,20 @@ class AdminDashboardProvider extends ChangeNotifier with SafeChangeNotifier {
     _recentOrders = parsedOrders.take(10).toList();
   }
 
-  @override
-  void dispose() {
+  void cancelSubscriptions() {
     _ordersSubscription?.cancel();
     _ridersSubscription?.cancel();
     _customersSubscription?.cancel();
     _popularItemsSubscription?.cancel();
+    _ordersSubscription = null;
+    _ridersSubscription = null;
+    _customersSubscription = null;
+    _popularItemsSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    cancelSubscriptions();
     super.dispose();
   }
 }

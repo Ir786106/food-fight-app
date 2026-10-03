@@ -54,11 +54,14 @@ class ChatService implements IChatService {
   Stream<List<ChatModel>> streamCustomerChats(String customerId) {
     return _chatsRef
         .where('customerId', isEqualTo: customerId)
-        .orderBy('lastMessageAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ChatModel.fromJson(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => ChatModel.fromJson(doc.data(), doc.id))
+              .toList();
+          list.sort((a, b) => b.lastMessageAt.compareTo(a.lastMessageAt));
+          return list;
+        });
   }
 
   @override
@@ -69,7 +72,8 @@ class ChatService implements IChatService {
   }) {
     Query<Map<String, dynamic>> query = _chatsRef;
 
-    if (!isSuperAdmin || branchId.isNotEmpty) {
+    // Only filter by branch if non-empty, not 'all', and not Super Admin viewing all branches
+    if (branchId.isNotEmpty && branchId != 'all' && !isSuperAdmin) {
       query = query.where('branchId', isEqualTo: branchId);
     }
 
@@ -79,23 +83,29 @@ class ChatService implements IChatService {
       query = query.where('status', isEqualTo: statusFilter);
     }
 
-    return query
-        .orderBy('lastMessageAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ChatModel.fromJson(doc.data(), doc.id))
-            .toList());
+    return query.snapshots().map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => ChatModel.fromJson(doc.data(), doc.id))
+          .toList();
+      list.sort((a, b) => b.lastMessageAt.compareTo(a.lastMessageAt));
+      return list;
+    });
   }
 
   @override
   Stream<List<ChatMessageModel>> streamMessages(String chatId, {int limit = 50}) {
     return _messagesRef(chatId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ChatMessageModel.fromJson(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => ChatMessageModel.fromJson(doc.data(), doc.id))
+              .toList();
+          list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          if (list.length > limit) {
+            return list.sublist(list.length - limit);
+          }
+          return list;
+        });
   }
 
   @override

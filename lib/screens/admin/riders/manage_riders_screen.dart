@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/admin_theme.dart';
+import '../../../core/utils/validator_utils.dart';
 import '../../../models/rider_model.dart';
 import '../../../providers/rider_provider.dart';
 import '../../../widgets/admin/admin_drawer.dart';
@@ -39,9 +40,12 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
   void _showAddEditRiderModal({RiderModel? rider}) {
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController(text: rider?.name ?? '');
+    final emailCtrl = TextEditingController(text: rider?.email ?? '');
+    final passwordCtrl = TextEditingController();
     final phoneCtrl = TextEditingController(text: rider?.phone ?? '');
     final vehicleTypeCtrl = TextEditingController(text: rider?.vehicleType ?? 'Motorcycle');
     final vehicleNumberCtrl = TextEditingController(text: rider?.vehicleNumber ?? '');
+    bool obscurePassword = true;
     bool isSaving = false;
 
     showDialog(
@@ -51,19 +55,53 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
           return AlertDialog(
             backgroundColor: AdminTheme.getCardBg(dialogContext),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              rider == null ? 'Register New Delivery Rider' : 'Edit Rider Profile',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            title: Row(
+              children: [
+                Icon(
+                  rider == null ? Icons.person_add_rounded : Icons.edit_rounded,
+                  color: AdminTheme.primaryBlue,
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  rider == null ? 'Register New Delivery Rider' : 'Edit Rider Profile',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
             ),
             content: SingleChildScrollView(
               child: Form(
                 key: formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (rider == null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: AdminTheme.primaryBlue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AdminTheme.primaryBlue.withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline_rounded, size: 18, color: AdminTheme.primaryBlue),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'A login account will be automatically generated with this email and password.',
+                                style: TextStyle(fontSize: 11.5, height: 1.3),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     TextFormField(
                       controller: nameCtrl,
-                      validator: (v) => (v == null || v.isEmpty) ? 'Name is required' : null,
+                      validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Full Name'),
                       decoration: const InputDecoration(
                         labelText: 'Rider Full Name *',
                         prefixIcon: Icon(Icons.person_outline),
@@ -71,11 +109,50 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
+                      controller: emailCtrl,
+                      enabled: rider == null,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: ValidatorUtils.validateEmail,
+                      decoration: InputDecoration(
+                        labelText: 'Login Email Address *',
+                        hintText: 'e.g. rider1@foodfight.pk',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        helperText: rider == null ? 'Rider will use this to sign in' : null,
+                      ),
+                    ),
+                    if (rider == null) ...[
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: passwordCtrl,
+                        obscureText: obscurePassword,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Password is required';
+                          if (v.length < 6) return 'Password must be at least 6 characters';
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Assign Login Password *',
+                          hintText: 'Min. 6 characters',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
+                          ),
+                          helperText: 'Temporary or initial password for rider',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    TextFormField(
                       controller: phoneCtrl,
                       keyboardType: TextInputType.phone,
                       validator: (v) => (v == null || v.length < 10) ? 'Valid phone required' : null,
                       decoration: const InputDecoration(
                         labelText: 'Mobile Phone *',
+                        hintText: '0300 1234567',
                         prefixIcon: Icon(Icons.phone_outlined),
                       ),
                     ),
@@ -83,7 +160,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     TextFormField(
                       controller: vehicleTypeCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Vehicle Type (e.g. Honda 125, Scooter)',
+                        labelText: 'Vehicle Type (e.g. Motorcycle, Scooter)',
                         prefixIcon: Icon(Icons.two_wheeler_outlined),
                       ),
                     ),
@@ -91,7 +168,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     TextFormField(
                       controller: vehicleNumberCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Vehicle License Plate (e.g. LEA-24-1234)',
+                        labelText: 'License Plate (e.g. LEA-24-1234)',
                         prefixIcon: Icon(Icons.badge_outlined),
                       ),
                     ),
@@ -101,7 +178,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(ctx),
+                onPressed: isSaving ? null : () => Navigator.pop(ctx),
                 child: const Text('Cancel'),
               ),
               FilledButton(
@@ -112,44 +189,60 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         if (!formKey.currentState!.validate()) return;
                         setModalState(() => isSaving = true);
 
-                        final newRider = RiderModel(
-                          id: rider?.id ?? '',
-                          userId: rider?.userId ?? 'rider_${DateTime.now().millisecondsSinceEpoch}',
-                          name: nameCtrl.text.trim(),
-                          phone: phoneCtrl.text.trim(),
-                          vehicleType: vehicleTypeCtrl.text.trim(),
-                          vehicleNumber: vehicleNumberCtrl.text.trim(),
-                          isActive: rider?.isActive ?? true,
-                          isOnline: rider?.isOnline ?? false,
-                          rating: rider?.rating ?? 5.0,
-                          totalDeliveries: rider?.totalDeliveries ?? 0,
-                          createdAt: rider?.createdAt ?? DateTime.now(),
-                          updatedAt: DateTime.now(),
-                        );
-
+                        final riderProv = context.read<RiderProvider>();
                         bool ok;
                         if (rider == null) {
-                          ok = await context.read<RiderProvider>().createRider(newRider);
+                          ok = await riderProv.createRiderWithAuth(
+                            name: nameCtrl.text.trim(),
+                            email: emailCtrl.text.trim().toLowerCase(),
+                            password: passwordCtrl.text.trim(),
+                            phone: phoneCtrl.text.trim(),
+                            vehicleType: vehicleTypeCtrl.text.trim(),
+                            vehicleNumber: vehicleNumberCtrl.text.trim(),
+                          );
                         } else {
-                          ok = await context.read<RiderProvider>().updateRider(newRider);
+                          final updatedRider = RiderModel(
+                            id: rider.id,
+                            userId: rider.userId,
+                            name: nameCtrl.text.trim(),
+                            email: rider.email ?? emailCtrl.text.trim().toLowerCase(),
+                            phone: phoneCtrl.text.trim(),
+                            vehicleType: vehicleTypeCtrl.text.trim(),
+                            vehicleNumber: vehicleNumberCtrl.text.trim(),
+                            isActive: rider.isActive,
+                            isOnline: rider.isOnline,
+                            rating: rider.rating,
+                            totalDeliveries: rider.totalDeliveries,
+                            createdAt: rider.createdAt,
+                            updatedAt: DateTime.now(),
+                          );
+                          ok = await riderProv.updateRider(updatedRider);
                         }
 
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
                         }
                         if (mounted) {
+                          final err = riderProv.errorMessage;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(ok
-                                  ? (rider == null ? 'Rider registered successfully!' : 'Rider profile updated!')
-                                  : 'Operation failed'),
+                                  ? (rider == null
+                                      ? 'Rider registered! Login Email: ${emailCtrl.text.trim()}'
+                                      : 'Rider profile updated!')
+                                  : (err ?? 'Failed to register rider')),
                               backgroundColor: ok ? AppColors.success : AppColors.error,
+                              duration: const Duration(seconds: 4),
                             ),
                           );
                         }
                       },
                 child: isSaving
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
                     : Text(rider == null ? 'Register Rider' : 'Save Changes'),
               ),
             ],
@@ -194,6 +287,11 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
           backgroundColor: AdminTheme.primaryBlue,
           foregroundColor: Colors.white,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.two_wheeler_rounded),
+              tooltip: 'Open Rider Console',
+              onPressed: () => Navigator.pushNamed(context, '/rider/dashboard'),
+            ),
             IconButton(
               icon: const Icon(Icons.person_add_rounded),
               tooltip: 'Register Rider',
@@ -394,6 +492,27 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (rider.email != null && rider.email!.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(Icons.email_outlined, size: 12.5, color: AdminTheme.primaryBlue.withValues(alpha: 0.8)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          rider.email!,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.brandYellow : AdminTheme.primaryBlue,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [

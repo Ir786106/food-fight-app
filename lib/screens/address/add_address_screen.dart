@@ -184,12 +184,13 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                   validator: (v) => (v == null || v.isEmpty) ? 'Enter your address' : null,
                 ),
                 const SizedBox(height: 20),
-                Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
+                Material(
+                  color: colorScheme.surface,
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                    side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
                   ),
+                  clipBehavior: Clip.antiAlias,
                   child: SwitchListTile(
                     title: Text(
                       'Set as default address',

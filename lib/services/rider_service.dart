@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/rider_model.dart';
 import '../models/order_model.dart';
 import '../core/constants/firestore_collections.dart';
@@ -10,6 +12,87 @@ class RiderService {
       _firestore.collection(FirestoreCollections.riders);
   static final CollectionReference _ordersCol =
       _firestore.collection(FirestoreCollections.orders);
+
+  /// Create a new rider account in Firebase Auth and Firestore with email & password.
+  /// Uses a secondary FirebaseApp instance so the currently logged-in Admin is NEVER logged out.
+  static Future<String> createRiderWithAuth({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    String? vehicleType,
+    String? vehicleNumber,
+  }) async {
+    FirebaseApp? tempApp;
+    try {
+      final appName = 'RiderAuthApp_${DateTime.now().millisecondsSinceEpoch}';
+      tempApp = await Firebase.initializeApp(
+        name: appName,
+        options: Firebase.app().options,
+      );
+
+      final tempAuth = FirebaseAuth.instanceFor(app: tempApp);
+      final cred = await tempAuth.createUserWithEmailAndPassword(
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      );
+
+      final uid = cred.user!.uid;
+      await cred.user!.updateDisplayName(name.trim());
+
+      // 1. Save user document in 'users' collection with delivery_rider role
+      await _firestore.collection(FirestoreCollections.users).doc(uid).set({
+        'id': uid,
+        'uid': uid,
+        'email': email.trim().toLowerCase(),
+        'name': name.trim(),
+        'phone': phone.trim(),
+        'role': 'delivery_rider',
+        'status': 'active',
+        'isActive': 1,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 2. Save rider document in 'riders' collection
+      final riderDoc = _ridersCol.doc(uid);
+      await riderDoc.set({
+        'id': uid,
+        'userId': uid,
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
+        'phone': phone.trim(),
+        'vehicleType': vehicleType ?? 'Motorcycle',
+        'vehicleNumber': vehicleNumber,
+        'isActive': 1,
+        'isOnline': 0,
+        'rating': 5.0,
+        'totalDeliveries': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      AppLogger.info('Registered rider user $email with UID $uid', tag: 'RiderService');
+      return uid;
+    } on FirebaseAuthException catch (e) {
+      AppLogger.error('FirebaseAuthException creating rider: ${e.code}', tag: 'RiderService');
+      if (e.code == 'email-already-in-use') {
+        throw 'This email is already registered. Please use a different email.';
+      } else if (e.code == 'weak-password') {
+        throw 'Password must be at least 6 characters long.';
+      } else if (e.code == 'invalid-email') {
+        throw 'The email address is badly formatted.';
+      }
+      throw e.message ?? 'Authentication error occurred.';
+    } catch (e) {
+      AppLogger.error('Failed to create rider with auth: $e', tag: 'RiderService');
+      rethrow;
+    } finally {
+      if (tempApp != null) {
+        await tempApp.delete();
+      }
+    }
+  }
 
   /// Stream all delivery riders (Admin / Super Admin)
   static Stream<List<RiderModel>> watchAllRiders() {
@@ -122,17 +205,46 @@ class RiderService {
   }
 
   /// Watch active deliveries assigned to a specific rider
-  static Stream<List<OrderModel>> watchRiderDeliveries(String riderId) {
-    return _ordersCol
-        .where('riderId', isEqualTo: riderId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
+  static Stream<List<OrderModel>> watchRiderDeliveries(String riderId, {String? riderPhone}) {
+    return _ordersCol.snapshots().map((snapshot) {
+      final list = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return OrderModel.fromJson(data);
+      }).where((o) {
+        if (o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled) {
+          return false;
+        }
+        if (o.riderId != null && o.riderId == riderId) return true;
+        if (riderPhone != null && riderPhone.isNotEmpty && o.riderPhone == riderPhone) {
+          return true;
+        }
+        return false;
       }).toList();
+
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
+  /// Watch completed deliveries for a specific rider
+  static Stream<List<OrderModel>> watchRiderHistory(String riderId, {String? riderPhone}) {
+    return _ordersCol.snapshots().map((snapshot) {
+      final list = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return OrderModel.fromJson(data);
+      }).where((o) {
+        if (o.status != OrderStatus.delivered) return false;
+        if (o.riderId != null && o.riderId == riderId) return true;
+        if (riderPhone != null && riderPhone.isNotEmpty && o.riderPhone == riderPhone) {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
     });
   }
 }

@@ -642,20 +642,22 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                     // ==========================================
                     // Multi-Size / Variants Toggle & Templates (Phase 7)
                     // ==========================================
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                    Material(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
+                        side: BorderSide(
                           color: _hasVariants
                               ? AdminTheme.primaryBlue.withValues(alpha: 0.5)
                               : Colors.grey.shade300,
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      clipBehavior: Clip.antiAlias,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
@@ -729,6 +731,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                             const SizedBox(height: 6),
                           ],
                         ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

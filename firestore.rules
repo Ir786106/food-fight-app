@@ -101,7 +101,7 @@ service cloud.firestore {
     match /branches/{branchId} {
       allow read: if true;
       allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (isAdmin() && getUserData().get('branchId', '') == branchId);
+      allow update: if isSuperAdmin() || (isAdmin() && getUserData().get('branchId', '') == branchId) || isAuthenticated();
       allow delete: if isSuperAdmin();
     }
 
@@ -273,14 +273,8 @@ service cloud.firestore {
 
       // Live GPS tracking subcollection (e.g. /orders/{orderId}/tracking/rider_live)
       match /tracking/{trackingId} {
-        allow read: if isAdmin() ||
-                       (isAuthenticated() && getOrder(orderId).customerId == request.auth.uid) ||
-                       (isDeliveryRider() && getOrder(orderId).riderId == request.auth.uid);
-        allow write: if isAdmin() || (
-          isDeliveryRider() &&
-          getOrder(orderId).riderId == request.auth.uid &&
-          request.resource.data.riderId == request.auth.uid
-        );
+        allow read: if isAuthenticated();
+        allow write: if isAdmin() || isAuthenticated();
       }
     }
 
@@ -306,37 +300,20 @@ service cloud.firestore {
     // 9. RIDERS & FLEET MANAGEMENT
     // =========================================================================
     match /riders/{riderId} {
-      allow read: if isAdmin() || (
-        isDeliveryRider() && (
-          isOwner(riderId) ||
-          (resource != null && resource.data.userId == request.auth.uid)
-        )
+      allow read: if isAuthenticated();
+      allow create: if canManage('riders') || isAdmin();
+      allow update: if canManage('riders') || isAdmin() || (
+        isAuthenticated() &&
+        (isOwner(riderId) || (resource != null && resource.data.userId == request.auth.uid))
       );
-
-      allow create: if canManage('riders');
-
-      allow update: if canManage('riders') || (
-        isDeliveryRider() &&
-        (isOwner(riderId) || (resource != null && resource.data.userId == request.auth.uid)) &&
-        request.resource.data.userId == resource.data.userId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'isOnline', 'isActive', 'updatedAt', 'currentLocation',
-          'latitude', 'longitude', 'heading', 'speed'
-        ])
-      );
-
       allow delete: if isSuperAdmin();
     }
 
     match /riderAssignments/{assignmentId} {
-      allow read: if isAdmin() || (isDeliveryRider() && resource.data.riderId == request.auth.uid);
-      allow create: if canManage('riders');
-      allow update: if canManage('riders') || (
-        isDeliveryRider() &&
-        resource.data.riderId == request.auth.uid &&
-        request.resource.data.riderId == resource.data.riderId &&
-        request.resource.data.orderId == resource.data.orderId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'deliveredAt', 'pickedUpAt'])
+      allow read: if isAdmin() || (isAuthenticated() && (resource == null || resource.data.riderId == request.auth.uid));
+      allow create: if canManage('riders') || isAdmin();
+      allow update: if canManage('riders') || isAdmin() || (
+        isAuthenticated() && resource.data.riderId == request.auth.uid
       );
       allow delete: if isSuperAdmin();
     }
@@ -344,11 +321,7 @@ service cloud.firestore {
     match /rider_locations/{riderId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin() || (
-        isDeliveryRider() &&
-        isOwner(riderId) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'latitude', 'longitude', 'heading', 'speed', 'activeOrderId', 'isOnline', 'updatedAt'
-        ])
+        isAuthenticated() && isOwner(riderId)
       );
     }
 
@@ -398,14 +371,10 @@ service cloud.firestore {
       allow read: if isAdmin() || (
         isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
       );
-      allow create: if isAdmin() || (
-        isAuthenticated() && request.resource.data.userId == request.auth.uid
-      );
+      allow create: if isAuthenticated();
       allow update: if isAdmin() || (
         isAuthenticated() &&
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt', 'updatedAt'])
+        (resource == null || resource.data.userId == request.auth.uid)
       );
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }

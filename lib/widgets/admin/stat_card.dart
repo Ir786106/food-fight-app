@@ -29,6 +29,12 @@ class StatCard extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.05);
 
+    final isMaroon = color == const Color(0xFF7B1113) ||
+        color == const Color(0xFF8B1E21) ||
+        color.toARGB32() == 0xFF7B1113 ||
+        color.toARGB32() == 0xFF8B1E21;
+    final effectiveColor = isDark && isMaroon ? const Color(0xFFFFD505) : color;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -58,10 +64,10 @@ class StatCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: isDark ? 0.2 : 0.12),
+                      color: effectiveColor.withValues(alpha: isDark ? 0.2 : 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, color: color, size: 18),
+                    child: Icon(icon, color: effectiveColor, size: 18),
                   ),
                   const SizedBox(width: 6),
                   if (subtitle != null)
