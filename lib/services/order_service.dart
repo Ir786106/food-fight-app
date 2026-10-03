@@ -6,6 +6,7 @@ import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'notification_service.dart';
 import 'branch_service.dart';
+import 'loyalty_service.dart';
 
 /// Order Service for Customer ordering and Admin order management
 class OrderService {
@@ -126,7 +127,7 @@ class OrderService {
     await _collection.doc(orderId).update(updates);
     AppLogger.info('Updated order $orderId to ${newStatus.name}', tag: 'OrderService');
 
-    // Emit live status notification to the customer
+    // Emit live status notification and award/refund loyalty tokens
     try {
       final order = await getOrder(orderId);
       if (order != null && order.customerId.isNotEmpty) {
@@ -135,9 +136,23 @@ class OrderService {
           order.orderNumber.isNotEmpty ? order.orderNumber : orderId,
           newStatus.displayName,
         );
+
+        if (newStatus == OrderStatus.delivered) {
+          await LoyaltyService().earnTokensForOrder(
+            userId: order.customerId,
+            orderId: orderId,
+            orderAmount: order.total,
+          );
+        } else if (newStatus == OrderStatus.cancelled && order.tokensUsed > 0) {
+          await LoyaltyService().refundTokensForCancelledOrder(
+            userId: order.customerId,
+            orderId: orderId,
+            tokensToRefund: order.tokensUsed,
+          );
+        }
       }
     } catch (e) {
-      AppLogger.warn('Could not emit order status notification: $e', tag: 'OrderService');
+      AppLogger.warn('Could not emit order status notification / tokens: $e', tag: 'OrderService');
     }
   }
 
