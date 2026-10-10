@@ -6,10 +6,10 @@ import '../../providers/menu_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/food_card.dart';
-import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/skeleton/food_card_skeleton.dart';
 
 class MenuScreen extends StatefulWidget {
   final VoidCallback? onNavigateToCart;
@@ -264,7 +264,22 @@ class _MenuScreenState extends State<MenuScreen> {
               // Items View
               Expanded(
                 child: menuProvider.isLoading && allFoods.isEmpty
-                    ? const LoadingIndicator(message: 'Loading fresh menu items...')
+                    ? (MediaQuery.sizeOf(context).width >= 720
+                        ? GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 440,
+                              childAspectRatio: 2.8,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                            ),
+                            itemCount: 6,
+                            itemBuilder: (_, __) => const FoodCardSkeleton.row(),
+                          )
+                        : ListView.separated(
+                            itemCount: 6,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (_, __) => const FoodCardSkeleton.row(),
+                          ))
                     : menuProvider.errorMessage != null && allFoods.isEmpty
                         ? ErrorView(
                             message: menuProvider.errorMessage!,

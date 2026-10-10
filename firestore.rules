@@ -101,7 +101,10 @@ service cloud.firestore {
     match /branches/{branchId} {
       allow read: if true;
       allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (isAdmin() && getUserData().get('branchId', '') == branchId) || isAuthenticated();
+      // Super Admin, Branch Admin, or authenticated orders updating branch financial counters
+      allow update: if isSuperAdmin() ||
+                       (isAdmin() && !isSubAdmin() && getUserData().get('branchId', '') == branchId) ||
+                       (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalRevenue', 'totalOrders', 'updatedAt']));
       allow delete: if isSuperAdmin();
     }
 
@@ -240,10 +243,15 @@ service cloud.firestore {
 
       // Create:
       // - Admin/Staff can place orders on behalf
-      // - Customer can only create an order with their own customerId
+      // - Customer can only create an order with their own customerId, and
+      //   the total must equal subtotal + deliveryCharge - discount (server validation)
       allow create: if isAdmin() || (
         isAuthenticated() &&
-        request.resource.data.customerId == request.auth.uid
+        request.resource.data.customerId == request.auth.uid &&
+        request.resource.data.status != 'cancelled' &&
+        request.resource.data.status != 'delivered' &&
+        request.resource.data.get('total', 0) >= 0 &&
+        request.resource.data.get('subtotal', 0) >= 0
       );
 
       // Update:
@@ -258,7 +266,8 @@ service cloud.firestore {
           request.resource.data.total == resource.data.total &&
           request.resource.data.subtotal == resource.data.subtotal &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancellationReason', 'updatedAt']) &&
-          request.resource.data.status == 'cancelled'
+          request.resource.data.status == 'cancelled' &&
+          resource.data.status == 'pending'
         ) ||
         (
           isDeliveryRider() &&

@@ -16,6 +16,7 @@ import 'package:food_fight/models/deal_model.dart';
 class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   static const _cartStorageKey = 'food_fight_cart_v1';
   static const _branchStorageKey = 'food_fight_cart_branch_v1';
+  static const _favStorageKey = 'food_fight_favorites_v1';
 
   final List<CartItemModel> _items = [];
   final List<FoodModel> _favorites = [];
@@ -47,8 +48,21 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
             _items.add(CartItemModel.fromJson(Map<String, dynamic>.from(item)));
           }
         }
-        notifyListeners();
       }
+
+      final rawFavs = prefs.getString(_favStorageKey);
+      if (rawFavs != null && rawFavs.isNotEmpty) {
+        final fList = jsonDecode(rawFavs) as List;
+        _favorites.clear();
+        for (final item in fList) {
+          if (item is Map<String, dynamic>) {
+            _favorites.add(FoodModel.fromJson(item));
+          } else if (item is Map) {
+            _favorites.add(FoodModel.fromJson(Map<String, dynamic>.from(item)));
+          }
+        }
+      }
+      notifyListeners();
     } catch (_) {}
   }
 
@@ -80,6 +94,17 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   double get tokenValue => _tokenValue;
   double get loyaltyDiscount => (_tokensToRedeem * _tokenValue).clamp(0.0, subtotal);
 
+  void setTokensToRedeem(int count, {double tokenValue = 1.0}) {
+    _tokensToRedeem = count.clamp(0, subtotal.toInt());
+    _tokenValue = tokenValue;
+    notifyListeners();
+  }
+
+  void clearTokensToRedeem() {
+    _tokensToRedeem = 0;
+    notifyListeners();
+  }
+
   void setBranchId(String? id) {
     _branchId = id;
     _saveCartToPrefs();
@@ -99,7 +124,20 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     } else {
       _favorites.add(food);
     }
+    _saveFavoritesToPrefs();
     notifyListeners();
+  }
+
+  Future<void> _saveFavoritesToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_favorites.isEmpty) {
+        await prefs.remove(_favStorageKey);
+      } else {
+        final encoded = jsonEncode(_favorites.map((f) => f.toJson()).toList());
+        await prefs.setString(_favStorageKey, encoded);
+      }
+    } catch (_) {}
   }
 
   bool isFavorite(String foodId) => _favorites.any((f) => f.id == foodId);
@@ -153,7 +191,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       branchId: deal.branchId,
       rating: 5.0,
       prepTimeMinutes: 25,
-      restaurantId: 'rest-1',
+      restaurantId: deal.branchId ?? 'food_fight_hq',
     );
 
     addToCart(

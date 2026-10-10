@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:csv/csv.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:food_fight/models/report_model.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/providers/report_provider.dart';
@@ -11,6 +15,8 @@ import 'package:food_fight/widgets/common/network_image_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
+import 'package:food_fight/widgets/charts/sales_trend_chart.dart';
+import 'package:food_fight/widgets/charts/order_status_donut_chart.dart';
 
 class SalesReportsScreen extends StatefulWidget {
   const SalesReportsScreen({super.key});
@@ -21,6 +27,7 @@ class SalesReportsScreen extends StatefulWidget {
 
 class _SalesReportsScreenState extends State<SalesReportsScreen> {
   String? _lastBranchId;
+  bool _isExporting = false;
 
   @override
   void didChangeDependencies() {
@@ -68,6 +75,18 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
+          if (report != null && report.totalOrders > 0)
+            IconButton(
+              icon: _isExporting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.download_rounded),
+              tooltip: 'Export CSV',
+              onPressed: _isExporting ? null : () => _exportCsv(report),
+            ),
           IconButton(
             icon: const Icon(Icons.date_range_rounded),
             tooltip: 'Custom Date Range',
@@ -186,6 +205,24 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                       ],
                     );
                   },
+                ),
+
+                const SizedBox(height: 20),
+
+                // Interactive Analytics Visualizations (fl_chart)
+                if (report.dailySales.isNotEmpty) ...[
+                  SalesTrendChart(
+                    dailySales: report.dailySales,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                OrderStatusDonutChart(
+                  deliveredCount: report.deliveredOrders,
+                  pendingCount: report.pendingOrders,
+                  cancelledCount: report.cancelledOrders,
+                  isDark: isDark,
                 ),
 
                 const SizedBox(height: 24),
@@ -366,4 +403,70 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
       ),
     );
   }
+
+  Future<void> _exportCsv(ReportModel report) async {
+    setState(() => _isExporting = true);
+    try {
+      final List<List<dynamic>> rows = [
+        ['FOOD FIGHT FAST FOOD - SALES & ANALYTICS REPORT'],
+        ['Generated At', DateTime.now().toIso8601String()],
+        ['Branch Scope', _lastBranchId ?? 'Platform HQ (All Branches)'],
+        [],
+        ['SUMMARY METRICS'],
+        ['Total Gross Revenue (PKR)', report.totalRevenue],
+        ['Total Orders Placed', report.totalOrders],
+        ['Completed / Delivered Orders', report.deliveredOrders],
+        ['Cancelled Orders', report.cancelledOrders],
+        ['Average Order Value (PKR)', report.averageOrderValue],
+        [],
+        ['DAILY PERFORMANCE BREAKDOWN'],
+        ['Date', 'Completed Orders', 'Revenue (PKR)'],
+        ...report.dailySales.map((s) => [
+              '${s.date.year}-${s.date.month.toString().padLeft(2, '0')}-${s.date.day.toString().padLeft(2, '0')}',
+              s.ordersCount,
+              s.revenue,
+            ]),
+        [],
+        ['BEST-SELLING MENU ITEMS'],
+        ['Item Name', 'Quantity Sold', 'Gross Revenue (PKR)'],
+        ...report.topSellingItems.map((item) => [
+              item.name,
+              item.quantitySold,
+              item.totalRevenue,
+            ]),
+      ];
+
+      final csvString = const ListToCsvConverter().convert(rows);
+      final dir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${dir.path}/food_fight_sales_report_$timestamp.csv');
+      await file.writeAsString(csvString);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Report exported: ${file.path.split(Platform.pathSeparator).last}'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to export report: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
 }
+

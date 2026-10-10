@@ -154,6 +154,30 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
     }
   }
 
+  /// Cancel order by customer with backend 5-minute window & pending-status validation
+  Future<bool> cancelOrderByCustomer(String orderId, {String? reason}) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+      await OrderService.cancelOrderByCustomer(orderId, reason: reason);
+      if (_currentOrder != null && _currentOrder!.id == orderId) {
+        _currentOrder = _currentOrder!.copyWith(
+          status: OrderStatus.cancelled,
+          cancellationReason: reason ?? 'Cancelled by customer',
+        );
+      }
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      AppLogger.error('Customer cancel order error: $e', tag: 'OrderProvider');
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Get order synchronously from local cached list
   OrderModel? getOrderById(String orderId) {
     try {

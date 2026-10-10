@@ -196,8 +196,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
+          child: Material(
+            color: Colors.transparent,
+            child: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -291,7 +293,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         ),
       ),
     ),
-  );
+  ),
+);
   }
 
   void _showCancellationDialog(BuildContext context, OrderModel order) {
@@ -416,10 +419,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                   setState(() => _isCancelling = true);
                                   Navigator.pop(ctx);
 
-                                  final ok = await orderProv.updateOrderStatus(
+                                  final ok = await orderProv.cancelOrderByCustomer(
                                         order.id,
-                                        OrderStatus.cancelled,
-                                        cancellationReason: finalReason,
+                                        reason: finalReason,
                                       );
 
                                   if (mounted) {

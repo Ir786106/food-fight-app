@@ -19,6 +19,7 @@ import '../../widgets/home/home_promo_carousel.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
+import '../../widgets/skeleton/food_card_skeleton.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -689,7 +690,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           const Icon(
                                             Icons.location_on_rounded,
@@ -741,15 +741,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                           size: 15,
                                         ),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          selectedBranch?.name ?? 'Branch',
-                                          style: TextStyle(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                        Flexible(
+                                          child: Text(
+                                            selectedBranch?.name ?? 'Branch',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
                                     ),
@@ -945,16 +947,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         SliverToBoxAdapter(
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 250),
-                            child: filteredByRail.isEmpty
-                                ? Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                                    child: EmptyStateView(
-                                      icon: Icons.fastfood_outlined,
-                                      title: 'No Dishes Found',
-                                      description: 'No items found matching $_selectedRailCategory / $_selectedTextTab.',
+                            child: (menuProvider.isLoading && allFoods.isEmpty)
+                                ? SizedBox(
+                                    height: 324,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                                      itemCount: 4,
+                                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                      itemBuilder: (_, __) => const SizedBox(
+                                        width: 180,
+                                        child: FoodCardSkeleton(),
+                                      ),
                                     ),
                                   )
-                                : SizedBox(
+                                : filteredByRail.isEmpty
+                                    ? Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                                        child: EmptyStateView(
+                                          icon: Icons.fastfood_outlined,
+                                          title: 'No Dishes Found',
+                                          description: 'No items found matching $_selectedRailCategory / $_selectedTextTab.',
+                                        ),
+                                      )
+                                    : SizedBox(
                                     height: 324,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
@@ -1023,7 +1039,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     heroTag: 'rec-food-${food.id}',
                                     onTap: () => Navigator.of(context).pushNamed(
                                       '/food-detail',
-                                      arguments: food,
+                                      arguments: {
+                                        'food': food,
+                                        'heroTag': 'rec-food-${food.id}',
+                                      },
                                     ),
                                   );
                                 },

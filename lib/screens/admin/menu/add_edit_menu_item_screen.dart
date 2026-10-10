@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:food_fight/providers/menu_provider.dart';
 import 'package:food_fight/providers/category_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
+import 'package:food_fight/providers/option_template_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:food_fight/services/supabase/supabase_image_storage_service.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
@@ -134,6 +135,14 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
     }
 
     _loadCategories();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthProvider>();
+    final branchId = auth.currentUser?.branchId;
+    context.read<OptionTemplateProvider>().watchTemplates(branchId: branchId);
   }
 
   @override
@@ -456,6 +465,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final templateProv = context.watch<OptionTemplateProvider>();
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -701,31 +711,50 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                ActionChip(
-                                  avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
-                                  label: const Text('4 Sizes (S, M, L, XL)', style: TextStyle(fontSize: 12)),
-                                  onPressed: () {
-                                    setState(() {
-                                      _variantEntries.clear();
-                                      _variantEntries.add(VariantFormEntry(label: 'Small', price: '450'));
-                                      _variantEntries.add(VariantFormEntry(label: 'Medium', price: '850'));
-                                      _variantEntries.add(VariantFormEntry(label: 'Large', price: '1350'));
-                                      _variantEntries.add(VariantFormEntry(label: 'XL', price: '1850'));
-                                    });
-                                  },
-                                ),
-                                ActionChip(
-                                  avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
-                                  label: const Text('3 Sizes (M, L, XL)', style: TextStyle(fontSize: 12)),
-                                  onPressed: () {
-                                    setState(() {
-                                      _variantEntries.clear();
-                                      _variantEntries.add(VariantFormEntry(label: 'Medium', price: '850'));
-                                      _variantEntries.add(VariantFormEntry(label: 'Large', price: '1350'));
-                                      _variantEntries.add(VariantFormEntry(label: 'XL', price: '1850'));
-                                    });
-                                  },
-                                ),
+                                ...templateProv.sizeSets.map((tmpl) {
+                                  return ActionChip(
+                                    avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
+                                    label: Text(tmpl.name, style: const TextStyle(fontSize: 12)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _variantEntries.clear();
+                                        for (var item in tmpl.items) {
+                                          _variantEntries.add(VariantFormEntry(
+                                            label: item.name,
+                                            price: item.price > 0 ? item.price.toStringAsFixed(0) : '450',
+                                          ));
+                                        }
+                                      });
+                                    },
+                                  );
+                                }),
+                                if (templateProv.sizeSets.isEmpty) ...[
+                                  ActionChip(
+                                    avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
+                                    label: const Text('4 Sizes (S, M, L, XL)', style: TextStyle(fontSize: 12)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _variantEntries.clear();
+                                        _variantEntries.add(VariantFormEntry(label: 'Small', price: '450'));
+                                        _variantEntries.add(VariantFormEntry(label: 'Medium', price: '850'));
+                                        _variantEntries.add(VariantFormEntry(label: 'Large', price: '1350'));
+                                        _variantEntries.add(VariantFormEntry(label: 'XL', price: '1850'));
+                                      });
+                                    },
+                                  ),
+                                  ActionChip(
+                                    avatar: const Icon(Icons.style_outlined, size: 16, color: AdminTheme.primaryBlue),
+                                    label: const Text('3 Sizes (M, L, XL)', style: TextStyle(fontSize: 12)),
+                                    onPressed: () {
+                                      setState(() {
+                                        _variantEntries.clear();
+                                        _variantEntries.add(VariantFormEntry(label: 'Medium', price: '850'));
+                                        _variantEntries.add(VariantFormEntry(label: 'Large', price: '1350'));
+                                        _variantEntries.add(VariantFormEntry(label: 'XL', price: '1850'));
+                                      });
+                                    },
+                                  ),
+                                ],
                               ],
                             ),
                             const SizedBox(height: 6),
@@ -1002,28 +1031,46 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        ActionChip(
-                          avatar: const Icon(Icons.layers_outlined, size: 15, color: AdminTheme.primaryBlue),
-                          label: const Text('+ Extra Toppings Set', style: TextStyle(fontSize: 11.5)),
-                          onPressed: () {
-                            setState(() {
-                              _addonEntries.add(AddonFormEntry(name: 'Extra Mozzarella Cheese', price: '150'));
-                              _addonEntries.add(AddonFormEntry(name: 'Smoked Chicken Chunks', price: '180'));
-                              _addonEntries.add(AddonFormEntry(name: 'Jalapeno & Mushrooms', price: '100'));
-                            });
-                          },
-                        ),
-                        ActionChip(
-                          avatar: const Icon(Icons.soup_kitchen_outlined, size: 15, color: AdminTheme.primaryBlue),
-                          label: const Text('+ Extra Dips Set', style: TextStyle(fontSize: 11.5)),
-                          onPressed: () {
-                            setState(() {
-                              _addonEntries.add(AddonFormEntry(name: 'Garlic Mayo Dip', price: '70'));
-                              _addonEntries.add(AddonFormEntry(name: 'Chipotle Ranch Dip', price: '80'));
-                              _addonEntries.add(AddonFormEntry(name: 'Ghost Pepper Hot Sauce', price: '90'));
-                            });
-                          },
-                        ),
+                        ...templateProv.extrasGroups.map((tmpl) {
+                          return ActionChip(
+                            avatar: const Icon(Icons.layers_outlined, size: 15, color: AdminTheme.primaryBlue),
+                            label: Text('+ ${tmpl.name}', style: const TextStyle(fontSize: 11.5)),
+                            onPressed: () {
+                              setState(() {
+                                for (var item in tmpl.items) {
+                                  _addonEntries.add(AddonFormEntry(
+                                    name: item.name,
+                                    price: item.price.toStringAsFixed(0),
+                                  ));
+                                }
+                              });
+                            },
+                          );
+                        }),
+                        if (templateProv.extrasGroups.isEmpty) ...[
+                          ActionChip(
+                            avatar: const Icon(Icons.layers_outlined, size: 15, color: AdminTheme.primaryBlue),
+                            label: const Text('+ Extra Toppings Set', style: TextStyle(fontSize: 11.5)),
+                            onPressed: () {
+                              setState(() {
+                                _addonEntries.add(AddonFormEntry(name: 'Extra Mozzarella Cheese', price: '150'));
+                                _addonEntries.add(AddonFormEntry(name: 'Smoked Chicken Chunks', price: '180'));
+                                _addonEntries.add(AddonFormEntry(name: 'Jalapeno & Mushrooms', price: '100'));
+                              });
+                            },
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.soup_kitchen_outlined, size: 15, color: AdminTheme.primaryBlue),
+                            label: const Text('+ Extra Dips Set', style: TextStyle(fontSize: 11.5)),
+                            onPressed: () {
+                              setState(() {
+                                _addonEntries.add(AddonFormEntry(name: 'Garlic Mayo Dip', price: '70'));
+                                _addonEntries.add(AddonFormEntry(name: 'Chipotle Ranch Dip', price: '80'));
+                                _addonEntries.add(AddonFormEntry(name: 'Ghost Pepper Hot Sauce', price: '90'));
+                              });
+                            },
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 10),

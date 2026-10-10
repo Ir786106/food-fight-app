@@ -2,6 +2,42 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.5.0+6] — 2026-10-10
+
+### Major Feature Upgrades & Production Hardening
+
+- **Google Maps & Real GPS Tracking**:
+  - Integrated `google_maps_flutter` with styled light/dark maps in `LiveTrackingMapWidget` streaming live rider coordinates.
+  - Replaced hardcoded coordinates in `RiderDashboardScreen` with `geolocator` device GPS streaming to Firestore.
+- **Interactive Analytics & Dashboard Charts (`fl_chart`)**:
+  - Created `SalesTrendChart` (daily revenue and orders bar chart with interactive tooltips).
+  - Created `OrderStatusDonutChart` (fulfillment status breakdown donut chart).
+  - Created `BranchComparisonChart` (cross-branch revenue comparison for Super Admin HQ).
+  - Integrated charts into `AdminDashboardScreen`, `SalesReportsScreen`, and `SuperAdminDashboardScreen`.
+  - Added CSV analytics export in `SalesReportsScreen` using `csv` package.
+- **Multi-Branch Fulfillment & Checkout**:
+  - Added interactive branch selector card and modal sheet in `CheckoutScreen` synchronized with `BranchProvider` and `CartProvider.setBranchId()`.
+  - Added customer Reorder button in `OrderHistoryScreen` repopulating cart from past orders.
+- **Shimmer Skeleton Loaders**:
+  - Created `ShimmerContainer`, `FoodCardSkeleton`, and `OrderCardSkeleton`.
+  - Replaced generic progress spinners in `HomeScreen`, `MenuScreen`, and `OrderHistoryScreen` with responsive shimmer skeletons.
+- **Hero Animation Polish**:
+  - Unified hero tags across `ProductCard`, `FoodCard`, and `FoodDetailScreen` with custom hero tag support for seamless image transitions.
+- **Persistent Favorites & Spice Customization**:
+  - Backed favorites in `CartProvider` with `SharedPreferences` persistence.
+  - Added 1–5 Spice Intensity selector (Mild to Atomic) in `FoodDetailScreen` appended to line item notes.
+- **Backend Order Cancellation & Security Hardening**:
+  - Enforced 5-minute cancellation window in `OrderService.cancelOrderByCustomer` and `OrderTrackingScreen`.
+  - Hardened `firestore.rules` ensuring order total immutability, customer ownership validation, and branch update permission restrictions.
+  - Switched order numbers to timestamp tail + entropy (`FF-$timeTail$random`) to eliminate collision risks.
+  - Added `FcmService` background handler and token registration.
+- **Option Templates Integration**:
+  - Wired `OptionTemplateProvider` into `AddEditMenuItemScreen` for dynamic size and extras selection.
+- **Quality & Verification**:
+  - Added `test/phase2_features_test.dart` for cart math, order number entropy, and cancellation validation.
+  - Full test suite passed (103/103 tests passing).
+  - `flutter analyze` completed with **0 issues**.
+
 ## [1.4.0+5] — 2026-10-03
 
 ### Root Cause Navigation & Architecture Fixes

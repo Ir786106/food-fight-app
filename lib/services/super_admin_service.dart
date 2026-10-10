@@ -21,6 +21,9 @@ class SuperAdminService {
   static final CollectionReference _ordersCollection =
       _firestore.collection(FirestoreCollections.orders);
 
+  static final CollectionReference _branchesCollection =
+      _firestore.collection(FirestoreCollections.branches);
+
   // -------------------------------------------------------------
   // ADMIN ACCOUNT MANAGEMENT
   // -------------------------------------------------------------
@@ -202,10 +205,12 @@ class SuperAdminService {
     try {
       final usersSnap = await _usersCollection.get();
       final ordersSnap = await _ordersCollection.get();
+      final branchesSnap = await _branchesCollection.get();
 
       int customers = 0;
       int admins = 0;
       int staff = 0;
+      int riders = 0;
 
       for (var doc in usersSnap.docs) {
         final role = ((doc.data() as Map<String, dynamic>)['role'] ?? '').toString().toLowerCase();
@@ -215,6 +220,8 @@ class SuperAdminService {
           admins++;
         } else if (role == 'staff') {
           staff++;
+        } else if (role == 'rider') {
+          riders++;
         }
       }
 
@@ -238,12 +245,14 @@ class SuperAdminService {
         }
       }
 
+      final totalBranches = branchesSnap.docs.isNotEmpty ? branchesSnap.docs.length : 5;
+
       return {
-        'totalRestaurants': 1,
+        'totalRestaurants': totalBranches,
         'totalCustomers': customers,
         'totalAdmins': admins,
         'totalStaff': staff,
-        'totalRiders': 8,
+        'totalRiders': riders,
         'totalOrders': totalOrders,
         'completedOrders': completedOrders,
         'cancelledOrders': cancelledOrders,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:food_fight/core/constants/app_colors.dart';
+import '../skeleton/shimmer_container.dart';
 
-/// Image viewer supporting Supabase public URLs, error fallback, and loading shimmer
+/// Image viewer supporting Supabase public URLs, CachedNetworkImage, error fallback, and loading shimmer
 class NetworkImageView extends StatelessWidget {
   final String? imageUrl;
   final double? width;
@@ -26,33 +28,26 @@ class NetworkImageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final validUrl = imageUrl != null && imageUrl!.trim().isNotEmpty && imageUrl!.startsWith('http');
 
+    final safeWidth = (width != null && width! > 0 && !width!.isNaN && !width!.isInfinite) ? width : null;
+    final safeHeight = (height != null && height! > 0 && !height!.isNaN && !height!.isInfinite) ? height : null;
+
     Widget imageContent;
 
     if (validUrl) {
-      imageContent = Image.network(
-        imageUrl!,
-        width: width,
-        height: height,
+      imageContent = CachedNetworkImage(
+        imageUrl: imageUrl!.trim(),
+        width: safeWidth,
+        height: safeHeight,
         fit: fit,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.grey.shade100,
-            child: const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) => _buildFallback(),
+        placeholder: (context, url) => ShimmerContainer(
+          width: safeWidth,
+          height: safeHeight,
+          borderRadius: borderRadius,
+        ),
+        errorWidget: (context, url, error) => _buildFallback(safeWidth, safeHeight),
       );
     } else {
-      imageContent = _buildFallback();
+      imageContent = _buildFallback(safeWidth, safeHeight);
     }
 
     if (borderRadius > 0) {
@@ -65,15 +60,17 @@ class NetworkImageView extends StatelessWidget {
     return imageContent;
   }
 
-  Widget _buildFallback() {
+  Widget _buildFallback(double? safeWidth, double? safeHeight) {
+    final fontSize = (safeHeight != null && safeHeight > 0) ? (safeHeight * 0.44).clamp(14.0, 72.0) : 24.0;
+
     return Container(
-      width: width,
-      height: height,
+      width: safeWidth,
+      height: safeHeight,
       color: AppColors.primary.withValues(alpha: 0.08),
       child: Center(
         child: fallbackEmoji.isNotEmpty
-            ? Text(fallbackEmoji, style: TextStyle(fontSize: (height != null ? height! * 0.45 : 24)))
-            : Icon(fallbackIcon, color: AppColors.primary, size: (height != null ? height! * 0.45 : 24)),
+            ? Text(fallbackEmoji, style: TextStyle(fontSize: fontSize))
+            : Icon(fallbackIcon, color: AppColors.primary, size: fontSize),
       ),
     );
   }

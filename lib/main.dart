@@ -37,6 +37,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'routes/app_routes.dart';
 import 'screens/common/not_found_screen.dart';
+import 'services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,13 @@ void main() async {
     debugPrint('Supabase Storage initialized successfully (Bucket: ${SupabaseConfig.bucketName})');
   } catch (e) {
     debugPrint('Supabase storage initialization warning: $e');
+  }
+
+  // Initialize Firebase Cloud Messaging (FCM)
+  try {
+    await FcmService.initialize();
+  } catch (e) {
+    debugPrint('FCM initialization warning: $e');
   }
 
   final themeProvider = ThemeProvider();

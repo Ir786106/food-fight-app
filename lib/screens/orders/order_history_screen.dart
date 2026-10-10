@@ -6,10 +6,11 @@ import '../../providers/chat_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/admin/status_badge.dart';
-import '../../widgets/common/loading_indicator.dart';
+import '../../providers/cart_provider.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/skeleton/order_card_skeleton.dart';
 import '../../widgets/orders/order_speed_dial_fab.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_colors.dart';
@@ -167,7 +168,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               : Builder(
                   builder: (context) {
                     if (orderProvider.isLoading && orderProvider.customerOrders.isEmpty) {
-                      return const LoadingIndicator(message: 'Loading your orders...');
+                      return ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, AppDimens.navBarScrollPadding),
+                        itemCount: 4,
+                        itemBuilder: (_, __) => const OrderCardSkeleton(),
+                      );
                     }
 
                     if (orderProvider.errorMessage != null && orderProvider.customerOrders.isEmpty) {
@@ -429,16 +434,38 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                     ),
                                                     Row(
                                                       children: [
-                                                        Text(
-                                                          'View Details',
-                                                          style: TextStyle(
-                                                            color: colorScheme.onSurface,
-                                                            fontWeight: FontWeight.w700,
-                                                            fontSize: 12.5,
+                                                        FilledButton.icon(
+                                                          style: FilledButton.styleFrom(
+                                                            backgroundColor: AppColors.primaryYellow,
+                                                            foregroundColor: AppColors.brandMaroon,
+                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                            minimumSize: Size.zero,
+                                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                          ),
+                                                          onPressed: () => _reorder(context, order),
+                                                          icon: const Icon(Icons.replay_rounded, size: 13),
+                                                          label: const Text(
+                                                            'Reorder',
+                                                            style: TextStyle(
+                                                              fontSize: 11,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 4),
-                                                        Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.onSurface),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          'Details',
+                                                          style: TextStyle(
+                                                            color: colorScheme.onSurfaceVariant,
+                                                            fontWeight: FontWeight.w600,
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 2),
+                                                        Icon(Icons.arrow_forward_ios_rounded, size: 10, color: colorScheme.onSurfaceVariant),
                                                       ],
                                                     ),
                                                   ],
@@ -523,4 +550,35 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       ],
     );
   }
+
+  void _reorder(BuildContext context, OrderModel order) {
+    final cart = context.read<CartProvider>();
+    if (order.branchId != null && order.branchId!.isNotEmpty) {
+      cart.setBranchId(order.branchId);
+    }
+    for (var item in order.items) {
+      cart.addToCart(
+        item.food,
+        quantity: item.quantity,
+        note: item.note,
+        selectedSize: item.selectedSize,
+        selectedVariant: item.selectedVariant,
+        selectedAddons: item.selectedAddons,
+      );
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added ${order.items.length} items from ${order.orderNumber} to cart! 🥊'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: SnackBarAction(
+          label: 'VIEW CART',
+          textColor: Colors.white,
+          onPressed: () => Navigator.of(context).pushNamed('/cart'),
+        ),
+      ),
+    );
+  }
 }
+

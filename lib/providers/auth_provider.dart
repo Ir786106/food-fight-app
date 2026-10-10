@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/firebase/firebase_auth_service.dart';
+import 'package:food_fight/services/fcm_service.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/core/utils/safe_change_notifier.dart';
@@ -29,6 +30,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
 
     try {
       _currentUser = await _authService.getCurrentUser();
+      if (_currentUser != null) {
+        FcmService.registerUserToken(_currentUser!.id);
+      }
       AppLogger.info('Auth initialized: ${_currentUser?.email} (${_currentUser?.role})', tag: 'AuthProvider');
     } catch (e) {
       _currentUser = null;
@@ -46,6 +50,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
 
     try {
       _currentUser = await _authService.signIn(email: email, password: password);
+      if (_currentUser != null) {
+        FcmService.registerUserToken(_currentUser!.id);
+      }
       _setLoading(false);
       return true;
     } on AppException catch (e) {
@@ -76,6 +83,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         phone: phone,
         password: password,
       );
+      if (_currentUser != null) {
+        FcmService.registerUserToken(_currentUser!.id);
+      }
       _setLoading(false);
       return true;
     } on AppException catch (e) {
@@ -102,6 +112,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         return false;
       }
       _currentUser = user;
+      if (_currentUser != null) {
+        FcmService.registerUserToken(_currentUser!.id);
+      }
       _setLoading(false);
       return true;
     } on AppException catch (e) {

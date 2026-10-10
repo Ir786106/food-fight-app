@@ -27,6 +27,24 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
   bool _initialized = false;
   late TabController _tabController;
   String? _watchedFoodId;
+  int _spiceLevel = 2;
+
+  String _spiceName(int level) {
+    switch (level) {
+      case 1:
+        return 'Mild 🌶️';
+      case 2:
+        return 'Medium 🌶️🌶️';
+      case 3:
+        return 'Hot 🌶️🌶️🌶️';
+      case 4:
+        return 'Extra Hot 🔥';
+      case 5:
+        return 'Atomic 💀';
+      default:
+        return 'Medium 🌶️🌶️';
+    }
+  }
 
   @override
   void initState() {
@@ -169,6 +187,13 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
   void _handleAddToCart(FoodModel food, CartProvider cart, double totalPrice) {
     HapticFeedback.lightImpact();
 
+    final spiceStr = food.isSpicy ? 'Spice: ${_spiceName(_spiceLevel)}' : null;
+    final userNote = _noteController.text.trim();
+    final combinedNote = [spiceStr, userNote.isNotEmpty ? userNote : null]
+        .where((s) => s != null)
+        .join(' • ');
+    final effectiveNote = combinedNote.isNotEmpty ? combinedNote : null;
+
     if (cart.isDifferentBranch(food.branchId)) {
       showDialog(
         context: context,
@@ -194,7 +219,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                 cart.addToCart(
                   food,
                   quantity: _quantity,
-                  note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+                  note: effectiveNote,
                   selectedVariant: _selectedVariant,
                   selectedSize: _selectedVariant?.label,
                   selectedAddons: _selectedAddons.toList(),
@@ -212,7 +237,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     cart.addToCart(
       food,
       quantity: _quantity,
-      note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+      note: effectiveNote,
       selectedVariant: _selectedVariant,
       selectedSize: _selectedVariant?.label,
       selectedAddons: _selectedAddons.toList(),
@@ -224,7 +249,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
     FoodModel? food;
-    if (args is FoodModel) {
+    String? customHeroTag;
+    if (args is Map) {
+      if (args['food'] is FoodModel) food = args['food'] as FoodModel;
+      if (args['heroTag'] is String) customHeroTag = args['heroTag'] as String;
+    } else if (args is FoodModel) {
       food = args;
     } else if (args is MenuItemModel) {
       food = FoodModel.fromMenuItem(args);
@@ -479,7 +508,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               child: GestureDetector(
                 onTap: () => _openImagePreview(context, foodItem),
                 child: Hero(
-                  tag: 'food-${food.id}',
+                  tag: customHeroTag ?? 'food-${food.id}',
                   child: Container(
                     width: 236,
                     height: 236,
@@ -666,6 +695,82 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                         ),
                     ],
                   ),
+
+                  // 1-5 Interactive Spice Level Selector
+                  if (food.isSpicy) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Spice Intensity',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          _spiceName(_spiceLevel),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: List.generate(5, (idx) {
+                        final lvl = idx + 1;
+                        final isSelected = _spiceLevel == lvl;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _spiceLevel = lvl);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.error.withValues(alpha: 0.18)
+                                    : (isDark ? AppColors.darkSurfaceElevated : Colors.grey.shade100),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.error
+                                      : (isDark ? Colors.white10 : Colors.grey.shade300),
+                                  width: isSelected ? 1.8 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    lvl == 5 ? '💀' : (lvl >= 4 ? '🔥' : '🌶️'),
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'L$lvl',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? AppColors.error : colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+
                   const SizedBox(height: 20),
 
                   // S / M / L Rounded-Square Selector (Ref A)
@@ -1145,7 +1250,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                           ),
                           const SizedBox(height: 10),
                           SizedBox(
-                            height: 230,
+                            height: 285,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
                               itemCount: relatedItems.length,

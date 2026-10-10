@@ -141,9 +141,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final areaProvider = context.watch<DeliveryAreaProvider>();
     final payProvider = context.watch<PaymentMethodProvider>();
     final addressProvider = context.watch<AddressProvider>();
+    final branchProv = context.watch<BranchProvider>();
     final deliveryAreas = areaProvider.activeAreas;
     final addresses = addressProvider.addresses;
-
+    final activeBranches = branchProv.activeBranches;
+    final currentBranch = activeBranches.where((b) => b.id == (cart.branchId ?? branchProv.selectedBranch?.id)).firstOrNull ?? branchProv.selectedBranch;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -207,6 +209,130 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // 0. Selected Preparing Branch Card
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryYellow.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.storefront_rounded,
+                                        color: AppColors.primaryYellow,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Preparing Branch',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                          ),
+                                        ),
+                                        Text(
+                                          currentBranch?.name ?? 'Food Fight Express Kitchen',
+                                          style: TextStyle(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                if (activeBranches.length > 1)
+                                  TextButton(
+                                    onPressed: () => _showBranchPicker(context, branchProv, cart),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text(
+                                      'Change',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryYellow,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            if (currentBranch != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 13,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      currentBranch.address,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'Active',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.success,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
                       // 1. Saved Address Selector as Chips/Cards (Home, Work, +Add new)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -815,4 +941,92 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ],
     );
   }
+
+  void _showBranchPicker(BuildContext context, BranchProvider branchProv, CartProvider cart) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Select Kitchen Branch',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...branchProv.activeBranches.map((branch) {
+                  final isSelected = branch.id == (cart.branchId ?? branchProv.selectedBranch?.id);
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primaryYellow
+                            : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200),
+                        width: isSelected ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: isSelected
+                            ? AppColors.primaryYellow.withValues(alpha: 0.2)
+                            : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                        child: Icon(
+                          Icons.storefront_rounded,
+                          color: isSelected ? AppColors.primaryYellow : Colors.grey.shade600,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        branch.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? AppColors.primaryYellow : null,
+                        ),
+                      ),
+                      subtitle: Text(
+                        branch.address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryYellow)
+                          : null,
+                      onTap: () {
+                        branchProv.selectBranch(branch);
+                        cart.setBranchId(branch.id);
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+

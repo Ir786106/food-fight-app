@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/order_model.dart';
@@ -25,8 +26,11 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
   bool _isOnline = true;
   bool _isBroadcasting = false;
   Timer? _gpsTimer;
-  double _riderLat = 31.5204;
+  StreamSubscription<Position>? _positionStream;
+  double _riderLat = 31.5204; // default center until GPS acquired
   double _riderLng = 74.3587;
+  double _riderSpeed = 0.0;
+  double _riderHeading = 0.0;
   String? _activeOrderId;
   late TabController _tabController;
 
@@ -53,38 +57,54 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _positionStream?.cancel();
     _stopGpsBroadcast();
     super.dispose();
   }
 
-  void _startGpsBroadcast(String orderId, String riderId) {
+  Future<void> _startGpsBroadcast(String orderId, String riderId) async {
     _stopGpsBroadcast();
     _activeOrderId = orderId;
+
+    // Request location permission
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission denied. Cannot broadcast live position.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isBroadcasting = true);
 
-    // Initial ping
-    RiderLocationService.updateOrderRiderLocation(
-      orderId: orderId,
-      riderId: riderId,
-      latitude: _riderLat,
-      longitude: _riderLng,
-      speed: 25.0,
-      heading: 45.0,
+    // Stream real GPS updates every 5 seconds (throttled for battery)
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // meters
     );
 
-    // Periodic simulation or actual sensor broadcast
-    _gpsTimer = Timer.periodic(const Duration(seconds: 6), (timer) async {
+    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen((Position position) async {
       if (!mounted) return;
-      // Slight coordinate jitter to simulate live motion on customer map
-      _riderLat += 0.00015;
-      _riderLng += 0.00012;
+      _riderLat = position.latitude;
+      _riderLng = position.longitude;
+      _riderSpeed = (position.speed * 3.6).clamp(0, 200); // m/s → km/h
+      _riderHeading = position.heading;
       await RiderLocationService.updateOrderRiderLocation(
         orderId: orderId,
         riderId: riderId,
         latitude: _riderLat,
         longitude: _riderLng,
-        speed: 28.5,
-        heading: 50.0,
+        speed: _riderSpeed,
+        heading: _riderHeading,
       );
     });
   }

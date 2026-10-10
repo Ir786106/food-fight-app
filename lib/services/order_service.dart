@@ -13,11 +13,12 @@ class OrderService {
   static final CollectionReference _collection =
       FirebaseFirestore.instance.collection(FirestoreCollections.orders);
 
-  /// Generate human-readable order number like "FF-4821"
+  /// Generate unique, human-readable order number like "FF-83921"
   static String generateOrderNumber() {
-    final random = Random();
-    final number = 1000 + random.nextInt(9000);
-    return 'FF-$number';
+    final now = DateTime.now();
+    final timeTail = (now.millisecondsSinceEpoch % 100000).toString().padLeft(5, '0');
+    final random = Random().nextInt(90) + 10;
+    return 'FF-$timeTail$random';
   }
 
   /// Place a new order
@@ -154,6 +155,24 @@ class OrderService {
     } catch (e) {
       AppLogger.warn('Could not emit order status notification / tokens: $e', tag: 'OrderService');
     }
+  }
+
+  /// Cancel order by customer with strict 5-minute window & pending-state check
+  static Future<bool> cancelOrderByCustomer(String orderId, {String? reason}) async {
+    final order = await getOrder(orderId);
+    if (order == null) throw Exception('Order not found');
+
+    if (order.status != OrderStatus.pending) {
+      throw Exception('Only pending orders can be cancelled. Kitchen has already started preparing your food.');
+    }
+
+    final diff = DateTime.now().difference(order.createdAt);
+    if (diff.inMinutes >= 5) {
+      throw Exception('The 5-minute cancellation window has passed. Please contact the branch directly.');
+    }
+
+    await updateOrderStatus(orderId, OrderStatus.cancelled, cancellationReason: reason ?? 'Cancelled by customer');
+    return true;
   }
 
   /// Fetch single order by ID

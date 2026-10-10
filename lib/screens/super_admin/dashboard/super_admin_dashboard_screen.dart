@@ -9,6 +9,7 @@ import 'package:food_fight/providers/branch_provider.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
+import 'package:food_fight/widgets/charts/branch_comparison_chart.dart';
 
 class SuperAdminDashboardScreen extends StatelessWidget {
   const SuperAdminDashboardScreen({super.key});
@@ -490,7 +491,16 @@ class SuperAdminDashboardScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
+
+        // Branch Revenue Comparison (fl_chart)
+        if (branches.isNotEmpty) ...[
+          BranchComparisonChart(
+            branches: branches,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // Branch Comparison Cards List
         if (branches.isEmpty)

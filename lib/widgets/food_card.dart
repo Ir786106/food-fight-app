@@ -50,7 +50,7 @@ class FoodCard extends StatelessWidget {
 
     const cardWidth = 172.0;
     const photoDiameter = 96.0;
-    final effectiveTag = heroTag ?? (food.id.isNotEmpty ? 'food-vert-${food.id}' : null);
+    final effectiveTag = heroTag ?? (food.id.isNotEmpty ? 'food-${food.id}' : null);
 
     final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
         (food.sizePrices != null && food.sizePrices!.length > 1);
@@ -215,7 +215,7 @@ class FoodCard extends StatelessWidget {
     final cart = context.watch<CartProvider>();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final effectiveTag = heroTag ?? (food.id.isNotEmpty ? 'food-horiz-${food.id}' : null);
+    final effectiveTag = heroTag ?? (food.id.isNotEmpty ? 'food-${food.id}' : null);
 
     final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
         (food.sizePrices != null && food.sizePrices!.length > 1);

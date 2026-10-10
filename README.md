@@ -1,11 +1,11 @@
-# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.3.0+4)
+# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.5.0+6)
 
 A complete, production-grade Flutter multi-branch fast-food ordering and enterprise management platform for **Food Fight Restaurant** (5 branches), featuring five distinct roles with role-based access control and branch isolation:
 
-1. **Customer Storefront**: World-class fast-food ordering UX with floating notch navigation, raised center cart button, vertical category side-rail with curved indicator, dynamic Admin Deals carousel, size variant & sauce customization from reusable option templates, loyalty tokens redemption slider, Cash on Delivery checkout, 6-stage live GPS order tracking, real customer rating & review submission, and real-time support chat.
-2. **Restaurant Admin Panel**: Collapsible professional desktop/tablet sidebar (260px expanded / 72px collapsed), active live KPI dashboard with unread chat & pending order badges, branch-scoped Deals management, Menu & Option Templates management with Supabase photo uploads, real-time order processing, review moderation, customer & rider management, and branch sales reports.
-3. **Platform Super Admin Panel**: Enterprise HQ with collapsible sidebar, platform-wide intelligence (multi-branch overview, master kitchen switches, system revenue), global loyalty token configurations, admin provisioning & granular sub-admin permission delegation, platform-wide deal & review moderation, and full-spectrum audit logs.
-4. **Delivery Rider Panel**: Dedicated rider console for active branch deliveries, live order status progression (`pickedUp`, `outForDelivery`, `delivered`), and real-time GPS location broadcasting.
+1. **Customer Storefront**: World-class fast-food ordering UX with floating notch navigation, raised center cart button, vertical category side-rail with curved indicator, dynamic Admin Deals carousel, real Google Maps live rider tracking, size variant & sauce customization, spice level customization (1-5), persistent favorites, shimmer skeleton loading, multi-branch checkout selector, loyalty tokens redemption, and real-time support chat.
+2. **Restaurant Admin Panel**: Collapsible professional desktop/tablet sidebar (260px expanded / 72px collapsed), active live KPI dashboard with interactive `fl_chart` status donut and sales trend charts, CSV analytics reports export, dynamic Option Templates management with Supabase photo uploads, real-time order processing, review moderation, customer & rider management, and branch sales reports.
+3. **Platform Super Admin Panel**: Enterprise HQ with collapsible sidebar, multi-branch comparative revenue bar charts, platform-wide intelligence, master kitchen switches, global loyalty token configurations, admin provisioning & granular sub-admin permission delegation, platform-wide deal & review moderation, and full-spectrum audit logs.
+4. **Delivery Rider Panel**: Dedicated rider console with real device GPS hardware tracking (`geolocator`), live order status progression (`pickedUp`, `outForDelivery`, `delivered`), and real-time coordinate streaming to Firestore.
 5. **Sub-admin Role**: Restricted branch operators with permission-gated access (orders, menu, chat, reviews, riders).
 
 ---

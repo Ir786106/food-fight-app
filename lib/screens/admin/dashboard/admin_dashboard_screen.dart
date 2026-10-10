@@ -15,6 +15,7 @@ import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
+import 'package:food_fight/widgets/charts/order_status_donut_chart.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -378,7 +379,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+
+                    // Live Order Fulfillment Distribution Chart (fl_chart)
+                    if ((dashboard.completedOrdersCount +
+                            dashboard.pendingOrdersCount +
+                            dashboard.preparingOrdersCount +
+                            dashboard.readyOrdersCount +
+                            dashboard.outForDeliveryOrdersCount +
+                            dashboard.cancelledOrdersCount) > 0) ...[
+                      OrderStatusDonutChart(
+                        deliveredCount: dashboard.completedOrdersCount,
+                        pendingCount: dashboard.pendingOrdersCount +
+                            dashboard.preparingOrdersCount +
+                            dashboard.readyOrdersCount +
+                            dashboard.outForDeliveryOrdersCount,
+                        cancelledCount: dashboard.cancelledOrdersCount,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Management Shortcuts
                     Text(
