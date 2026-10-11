@@ -131,7 +131,7 @@ class FoodFightApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
 
         ChangeNotifierProvider(create: (_) => OptionTemplateProvider()),
-
+        
         ChangeNotifierProvider.value(value: effectiveTheme),
       ],
       child: Consumer<ThemeProvider>(
