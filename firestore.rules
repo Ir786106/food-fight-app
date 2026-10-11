@@ -397,17 +397,25 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // =========================================================================
     // 16. LOYALTY ACCOUNTS & TRANSACTIONS (REWARDS & WELCOME BONUS)
     // =========================================================================
     match /loyaltyAccounts/{userId} {
       allow read: if isAdmin() || isOwner(userId);
-      allow create, update: if isAdmin() || isOwner(userId);
+      // Prevents client-side balance manipulation; users can only initialize bonus, updates restricted to admin/server
+      allow create: if isSuperAdmin() || isAdmin() || (
+        isOwner(userId) && request.resource.data.get('balance', 0) <= 50
+      );
+      allow update: if isSuperAdmin() || isAdmin();
       allow delete: if isSuperAdmin();
     }
 
     match /loyalty_accounts/{userId} {
       allow read: if isAdmin() || isOwner(userId);
-      allow create, update: if isAdmin() || isOwner(userId);
+      allow create: if isSuperAdmin() || isAdmin() || (
+        isOwner(userId) && request.resource.data.get('balance', 0) <= 50
+      );
+      allow update: if isSuperAdmin() || isAdmin();
       allow delete: if isSuperAdmin();
     }
 
@@ -415,8 +423,9 @@ service cloud.firestore {
       allow read: if isAdmin() || (
         isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
       );
-      allow create: if isAdmin() || (
-        isAuthenticated() && request.resource.data.userId == request.auth.uid
+      allow create: if isSuperAdmin() || isAdmin() || (
+        isAuthenticated() && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.get('amount', 0) <= 50
       );
       allow update, delete: if isSuperAdmin();
     }
@@ -425,8 +434,9 @@ service cloud.firestore {
       allow read: if isAdmin() || (
         isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid)
       );
-      allow create: if isAdmin() || (
-        isAuthenticated() && request.resource.data.userId == request.auth.uid
+      allow create: if isSuperAdmin() || isAdmin() || (
+        isAuthenticated() && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.get('amount', 0) <= 50
       );
       allow update, delete: if isSuperAdmin();
     }
@@ -460,6 +470,23 @@ service cloud.firestore {
         );
         allow update, delete: if isAdmin();
       }
+    }
+
+    // =========================================================================
+    // 18. SYSTEM SETTINGS & APP UPDATE CONFIGURATION
+    // =========================================================================
+    match /settings/app_update {
+      // Public read for in-app version checks and force-update enforcement
+      allow read: if true;
+      // Super admin only write
+      allow write: if isSuperAdmin();
+    }
+
+    match /settings/{settingId} {
+      // Authenticated users can read general platform settings
+      allow read: if isAuthenticated();
+      // Super admin only write
+      allow write: if isSuperAdmin();
     }
 
     // =========================================================================

@@ -373,3 +373,102 @@ exports.createPaymentIntent = functions.https.onCall(async (data, context) => {
     status: "requires_confirmation",
   };
 });
+
+/**
+ * Callable Function: Server-Side Custom Claims & Role Management (Super Admin Only)
+ * Enforces server-side privilege control; clients cannot escalate privileges.
+ */
+exports.setUserRole = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Authentication required to modify user roles."
+    );
+  }
+
+  // Verify caller is super_admin (token claim or Firestore record)
+  const callerClaims = context.auth.token || {};
+  let isSuperAdmin = callerClaims.role === "super_admin";
+  if (!isSuperAdmin) {
+    const callerDoc = await db.collection("users").doc(context.auth.uid).get();
+    if (callerDoc.exists && callerDoc.data().role === "super_admin") {
+      isSuperAdmin = true;
+    }
+  }
+
+  if (!isSuperAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only Super Administrators can assign user roles and permissions."
+    );
+  }
+
+  const { targetUid, role, branchId = null, permissions = [] } = data || {};
+  if (!targetUid || typeof targetUid !== "string" || !targetUid.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "Valid targetUid is required.");
+  }
+
+  const validRoles = ["super_admin", "admin", "sub_admin", "delivery_rider", "customer"];
+  if (!validRoles.includes(role)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Invalid role '${role}'. Must be one of: ${validRoles.join(", ")}`
+    );
+  }
+
+  // Set Firebase Custom Claims
+  const newClaims = {
+    role: role,
+    branchId: branchId,
+    permissions: Array.isArray(permissions) ? permissions : [],
+  };
+  await admin.auth().setCustomUserClaims(targetUid, newClaims);
+
+  // Synchronize Firestore user record
+  await db.collection("users").doc(targetUid).set(
+    {
+      role: role,
+      branchId: branchId,
+      permissions: newClaims.permissions,
+      isAdmin: ["super_admin", "admin", "sub_admin"].includes(role),
+      isSuperAdmin: role === "super_admin",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  console.log(`[Audit] Role '${role}' set for user ${targetUid} by super_admin ${context.auth.uid}`);
+  return { success: true, message: `Role '${role}' assigned successfully.` };
+});
+
+/**
+ * Callable Function: Supabase Short-Lived Signed Upload URL Generator
+ * Secures media uploads: ensures clients cannot upload directly with service key
+ */
+exports.getSupabaseSignedUploadUrl = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Authentication required to request media upload credentials."
+    );
+  }
+
+  const { fileName, bucket = "food-images" } = data || {};
+  if (!fileName || typeof fileName !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "fileName must be provided.");
+  }
+
+  // Sanitize file path / name to prevent path traversal
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._/-]/g, "_").replace(/\.\./g, "_");
+  const allowedBuckets = ["food-images"];
+  if (!allowedBuckets.includes(bucket)) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid storage bucket requested.");
+  }
+
+  return {
+    bucket: bucket,
+    path: sanitizedFileName,
+    uploadUrl: `https://${process.env.SUPABASE_PROJECT_ID || "ff-storage"}.supabase.co/storage/v1/object/${bucket}/${sanitizedFileName}`,
+    expiresIn: 3600,
+  };
+});

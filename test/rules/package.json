@@ -1,0 +1,12 @@
+{
+  "name": "food-fight-rules-tests",
+  "version": "1.0.0",
+  "description": "Firestore Security Rules Unit Tests for Food Fight",
+  "scripts": {
+    "test": "mocha --timeout 10000 firestore_rules.test.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.3",
+    "mocha": "^10.4.0"
+  }
+}

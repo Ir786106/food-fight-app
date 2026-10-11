@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'core/constants/app_constants.dart';
@@ -32,6 +33,7 @@ import 'providers/deal_provider.dart';
 import 'providers/loyalty_provider.dart';
 import 'providers/review_provider.dart';
 import 'providers/option_template_provider.dart';
+import 'providers/app_update_provider.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
@@ -45,6 +47,12 @@ void main() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // Activate App Check (Play Integrity for release, debug provider for debug)
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: const bool.fromEnvironment('dart.vm.product')
+          ? AndroidProvider.playIntegrity
+          : AndroidProvider.debug,
     );
   } catch (e) {
     debugPrint('Firebase initialization warning: $e');
@@ -131,6 +139,8 @@ class FoodFightApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
 
         ChangeNotifierProvider(create: (_) => OptionTemplateProvider()),
+        
+        ChangeNotifierProvider(create: (_) => AppUpdateProvider()),
         
         ChangeNotifierProvider.value(value: effectiveTheme),
       ],
