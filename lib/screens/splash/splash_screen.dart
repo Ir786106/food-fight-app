@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Professional restaurant splash screen displaying the official FoodFight logo.
 class SplashScreen extends StatefulWidget {
@@ -103,7 +104,15 @@ class _SplashScreenState extends State<SplashScreen>
           Navigator.of(context).pushReplacementNamed('/home');
         }
       } else {
-        Navigator.of(context).pushReplacementNamed('/login');
+        final prefs = await SharedPreferences.getInstance();
+        final onboardingCompleted =
+            prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
+        if (!mounted) return;
+        if (!onboardingCompleted) {
+          Navigator.of(context).pushReplacementNamed('/onboarding');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
       }
     } catch (e) {
       debugPrint('Navigation error from splash: $e');

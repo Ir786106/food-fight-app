@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import '../../theme/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_constants.dart';
+import '../../providers/app_update_provider.dart';
+import '../../theme/theme_provider.dart';
+import '../../widgets/app_update_bottom_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,6 +19,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _emailOffers = true;
   bool _locationAccess = true;
+  String _appVersion = '';
+  bool _isCheckingUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) setState(() => _appVersion = '${info.version}+${info.buildNumber}');
+    } catch (_) {}
+  }
+
+  Future<void> _checkForUpdates() async {
+    setState(() => _isCheckingUpdate = true);
+    final prov = context.read<AppUpdateProvider>();
+    await prov.checkForUpdateNow();
+    setState(() => _isCheckingUpdate = false);
+    if (!mounted) return;
+    if (prov.hasUpdate) {
+      await AppUpdateBottomSheet.show(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Food Fight is up to date.')),
+      );
+    }
+  }
+
+  Future<void> _replayOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.storageOnboardingCompleted, false);
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/onboarding', (route) => false);
+  }
 
   Widget _buildSwitchTile(String title, String subtitle, bool value,
       ValueChanged<bool> onChanged) {
@@ -101,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              'ABOUT & LEGAL',
+              'ABOUT & UPDATES',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
@@ -110,7 +152,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildInfoTile('App Version', '1.3.0+4 (Production Release)'),
+            _buildInfoTile('App Version', _appVersion.isNotEmpty ? _appVersion : '…'),
+            _buildActionTile(
+              icon: Icons.system_update_rounded,
+              title: 'Check for Updates',
+              subtitle: 'See if a newer version is available',
+              trailing: _isCheckingUpdate
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : null,
+              onTap: _isCheckingUpdate ? null : _checkForUpdates,
+            ),
+            _buildActionTile(
+              icon: Icons.play_circle_outline_rounded,
+              title: 'Replay App Intro',
+              subtitle: 'See the onboarding screens again',
+              onTap: _replayOnboarding,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'LEGAL',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                letterSpacing: 0.8,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
             _buildInfoTile('Terms of Service', ''),
             _buildInfoTile('Privacy Policy', ''),
           ],
@@ -194,6 +262,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case ThemeMode.system:
         return Icons.settings_suggest;
     }
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: Icon(icon, color: AppColors.brandMaroon, size: 22),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: colorScheme.onSurface)),
+          subtitle: subtitle != null ? Text(subtitle, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)) : null,
+          trailing: trailing ?? Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
+          onTap: onTap,
+        ),
+      ),
+    );
   }
 
   Widget _buildInfoTile(String title, String trailingText, {VoidCallback? onTap}) {
