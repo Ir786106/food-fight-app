@@ -31,7 +31,7 @@ dependencies:
   # Charts & Data Viz
   fl_chart: ^0.68.0
   # Location & Maps
-  geolocator: ^13.0.2
+  geolocator: ^14.0.2
   google_maps_flutter: ^2.9.0
   # UI Enhancements
   shimmer: ^3.0.0
