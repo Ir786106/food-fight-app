@@ -986,38 +986,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: isSelected
-                            ? AppColors.primaryYellow.withValues(alpha: 0.2)
-                            : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
-                        child: Icon(
-                          Icons.storefront_rounded,
-                          color: isSelected ? AppColors.primaryYellow : Colors.grey.shade600,
-                          size: 20,
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isSelected
+                              ? AppColors.primaryYellow.withValues(alpha: 0.2)
+                              : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                          child: Icon(
+                            Icons.storefront_rounded,
+                            color: isSelected ? AppColors.primaryYellow : Colors.grey.shade600,
+                            size: 20,
+                          ),
                         ),
-                      ),
-                      title: Text(
-                        branch.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? AppColors.primaryYellow : null,
+                        title: Text(
+                          branch.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? AppColors.primaryYellow : null,
+                          ),
                         ),
+                        subtitle: Text(
+                          branch.address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: isSelected
+                            ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryYellow)
+                            : null,
+                        onTap: () {
+                          branchProv.selectBranch(branch);
+                          cart.setBranchId(branch.id);
+                          Navigator.of(ctx).pop();
+                        },
                       ),
-                      subtitle: Text(
-                        branch.address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryYellow)
-                          : null,
-                      onTap: () {
-                        branchProv.selectBranch(branch);
-                        cart.setBranchId(branch.id);
-                        Navigator.of(ctx).pop();
-                      },
                     ),
                   );
                 }),

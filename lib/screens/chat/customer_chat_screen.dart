@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/order_model.dart';
 import '../../models/chat_message_model.dart';
@@ -746,17 +747,20 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    msg.imageUrl!,
+                  child: CachedNetworkImage(
+                    imageUrl: msg.imageUrl!,
                     fit: BoxFit.cover,
-                    loadingBuilder: (ctx, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        height: 160,
-                        color: isDark ? Colors.white12 : Colors.grey.shade200,
-                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      );
-                    },
+                    placeholder: (ctx, url) => Container(
+                      height: 160,
+                      color: isDark ? Colors.white12 : Colors.grey.shade200,
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    errorWidget: (ctx, url, error) => Container(
+                      height: 120,
+                      color: isDark ? Colors.white10 : Colors.grey.shade100,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.broken_image_rounded, color: AppColors.error, size: 36),
+                    ),
                   ),
                 ),
               ),

@@ -49,6 +49,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _handleBackInvocation(bool didPop) {
     if (didPop) return;
 
+    // 0. If virtual keyboard has focus, dismiss keyboard first
+    if (FocusManager.instance.primaryFocus?.hasFocus ?? false) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return;
+    }
+
     // 1. Check if the current tab's navigator can pop a nested screen
     final currentNavigatorState = _navigatorKeys[_currentIndex].currentState;
     if (currentNavigatorState != null && currentNavigatorState.canPop()) {

@@ -53,16 +53,15 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
       }
-      _setLoading(false);
       return true;
     } on AppException catch (e) {
       _errorMessage = e.message;
-      _setLoading(false);
       return false;
     } catch (e) {
-      _errorMessage = 'An unexpected error occurred during login';
-      _setLoading(false);
+      _errorMessage = _parseError(e, 'Incorrect email or password, or account error. Please try again.');
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
@@ -86,16 +85,15 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
       }
-      _setLoading(false);
       return true;
     } on AppException catch (e) {
       _errorMessage = e.message;
-      _setLoading(false);
       return false;
     } catch (e) {
-      _errorMessage = 'An unexpected error occurred during registration';
-      _setLoading(false);
+      _errorMessage = _parseError(e, 'An unexpected error occurred during registration. Please check your network and try again.');
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
@@ -108,23 +106,21 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       final user = await _authService.signInWithGoogle();
       if (user == null) {
         // User cancelled the flow
-        _setLoading(false);
         return false;
       }
       _currentUser = user;
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
       }
-      _setLoading(false);
       return true;
     } on AppException catch (e) {
       _errorMessage = e.message;
-      _setLoading(false);
       return false;
     } catch (e) {
-      _errorMessage = 'Failed to sign in with Google';
-      _setLoading(false);
+      _errorMessage = _parseError(e, 'Failed to complete Google sign-in. Please try again.');
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
@@ -175,6 +171,24 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _setLoading(false);
       return false;
     }
+  }
+
+  String _parseError(dynamic e, String fallback) {
+    if (e is AppException) return e.message;
+    final str = e.toString().toLowerCase();
+    if (str.contains('permission-denied')) {
+      return 'Access denied by security rules. Please try again or contact support.';
+    }
+    if (str.contains('network') || str.contains('unavailable') || str.contains('socketexception') || str.contains('timed out')) {
+      return 'Network connection issue. Please check your internet connection.';
+    }
+    if (str.contains('user-disabled')) {
+      return 'Your account has been deactivated. Please contact support.';
+    }
+    if (str.contains('invalid-credential') || str.contains('wrong-password') || str.contains('user-not-found')) {
+      return 'Incorrect email or password. Please try again.';
+    }
+    return fallback;
   }
 
   void _setLoading(bool value) {

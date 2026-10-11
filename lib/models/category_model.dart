@@ -45,7 +45,11 @@ class CategoryModel {
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString(),
-      imageUrl: json['imageUrl']?.toString() ?? json['categoryImage']?.toString(),
+      imageUrl: json['imageUrl']?.toString() ??
+          json['image_url']?.toString() ??
+          json['categoryImage']?.toString() ??
+          json['image']?.toString() ??
+          json['iconUrl']?.toString(),
       order: SafeConvert.toInt(json['order']),
       isActive: json['isActive'] == 1 || json['isActive'] == true,
       createdAt: SafeConvert.toDateTime(json['createdAt']),

@@ -133,15 +133,30 @@ class FirebaseAuthService implements IAuthService {
         clientId: kIsWeb
             ? '585587375994-h4ohhnrmellh0ooboa0gpdp9pq2v0m86.apps.googleusercontent.com'
             : null,
+        serverClientId: '585587375994-h4ohhnrmellh0ooboa0gpdp9pq2v0m86.apps.googleusercontent.com',
       );
 
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await googleSignIn.signIn();
+      } catch (e) {
+        AppLogger.error('Google sign-in client error: $e', tag: 'FirebaseAuthService');
+        throw AppException(message: 'Google Sign-In was cancelled or encountered an issue. Please try again.');
+      }
+
       if (googleUser == null) {
         AppLogger.info('Google sign-in was cancelled by user', tag: 'FirebaseAuthService');
         return null;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      GoogleSignInAuthentication googleAuth;
+      try {
+        googleAuth = await googleUser.authentication;
+      } catch (e) {
+        AppLogger.error('Google auth token retrieval failed: $e', tag: 'FirebaseAuthService');
+        throw AppException(message: 'Failed to retrieve Google authentication token.');
+      }
+
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -304,10 +319,23 @@ class FirebaseAuthService implements IAuthService {
 
   /// Helper method to get user data from Firestore or create initial record
   Future<UserModel> _getUserData(User firebaseUser) async {
-    final doc = await _usersCollection.doc(firebaseUser.uid).get();
-    if (doc.exists && doc.data() != null) {
-      final data = doc.data() as Map<String, dynamic>;
-      return UserModel.fromJson(data);
+    try {
+      final doc = await _usersCollection
+          .doc(firebaseUser.uid)
+          .get()
+          .timeout(const Duration(seconds: 10));
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        // Ensure role is non-empty string
+        final rawRole = data['role']?.toString().trim();
+        if (rawRole == null || rawRole.isEmpty) {
+          data['role'] = 'customer';
+        }
+        return UserModel.fromJson(data);
+      }
+    } catch (e) {
+      AppLogger.warn('Firestore user fetch timed out or failed ($e), proceeding with fallback', tag: 'FirebaseAuthService');
     }
 
     // Default user record if not in Firestore yet
@@ -322,11 +350,22 @@ class FirebaseAuthService implements IAuthService {
       updatedAt: DateTime.now(),
     );
 
-    await _usersCollection.doc(newUser.id).set(newUser.toJson(), SetOptions(merge: true));
+    try {
+      await _usersCollection
+          .doc(newUser.id)
+          .set(newUser.toJson(), SetOptions(merge: true))
+          .timeout(const Duration(seconds: 8));
+    } catch (e) {
+      AppLogger.warn('Could not write initial user doc to Firestore: $e', tag: 'FirebaseAuthService');
+    }
 
     // Credit welcome tokens on initial account creation if not yet credited
     try {
-      final settingsDoc = await _firestore.collection('settings').doc('global_settings').get();
+      final settingsDoc = await _firestore
+          .collection('settings')
+          .doc('global_settings')
+          .get()
+          .timeout(const Duration(seconds: 5));
       final bonus = (settingsDoc.data()?['welcomeTokens'] as num? ?? 50).toInt();
       final loyalty = LoyaltyService(firestore: _firestore);
       await loyalty.creditWelcomeBonus(newUser.id, amount: bonus);

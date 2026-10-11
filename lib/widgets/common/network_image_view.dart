@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:food_fight/core/constants/app_colors.dart';
+import '../../services/supabase/supabase_image_storage_service.dart';
 import '../skeleton/shimmer_container.dart';
 
 /// Image viewer supporting Supabase public URLs, CachedNetworkImage, error fallback, and loading shimmer
@@ -26,16 +27,30 @@ class NetworkImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final validUrl = imageUrl != null && imageUrl!.trim().isNotEmpty && imageUrl!.startsWith('http');
+    String? resolvedUrl;
+    if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
+      final trimmed = imageUrl!.trim();
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        resolvedUrl = Uri.encodeFull(trimmed);
+      } else if (!trimmed.startsWith('assets/')) {
+        final cleanPath = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
+        try {
+          final publicUrl = SupabaseImageStorageService().getImageUrl(cleanPath);
+          if (publicUrl.isNotEmpty && publicUrl.startsWith('http')) {
+            resolvedUrl = Uri.encodeFull(publicUrl);
+          }
+        } catch (_) {}
+      }
+    }
 
     final safeWidth = (width != null && width! > 0 && !width!.isNaN && !width!.isInfinite) ? width : null;
     final safeHeight = (height != null && height! > 0 && !height!.isNaN && !height!.isInfinite) ? height : null;
 
     Widget imageContent;
 
-    if (validUrl) {
+    if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
       imageContent = CachedNetworkImage(
-        imageUrl: imageUrl!.trim(),
+        imageUrl: resolvedUrl,
         width: safeWidth,
         height: safeHeight,
         fit: fit,

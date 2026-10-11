@@ -91,9 +91,6 @@ service cloud.firestore {
       return resource.data.get('role', '');
     }
 
-    function getOrder(orderId) {
-      return get(/databases/$(database)/documents/orders/$(orderId)).data;
-    }
 
     // =========================================================================
     // 1. BRANCHES & MULTI-LOCATION
@@ -128,18 +125,18 @@ service cloud.firestore {
       // - Admin: can create staff/customer, CANNOT create super_admin
       // - Super Admin: full creation rights
       allow create: if (
-        isSuperAdmin() ||
-        (
-          isAdmin() &&
-          !isSubAdmin() &&
-          incomingRole() != 'super_admin'
-        ) ||
         (
           isOwner(userId) &&
           (incomingRole() == 'customer' || incomingRole() == '') &&
           request.resource.data.get('permissions', null) == null &&
           request.resource.data.get('isAdmin', false) == false &&
           request.resource.data.get('isSuperAdmin', false) == false
+        ) ||
+        isSuperAdmin() ||
+        (
+          isAdmin() &&
+          !isSubAdmin() &&
+          incomingRole() != 'super_admin'
         )
       );
 

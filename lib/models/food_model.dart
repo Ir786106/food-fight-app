@@ -139,7 +139,11 @@ class FoodModel {
       addons: parsedAddons,
       sizePrices: parsedSizePrices,
       imageEmoji: json['imageEmoji']?.toString() ?? '🥊',
-      imageUrl: json['imageUrl']?.toString(),
+      imageUrl: json['imageUrl']?.toString() ??
+          json['image_url']?.toString() ??
+          json['image']?.toString() ??
+          json['photoUrl']?.toString() ??
+          json['photo_url']?.toString(),
       category: json['category']?.toString() ?? '',
       rating: SafeConvert.toDouble(json['rating'], 4.8),
       prepTimeMinutes: SafeConvert.toInt(json['prepTimeMinutes'], 25),

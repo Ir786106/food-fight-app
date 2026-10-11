@@ -247,7 +247,11 @@ class MenuItemModel {
       price: SafeConvert.toDouble(json['price']),
       discount: SafeConvert.toDouble(json['discount']),
       finalPrice: SafeConvert.toDouble(json['finalPrice']),
-      imageUrl: json['imageUrl'] ?? json['image_url'],
+      imageUrl: json['imageUrl']?.toString() ??
+          json['image_url']?.toString() ??
+          json['image']?.toString() ??
+          json['photoUrl']?.toString() ??
+          json['photo_url']?.toString(),
       categoryId: json['categoryId'] ?? json['category_id'] ?? '',
       restaurantId: json['restaurantId'] ?? json['restaurant_id'],
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
