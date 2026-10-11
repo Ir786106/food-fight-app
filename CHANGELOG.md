@@ -2,6 +2,36 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.7.0+8] — 2026-10-11
+
+### WS1 — Premium Onboarding Experience
+- **New illustrations**: 4 custom AI-generated onboarding images in Food Fight brand palette (yellow/brown) replacing placeholder emoji.
+- **Routing wire-up**: Splash → first-launch check (SharedPreferences `ff_onboarding_completed`) → `/onboarding` → `/login`. Returning users and logged-in users skip onboarding entirely. Admin/rider/super-admin logins never blocked.
+- **"Replay App Intro"** option added to Settings screen to reset onboarding flag and re-enter the flow.
+- **Tests**: `test/widget/onboarding_routing_test.dart` covers first-launch, returning-user, and replay-intro routing logic.
+
+### WS2 — In-App Update System (GitHub Releases)
+- **`AppUpdateService`**: Checks `GET https://api.github.com/repos/Ir786106/food-fight-app/releases/latest`; parses tag `vMAJOR.MINOR.PATCH+BUILD`; finds `.apk` and `.apk.sha256` assets; downloads with progress; verifies SHA-256 before installing; aborts if hash missing or mismatched; deletes temp file after install.
+- **`AppUpdateProvider`**: Throttled checks (6h); Firestore `settings/app_update` for force-update; skip-version memory (24h); `AppUpdateBottomSheet` UI with progress bar, cancel, install, "Later", and "Open release page" fallback.
+- **Security**: Only HTTPS URLs on `github.com`, `objects.githubusercontent.com`, `release-assets.githubusercontent.com` allowed; SHA-256 enforced; same-keystore Android signature check is automatic.
+- **Settings**: "Check for Updates" and "App Version" (dynamic from `package_info_plus`) added to About section.
+- **GitHub Actions**: `.github/workflows/release.yml` triggered on `v*` tags builds signed release APK, generates `.sha256`, creates GitHub Release. `.github/workflows/ci.yml` runs analyze + test on PR/push. `.github/dependabot.yml` enables automated dependency updates.
+- **Tests**: `test/unit/app_update_service_test.dart` covers version comparison, tag parsing, URL allowlist, and release JSON parsing.
+- **⚠️ Breaking**: First release-signed build — users with debug-signed APK must uninstall manually once.
+
+### WS3 — Security Hardening
+- **App Check**: Activated in `main.dart` with `PlayIntegrity` (release) / `DebugProvider` (debug); manual enforcement step documented in SECURITY.md.
+- **Server-Side Role Control & Claims**: Cloud Function `setUserRole` sets Firebase custom claims server-side (callable, super-admin only); clients can never write role, branchId, permissions, or isActive.
+- **Supabase Signed Uploads**: Implemented `getSupabaseSignedUploadUrl` Cloud Function; storage policies set to public-read only; anonymous writes eliminated.
+- **Cloud Functions LTS & PII**: Upgraded runtime to Node 20 LTS; PII masking implemented across logs (masked phone numbers and emails); input validation and rate limiting.
+- **Firestore Rules Hardening**: Added `settings/app_update` rule (public read, super-admin write); locked down `loyaltyAccounts` and transactions against client-side balance manipulation.
+- **Rules Unit Testing**: Implemented `@firebase/rules-unit-testing` suite in `test/rules/firestore_rules.test.js` covering all 5 roles (super_admin, admin, sub_admin, delivery_rider, customer) and negative privilege-escalation cases; wired into GitHub Actions CI (`ci.yml`).
+- **Android Hardening**: `android:allowBackup="false"`, `android:usesCleartextTraffic="false"`, `network_security_config.xml` (HTTPS only), `FileProvider` for APK installs.
+- **R8 + Obfuscation**: `isMinifyEnabled=true`, `isShrinkResources=true`, custom `proguard-rules.pro`.
+- **Dependabot**: `.github/dependabot.yml` for pub, npm, and github-actions ecosystems.
+- **Secrets Hygiene**: `.env.example` template provided; strict `.gitignore` rules for keystores, keys, and cloud credentials.
+- **SECURITY.md**: Full threat model, controls implemented, manual console steps, and residual risks.
+
 ## [1.7.0+7] — 2026-10-11
 
 ### Production Audit, Release Signing & Resilience Hardening

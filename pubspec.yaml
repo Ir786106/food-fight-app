@@ -1,7 +1,7 @@
 name: food_fight
 description: "Food Fight - Fast Food Ordering System (5 Branches)"
 publish_to: 'none'
-version: 1.7.0+7
+version: 1.7.0+8
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -42,6 +42,9 @@ dependencies:
   intl: ^0.19.0
   # Export
   csv: ^6.0.0
+  package_info_plus: ^9.0.1
+  open_filex: ^4.7.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +57,7 @@ flutter:
 
   assets:
     - assets/images/branding/
+    - assets/images/onboarding/
 
 flutter_launcher_icons:
   android: true

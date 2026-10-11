@@ -196,46 +196,89 @@ Google Sign-In is integrated using Firebase Authentication's Google Provider:
 
 To ensure authenticated app users can upload menu and profile pictures while keeping public read access active, run the migration in `supabase_storage_policies.sql` inside your **Supabase Dashboard -> SQL Editor**:
 
-- Grants public read (`SELECT`) access on `food-images`.
 - Grants authenticated users `INSERT`, `UPDATE`, and `DELETE` access.
 - In `lib/main.dart`, Supabase client is initialized with a Firebase Auth ID token bridge so Supabase recognizes authenticated app requests.
 
 ---
 
-## 🏃 Running and Building the Application
+## 🚀 Version 1.7.0+8 Updates: Onboarding & In-App Updates
+
+### 🌟 Workstream 1: Premium Onboarding
+- 4 custom illustrated brand pages (`fast delivery`, `browse menu/deals`, `live tracking`, `permission primer`).
+- Splash checks `ff_onboarding_completed` in `SharedPreferences`. First-time users see onboarding; returning and authenticated users skip directly to login/app.
+- "Replay App Intro" button in Settings allows users to experience the intro anytime.
+
+### 🔄 Workstream 2: In-App Updates via GitHub Releases
+- **Automatic check**: App checks `GET https://api.github.com/repos/Ir786106/food-fight-app/releases/latest` on launch and on resume (throttled every 6h).
+- **Manual check**: Settings → About → "Check for Updates" button.
+- **Security**: Strict HTTPS allowlist (`github.com`, `objects.githubusercontent.com`), SHA-256 integrity verification before APK installation.
+- **Remote Kill Switch**: Super Admin can set `settings/app_update` in Firestore with `{ minSupportedVersion, forceUpdate: true, message }` to mandate updates.
+
+### 🔐 Workstream 3: Security Hardening
+- See [SECURITY.md](SECURITY.md) for full threat model and security controls.
+
+---
+
+## 📦 Release Workflow & Signing Protocol
+
+### Release Prerequisites & Constraints
+1. **Version Code Must Monotonically Increase**:
+   - In `pubspec.yaml`, the build number after `+` (e.g. `1.7.0+8`) MUST increase on each release (e.g., `+9`, `+10`). Android refuses APK updates if the installed `versionCode` is equal to or greater than the new APK's `versionCode`.
+2. **Consistent Release Keystore**:
+   - Every release MUST be signed with the **SAME release keystore**. If a different keystore is used, Android will reject the update with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+   - Keystore location: `android/app/release.keystore` (configured via `android/key.properties`).
+   - **Backup Notice**: Securely back up `release.keystore` and passwords in an encrypted password manager. Never commit keystores to version control.
+3. **One-Time Signature Transition**:
+   - Any device currently running a **debug-signed APK** must uninstall it first before installing the first release-signed APK (`v1.7.0`). After this one-time step, all future updates will install seamlessly in-app.
+
+### How to Publish a New Release
+1. **Bump Version in `pubspec.yaml`**:
+   ```yaml
+   version: 1.7.0+8 # increment build number and/or semantic version
+   ```
+2. **Commit and Push Changes**:
+   ```bash
+   git add .
+   git commit -m "chore(release): bump to v1.7.0+8"
+   git push origin main
+   ```
+3. **Tag and Push to Trigger GitHub Release Workflow**:
+   ```bash
+   git tag v1.7.0
+   git push origin v1.7.0
+   ```
+4. The `.github/workflows/release.yml` GitHub Action will automatically:
+   - Run tests and analyzer.
+   - Build obfuscated release APK (`flutter build apk --release --obfuscate --split-debug-info=build/symbols`).
+   - Generate `food-fight-v1.7.0.apk.sha256`.
+   - Publish the GitHub Release with downloadable assets.
+
+---
+
+## 🏃 Running and Building Locally
 
 ### 📦 Fresh Clone Setup
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/irfanwaseem12/food_fight.git
-   cd food_fight/food_fight
+   git clone https://github.com/Ir786106/food-fight-app.git
+   cd food-fight-app
    ```
 2. **Install dependencies**:
    ```bash
    flutter pub get
    ```
-3. **Firebase & Google Services**:
-   - Ensure `android/app/google-services.json` is in place.
-   - For Google Sign-In on Android, make sure the SHA-1 and SHA-256 fingerprints for your debug/release keystores are registered in the Firebase Console under Android app `com.example.food_fight`.
-4. **Release Signing Setup**:
-   - Place your release keystore at `android/app/release.keystore` (or configure a custom path).
-   - Create `android/key.properties` with:
-     ```properties
-     storePassword=YOUR_STORE_PASSWORD
-     keyPassword=YOUR_KEY_PASSWORD
-     keyAlias=YOUR_KEY_ALIAS
-     storeFile=release.keystore
-     ```
-   - *Note: `key.properties` and `release.keystore` are strictly excluded from git via `.gitignore`.*
-5. **Run & Test**:
+3. **Environment Setup**:
+   - Copy `.env.example` to `.env` and fill in necessary configuration.
+   - Ensure `android/app/google-services.json` is configured.
+4. **Run & Test**:
    ```bash
    flutter test
    flutter analyze
    flutter run
    ```
-6. **Build Signed Release APK**:
+5. **Build Signed Release APK**:
    ```bash
-   flutter build apk --release
+   flutter build apk --release --obfuscate --split-debug-info=build/symbols
    ```
 
 ---
