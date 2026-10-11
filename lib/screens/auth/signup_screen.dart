@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_textfield.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/common/google_sign_in_button.dart';
+import '../../core/utils/validator_utils.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -197,68 +198,73 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   // Full Name
                                   CustomTextField(
+                                    key: const ValueKey('name_input_field'),
+                                    fieldKey: const ValueKey('name_field'),
+                                    semanticsLabel: 'Full Name Field',
                                     controller: _nameController,
                                     label: 'Full Name',
                                     hint: 'John Doe',
                                     icon: Icons.person_outline_rounded,
-                                    validator: (v) =>
-                                        (v == null || v.trim().isEmpty) ? 'Please enter your name' : null,
+                                    validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Full Name'),
                                   ),
                                   const SizedBox(height: 14),
 
                                   // Email
                                   CustomTextField(
+                                    key: const ValueKey('signup_email_input_field'),
+                                    fieldKey: const ValueKey('email_field'),
+                                    semanticsLabel: 'Email Address Field',
                                     controller: _emailController,
                                     label: 'Email Address',
                                     hint: 'you@example.com',
                                     icon: Icons.email_outlined,
                                     keyboardType: TextInputType.emailAddress,
-                                    validator: (v) {
-                                      if (v == null || v.trim().isEmpty) return 'Please enter your email';
-                                      final normalized = v.trim().toLowerCase();
-                                      if (!normalized.contains('@') || !normalized.contains('.')) {
-                                        return 'Enter a valid email address';
-                                      }
-                                      return null;
-                                    },
+                                    validator: ValidatorUtils.validateEmail,
                                   ),
                                   const SizedBox(height: 14),
 
                                   // Phone
                                   CustomTextField(
+                                    key: const ValueKey('phone_input_field'),
+                                    fieldKey: const ValueKey('phone_field'),
+                                    semanticsLabel: 'Pakistan Mobile Phone Field',
                                     controller: _phoneController,
                                     label: 'Phone Number',
                                     hint: '0300 1234567',
                                     icon: Icons.phone_outlined,
                                     keyboardType: TextInputType.phone,
-                                    validator: (v) =>
-                                        (v == null || v.trim().isEmpty) ? 'Please enter your phone number' : null,
+                                    validator: ValidatorUtils.validatePhone,
                                   ),
                                   const SizedBox(height: 14),
 
                                   // Password
                                   CustomTextField(
+                                    key: const ValueKey('signup_password_input_field'),
+                                    fieldKey: const ValueKey('signup_password_field'),
+                                    toggleKey: const ValueKey('signup_password_visibility_toggle'),
+                                    semanticsLabel: 'Password Field',
                                     controller: _passwordController,
                                     label: 'Password',
                                     hint: 'Min 6 characters',
                                     icon: Icons.lock_outline_rounded,
                                     isPassword: true,
-                                    validator: (v) {
-                                      if (v == null || v.isEmpty) return 'Please enter a password';
-                                      if (v.length < 6) return 'Password must be at least 6 characters';
-                                      return null;
-                                    },
+                                    validator: (v) => ValidatorUtils.validatePassword(v, minLength: 6),
                                   ),
                                   const SizedBox(height: 14),
 
                                   // Confirm Password
                                   CustomTextField(
+                                    key: const ValueKey('confirm_password_input_field'),
+                                    fieldKey: const ValueKey('confirm_password_field'),
+                                    toggleKey: const ValueKey('confirm_password_visibility_toggle'),
+                                    semanticsLabel: 'Confirm Password Field',
                                     controller: _confirmPasswordController,
                                     label: 'Confirm Password',
                                     hint: 'Re-enter your password',
                                     icon: Icons.lock_outline_rounded,
                                     isPassword: true,
                                     validator: (v) {
+                                      if (v == null || v.isEmpty) return 'Please confirm your password';
                                       if (v != _passwordController.text) {
                                         return 'Passwords do not match';
                                       }
@@ -269,6 +275,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   // Terms & Conditions Checkbox
                                   InkWell(
+                                    key: const ValueKey('terms_checkbox'),
                                     onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
                                     borderRadius: BorderRadius.circular(8),
                                     child: Padding(
@@ -307,6 +314,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   // Primary Sign Up Button
                                   CustomButton(
+                                    key: const ValueKey('create_account_button'),
+                                    semanticsLabel: 'Create Account Button',
                                     text: 'Create Account',
                                     isLoading: _isLoading,
                                     onPressed: _handleSignup,
@@ -345,6 +354,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   // Google Sign-Up Button
                                   GoogleSignInButton(
+                                    key: const ValueKey('google_signup_button'),
+                                    semanticsLabel: 'Sign up with Google Button',
                                     text: 'Sign up with Google',
                                     isLoading: _isGoogleLoading,
                                     onPressed: _handleGoogleSignIn,
@@ -365,6 +376,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                           ),
                                         ),
                                         GestureDetector(
+                                          key: const ValueKey('login_link'),
                                           behavior: HitTestBehavior.opaque,
                                           onTap: () => Navigator.of(context).pop(),
                                           child: const Padding(

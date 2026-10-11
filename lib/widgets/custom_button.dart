@@ -24,6 +24,7 @@ class CustomButton extends StatelessWidget {
   final double? width;
   final double height;
   final String? priceBadge;
+  final String? semanticsLabel;
 
   const CustomButton({
     super.key,
@@ -35,6 +36,7 @@ class CustomButton extends StatelessWidget {
     this.icon,
     this.width = double.infinity,
     this.height = AppDimens.buttonHeight,
+    this.semanticsLabel,
   })  : variant = CustomButtonVariant.primary,
         priceBadge = null;
 
@@ -48,6 +50,7 @@ class CustomButton extends StatelessWidget {
     this.icon,
     this.width = double.infinity,
     this.height = AppDimens.buttonHeight,
+    this.semanticsLabel,
   })  : variant = CustomButtonVariant.outlined,
         priceBadge = null;
 
@@ -59,6 +62,7 @@ class CustomButton extends StatelessWidget {
     this.icon,
     this.width = double.infinity,
     this.height = AppDimens.buttonHeight,
+    this.semanticsLabel,
   })  : variant = CustomButtonVariant.destructive,
         color = AppColors.error,
         textColor = AppColors.error,
@@ -73,6 +77,7 @@ class CustomButton extends StatelessWidget {
     this.width = double.infinity,
     this.height = 56.0,
     this.priceBadge,
+    this.semanticsLabel,
   })  : variant = CustomButtonVariant.darkCta,
         color = AppColors.ctaDark,
         textColor = Colors.white;
@@ -84,6 +89,7 @@ class CustomButton extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.textColor,
+    this.semanticsLabel,
   })  : variant = CustomButtonVariant.text,
         color = null,
         width = null,
@@ -94,10 +100,11 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final Widget buttonWidget;
 
     switch (variant) {
       case CustomButtonVariant.text:
-        return TextButton(
+        buttonWidget = TextButton(
           onPressed: isLoading ? null : onPressed,
           style: TextButton.styleFrom(
             foregroundColor: textColor ?? (isDark ? AppColors.darkAmberDark : AppColors.amberDark),
@@ -132,7 +139,7 @@ class CustomButton extends StatelessWidget {
         );
 
       case CustomButtonVariant.darkCta:
-        return SizedBox(
+        buttonWidget = SizedBox(
           width: width,
           height: height,
           child: ElevatedButton(
@@ -204,7 +211,7 @@ class CustomButton extends StatelessWidget {
         );
 
       case CustomButtonVariant.destructive:
-        return SizedBox(
+        buttonWidget = SizedBox(
           width: width,
           height: height,
           child: OutlinedButton(
@@ -245,7 +252,7 @@ class CustomButton extends StatelessWidget {
         );
 
       case CustomButtonVariant.outlined:
-        return SizedBox(
+        buttonWidget = SizedBox(
           width: width,
           height: height,
           child: OutlinedButton(
@@ -294,7 +301,7 @@ class CustomButton extends StatelessWidget {
         final btnColor = color ?? AppColors.brandYellow;
         final fgColor = textColor ?? AppColors.onYellow;
 
-        return SizedBox(
+        buttonWidget = SizedBox(
           width: width,
           height: height,
           child: ElevatedButton(
@@ -342,5 +349,12 @@ class CustomButton extends StatelessWidget {
           ),
         );
     }
+
+    return Semantics(
+      button: true,
+      label: semanticsLabel ?? text,
+      enabled: onPressed != null && !isLoading,
+      child: buttonWidget,
+    );
   }
 }

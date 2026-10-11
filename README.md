@@ -202,22 +202,41 @@ To ensure authenticated app users can upload menu and profile pictures while kee
 
 ---
 
-## 🏃 Running the Application
+## 🏃 Running and Building the Application
 
-```bash
-# 1. Navigate to the project directory
-cd food_fight
-
-# 2. Get dependencies
-flutter pub get
-
-# 3. Verify tests and code quality
-flutter test
-flutter analyze
-
-# 4. Run on your connected device, emulator, or Chrome
-flutter run
-```
+### 📦 Fresh Clone Setup
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/irfanwaseem12/food_fight.git
+   cd food_fight/food_fight
+   ```
+2. **Install dependencies**:
+   ```bash
+   flutter pub get
+   ```
+3. **Firebase & Google Services**:
+   - Ensure `android/app/google-services.json` is in place.
+   - For Google Sign-In on Android, make sure the SHA-1 and SHA-256 fingerprints for your debug/release keystores are registered in the Firebase Console under Android app `com.example.food_fight`.
+4. **Release Signing Setup**:
+   - Place your release keystore at `android/app/release.keystore` (or configure a custom path).
+   - Create `android/key.properties` with:
+     ```properties
+     storePassword=YOUR_STORE_PASSWORD
+     keyPassword=YOUR_KEY_PASSWORD
+     keyAlias=YOUR_KEY_ALIAS
+     storeFile=release.keystore
+     ```
+   - *Note: `key.properties` and `release.keystore` are strictly excluded from git via `.gitignore`.*
+5. **Run & Test**:
+   ```bash
+   flutter test
+   flutter analyze
+   flutter run
+   ```
+6. **Build Signed Release APK**:
+   ```bash
+   flutter build apk --release
+   ```
 
 ---
 

@@ -28,11 +28,28 @@ class ValidatorUtils {
 
   // Phone validation (Pakistani format)
   static bool isValidPhone(String? phone) {
-    if (phone == null || phone.isEmpty) return false;
-    final phoneRegex = RegExp(
-      r'^(03[0-9]{2}|923[0-9]{2})[- ]?[0-9]{7}$',
-    );
-    return phoneRegex.hasMatch(phone);
+    if (phone == null || phone.trim().isEmpty) return false;
+    final clean = phone.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    final phoneRegex = RegExp(r'^(\+92|92|0)?3[0-9]{9}$');
+    return phoneRegex.hasMatch(clean);
+  }
+
+  /// Form field validator for Pakistani mobile numbers
+  static String? validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Phone number is required';
+    if (!isValidPhone(value.trim())) {
+      return 'Enter a valid Pakistan phone number (e.g. 0300 1234567)';
+    }
+    return null;
+  }
+
+  /// Form field validator for passwords
+  static String? validatePassword(String? value, {int minLength = 6}) {
+    if (value == null || value.isEmpty) return 'Password is required';
+    if (value.length < minLength) {
+      return 'Password must be at least $minLength characters';
+    }
+    return null;
   }
 
   // Name validation

@@ -297,6 +297,7 @@ class _FloatingNavBarState extends State<FloatingNavBar>
                       color: Colors.transparent,
                       shape: const CircleBorder(),
                       child: InkWell(
+                        key: const ValueKey('tab_cart'),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           if (widget.onCartSelected != null) {
@@ -420,6 +421,7 @@ class _FloatingNavBarState extends State<FloatingNavBar>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          key: ValueKey('tab_${item.label.toLowerCase()}'),
           onTap: () {
             HapticFeedback.lightImpact();
             widget.onTabSelected(index);

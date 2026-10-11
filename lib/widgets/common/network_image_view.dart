@@ -59,7 +59,10 @@ class NetworkImageView extends StatelessWidget {
           height: safeHeight,
           borderRadius: borderRadius,
         ),
-        errorWidget: (context, url, error) => _buildFallback(safeWidth, safeHeight),
+        errorWidget: (context, url, error) {
+          debugPrint('NetworkImageView failed to load: $url, error: $error');
+          return _buildFallback(safeWidth, safeHeight);
+        },
       );
     } else {
       imageContent = _buildFallback(safeWidth, safeHeight);

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/common/network_image_view.dart';
 import '../../models/order_model.dart';
 import '../../models/chat_message_model.dart';
 import '../../providers/auth_provider.dart';
@@ -745,23 +745,13 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
             if (msg.imageUrl != null && msg.imageUrl!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: msg.imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (ctx, url) => Container(
-                      height: 160,
-                      color: isDark ? Colors.white12 : Colors.grey.shade200,
-                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
-                    errorWidget: (ctx, url, error) => Container(
-                      height: 120,
-                      color: isDark ? Colors.white10 : Colors.grey.shade100,
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.broken_image_rounded, color: AppColors.error, size: 36),
-                    ),
-                  ),
+                child: NetworkImageView(
+                  imageUrl: msg.imageUrl,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  borderRadius: 10,
+                  fallbackIcon: Icons.broken_image_rounded,
                 ),
               ),
 

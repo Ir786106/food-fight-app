@@ -78,24 +78,28 @@ Static analysis (`flutter analyze`) confirmed 0 lint errors. The automated test 
 ## 4. Status Tracking & Final Sign-Off
 
 - [x] **Phase 1:** Comprehensive Codebase Audit completed and logged.
-- [x] **Phase 2:** All 10 automated testing bugs fixed and verified:
-  - Bug 1: Android `INTERNET`, `ACCESS_NETWORK_STATE`, `usesCleartextTraffic`, Supabase image URL formatting & model synonym fallbacks (`imageUrl`, `image_url`, `photoUrl`, `iconUrl`), and `CachedNetworkImage` fallbacks implemented everywhere.
-  - Bug 2: Login error handling completely fortified with user-friendly error messages, 10s Firestore timeouts, role fallbacks, and guaranteed loader cleanup in `finally` blocks.
-  - Bug 3: Google Sign-In crash fixed with Web Client ID `serverClientId`, debug and release OAuth clients configured in `google-services.json`, user doc creation fallback, and try/catch guards.
-  - Bug 4: Android back button closes app fixed via `FocusManager` keyboard dismissal check and `PopScope` double-back-to-exit on root navigation screens.
+- [x] **Phase 2:** All automated testing and confirmed root causes fixed and verified:
+  - Root Cause 1: Android `main/AndroidManifest.xml` updated with `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `POST_NOTIFICATIONS` and `usesCleartextTraffic`.
+  - Root Cause 2: Supabase image URL formatting & model synonym fallbacks (`imageUrl`, `image_url`, `photoUrl`, `iconUrl`), `NetworkImageView` with broken-image error logging used everywhere; `MenuService` fallback from `menuItems` to `menu_items`; Supabase storage policies tightened to public read & authenticated write.
+  - Root Cause 3: Login & sign-up error handling fortified with specific user-friendly `AppException` translations (`permission-denied`, `network-request-failed`, `timeout`, `user-disabled`, `TypeError`), 20s timeouts on Firestore & Auth calls, `AppLogger` integration, and guaranteed loader cleanup in `finally` blocks.
+  - Root Cause 4: Google Sign-In crash fixed with Web Client ID `serverClientId`, debug and release OAuth clients configured in `google-services.json`, user doc creation fallback with role `customer`, and try/catch guards.
+  - Root Cause 5: Release signing configured with `key.properties` and release keystore; both strictly ignored by git.
+  - Root Cause 6: Client-safe keys retained in git with fresh-clone build instructions documented in `README.md`; Supabase storage write policies locked down to authenticated users only.
+  - Root Cause 7: Test automation identifiers (`ValueKey`s and `Semantics` labels) added to all auth fields (email, password, visibility toggle, Log In, Forgot Password, Sign Up, Google, Create Account, T&C checkbox) and floating bottom-nav items (`tab_home`, `tab_orders`, `tab_cart`, `tab_chat`, `tab_profile`).
+  - Bug 4: Android back button closes app fixed via `FocusManager` keyboard dismissal check, nested tab popping, home tab switch, and `PopScope` double-back-to-exit on root navigation screens.
   - Bug 5: Auth screens landscape/keyboard overlap fixed with responsive card layouts, `SingleChildScrollView`, `resizeToAvoidBottomInset: true`, and elimination of `Transform.translate` touch-offset hacks.
-  - Bug 6: RenderFlex overflows and invisible `ListTile` ink splash warnings eliminated (`Material` wrapper on checkout tiles).
-  - Bug 7: Multi-role `firestore.rules` rewritten for 5 roles (`super_admin`, `admin`, `sub_admin`, `delivery_rider`, `customer`) with branch-scoping and deployed live to Firebase alongside `firestore.indexes.json`.
+  - Bug 6: RenderFlex overflows and invisible `ListTile` ink splash warnings eliminated.
+  - Bug 7: Multi-role `firestore.rules` rewritten for 5 roles (`super_admin`, `admin`, `sub_admin`, `delivery_rider`, `customer`) with branch-scoping.
   - Bug 8: 'int' is not a subtype of 'double' runtime cast crashes eradicated across all models via `SafeConvert.toDouble`.
   - Bug 9: Dummy/hardcoded data eliminated; all data driven by Firestore with full loading, empty, and error states.
   - Bug 10: Full button & interactive card connectivity verified for Customer, Admin, Sub-Admin, Rider, and Super Admin panels.
-- [x] **Phase 3:** Brand theme consistency verified (yellow/brown/dark matching Food Fight identity), WCAG AA color contrast verified, form validation active on all inputs, sensitive credentials kept out of git.
+- [x] **Phase 3:** Brand theme consistency verified (yellow/brown/dark matching Food Fight identity), WCAG AA color contrast verified, form validation active on all inputs including Pakistani phone numbers, sensitive credentials kept out of git.
 - [x] **Phase 4:** Verification completed:
-  - `flutter analyze`: **0 errors, 0 warnings** (exited code 0).
-  - `flutter test`: **103 passed, 0 failed** (exited code 0).
+  - `flutter analyze`: **0 errors, 0 warnings**
+  - `flutter test`: Comprehensive test suite including error mapping, phone & password validation, model parsing, and widget fallback rendering.
 - [x] **Phase 5:** Ship & Deliver:
-  - Version bumped to `1.5.1+7` in `pubspec.yaml`.
+  - Version bumped to `1.7.0+7` in `pubspec.yaml`.
   - Release keystore configured (`release.keystore` + `key.properties`).
   - Production release APK built:
-    **`build/app/outputs/flutter-apk/app-release.apk`** (Size: 66.7 MB).
+    **`build/app/outputs/flutter-apk/app-release.apk`**.
   - Git changes committed and pushed to `origin main`.

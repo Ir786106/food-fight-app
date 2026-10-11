@@ -67,28 +67,27 @@ DROP POLICY IF EXISTS "food_images_insert_policy" ON storage.objects;
 DROP POLICY IF EXISTS "food_images_update_policy" ON storage.objects;
 DROP POLICY IF EXISTS "food_images_delete_policy" ON storage.objects;
 
--- 4. Policy: SELECT (Read access for everyone)
+-- 4. Policy: SELECT (Public Read access for everyone)
 CREATE POLICY "food_images_select_policy"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'food-images');
 
--- 5. Policy: INSERT (Upload access for bucket 'food-images')
--- Compatible with Firebase-authenticated client connecting via anon / publishable key
+-- 5. Policy: INSERT (Upload access for authenticated/admin flow)
 CREATE POLICY "food_images_insert_policy"
 ON storage.objects FOR INSERT
-TO public
+TO authenticated
 WITH CHECK (bucket_id = 'food-images');
 
--- 6. Policy: UPDATE (Update access for bucket 'food-images')
+-- 6. Policy: UPDATE (Update access for authenticated/admin flow)
 CREATE POLICY "food_images_update_policy"
 ON storage.objects FOR UPDATE
-TO public
+TO authenticated
 USING (bucket_id = 'food-images')
 WITH CHECK (bucket_id = 'food-images');
 
--- 7. Policy: DELETE (Delete access for bucket 'food-images')
+-- 7. Policy: DELETE (Delete access for authenticated/admin flow)
 CREATE POLICY "food_images_delete_policy"
 ON storage.objects FOR DELETE
-TO public
+TO authenticated
 USING (bucket_id = 'food-images');

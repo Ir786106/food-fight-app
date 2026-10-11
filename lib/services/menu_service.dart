@@ -52,6 +52,22 @@ class MenuService {
         return MenuItemModel.fromJson(data);
       }).toList();
 
+      if (items.isEmpty) {
+        // Fallback for alternate collection name 'menu_items'
+        Query altQuery = FirebaseFirestore.instance.collection('menu_items');
+        if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
+          altQuery = altQuery.where('categoryId', isEqualTo: categoryId);
+        }
+        final altSnapshot = await altQuery.get();
+        if (altSnapshot.docs.isNotEmpty) {
+          items = altSnapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            data['id'] = doc.id;
+            return MenuItemModel.fromJson(data);
+          }).toList();
+        }
+      }
+
       if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
         items = items.where((i) => i.branchId == null || i.branchId == branchId).toList();
       }
@@ -66,7 +82,11 @@ class MenuService {
   /// Get single menu item by ID
   static Future<MenuItemModel?> getMenuItem(String id) async {
     try {
-      final doc = await _collection.doc(id).get();
+      var doc = await _collection.doc(id).get();
+      if (!doc.exists || doc.data() == null) {
+        // Fallback to alternate collection name
+        doc = await FirebaseFirestore.instance.collection('menu_items').doc(id).get();
+      }
       if (!doc.exists || doc.data() == null) return null;
       final data = doc.data() as Map<String, dynamic>;
       data['id'] = doc.id;

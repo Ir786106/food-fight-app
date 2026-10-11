@@ -2,6 +2,33 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.7.0+7] — 2026-10-11
+
+### Production Audit, Release Signing & Resilience Hardening
+
+- **Android Permissions & Manifest (`AndroidManifest.xml`)**:
+  - Added `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, and `POST_NOTIFICATIONS` to `android/app/src/main/AndroidManifest.xml` ensuring network calls, image loading, location tracking, and push notifications work in release APK builds.
+- **Release Signing Automation (`build.gradle.kts`)**:
+  - Configured release signing config in `android/app/build.gradle.kts` with `key.properties` and keystore fallback.
+  - Kept sensitive keystores and properties strictly excluded from git.
+- **Image Architecture & Resiliency**:
+  - Replaced raw network images in chat and admin screens with `NetworkImageView` with image loading error diagnostics.
+  - Hardened `MenuService` to query both `menuItems` and legacy `menu_items` collections seamlessly with automatic fallback.
+  - Updated `supabase_storage_policies.sql` to require authenticated sessions for uploads, updates, and deletes while retaining public-read access.
+- **Authentication Resilience & Error Wrapping**:
+  - Wrapped `FirebaseAuthService.signIn`, `signUp`, and `signInWithGoogle` with 20-second timeouts, `AppLogger` real-error tracking, and exhaustive `AppException` translations (`permission-denied`, `network-request-failed`, `timeout`, `user-disabled`, data parse/type errors).
+  - Guaranteed loading state resets in `finally` blocks to eliminate hung UI loaders.
+- **Google Sign-In Hardening**:
+  - Configured Android `serverClientId` (Web Client ID), safe cancellation handling, and automated creation of `users/{uid}` with customer role satisfying Firestore security rules.
+- **Test Automation & Accessibility (Semantics & ValueKeys)**:
+  - Added explicit `ValueKey`s and `Semantics` labels across all authentication inputs, buttons, visibility toggles, and terms checkboxes in `LoginScreen` and `SignUpScreen`.
+  - Added `ValueKey`s to floating bottom navigation bar items (`tab_home`, `tab_orders`, `tab_cart`, `tab_chat`, `tab_profile`).
+- **Validation & Form Controls**:
+  - Added Pakistani phone number format validator in `ValidatorUtils` (`03xx` / `+923xx`, 11 digits).
+  - Added password strength validator.
+- **Testing & Verification**:
+  - Created `test/auth_error_and_model_parsing_test.dart` covering error translation, phone and password validation, model parsing null-safety, and image fallback rendering.
+
 ## [1.5.0+6] — 2026-10-10
 
 ### Major Feature Upgrades & Production Hardening

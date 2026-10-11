@@ -18,6 +18,9 @@ class CustomTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final int maxLines;
   final String? helperText;
+  final Key? fieldKey;
+  final Key? toggleKey;
+  final String? semanticsLabel;
 
   const CustomTextField({
     super.key,
@@ -35,6 +38,9 @@ class CustomTextField extends StatefulWidget {
     this.suffixIcon,
     this.maxLines = 1,
     this.helperText,
+    this.fieldKey,
+    this.toggleKey,
+    this.semanticsLabel,
   });
 
   @override
@@ -69,51 +75,57 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ),
           const SizedBox(height: 7),
         ],
-        TextFormField(
-          controller: widget.controller,
-          obscureText: widget.isPassword ? _obscure : false,
-          keyboardType: widget.keyboardType,
-          textInputAction: widget.textInputAction,
-          autofillHints: widget.autofillHints,
-          validator: widget.validator,
-          onChanged: widget.onChanged,
-          readOnly: widget.readOnly,
-          maxLines: widget.maxLines,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-          ),
-          decoration: InputDecoration(
-            hintText: widget.hint,
-            helperText: widget.helperText,
-            helperStyle: GoogleFonts.inter(
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-              fontSize: 12,
-            ),
-            hintStyle: GoogleFonts.inter(
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+        Semantics(
+          label: widget.semanticsLabel ?? (widget.label.isNotEmpty ? widget.label : widget.hint),
+          textField: true,
+          child: TextFormField(
+            key: widget.fieldKey,
+            controller: widget.controller,
+            obscureText: widget.isPassword ? _obscure : false,
+            keyboardType: widget.keyboardType,
+            textInputAction: widget.textInputAction,
+            autofillHints: widget.autofillHints,
+            validator: widget.validator,
+            onChanged: widget.onChanged,
+            readOnly: widget.readOnly,
+            maxLines: widget.maxLines,
+            style: GoogleFonts.inter(
               fontSize: 14,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
-            filled: true,
-            fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-            prefixIcon: widget.icon != null
-                ? Icon(
-                    widget.icon,
-                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                    size: 20,
-                  )
-                : null,
-            suffixIcon: widget.isPassword
-                ? IconButton(
-                    icon: Icon(
-                      _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              helperText: widget.helperText,
+              helperStyle: GoogleFonts.inter(
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                fontSize: 12,
+              ),
+              hintStyle: GoogleFonts.inter(
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                fontSize: 14,
+              ),
+              filled: true,
+              fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+              prefixIcon: widget.icon != null
+                  ? Icon(
+                      widget.icon,
+                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                       size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  )
-                : widget.suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    )
+                  : null,
+              suffixIcon: widget.isPassword
+                  ? IconButton(
+                      key: widget.toggleKey ?? const ValueKey('password_visibility_toggle'),
+                      icon: Icon(
+                        _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        size: 20,
+                      ),
+                      tooltip: _obscure ? 'Show password' : 'Hide password',
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    )
+                  : widget.suffixIcon,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimens.radius14),
               borderSide: BorderSide(
@@ -150,7 +162,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
           ),
         ),
-      ],
-    );
+      ),
+    ],
+  );
   }
 }

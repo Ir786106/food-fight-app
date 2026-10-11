@@ -5,12 +5,14 @@ class GoogleSignInButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final String text;
+  final String? semanticsLabel;
 
   const GoogleSignInButton({
     super.key,
     required this.onPressed,
     this.isLoading = false,
     this.text = 'Continue with Google',
+    this.semanticsLabel,
   });
 
   @override
@@ -19,21 +21,25 @@ class GoogleSignInButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: isDark ? colorScheme.surface : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.7 : 0.9),
-          width: 1.2,
+    return Semantics(
+      button: true,
+      label: semanticsLabel ?? text,
+      enabled: onPressed != null && !isLoading,
+      child: Material(
+        color: isDark ? colorScheme.surface : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.7 : 0.9),
+            width: 1.2,
+          ),
         ),
-      ),
-      elevation: isDark ? 0 : 1,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isLoading ? null : onPressed,
-        borderRadius: BorderRadius.circular(16),
+        elevation: isDark ? 0 : 1,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(16),
         child: Container(
           height: 54,
           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -66,6 +72,7 @@ class GoogleSignInButton extends StatelessWidget {
                 ),
         ),
       ),
+    ),
     );
   }
 }

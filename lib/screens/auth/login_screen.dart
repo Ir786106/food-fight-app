@@ -222,6 +222,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   // Email
                                   CustomTextField(
+                                    key: const ValueKey('email_input_field'),
+                                    fieldKey: const ValueKey('email_field'),
+                                    semanticsLabel: 'Email Address Field',
                                     controller: _emailController,
                                     label: 'Email Address',
                                     hint: 'name@example.com',
@@ -237,6 +240,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   // Password
                                   CustomTextField(
+                                    key: const ValueKey('password_input_field'),
+                                    fieldKey: const ValueKey('password_field'),
+                                    toggleKey: const ValueKey('password_visibility_toggle'),
+                                    semanticsLabel: 'Password Field',
                                     controller: _passwordController,
                                     label: 'Password',
                                     hint: '••••••••',
@@ -253,6 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Align(
                                     alignment: Alignment.centerRight,
                                     child: TextButton(
+                                      key: const ValueKey('forgot_password_button'),
                                       onPressed: () => Navigator.of(context).pushNamed('/forgot-password'),
                                       style: TextButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
@@ -271,6 +279,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   // Primary Log In Button
                                   CustomButton(
+                                    key: const ValueKey('login_button'),
+                                    semanticsLabel: 'Log In Button',
                                     text: 'Log In',
                                     isLoading: _isLoading,
                                     onPressed: _handleLogin,
@@ -309,6 +319,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   // Google Sign-In Button
                                   GoogleSignInButton(
+                                    key: const ValueKey('google_signin_button'),
+                                    semanticsLabel: 'Continue with Google Button',
                                     isLoading: _isGoogleLoading,
                                     onPressed: _handleGoogleSignIn,
                                   ),
@@ -328,6 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         GestureDetector(
+                                          key: const ValueKey('signup_button'),
                                           behavior: HitTestBehavior.opaque,
                                           onTap: () => Navigator.of(context).pushNamed('/signup'),
                                           child: const Padding(

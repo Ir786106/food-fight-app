@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -42,14 +43,16 @@ class FirebaseAuthService implements IAuthService {
     required String password,
   }) async {
     try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
+      final credential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password,
+          )
+          .timeout(const Duration(seconds: 20));
 
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
-        throw AppException(message: 'User creation failed');
+        throw AppException(message: 'User creation failed: no credential returned');
       }
 
       await firebaseUser.updateDisplayName(name);
@@ -66,12 +69,19 @@ class FirebaseAuthService implements IAuthService {
       );
 
       // Write user document to Cloud Firestore
-      await _usersCollection.doc(user.id).set(user.toJson());
+      await _usersCollection
+          .doc(user.id)
+          .set(user.toJson())
+          .timeout(const Duration(seconds: 15));
       AppLogger.info('User signed up and saved to Firestore: ${user.email}', tag: 'FirebaseAuthService');
 
       // Credit welcome tokens from global_settings
       try {
-        final settingsDoc = await _firestore.collection('settings').doc('global_settings').get();
+        final settingsDoc = await _firestore
+            .collection('settings')
+            .doc('global_settings')
+            .get()
+            .timeout(const Duration(seconds: 5));
         final bonus = (settingsDoc.data()?['welcomeTokens'] as num? ?? 50).toInt();
         final loyalty = LoyaltyService(firestore: _firestore);
         await loyalty.creditWelcomeBonus(user.id, amount: bonus);
@@ -80,12 +90,26 @@ class FirebaseAuthService implements IAuthService {
       }
 
       return user;
+    } on TimeoutException catch (e) {
+      AppLogger.error('Sign up timed out: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Registration timed out. Please check your internet connection.');
     } on FirebaseAuthException catch (e) {
       AppLogger.error('Sign up failed: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
       throw _getFirebaseException(e);
+    } on FirebaseException catch (e) {
+      AppLogger.error('Firestore/Firebase error during sign up: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
+      if (e.code == 'permission-denied') {
+        throw AppException(message: 'Permission denied creating account profile. Please contact support.');
+      }
+      throw AppException(message: e.message ?? 'Firebase service error during registration.');
+    } on AppException {
+      rethrow;
+    } on TypeError catch (e) {
+      AppLogger.error('Type error during sign up: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Invalid user document format during registration.');
     } catch (e) {
       AppLogger.error('Sign up error: $e', tag: 'FirebaseAuthService');
-      throw AppException(message: e.toString());
+      throw AppException(message: 'Registration encountered an issue: ${e.toString()}');
     }
   }
 
@@ -95,10 +119,12 @@ class FirebaseAuthService implements IAuthService {
     required String password,
   }) async {
     try {
-      final credential = await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
+      final credential = await _auth
+          .signInWithEmailAndPassword(
+            email: email.trim(),
+            password: password,
+          )
+          .timeout(const Duration(seconds: 20));
 
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
@@ -117,12 +143,26 @@ class FirebaseAuthService implements IAuthService {
 
       AppLogger.info('User signed in: ${user.email} (Role: ${user.role})', tag: 'FirebaseAuthService');
       return user;
+    } on TimeoutException catch (e) {
+      AppLogger.error('Sign in timed out: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Sign in timed out. Please check your internet connection.');
     } on FirebaseAuthException catch (e) {
       AppLogger.error('Sign in failed: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
       throw _getFirebaseException(e);
+    } on FirebaseException catch (e) {
+      AppLogger.error('Firestore/Firebase error during sign in: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
+      if (e.code == 'permission-denied') {
+        throw AppException(message: 'Permission denied accessing account profile. Please contact support.');
+      }
+      throw AppException(message: e.message ?? 'Firebase service error during sign in.');
+    } on AppException {
+      rethrow;
+    } on TypeError catch (e) {
+      AppLogger.error('Type error during sign in: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Invalid user document format. Please contact support.');
     } catch (e) {
       AppLogger.error('Sign in error: $e', tag: 'FirebaseAuthService');
-      rethrow;
+      throw AppException(message: 'An error occurred during login: ${e.toString()}');
     }
   }
 
@@ -162,7 +202,9 @@ class FirebaseAuthService implements IAuthService {
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth
+          .signInWithCredential(credential)
+          .timeout(const Duration(seconds: 20));
       final User? firebaseUser = userCredential.user;
       if (firebaseUser == null) {
         throw AppException(message: 'Google authentication failed: no user returned');
@@ -184,13 +226,26 @@ class FirebaseAuthService implements IAuthService {
 
       AppLogger.info('User authenticated with Google: ${user.email} (Role: ${user.role})', tag: 'FirebaseAuthService');
       return user;
+    } on TimeoutException catch (e) {
+      AppLogger.error('Google sign-in timed out: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Google sign-in timed out. Please check your internet connection.');
     } on FirebaseAuthException catch (e) {
       AppLogger.error('Firebase Google sign-in failed: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
       throw _getFirebaseException(e);
+    } on FirebaseException catch (e) {
+      AppLogger.error('Firestore/Firebase error during Google sign-in: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
+      if (e.code == 'permission-denied') {
+        throw AppException(message: 'Permission denied accessing account profile. Please contact support.');
+      }
+      throw AppException(message: e.message ?? 'Firebase service error during Google sign-in.');
+    } on AppException {
+      rethrow;
+    } on TypeError catch (e) {
+      AppLogger.error('Type error parsing Google user profile: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Invalid user document format. Please contact support.');
     } catch (e) {
-      if (e is AppException) rethrow;
       AppLogger.error('Google sign-in error: $e', tag: 'FirebaseAuthService');
-      throw AppException(message: 'Failed to complete Google sign-in. Please try again.');
+      throw AppException(message: 'Failed to complete Google sign-in: ${e.toString()}');
     }
   }
 

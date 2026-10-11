@@ -173,23 +173,32 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     }
   }
 
-  String _parseError(dynamic e, String fallback) {
+  static String parseError(dynamic e, [String fallback = 'An unexpected error occurred. Please try again.']) {
+    if (e == null) return fallback;
     if (e is AppException) return e.message;
     final str = e.toString().toLowerCase();
     if (str.contains('permission-denied')) {
-      return 'Access denied by security rules. Please try again or contact support.';
+      return "You don't have permission to perform this action.";
     }
-    if (str.contains('network') || str.contains('unavailable') || str.contains('socketexception') || str.contains('timed out')) {
-      return 'Network connection issue. Please check your internet connection.';
+    if (str.contains('timeout') || str.contains('timed out')) {
+      return 'Request timed out after 20 seconds. Please check your internet connection.';
+    }
+    if (str.contains('network') || str.contains('unavailable') || str.contains('socketexception') || str.contains('network-request-failed')) {
+      return 'Network connection failed. Please check your internet connection.';
     }
     if (str.contains('user-disabled')) {
-      return 'Your account has been deactivated. Please contact support.';
+      return 'This user account has been disabled. Please contact support.';
     }
     if (str.contains('invalid-credential') || str.contains('wrong-password') || str.contains('user-not-found')) {
       return 'Incorrect email or password. Please try again.';
     }
+    if (str.contains('typeerror') || str.contains('format') || str.contains('subtype')) {
+      return 'Data parsing error occurred. Please contact support.';
+    }
     return fallback;
   }
+
+  String _parseError(dynamic e, String fallback) => parseError(e, fallback);
 
   void _setLoading(bool value) {
     _isLoading = value;
