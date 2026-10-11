@@ -12,7 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   provider: ^6.1.2
   shared_preferences: ^2.2.3
-  google_fonts: ^6.2.1
+  google_fonts: ^8.2.1
   # Firebase
   firebase_core: ^3.10.0
   firebase_auth: ^5.3.0
