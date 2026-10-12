@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -52,19 +53,50 @@ class UpdateCheckResponse {
   });
 }
 
+enum ApkInstallStatus {
+  ready,
+  signatureMismatch,
+  versionDowngrade,
+  insufficientStorage,
+  unknownSourcesBlocked,
+  parseError,
+  error,
+}
+
+class ApkPreInstallResult {
+  final ApkInstallStatus status;
+  final String errorCode;
+  final String englishMessage;
+  final String romanUrduMessage;
+  final String releasePageUrl;
+
+  const ApkPreInstallResult({
+    required this.status,
+    required this.errorCode,
+    required this.englishMessage,
+    required this.romanUrduMessage,
+    this.releasePageUrl = 'https://github.com/Ir786106/food-fight-app/releases/latest',
+  });
+
+  bool get canInstall => status == ApkInstallStatus.ready;
+}
+
 class AppUpdateService {
   static final AppUpdateService _instance = AppUpdateService._();
   factory AppUpdateService() => _instance;
   AppUpdateService._();
 
   final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
+    connectTimeout: const Duration(seconds: 8),
     receiveTimeout: const Duration(seconds: 30),
     headers: {
       'Accept': 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
   ));
+
+  static const MethodChannel _verifierChannel =
+      MethodChannel('com.example.food_fight/package_verifier');
 
   CancelToken? _downloadCancelToken;
   String? _tempApkPath;
@@ -227,9 +259,116 @@ class AppUpdateService {
     }
   }
 
+  Future<ApkPreInstallResult> verifyApkBeforeInstall() async {
+    if (_tempApkPath == null) {
+      return const ApkPreInstallResult(
+        status: ApkInstallStatus.error,
+        errorCode: 'FILE_NOT_FOUND',
+        englishMessage: 'No downloaded APK file found to install.',
+        romanUrduMessage: 'Install karne ke liye koi downloaded file nahi mili.',
+      );
+    }
+
+    if (!Platform.isAndroid) {
+      return const ApkPreInstallResult(
+        status: ApkInstallStatus.ready,
+        errorCode: 'OK',
+        englishMessage: 'Ready to install.',
+        romanUrduMessage: 'Install ke liye tayyar.',
+      );
+    }
+
+    try {
+      final res = await _verifierChannel.invokeMapMethod<String, dynamic>(
+        'verifyApk',
+        {'apkPath': _tempApkPath},
+      );
+
+      final errorCode = res?['errorCode'] as String? ?? 'OK';
+
+      switch (errorCode) {
+        case 'SIGNATURE_MISMATCH':
+          return const ApkPreInstallResult(
+            status: ApkInstallStatus.signatureMismatch,
+            errorCode: 'SIGNATURE_MISMATCH',
+            englishMessage:
+                'This update was signed with a different key. Uninstall the app once and install again.',
+            romanUrduMessage:
+                'Yeh update mukhtalif key se sign ki gayi hai. Barah-e-karam pehle purani app uninstall karein, phir naya version install karein.',
+          );
+        case 'VERSION_DOWNGRADE':
+          return const ApkPreInstallResult(
+            status: ApkInstallStatus.versionDowngrade,
+            errorCode: 'VERSION_DOWNGRADE',
+            englishMessage:
+                'A newer or identical version is already installed on your device.',
+            romanUrduMessage:
+                'Aap ke phone mein pehle se naya ya yahi version mojood hai.',
+          );
+        case 'INSUFFICIENT_STORAGE':
+          return const ApkPreInstallResult(
+            status: ApkInstallStatus.insufficientStorage,
+            errorCode: 'INSUFFICIENT_STORAGE',
+            englishMessage:
+                'Insufficient storage space. Please free up at least 150MB of internal storage.',
+            romanUrduMessage:
+                'Phone ki memory kam hai. Barah-e-karam thori storage khali karein.',
+          );
+        case 'UNKNOWN_SOURCES_BLOCKED':
+          return const ApkPreInstallResult(
+            status: ApkInstallStatus.unknownSourcesBlocked,
+            errorCode: 'UNKNOWN_SOURCES_BLOCKED',
+            englishMessage:
+                'Installation from unknown sources is blocked. Please enable permission in Settings.',
+            romanUrduMessage:
+                'Unknown sources se install band hai. Settings mein ja kar ijazat on karein.',
+          );
+        case 'PARSE_ERROR':
+          return const ApkPreInstallResult(
+            status: ApkInstallStatus.parseError,
+            errorCode: 'PARSE_ERROR',
+            englishMessage:
+                'Downloaded APK is corrupted or incomplete. Please download again.',
+            romanUrduMessage:
+                'Downloaded APK kharab ya na-mukammal hai. Dobara download karein.',
+          );
+        default:
+          return const ApkPreInstallResult(
+            status: ApkInstallStatus.ready,
+            errorCode: 'OK',
+            englishMessage: 'APK verified successfully.',
+            romanUrduMessage: 'APK ki tasdeeq ho gayi hai.',
+          );
+      }
+    } catch (e) {
+      AppLogger.warn('Pre-install verification notice ($e), allowing system installer to proceed', tag: 'AppUpdateService');
+      return const ApkPreInstallResult(
+        status: ApkInstallStatus.ready,
+        errorCode: 'OK',
+        englishMessage: 'Ready to install.',
+        romanUrduMessage: 'Install ke liye tayyar.',
+      );
+    }
+  }
+
+  Future<void> openUnknownSourcesSettings() async {
+    try {
+      if (Platform.isAndroid) {
+        await _verifierChannel.invokeMethod('openInstallUnknownAppsSettings');
+      }
+    } catch (e) {
+      AppLogger.warn('Failed to open unknown sources settings: $e', tag: 'AppUpdateService');
+    }
+  }
+
   Future<bool> installApk() async {
     if (_tempApkPath == null) return false;
     try {
+      final precheck = await verifyApkBeforeInstall();
+      if (!precheck.canInstall) {
+        AppLogger.warn('Install aborted due to pre-check: ${precheck.errorCode}', tag: 'AppUpdateService');
+        return false;
+      }
       final result = await OpenFilex.open(_tempApkPath!, type: 'application/vnd.android.package-archive');
       Future.delayed(const Duration(seconds: 90), _cleanupTempFile);
       return result.type == ResultType.done;

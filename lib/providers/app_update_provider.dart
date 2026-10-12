@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +34,7 @@ class AppUpdateProvider extends ChangeNotifier {
   double _downloadProgress = 0.0;
   String? _errorMessage;
   bool _installReady = false;
+  ApkPreInstallResult? _precheckResult;
 
   ReleaseInfo? get availableRelease => _availableRelease;
   ForceUpdateConfig? get forceConfig => _forceConfig;
@@ -42,6 +43,7 @@ class AppUpdateProvider extends ChangeNotifier {
   double get downloadProgress => _downloadProgress;
   String? get errorMessage => _errorMessage;
   bool get installReady => _installReady;
+  ApkPreInstallResult? get precheckResult => _precheckResult;
   bool get hasUpdate => _availableRelease != null;
   bool get isForceUpdate => _forceConfig?.forceUpdate == true && hasUpdate;
 
@@ -161,7 +163,19 @@ class AppUpdateProvider extends ChangeNotifier {
     );
   }
 
-  Future<bool> installApk() => _service.installApk();
+  Future<bool> installApk() async {
+    _precheckResult = await _service.verifyApkBeforeInstall();
+    if (!_precheckResult!.canInstall) {
+      _errorMessage = '${_precheckResult!.englishMessage}\n\n${_precheckResult!.romanUrduMessage}';
+      notifyListeners();
+      return false;
+    }
+    return await _service.installApk();
+  }
+
+  Future<void> openUnknownSourcesSettings() async {
+    await _service.openUnknownSourcesSettings();
+  }
 
   void cancelDownload() {
     _service.cancelDownload();

@@ -12,15 +12,22 @@ class CategoryProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _errorMessage;
   StreamSubscription<List<CategoryModel>>? _subscription;
 
-  List<CategoryModel> get categories => List.unmodifiable(_categories);
-  List<CategoryModel> get activeCategories =>
-      List.unmodifiable(_categories.where((c) => c.isActive).toList());
+  List<CategoryModel> get categories {
+    if (_categories.isEmpty && !_isLoading && _subscription == null) {
+      watchCategories();
+    }
+    return List.unmodifiable(_categories);
+  }
+  List<CategoryModel> get activeCategories {
+    if (_categories.isEmpty && !_isLoading && _subscription == null) {
+      watchCategories();
+    }
+    return List.unmodifiable(_categories.where((c) => c.isActive).toList());
+  }
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  CategoryProvider() {
-    init();
-  }
+  CategoryProvider();
 
   void init() {
     watchCategories();

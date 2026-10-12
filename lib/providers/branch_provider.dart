@@ -18,9 +18,20 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   BranchSortField _sortField = BranchSortField.revenue;
   bool _sortAscending = false;
 
-  List<BranchModel> get branches => List.unmodifiable(_branches);
-  List<BranchModel> get activeBranches =>
-      _branches.where((b) => b.isActive).toList();
+  bool _initialized = false;
+
+  List<BranchModel> get branches {
+    if (!_initialized && _branchesSub == null) {
+      ensureInitialized();
+    }
+    return List.unmodifiable(_branches);
+  }
+  List<BranchModel> get activeBranches {
+    if (!_initialized && _branchesSub == null) {
+      ensureInitialized();
+    }
+    return _branches.where((b) => b.isActive).toList();
+  }
 
   BranchModel? get selectedBranch => _selectedBranch ?? (_branches.isNotEmpty ? _branches.first : null);
   bool get isLoading => _isLoading;
@@ -28,8 +39,12 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   BranchSortField get sortField => _sortField;
   bool get sortAscending => _sortAscending;
 
-  BranchProvider() {
-    init();
+  BranchProvider();
+
+  Future<void> ensureInitialized() async {
+    if (_initialized) return;
+    _initialized = true;
+    await init();
   }
 
   /// Initialize real-time listener and seed default branches if necessary

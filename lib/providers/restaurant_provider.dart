@@ -10,11 +10,21 @@ class RestaurantProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _errorMessage;
   StreamSubscription<List<RestaurantModel>>? _sub;
 
-  List<RestaurantModel> get restaurants => List.unmodifiable(_restaurants);
+  List<RestaurantModel> get restaurants {
+    if (!_initialized && _sub == null) {
+      ensureInitialized();
+    }
+    return List.unmodifiable(_restaurants);
+  }
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool _initialized = false;
 
-  RestaurantProvider() {
+  RestaurantProvider();
+
+  void ensureInitialized() {
+    if (_initialized) return;
+    _initialized = true;
     _init();
   }
 

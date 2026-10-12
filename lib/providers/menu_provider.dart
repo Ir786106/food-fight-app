@@ -58,9 +58,7 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
     return items.map((item) => FoodModel.fromMenuItem(item)).toList();
   }
 
-  MenuProvider() {
-    init();
-  }
+  MenuProvider();
 
   void init() {
     watchMenuItems();

@@ -22,9 +22,7 @@ class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
 
   String? get currentBranchId => _currentBranchId;
 
-  DeliveryAreaProvider() {
-    init();
-  }
+  DeliveryAreaProvider();
 
   void init() {
     watchAreas();

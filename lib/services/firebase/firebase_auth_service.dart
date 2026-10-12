@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/interfaces/auth_service_interface.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
@@ -19,13 +20,27 @@ class FirebaseAuthService implements IAuthService {
       _firestore.collection(FirestoreCollections.users);
 
   @override
-  Future<UserModel?> getCurrentUser() async {
+  Future<UserModel?> getCurrentUser({bool preferCache = true}) async {
     try {
       final firebaseUser = _auth.currentUser;
       if (firebaseUser == null) return null;
-      return await _getUserData(firebaseUser);
+      return await _getUserData(firebaseUser, preferCache: preferCache);
     } catch (e) {
       AppLogger.error('Error getting current user: $e', tag: 'FirebaseAuthService');
+      final firebaseUser = _auth.currentUser;
+      if (firebaseUser != null) {
+        final cachedRole = await getCachedUserRole(firebaseUser.uid) ?? 'customer';
+        return UserModel(
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
+          email: firebaseUser.email ?? '',
+          phone: firebaseUser.phoneNumber ?? '',
+          role: cachedRole,
+          isActive: true,
+          createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
       return null;
     }
   }
@@ -181,7 +196,17 @@ class FirebaseAuthService implements IAuthService {
         googleUser = await googleSignIn.signIn();
       } catch (e) {
         AppLogger.error('Google sign-in client error: $e', tag: 'FirebaseAuthService');
-        throw AppException(message: 'Google Sign-In was cancelled or encountered an issue. Please try again.');
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('service_missing') ||
+            errStr.contains('service_version_update_required') ||
+            errStr.contains('service_disabled') ||
+            errStr.contains('api_unavailable') ||
+            errStr.contains('12500')) {
+          throw AppException(
+            message: 'Google Play services is unavailable or outdated on this device. Please sign in with Email & Password or update Google Play services.',
+          );
+        }
+        throw AppException(message: 'Google Sign-In was cancelled or encountered an issue. Please sign in with Email & Password.');
       }
 
       if (googleUser == null) {
@@ -372,63 +397,107 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
-  /// Helper method to get user data from Firestore or create initial record
-  Future<UserModel> _getUserData(User firebaseUser) async {
+  /// Cache user role locally in SharedPreferences for instantaneous offline routing
+  static Future<void> cacheRoleLocally(String uid, String role) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ff_cached_role_$uid', role);
+      await prefs.setString('ff_last_active_uid', uid);
+    } catch (_) {}
+  }
+
+  /// Retrieve cached user role from SharedPreferences
+  static Future<String?> getCachedUserRole(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('ff_cached_role_$uid');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Helper method to get user data from Firestore cache/network or create fallback record
+  Future<UserModel> _getUserData(User firebaseUser, {bool preferCache = true}) async {
+    // 1. Try local Firestore cache first for instant (<10ms) frame rendering
+    if (preferCache) {
+      try {
+        final cacheDoc = await _usersCollection
+            .doc(firebaseUser.uid)
+            .get(const GetOptions(source: Source.cache));
+
+        if (cacheDoc.exists && cacheDoc.data() != null) {
+          final data = cacheDoc.data() as Map<String, dynamic>;
+          final rawRole = data['role']?.toString().trim();
+          if (rawRole == null || rawRole.isEmpty) {
+            data['role'] = 'customer';
+          }
+          final cachedUser = UserModel.fromJson(data);
+          unawaited(cacheRoleLocally(firebaseUser.uid, cachedUser.role));
+          // Refresh asynchronously in background without blocking startup
+          unawaited(_refreshUserDoc(firebaseUser.uid));
+          return cachedUser;
+        }
+      } catch (_) {
+        // Cache miss or local database not populated yet, proceed to network
+      }
+    }
+
+    // 2. Fetch from network with short 3s timeout
     try {
       final doc = await _usersCollection
           .doc(firebaseUser.uid)
           .get()
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 3));
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
-        // Ensure role is non-empty string
         final rawRole = data['role']?.toString().trim();
         if (rawRole == null || rawRole.isEmpty) {
           data['role'] = 'customer';
         }
-        return UserModel.fromJson(data);
+        final user = UserModel.fromJson(data);
+        unawaited(cacheRoleLocally(firebaseUser.uid, user.role));
+        return user;
       }
     } catch (e) {
-      AppLogger.warn('Firestore user fetch timed out or failed ($e), proceeding with fallback', tag: 'FirebaseAuthService');
+      AppLogger.warn('Firestore user fetch timed out or failed ($e), proceeding with cached fallback', tag: 'FirebaseAuthService');
     }
 
-    // Default user record if not in Firestore yet
+    final fallbackRole = await getCachedUserRole(firebaseUser.uid) ?? 'customer';
+
+    // 3. Fallback user record (never treat authenticated user as logged out!)
     final newUser = UserModel(
       id: firebaseUser.uid,
       name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
       email: firebaseUser.email ?? '',
-      phone: '',
-      role: 'customer',
+      phone: firebaseUser.phoneNumber ?? '',
+      role: fallbackRole,
       isActive: true,
       createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
+    // Save initial record in background if missing
     try {
-      await _usersCollection
+      unawaited(_usersCollection
           .doc(newUser.id)
           .set(newUser.toJson(), SetOptions(merge: true))
-          .timeout(const Duration(seconds: 8));
-    } catch (e) {
-      AppLogger.warn('Could not write initial user doc to Firestore: $e', tag: 'FirebaseAuthService');
-    }
-
-    // Credit welcome tokens on initial account creation if not yet credited
-    try {
-      final settingsDoc = await _firestore
-          .collection('settings')
-          .doc('global_settings')
-          .get()
-          .timeout(const Duration(seconds: 5));
-      final bonus = (settingsDoc.data()?['welcomeTokens'] as num? ?? 50).toInt();
-      final loyalty = LoyaltyService(firestore: _firestore);
-      await loyalty.creditWelcomeBonus(newUser.id, amount: bonus);
-    } catch (e) {
-      AppLogger.warn('Could not credit welcome bonus for initial user record: $e', tag: 'FirebaseAuthService');
-    }
+          .timeout(const Duration(seconds: 5))
+          .catchError((_) {}));
+    } catch (_) {}
 
     return newUser;
+  }
+
+  Future<void> _refreshUserDoc(String uid) async {
+    try {
+      final doc = await _usersCollection.doc(uid).get(const GetOptions(source: Source.server));
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        final role = data['role']?.toString().trim() ?? 'customer';
+        await cacheRoleLocally(uid, role);
+      }
+    } catch (_) {}
   }
 
   AppException _getFirebaseException(FirebaseAuthException e) {

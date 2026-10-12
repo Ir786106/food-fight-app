@@ -23,20 +23,22 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
   bool get isCustomer => _currentUser?.isCustomer ?? false;
   bool get isRider => _currentUser?.isRider ?? false;
 
-  /// Initialize auth state from Firebase on app launch
-  Future<void> init() async {
+  /// Initialize auth state from Firebase on app launch with fast cache preference
+  Future<void> init({bool preferCache = true}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      _currentUser = await _authService.getCurrentUser();
+      _currentUser = await _authService.getCurrentUser(preferCache: preferCache);
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
       }
       AppLogger.info('Auth initialized: ${_currentUser?.email} (${_currentUser?.role})', tag: 'AuthProvider');
     } catch (e) {
-      _currentUser = null;
       AppLogger.error('Auth initialization error: $e', tag: 'AuthProvider');
+      try {
+        _currentUser = await _authService.getCurrentUser(preferCache: true);
+      } catch (_) {}
     } finally {
       _isLoading = false;
       notifyListeners();

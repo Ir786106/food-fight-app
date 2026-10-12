@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'core/constants/app_constants.dart';
@@ -35,48 +34,35 @@ import 'providers/review_provider.dart';
 import 'providers/option_template_provider.dart';
 import 'providers/app_update_provider.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'core/config/supabase_config.dart';
+import 'dart:async';
+import 'core/bootstrap/app_bootstrap.dart';
+import 'core/metrics/app_startup_metrics.dart';
+import 'core/utils/logger.dart';
 import 'routes/app_routes.dart';
 import 'screens/common/not_found_screen.dart';
-import 'services/fcm_service.dart';
 
 void main() async {
+  AppStartupMetrics.start();
+  AppLogger.info('[PERF] main() started (+0ms)', tag: 'Startup');
+
   WidgetsFlutterBinding.ensureInitialized();
+  AppLogger.info('[PERF] WidgetsFlutterBinding initialized (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
 
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    // Activate App Check (Play Integrity for release, debug provider for debug)
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: const bool.fromEnvironment('dart.vm.product')
-          ? AndroidProvider.playIntegrity
-          : AndroidProvider.debug,
-    );
+    AppLogger.info('[PERF] Firebase.initializeApp finished (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
   } catch (e) {
-    debugPrint('Firebase initialization warning: $e');
-  }
-
-  try {
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      publishableKey: SupabaseConfig.publishableKey,
-    );
-    debugPrint('Supabase Storage initialized successfully (Bucket: ${SupabaseConfig.bucketName})');
-  } catch (e) {
-    debugPrint('Supabase storage initialization warning: $e');
-  }
-
-  // Initialize Firebase Cloud Messaging (FCM)
-  try {
-    await FcmService.initialize();
-  } catch (e) {
-    debugPrint('FCM initialization warning: $e');
+    AppLogger.warn('Firebase initialization notice: $e', tag: 'Startup');
   }
 
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemeMode();
+  AppLogger.info('[PERF] ThemeProvider loaded (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+
+  // Trigger non-blocking background bootstrap concurrently with first frame
+  unawaited(AppBootstrap.startBackgroundBootstrap());
 
   runApp(FoodFightApp(themeProvider: themeProvider));
 }
@@ -88,6 +74,9 @@ class FoodFightApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLogger.info('[PERF] First Flutter frame rendered (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+    });
     final effectiveTheme = themeProvider ?? ThemeProvider();
 
     return MultiProvider(

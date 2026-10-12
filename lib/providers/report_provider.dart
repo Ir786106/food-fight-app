@@ -24,7 +24,10 @@ class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
   String? get currentBranchId => _currentBranchId;
 
   ReportProvider() {
-    setPreset('month');
+    final now = DateTime.now();
+    _startDate = DateTime(now.year, now.month, 1);
+    _endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    _selectedPreset = 'month';
   }
 
   void setBranchId(String? branchId) {

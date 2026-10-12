@@ -19,6 +19,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
     final textDark = SuperAdminTheme.getTextDark(context);
 
     final provider = context.watch<SuperAdminProvider>();
+    provider.ensureInitialized();
 
     return PopScope(
       canPop: false,

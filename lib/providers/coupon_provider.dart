@@ -22,9 +22,7 @@ class CouponProvider extends ChangeNotifier with SafeChangeNotifier {
 
   String? get currentBranchId => _currentBranchId;
 
-  CouponProvider() {
-    init();
-  }
+  CouponProvider();
 
   void init() {
     watchCoupons();

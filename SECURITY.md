@@ -26,9 +26,14 @@
 - **Route Guards**: `AdminRouteGuard`, `SuperAdminRouteGuard`, `RiderRouteGuard` in `app_routes.dart` block unauthorized navigation client-side (defense-in-depth; not the primary control).
 - **Login Throttling**: Firebase Auth enforces server-side lockout; client shows error messages without exposing counts.
 
-### B. App Check & Backend
-- **Firebase App Check**: Initialized in `main.dart` with `PlayIntegrity` for production, `DebugProvider` for debug builds.
-- **Manual Step Required**: Enable enforcement for Firestore, Storage, and Functions in the Firebase Console → App Check → Enforce.
+### B. App Check & Sideloaded Distribution Policy
+- **Firebase App Check**: Initialized in `AppBootstrap` strictly in the background with a 4s timeout (`PlayIntegrity` in release, `DebugProvider` in debug).
+- **Play Integrity with Sideloaded APKs**: Because production APKs are distributed directly via GitHub Releases (sideloaded) rather than downloaded through Google Play Store, Play Integrity attestations cannot verify Play licensing and will fail attestation checks.
+- **Firebase Console App Check Enforcement**:
+  - App Check enforcement **MUST REMAIN OFF (UNENFORCED)** in the Firebase Console for Firestore, Storage, Auth, and Cloud Functions while distributed outside Google Play Store.
+  - Enabling enforcement on sideloaded APKs will block legitimate user database queries.
+  - Backend integrity and database security are guaranteed by robust, server-evaluated `firestore.rules` (which validate user authentication, custom claims, and schema constraints) and `storage.rules`. Leaving App Check unenforced does not weaken authorization or data validation rules.
+- **Migration to Play Store**: If and when the app is published through Google Play Console, link the Play app to Firebase App Check and transition enforcement to ON after monitoring metrics.
 
 ### C. Supabase Storage
 - `supabase_storage_policies.sql` updated: anonymous `INSERT`/`UPDATE`/`DELETE` removed. Public `SELECT` only.
@@ -67,8 +72,8 @@
 ## Manual Steps Required in Consoles
 
 ### Firebase Console
-1. **Enable App Check enforcement** for Firestore, Storage, and Cloud Functions:
-   - Firebase Console → App Check → Firestore/Storage/Functions → Enable Enforcement
+1. **Keep App Check enforcement OFF (UNENFORCED)** for Firestore, Storage, and Cloud Functions while distributing via GitHub Releases / sideloading:
+   - Firebase Console → App Check → Firestore/Storage/Functions → Ensure enforcement is **Off / Unenforced** (monitoring mode only). Enabling enforcement on APKs distributed outside Google Play Store will reject legitimate client requests because Play Integrity cannot verify sideloaded builds. Server-side security remains strictly enforced through robust `firestore.rules` and `storage.rules`.
 2. **Restrict Firebase API key** by package name (`com.example.food_fight`) and SHA-1/SHA-256 fingerprints:
    - Google Cloud Console → APIs & Services → Credentials → Restrict key
 3. **Register SHA-1 and SHA-256 fingerprints** in Firebase project settings

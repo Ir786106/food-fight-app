@@ -20,9 +20,7 @@ class AuditLogProvider extends ChangeNotifier with SafeChangeNotifier {
   String get entityFilter => _entityFilter;
   String get searchQuery => _searchQuery;
 
-  AuditLogProvider() {
-    init();
-  }
+  AuditLogProvider();
 
   void init() {
     watchLogs();

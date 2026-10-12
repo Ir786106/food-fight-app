@@ -40,7 +40,13 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   int get cancelledOrders => _metrics['cancelledOrders'] as int? ?? 0;
   double get platformRevenue => (_metrics['platformRevenue'] as num? ?? 0.0).toDouble();
 
-  SuperAdminProvider() {
+  bool _initialized = false;
+
+  SuperAdminProvider();
+
+  void ensureInitialized() {
+    if (_initialized) return;
+    _initialized = true;
     init();
   }
 

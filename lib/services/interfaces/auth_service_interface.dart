@@ -2,8 +2,8 @@ import 'package:food_fight/models/user_model.dart';
 
 /// Interface for authentication service
 abstract class IAuthService {
-  /// Get current user
-  Future<UserModel?> getCurrentUser();
+  /// Get current user with optional cache preference for instant splash routing
+  Future<UserModel?> getCurrentUser({bool preferCache = true});
 
   /// Check if user is logged in
   Future<bool> isLoggedIn();

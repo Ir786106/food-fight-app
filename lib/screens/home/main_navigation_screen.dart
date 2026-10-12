@@ -13,6 +13,9 @@ import '../profile/profile_screen.dart';
 import '../../routes/app_routes.dart';
 import '../common/not_found_screen.dart';
 
+import '../../providers/app_update_provider.dart';
+import '../../widgets/app_update_bottom_sheet.dart';
+
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
@@ -24,6 +27,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   final List<int> _tabHistory = [0];
   bool _isNavVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Defer update check until 2.5s after the first routed screen is fully displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (!mounted) return;
+        final updateProv = context.read<AppUpdateProvider>();
+        updateProv.checkForUpdateThrottled().then((_) {
+          if (!mounted) return;
+          if (updateProv.hasUpdate) {
+            AppUpdateBottomSheet.show(context);
+          }
+        });
+      });
+    });
+  }
 
   // Per-tab navigator keys to preserve per-tab Navigator back-button behavior
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(

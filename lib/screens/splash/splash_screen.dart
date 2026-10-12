@@ -5,9 +5,16 @@ import '../../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import '../../services/firebase/firebase_auth_service.dart';
+import '../../core/utils/logger.dart';
+import '../../core/metrics/app_startup_metrics.dart';
+
 /// Professional restaurant splash screen displaying the official FoodFight logo.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final Stopwatch? startupStopwatch;
+
+  const SplashScreen({super.key, this.startupStopwatch});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -21,105 +28,154 @@ class _SplashScreenState extends State<SplashScreen>
   late final Animation<Offset> _logoSlide;
   late final Animation<double> _taglineFade;
   late final Animation<Offset> _taglineSlide;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
 
+    AppLogger.info('[PERF] SplashScreen initState reached', tag: 'Splash');
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 1400),
     );
 
     _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.50, curve: Curves.easeOut),
       ),
     );
 
-    _logoScale = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.65, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    _logoSlide = Tween<Offset>(
-      begin: const Offset(0, 0.12),
-      end: Offset.zero,
-    ).animate(
+    _logoScale = Tween<double>(begin: 0.88, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.60, curve: Curves.easeOutCubic),
       ),
     );
 
-    _taglineFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.50, 0.85, curve: Curves.easeIn),
-      ),
-    );
-
-    _taglineSlide = Tween<Offset>(
-      begin: const Offset(0, 0.25),
+    _logoSlide = Tween<Offset>(
+      begin: const Offset(0, 0.10),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.50, 0.85, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.55, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _taglineFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.40, 0.85, curve: Curves.easeIn),
+      ),
+    );
+
+    _taglineSlide = Tween<Offset>(
+      begin: const Offset(0, 0.20),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.40, 0.85, curve: Curves.easeOutCubic),
       ),
     );
 
     _controller.forward();
 
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _navigateNext();
-      }
+    // Start route resolution immediately in parallel with the 1.4s animation
+    _startParallelRouting();
+  }
+
+  void _startParallelRouting() {
+    final minAnimationDelay = Future.delayed(const Duration(milliseconds: 1400));
+    final routeResolution = _decideDestinationRoute();
+
+    Future.wait([minAnimationDelay, routeResolution])
+        .timeout(
+          const Duration(milliseconds: 3800),
+          onTimeout: () => [null, _fallbackOfflineRoute()],
+        )
+        .then((results) {
+      if (!mounted || _hasNavigated) return;
+      _hasNavigated = true;
+
+      final destination = (results.length > 1 && results[1] != null)
+          ? results[1] as String
+          : _fallbackOfflineRoute();
+
+      final elapsed = widget.startupStopwatch?.elapsedMilliseconds ?? AppStartupMetrics.elapsedMs;
+      AppLogger.info(
+        '[PERF] Cold start to routed screen: $destination at +${elapsed}ms',
+        tag: 'Performance',
+      );
+
+      Navigator.of(context).pushReplacementNamed(destination);
+    }).catchError((e) {
+      if (!mounted || _hasNavigated) return;
+      _hasNavigated = true;
+      final fallback = _fallbackOfflineRoute();
+      Navigator.of(context).pushReplacementNamed(fallback);
     });
   }
 
-  Future<void> _navigateNext() async {
+  Future<String> _decideDestinationRoute() async {
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (!mounted) return;
-      final auth = context.read<AuthProvider>();
-      await auth.init().timeout(
-        const Duration(seconds: 3),
-        onTimeout: () {
-          debugPrint('Auth initialization timed out, proceeding to login screen');
-        },
-      );
-      if (!mounted) return;
-      if (auth.isLoggedIn) {
-        if (auth.isSuperAdmin) {
-          Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
-        } else if (auth.isAdmin) {
-          Navigator.of(context).pushReplacementNamed('/admin/dashboard');
-        } else if (auth.isRider) {
-          Navigator.of(context).pushReplacementNamed('/rider/dashboard');
-        } else {
-          Navigator.of(context).pushReplacementNamed('/home');
-        }
-      } else {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser == null) {
         final prefs = await SharedPreferences.getInstance();
         final onboardingCompleted =
             prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
-        if (!mounted) return;
-        if (!onboardingCompleted) {
-          Navigator.of(context).pushReplacementNamed('/onboarding');
-        } else {
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
+        return onboardingCompleted ? '/login' : '/onboarding';
       }
+
+      // User has active session: load cached profile instantly
+      final auth = context.read<AuthProvider>();
+      await auth.init(preferCache: true).timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          AppLogger.warn('Auth cache init exceeded 2s, using direct cached role', tag: 'Splash');
+        },
+      );
+
+      if (auth.isLoggedIn && auth.currentUser != null) {
+        return _resolveRoleRoute(auth.currentUser!.role);
+      }
+
+      // If network is slow or offline, use local cached role
+      final cachedRole = await FirebaseAuthService.getCachedUserRole(firebaseUser.uid);
+      return _resolveRoleRoute(cachedRole ?? 'customer');
     } catch (e) {
-      debugPrint('Navigation error from splash: $e');
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
+      AppLogger.warn('Route determination notice: $e', tag: 'Splash');
+      return _fallbackOfflineRoute();
     }
+  }
+
+  String _resolveRoleRoute(String? role) {
+    final normalized = (role ?? '').trim().toLowerCase();
+    if (normalized == 'superadmin' || normalized == 'super_admin') {
+      return '/super-admin/dashboard';
+    } else if (normalized == 'admin') {
+      return '/admin/dashboard';
+    } else if (normalized == 'rider') {
+      return '/rider/dashboard';
+    } else {
+      return '/home';
+    }
+  }
+
+  String _fallbackOfflineRoute() {
+    try {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      // Logged-in user is NEVER sent to /login just because network is offline or slow!
+      if (firebaseUser != null) {
+        return '/home';
+      }
+    } catch (_) {
+      // In headless test environments where Firebase is not initialized
+    }
+    return '/login';
   }
 
   @override

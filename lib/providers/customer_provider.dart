@@ -21,9 +21,7 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
   String get searchQuery => _searchQuery;
   bool? get activeFilter => _activeFilter;
 
-  CustomerProvider() {
-    init();
-  }
+  CustomerProvider();
 
   void init() {
     watchCustomers();

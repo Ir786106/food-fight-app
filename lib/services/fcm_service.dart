@@ -13,8 +13,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class FcmService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
-  /// Initialize FCM permissions and stream listeners
-  static Future<void> initialize() async {
+  /// Initialize background and foreground listeners without requesting permissions
+  static Future<void> initializeListenersOnly() async {
+    try {
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        AppLogger.info('FCM Foreground message received: ${message.notification?.title}', tag: 'FCM');
+      });
+    } catch (e) {
+      AppLogger.warn('FCM listeners initialization warning: $e', tag: 'FCM');
+    }
+  }
+
+  /// Request notification permissions on-demand (e.g. during onboarding primer or after login)
+  static Future<NotificationSettings?> requestNotificationPermission() async {
     try {
       final settings = await _messaging.requestPermission(
         alert: true,
@@ -27,15 +40,16 @@ class FcmService {
       );
 
       AppLogger.info('FCM Notification permission status: ${settings.authorizationStatus}', tag: 'FCM');
-
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        AppLogger.info('FCM Foreground message received: ${message.notification?.title}', tag: 'FCM');
-      });
+      return settings;
     } catch (e) {
-      AppLogger.warn('FCM initialization warning: $e', tag: 'FCM');
+      AppLogger.warn('FCM permission request warning: $e', tag: 'FCM');
+      return null;
     }
+  }
+
+  /// Backward-compatible initialize method (now listeners only, non-blocking)
+  static Future<void> initialize() async {
+    await initializeListenersOnly();
   }
 
   /// Register FCM push token under the user document in Cloud Firestore
