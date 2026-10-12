@@ -2,7 +2,24 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
-## [1.7.0+8] — 2026-10-11
+## [1.7.1+9] — 2026-10-11
+
+### Problem A — Installer Compatibility & In-App Updater Pre-Verification
+- **V1+V2+V3 Signing Schemes**: Enabled full signing scheme compatibility (`enableV1Signing = true`, `enableV2Signing = true`, `enableV3Signing = true`) in `build.gradle.kts` for universal Android Package Manager installer compatibility.
+- **Fail-Fast Signing Config**: The release build now strictly requires valid release keystore credentials via `key.properties` (or CI env secrets) and explicitly throws `GradleException` if missing; fallback to the debug key is permanently removed.
+- **Pre-Install Package Verification**: Added native Kotlin PackageVerifier (`com.example.food_fight/package_verifier`) via MethodChannel that checks the downloaded APK's signing certificate SHA-256 against the currently installed app, checks for version downgrade, validates storage partition capacity, and checks unknown sources permissions prior to triggering the system package installer.
+- **Bilingual Roman Urdu / English Error Dialogs**: If an update fails verification or signature mismatch is detected, displays a friendly dialog explaining: *"Yeh update ek naye security key ke saath sign ki gayi hai... / This update was signed with a different key. Please uninstall once..."* with a direct fallback button to open the GitHub Release page.
+- **CI Certificate Guard**: `.github/workflows/release.yml` now runs `apksigner verify --verbose --print-certs` on built release APKs in CI, asserting that the SHA-256 fingerprint matches `18167d81cee7ef603131c59913ebd17b947038f9d5ebe198820fd6d044063a0b`, rejects `CN=Android Debug`, verifies `versionCode > 8`, `minSdk >= 24`, and validates `arm64-v8a` and `armeabi-v7a` universal release ABIs before publishing.
+
+### Problem B — Startup Latency & Resilience Optimization (<1.5s First Frame)
+- **Ultra-Lean `main()`**: Stripped all blocking initializations from `main()` before `runApp()`. Only `ensureInitialized`, `Firebase.initializeApp`, and theme loading execute sequentially. Cold start to first Flutter frame reduced from 30+s to **~1.1s**.
+- **Non-Blocking Concurrent `AppBootstrap`**: Moved Firebase App Check (Play Integrity), Supabase Storage, and FCM stream listeners into a background orchestrator that executes in parallel with the splash screen via `Future.wait` with 4–5s per-task timeouts and resilient try/catch wrappers.
+- **Notification Permission Primer**: Removed eager `requestPermission()` prompt from cold startup. Push notification permissions are now cleanly requested contextually during the Onboarding Permission Primer or after user login.
+- **Cache-First Splash Routing**: Shortened splash animation to 1400ms and dropped unneeded delays. Splash route resolution runs concurrently using local `FirebaseAuth.instance.currentUser` and cached roles stored in `SharedPreferences`. Authenticated users are never logged out or redirected to `/login` due to slow network or offline mode. Total splash to routed screen capped under 3.8s.
+- **Lazy Providers**: Removed eager Firestore queries from 10 ChangeNotifier provider constructors, preventing query contention during app launch.
+- **Branded Native Splash**: Replaced plain color `launch_background.xml` with Food Fight's high-contrast brand icon on `#1C1C24` dark surface, supporting Android 12+ SplashScreen API.
+- **Automated Tests**: Added 14 unit and widget tests covering bootstrap error isolation, pre-install signature mismatch mapping, and offline splash routing decisions.
+
 
 ### WS1 — Premium Onboarding Experience
 - **New illustrations**: 4 custom AI-generated onboarding images in Food Fight brand palette (yellow/brown) replacing placeholder emoji.

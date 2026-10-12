@@ -1,4 +1,4 @@
-﻿name: Release
+name: Release
 
 on:
   push:
@@ -69,26 +69,94 @@ jobs:
       - name: Rename APK
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          mv build/app/outputs/flutter-apk/app-release.apk food-fight-v${VERSION}.apk
+          mv build/app/outputs/flutter-apk/app-release.apk FoodFight_v${VERSION}_release.apk
+
+      - name: Verify APK Signing Certificate and Build Guard
+        env:
+          EXPECTED_CERT_SHA256: "18167d81cee7ef603131c59913ebd17b947038f9d5ebe198820fd6d044063a0b"
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          APK_PATH="FoodFight_v${VERSION}_release.apk"
+
+          echo "=== 1. Checking apksigner verification ==="
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n1)
+          echo "Using apksigner: $APKSIGNER"
+
+          VERIFY_OUTPUT=$($APKSIGNER verify --verbose --print-certs --min-sdk-version 23 "$APK_PATH")
+          echo "$VERIFY_OUTPUT"
+
+          if echo "$VERIFY_OUTPUT" | grep -qi "Android Debug"; then
+            echo "::error::Release APK was signed with an Android Debug key! Aborting."
+            exit 1
+          fi
+
+          ACTUAL_SHA256=$(echo "$VERIFY_OUTPUT" | grep -i "Signer #1 certificate SHA-256 digest:" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')
+          echo "Actual cert SHA-256:   $ACTUAL_SHA256"
+          echo "Expected cert SHA-256: $EXPECTED_CERT_SHA256"
+
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error::Signing certificate mismatch! Expected $EXPECTED_CERT_SHA256 but got $ACTUAL_SHA256"
+            exit 1
+          fi
+
+          if ! echo "$VERIFY_OUTPUT" | grep -q "Verified using v1 scheme (JAR signing): true"; then
+            echo "::error::V1 JAR signing scheme is NOT enabled!"
+            exit 1
+          fi
+
+          if ! echo "$VERIFY_OUTPUT" | grep -q "Verified using v2 scheme (APK Signature Scheme v2): true"; then
+            echo "::error::V2 signing scheme is NOT enabled!"
+            exit 1
+          fi
+
+          echo "=== 2. Checking APK Manifest and ABIs with aapt ==="
+          AAPT=$(find $ANDROID_HOME/build-tools -name aapt | sort -V | tail -n1)
+          BADGING=$($AAPT dump badging "$APK_PATH")
+
+          MIN_SDK=$(echo "$BADGING" | grep "sdkVersion:" | sed -E "s/.*sdkVersion:'([0-9]+)'.*/\1/")
+          echo "APK minSdk: $MIN_SDK"
+          if [ -z "$MIN_SDK" ] || [ "$MIN_SDK" -lt 24 ]; then
+            echo "::error::minSdk must be >= 24! Found: $MIN_SDK"
+            exit 1
+          fi
+
+          echo "Checking native ABIs (arm64-v8a and armeabi-v7a)..."
+          for abi in "arm64-v8a" "armeabi-v7a"; do
+            if ! echo "$BADGING" | grep -q "$abi"; then
+              echo "::error::Required ABI '$abi' is missing from APK!"
+              exit 1
+            fi
+            echo "  ✓ $abi present"
+          done
+
+          VERSION_CODE=$(echo "$BADGING" | grep -m1 "package:" | sed -E "s/.*versionCode='([0-9]+)'.*/\1/")
+          echo "APK versionCode: $VERSION_CODE"
+          if [ -z "$VERSION_CODE" ] || [ "$VERSION_CODE" -le 8 ]; then
+            echo "::error::versionCode ($VERSION_CODE) must be greater than previous release (8)!"
+            exit 1
+          fi
+
+          echo "=== All APK integrity guards PASSED! ==="
 
       - name: Generate SHA-256 checksum
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          sha256sum food-fight-v${VERSION}.apk > food-fight-v${VERSION}.apk.sha256
+          sha256sum FoodFight_v${VERSION}_release.apk > FoodFight_v${VERSION}_release.apk.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
-            food-fight-v${{ steps.version.outputs.VERSION }}.apk
-            food-fight-v${{ steps.version.outputs.VERSION }}.apk.sha256
+            FoodFight_v${{ steps.version.outputs.VERSION }}_release.apk
+            FoodFight_v${{ steps.version.outputs.VERSION }}_release.apk.sha256
           body: |
             ## Food Fight v${{ steps.version.outputs.VERSION }}
             
             ### Installation
-            Download `food-fight-v${{ steps.version.outputs.VERSION }}.apk` and install it.
+            Download `FoodFight_v${{ steps.version.outputs.VERSION }}_release.apk` and install it.
             
             > ⚠️ **First release-signed build**: Users with a debug-signed APK must uninstall the old version first due to signature change. After this one-time step, in-app updates will work automatically.
             
             Build: ${{ github.run_number }}
+

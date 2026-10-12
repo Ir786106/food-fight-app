@@ -1,4 +1,6 @@
-# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.5.0+6)
+# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.7.1+9)
+
+Supported Platforms: **Android 7.0+ / API 24+** (minSdk 24, targetSdk 36, universal APK for `arm64-v8a` and `armeabi-v7a`).
 
 A complete, production-grade Flutter multi-branch fast-food ordering and enterprise management platform for **Food Fight Restaurant** (5 branches), featuring five distinct roles with role-based access control and branch isolation:
 
@@ -280,6 +282,69 @@ To ensure authenticated app users can upload menu and profile pictures while kee
    ```bash
    flutter build apk --release --obfuscate --split-debug-info=build/symbols
    ```
+
+---
+
+## 🛠️ Installing & Troubleshooting Release APKs
+
+When installing or updating Food Fight release APKs (`FoodFight_v1.7.1_release.apk`), Android's Package Manager may report `"App not installed"` without an explicit error message in the UI. Below is the diagnostic guide and recovery steps using `adb`:
+
+### 1. Common Installation Failures & Exact Solutions
+
+| ADB Error Code / UI Symptom | Root Cause | Exact Fix / Manual Resolution |
+| :--- | :--- | :--- |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` ("App not installed") | **Signature Conflict**: The device has an existing install signed with a different key (e.g. Flutter debug key `CN=Android Debug` or a legacy test key) instead of the official release certificate. | **One-time clean uninstall**:<br>`adb uninstall com.example.food_fight` (or long-press icon → Uninstall).<br>Then install the release APK:<br>`adb install -r FoodFight_v1.7.1_release.apk` |
+| `INSTALL_FAILED_VERSION_DOWNGRADE` | **Version Downgrade**: The installed app has a higher `versionCode` than the APK being installed. | Android prevents downgrading without a complete uninstall. Ensure `versionCode` increases with every release. |
+| `INSTALL_FAILED_NO_MATCHING_ABIS` | **ABI Incompatibility**: Device CPU architecture does not match APK ABIs. | Food Fight release APK includes universal 64-bit `arm64-v8a` and 32-bit `armeabi-v7a` ABIs. (Desktop emulators running x86/x86_64 should use debug builds). |
+| `INSTALL_FAILED_INSUFFICIENT_STORAGE` | **Low Disk Space**: Insufficient internal storage partition space. | Free at least 150 MB of storage space on the internal device partition and retry. |
+| **"Install blocked / Unknown sources" (Android 7.x vs 8+)** | **OS Unknown App Sources Setting**: Android 7.x uses a global setting; Android 8.0+ enforces per-app permissions. | - **Android 7.x (API 24–25)**: Go to **Settings → Security → Unknown sources** → Turn ON.<br>- **Android 8.0+ (API 26–36)**: When prompted, tap **Settings** and enable **"Allow from this source"** for Food Fight / your file manager (`ACTION_MANAGE_UNKNOWN_APP_SOURCES`). |
+| **"Blocked by Play Protect"** | Google Play Protect warns on sideloaded APKs signed with private certificates. | In the Play Protect prompt, tap **"More details"** and then select **"Install anyway"**. |
+| **Work Profile / Secure Folder Conflict** | App uninstalled from main user profile but still exists in Work Profile, Secure Folder, or Dual Messenger under old key. | Go to **Settings → Apps → Food Fight** and ensure "Uninstall for all users" is selected, or run:<br>`adb uninstall --user all com.example.food_fight` |
+| **Corrupted Download / "Parse Error"** | The APK file download was interrupted or corrupted. | Verify SHA-256 checksum against `.sha256` release file:<br>`certutil -hashfile FoodFight_v1.7.1_release.apk SHA256` |
+
+---
+
+## 📊 Android Compatibility Matrix (API 24 to 36)
+
+| Android Version | API Level | Install & Sideload | Native Splash Screen | Push Notifications | Location Flow | Images & Scoped Storage | In-App Updater | Verification Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Android 7.0 / 7.1** | 24–25 | Global "Unknown sources" in Security settings | `androidx.core:core-splashscreen` backward-compatible branded drawable | Channels & POST_NOTIFICATIONS not required (automatic) | Standard coarse/fine location | `READ_EXTERNAL_STORAGE` (`maxSdkVersion="32"`) | FileProvider content URI, settings fallback | Statically verified (minSdk=24, lintRelease, desugaring enabled) |
+| **Android 8.0 / 8.1** | 26–27 | Per-app "Install unknown apps" (`canRequestPackageInstalls`) | `androidx.core:core-splashscreen` | Notification Channels configured in FCM | Standard location | `READ_EXTERNAL_STORAGE` | `ACTION_MANAGE_UNKNOWN_APP_SOURCES` per-app flow | Statically verified |
+| **Android 9** | 28 | Per-app install permission | `androidx.core:core-splashscreen` | Notification Channels | Standard location | `READ_EXTERNAL_STORAGE` | Per-app install permission | Statically verified |
+| **Android 10** | 29 | Per-app install permission | `androidx.core:core-splashscreen` | Notification Channels | Background location separated; app uses foreground-only fine/coarse | Scoped Storage: private app cache via FileProvider (no legacy storage needed) | Scoped app cache APK download, FileProvider URI | Statically verified |
+| **Android 11** | 30 | Per-app install permission | `androidx.core:core-splashscreen` | Notification Channels | One-time permissions handled safely; prompts when needed | Scoped Storage: private cache | Package visibility queries declared for web, tel, mailto, maps, APK | Statically verified |
+| **Android 12 / 12L** | 31–32 | Per-app install permission | System `SplashScreen` API (`values-v31` windowSplashScreenBackground/AnimatedIcon) | Notification Channels | Approximate vs precise location support | Photo Picker fallback / Photo gallery | Full PackageVerifier (cert matching, downgrade, storage check) | Statically verified |
+| **Android 13** | 33 | Per-app install permission | System `SplashScreen` API | Runtime `POST_NOTIFICATIONS` permission requested via Onboarding Primer / after login | Precise/Approximate location | `READ_MEDIA_IMAGES` (granular media); Photo Picker | Full PackageVerifier + friendly Roman Urdu/English dialogs | Statically verified |
+| **Android 14** | 34 | Per-app install permission | System `SplashScreen` API | Runtime `POST_NOTIFICATIONS` | Foreground service location type guarded; app uses standard client location | Partial media access support; Photo Picker | Full PackageVerifier | Statically verified |
+| **Android 15 / 16** | 35–36 | Per-app install permission | System `SplashScreen` API + Edge-to-Edge default | Runtime `POST_NOTIFICATIONS` | Standard location | Photo Picker system component | Full PackageVerifier | Statically verified (compileSdk=36, targetSdk=36) |
+
+> ℹ️ **Device Note**: All manifest merger rules, bytecode desugaring, ABI compatibility, and permissions have been strictly verified statically without a device. Hardware-specific behaviors such as vendor-specific OEM battery optimizers (MIUI, ColorOS) and actual system dialog animations require physical device validation.
+
+### 2. Official Release Certificate Fingerprints
+
+Food Fight release builds are signed with the permanent release keystore (`CN=FoodFight, OU=Engineering, L=Islamabad`):
+- **Certificate SHA-256**: `18167d81cee7ef603131c59913ebd17b947038f9d5ebe198820fd6d044063a0b`
+- **Certificate SHA-1**: `b1882e4e150914051838acb1a59c0c90521f2921`
+- **Signing Schemes**: V1 (JAR), V2 (Full APK), and V3 (APK Signature Scheme v3) enabled.
+
+### 3. Keystore Backup & Security Hygiene
+> ⚠️ **CRITICAL**: The release keystore (`release.keystore`) is the app's permanent cryptographic identity on Android. If lost, existing users will NEVER be able to update the app without uninstalling and losing local data.
+- **Backup Instructions**:
+  1. Store an encrypted copy of `release.keystore` in an enterprise password manager (1Password / KeePass / Bitwarden).
+  2. Maintain the base64-encoded keystore in GitHub Repository Secrets (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`).
+  3. Never commit raw `.keystore`, `.jks`, or `key.properties` files into git (enforced by `.gitignore`).
+
+### 4. Firebase Console Configuration (Google Sign-In)
+To ensure **Google Sign-In** and Firebase Authentication work properly with this release certificate:
+1. Open [Firebase Console](https://console.firebase.google.com/) → Select **Food Fight** project.
+2. Navigate to **Project settings** (gear icon) → **General** tab.
+3. Scroll down to **Your apps** → Select the Android app (`com.example.food_fight`).
+4. Click **Add fingerprint** and add both fingerprints:
+   - **SHA-1**: `B1:88:2E:4E:15:09:14:05:18:38:AC:B1:A5:9C:0C:90:52:1F:29:21`
+   - **SHA-256**: `18:16:7D:81:CE:E7:EF:60:31:31:C5:99:13:EB:D1:7B:94:70:38:F9:D5:EB:E1:98:82:0F:D6:D0:44:06:3A:0B`
+5. Download the updated `google-services.json` file.
+6. Replace `android/app/google-services.json` in your local project workspace.
+
 
 ---
 

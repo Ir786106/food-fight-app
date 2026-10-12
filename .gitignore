@@ -43,6 +43,8 @@ app.*.map.json
 /android/.gradle/
 /android/.kotlin/
 /android/local.properties
+*.apk
+*.apk.sha256
 
 # Platform ephemeral files
 **/ephemeral/
