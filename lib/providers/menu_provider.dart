@@ -16,6 +16,7 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
   StreamSubscription<List<MenuItemModel>>? _subscription;
 
   List<MenuItemModel> get menuItems => List.unmodifiable(_menuItems);
+  List<MenuItemModel> get items => menuItems;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get selectedCategory => _selectedCategory;

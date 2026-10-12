@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/supabase/supabase_image_storage_service.dart';
-import '../../core/config/supabase_config.dart';
+import '../../services/app_image_storage_service.dart';
+import '../../core/constants/image_storage.dart';
+import '../../core/utils/logger.dart';
 import '../../core/constants/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_textfield.dart';
@@ -104,7 +105,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 title: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final img = await SupabaseImageStorageService.pickImage(source: ImageSource.camera);
+                  final img = await AppImageStorageService.pickImage(source: ImageSource.camera);
                   if (img != null) {
                     setState(() {
                       _pickedImage = img;
@@ -129,7 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final img = await SupabaseImageStorageService.pickImage(source: ImageSource.gallery);
+                  final img = await AppImageStorageService.pickImage(source: ImageSource.gallery);
                   if (img != null) {
                     setState(() {
                       _pickedImage = img;
@@ -178,10 +179,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       String? finalPhotoUrl = _removePhoto ? '' : _profileImageUrl;
 
       if (_pickedImage != null && !_removePhoto) {
-        final storage = SupabaseImageStorageService();
+        final storage = AppImageStorageService();
         finalPhotoUrl = await storage.uploadImage(
           image: _pickedImage!,
-          path: SupabaseConfig.profilesFolder,
+          path: StoragePaths.userImagesPath,
         );
       }
 
@@ -203,16 +204,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
         Navigator.of(context).pop();
       } else {
-        final err = auth.errorMessage ?? 'Failed to update profile';
+        final err = auth.errorMessage ?? 'Failed to update profile. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(err),
+            backgroundColor: AppColors.error,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _save,
+            ),
+          ),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error('Failed to update profile: $e\n$stack', tag: 'EditProfileScreen');
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: const Text('No connection. Please check your internet and try again.'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _save,
+            ),
+          ),
         );
       }
     }

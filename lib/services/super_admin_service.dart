@@ -7,21 +7,21 @@ import 'package:food_fight/core/utils/logger.dart';
 
 /// Super Admin Service for platform-wide management, admin accounts, settings & audit logs
 class SuperAdminService {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
-  static final CollectionReference _usersCollection =
+  static CollectionReference get _usersCollection =>
       _firestore.collection(FirestoreCollections.users);
 
-  static final CollectionReference _settingsCollection =
+  static CollectionReference get _settingsCollection =>
       _firestore.collection(FirestoreCollections.settings);
 
-  static final CollectionReference _auditCollection =
+  static CollectionReference get _auditCollection =>
       _firestore.collection(FirestoreCollections.auditLogs);
 
-  static final CollectionReference _ordersCollection =
+  static CollectionReference get _ordersCollection =>
       _firestore.collection(FirestoreCollections.orders);
 
-  static final CollectionReference _branchesCollection =
+  static CollectionReference get _branchesCollection =>
       _firestore.collection(FirestoreCollections.branches);
 
   // -------------------------------------------------------------

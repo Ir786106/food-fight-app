@@ -473,6 +473,16 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // 17B. RESTAURANT BRANCHES
+    // =========================================================================
+    match /branches/{branchId} {
+      // Anyone (customers, guests, authenticated users) can read branches & coordinates
+      allow read: if true;
+      // Only Super Admin can write/create/update/delete branch configuration
+      allow write: if isSuperAdmin();
+    }
+
+    // =========================================================================
     // 18. SYSTEM SETTINGS & APP UPDATE CONFIGURATION
     // =========================================================================
     match /settings/app_update {

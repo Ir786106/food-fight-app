@@ -9,7 +9,7 @@ import '../../models/branch_model.dart';
 class HomeHeader extends StatelessWidget {
   final String userName;
   final BranchModel? selectedBranch;
-  final VoidCallback onBranchTap;
+  final VoidCallback? onBranchTap;
   final VoidCallback onSearchTap;
   final VoidCallback onChatTap;
 
@@ -17,7 +17,7 @@ class HomeHeader extends StatelessWidget {
     super.key,
     required this.userName,
     required this.selectedBranch,
-    required this.onBranchTap,
+    this.onBranchTap,
     required this.onSearchTap,
     required this.onChatTap,
   });
@@ -36,50 +36,43 @@ class HomeHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Branch location selector pill
-              GestureDetector(
-                onTap: onBranchTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.border,
+              // Branch location read-only indicator pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark ? AppColors.darkBorder : AppColors.border,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.location_on_rounded,
+                      color: AppColors.brandYellow,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      selectedBranch != null
+                          ? 'Delivering: ${selectedBranch!.city.isNotEmpty ? selectedBranch!.city : selectedBranch!.name}'
+                          : 'Food Fight Kitchen',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.location_on_rounded,
-                        color: AppColors.brandYellow,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        selectedBranch?.name ?? 'Select Branch',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
-                        size: 18,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
 

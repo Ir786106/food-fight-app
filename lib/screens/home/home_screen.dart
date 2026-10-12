@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -8,9 +9,7 @@ import '../../providers/branch_provider.dart';
 import '../../providers/deal_provider.dart';
 import '../../providers/loyalty_provider.dart';
 import '../../providers/cart_provider.dart';
-import '../../providers/address_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../models/branch_model.dart';
 import '../../models/food_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/home/category_rail.dart';
@@ -19,8 +18,9 @@ import '../../widgets/home/home_promo_carousel.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
+import '../../widgets/common/offline_banner.dart';
+import '../../widgets/common/out_of_delivery_area_banner.dart';
 import '../../widgets/skeleton/food_card_skeleton.dart';
-
 
 class HomeScreen extends StatefulWidget {
   final ScrollController? parentScrollController;
@@ -45,20 +45,59 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _textTabs = const ['Popular', 'Recommended', 'New', 'All'];
 
+  final Map<String, String> _categoryEmojiMap = {
+    'all': '🍽️',
+    'burger': '🍔',
+    'burgers': '🍔',
+    'pizza': '🍕',
+    'pizzas': '🍕',
+    'chicken': '🍗',
+    'broast': '🍗',
+    'wings': '🍗',
+    'fries': '🍟',
+    'sides': '🍟',
+    'drink': '🥤',
+    'drinks': '🥤',
+    'beverages': '🥤',
+    'dessert': '🍰',
+    'desserts': '🍰',
+    'deals': '🏷️',
+    'combos': '🥊',
+    'fast food': '🍔',
+  };
+
+  String _getCategoryEmoji(String categoryName) {
+    final lower = categoryName.toLowerCase().trim();
+    for (final entry in _categoryEmojiMap.entries) {
+      if (lower.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return '🍽️';
+  }
+
   @override
   void initState() {
     super.initState();
-    _promoTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted) return;
-      if (!_promoController.hasClients) return;
-      final nextIndex = (_promoIndex + 1) % 3;
-      _promoController.animateToPage(
-        nextIndex,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeOut,
-      );
-      _promoIndex = nextIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<BranchProvider>().autoResolveNearestBranch(context: context);
+      }
     });
+
+    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+      _promoTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (!mounted) return;
+        if (!_promoController.hasClients) return;
+        final nextIndex = (_promoIndex + 1) % 3;
+        _promoController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+        _promoIndex = nextIndex;
+      });
+    }
   }
 
   @override
@@ -73,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedRailCategory = categoryName;
     });
-    // Scroll content to top on category change
     if (_contentScrollController.hasClients) {
       _contentScrollController.animateTo(
         0,
@@ -83,476 +121,163 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _selectBranch(BranchModel branch) {
-    final cart = context.read<CartProvider>();
-
-    if (cart.items.isNotEmpty && cart.branchId != null && cart.branchId != branch.id) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text('Switch Branch?'),
-          content: Text(
-            'Your cart contains items from another branch. Switching to "${branch.name}" will clear your current cart.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brandYellow,
-                foregroundColor: AppColors.brandMaroon,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                cart.clearCart();
-                _applyBranchSelection(branch);
-              },
-              child: const Text(
-                'Clear Cart & Switch',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      _applyBranchSelection(branch);
-    }
-  }
-
-  void _applyBranchSelection(BranchModel branch) {
-    context.read<BranchProvider>().selectBranch(branch);
-    context.read<MenuProvider>().watchMenuItems(branchId: branch.id);
-    context.read<DealProvider>().watchDeals(branchId: branch.id);
-  }
-
-  void _openBranchSelectionSheet(BuildContext context) {
-    final branchProv = context.read<BranchProvider>();
-    final activeBranches = branchProv.activeBranches;
-    final selectedBranch = branchProv.selectedBranch;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+  void _openFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBorder : AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+              const Text('Filter & Sort Dishes', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Vegetarian only (🌱)'),
+                value: _filterOnlyVeg,
+                activeTrackColor: AppColors.lettuce,
+                onChanged: (val) {
+                  setSheetState(() => _filterOnlyVeg = val);
+                  setState(() {});
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Spicy only (🌶️)'),
+                value: _filterOnlySpicy,
+                activeTrackColor: AppColors.tomato,
+                onChanged: (val) {
+                  setSheetState(() => _filterOnlySpicy = val);
+                  setState(() {});
+                },
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const Text('Sort by', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
                 children: [
-                  Text(
-                    'Select Food Fight Branch',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
-                    ),
+                  ChoiceChip(
+                    label: const Text('Popular'),
+                    selected: _sortBy == 'popular',
+                    onSelected: (s) {
+                      setSheetState(() => _sortBy = 'popular');
+                      setState(() {});
+                    },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.pop(ctx),
+                  ChoiceChip(
+                    label: const Text('Rating'),
+                    selected: _sortBy == 'rating',
+                    onSelected: (s) {
+                      setSheetState(() => _sortBy = 'rating');
+                      setState(() {});
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('Price: Low to High'),
+                    selected: _sortBy == 'price_low',
+                    onSelected: (s) {
+                      setSheetState(() => _sortBy = 'price_low');
+                      setState(() {});
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('Price: High to Low'),
+                    selected: _sortBy == 'price_high',
+                    onSelected: (s) {
+                      setSheetState(() => _sortBy = 'price_high');
+                      setState(() {});
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: activeBranches.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (ctx, index) {
-                  final branch = activeBranches[index];
-                  final isSelected = branch.id == selectedBranch?.id;
-
-                  return InkWell(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      if (!isSelected) {
-                        _selectBranch(branch);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.yellowSoft.withValues(alpha: 0.5)
-                            : (isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.brandYellow
-                              : (isDark ? AppColors.darkBorder : AppColors.border),
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: isSelected ? AppColors.brandYellow : AppColors.yellowSoft,
-                            child: const Icon(
-                              Icons.storefront_rounded,
-                              color: AppColors.brandMaroon,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  branch.name,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${branch.city} • ${branch.address}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-                            color: isSelected ? AppColors.brandMaroon : AppColors.textMuted,
-                            size: 22,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brandYellow,
+                  foregroundColor: AppColors.brandMaroon,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.w800)),
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   void _openMenuDrawerSheet(BuildContext context) {
-    final auth = context.read<AuthProvider>();
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBorder : AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const Text('Quick Navigation', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.brandYellow,
-                    child: Icon(Icons.person_rounded, color: AppColors.brandMaroon, size: 28),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          auth.currentUser?.name ?? 'Food Fighter',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          auth.currentUser?.email ?? 'fighter@foodfight.pk',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _drawerItem(
-                icon: Icons.location_on_outlined,
-                title: 'Saved Addresses',
+              ListTile(
+                leading: const Icon(Icons.restaurant_menu_rounded, color: AppColors.brandYellow),
+                title: const Text('Full Menu'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Navigator.of(context).pushNamed('/addresses');
+                  Navigator.of(context).pushNamed('/menu');
                 },
-                isDark: isDark,
               ),
-              _drawerItem(
-                icon: Icons.storefront_outlined,
-                title: 'Switch Branch',
+              ListTile(
+                leading: const Icon(Icons.receipt_long_rounded, color: AppColors.brandYellow),
+                title: const Text('Order History'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  _openBranchSelectionSheet(context);
+                  Navigator.of(context).pushNamed('/orders');
                 },
-                isDark: isDark,
               ),
-              _drawerItem(
-                icon: Icons.favorite_border_rounded,
-                title: 'My Favorites',
+              ListTile(
+                leading: const Icon(Icons.stars_rounded, color: AppColors.brandYellow),
+                title: const Text('Loyalty & Rewards'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Navigator.of(context).pushNamed('/favorites');
+                  Navigator.of(context).pushNamed('/loyalty');
                 },
-                isDark: isDark,
               ),
-              _drawerItem(
-                icon: Icons.receipt_long_outlined,
-                title: 'Order History',
+              ListTile(
+                leading: const Icon(Icons.headset_mic_rounded, color: AppColors.brandYellow),
+                title: const Text('Customer Support Chat'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Navigator.of(context).pushNamed('/order-history');
+                  Navigator.of(context).pushNamed('/chat');
                 },
-                isDark: isDark,
-              ),
-              _drawerItem(
-                icon: Icons.settings_outlined,
-                title: 'Settings',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.of(context).pushNamed('/settings');
-                },
-                isDark: isDark,
               ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _drawerItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 15,
-          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
         ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-      onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    );
-  }
-
-  void _openFilterSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkBorder : AppColors.border,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filter & Sort Dishes',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setSheetState(() {
-                            _filterOnlyVeg = false;
-                            _filterOnlySpicy = false;
-                            _sortBy = 'popular';
-                          });
-                          setState(() {});
-                          Navigator.pop(ctx);
-                        },
-                        child: const Text('Reset', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  // Toggles
-                  SwitchListTile(
-                    title: const Text('Vegetarian only (🌱)'),
-                    value: _filterOnlyVeg,
-                    activeTrackColor: AppColors.lettuce,
-                    onChanged: (val) {
-                      setSheetState(() => _filterOnlyVeg = val);
-                      setState(() {});
-                    },
-                  ),
-                  SwitchListTile(
-                    title: const Text('Spicy only (🌶️)'),
-                    value: _filterOnlySpicy,
-                    activeTrackColor: AppColors.tomato,
-                    onChanged: (val) {
-                      setSheetState(() => _filterOnlySpicy = val);
-                      setState(() {});
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Sort by', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('Popular'),
-                        selected: _sortBy == 'popular',
-                        onSelected: (s) {
-                          setSheetState(() => _sortBy = 'popular');
-                          setState(() {});
-                        },
-                      ),
-                      ChoiceChip(
-                        label: const Text('Rating'),
-                        selected: _sortBy == 'rating',
-                        onSelected: (s) {
-                          setSheetState(() => _sortBy = 'rating');
-                          setState(() {});
-                        },
-                      ),
-                      ChoiceChip(
-                        label: const Text('Price: Low to High'),
-                        selected: _sortBy == 'price_low',
-                        onSelected: (s) {
-                          setSheetState(() => _sortBy = 'price_low');
-                          setState(() {});
-                        },
-                      ),
-                      ChoiceChip(
-                        label: const Text('Price: High to Low'),
-                        selected: _sortBy == 'price_high',
-                        onSelected: (s) {
-                          setSheetState(() => _sortBy = 'price_high');
-                          setState(() {});
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.brandYellow,
-                      foregroundColor: AppColors.onYellow,
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.w800)),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = screenWidth < 600;
+    final isTablet = screenWidth >= 600 && screenWidth < 900;
+
     final categoryProvider = context.watch<CategoryProvider>();
     final menuProvider = context.watch<MenuProvider>();
     final branchProvider = context.watch<BranchProvider>();
     final dealProvider = context.watch<DealProvider>();
-    final addressProvider = context.watch<AddressProvider?>();
     final notifProvider = context.watch<NotificationProvider?>();
+    final auth = context.watch<AuthProvider>();
 
     final selectedBranch = branchProvider.selectedBranch;
 
@@ -577,16 +302,15 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // 1. Filter by category rail
+    // Filter by category
     List<FoodModel> filteredByRail = _selectedRailCategory == 'All'
         ? allFoods
         : allFoods.where((f) => f.category.toLowerCase() == _selectedRailCategory.toLowerCase()).toList();
 
-    // 2. Filter by text tab (Popular, Recommended, New, All)
+    // Filter by text tab
     if (_selectedTextTab == 'Popular') {
-      final pop = filteredByRail.where((f) => f.rating >= 4.0).toList();
-      filteredByRail = pop.isNotEmpty
-          ? pop
+      filteredByRail = filteredByRail.where((f) => f.rating >= 4.0).toList().isEmpty
+          ? filteredByRail
           : (List<FoodModel>.from(filteredByRail)..sort((a, b) => b.rating.compareTo(a.rating)));
     } else if (_selectedTextTab == 'Recommended') {
       filteredByRail = filteredByRail.reversed.toList();
@@ -594,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
       filteredByRail = filteredByRail.take(10).toList();
     }
 
-    // 3. Filter by sheet options
+    // Filter by options
     if (_filterOnlyVeg) {
       filteredByRail = filteredByRail.where((f) => f.isVeg).toList();
     }
@@ -602,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
       filteredByRail = filteredByRail.where((f) => f.isSpicy).toList();
     }
 
-    // 4. Sort
+    // Sort
     if (_sortBy == 'price_low') {
       filteredByRail.sort((a, b) => a.startingPrice.compareTo(b.startingPrice));
     } else if (_sortBy == 'price_high') {
@@ -611,491 +335,469 @@ class _HomeScreenState extends State<HomeScreen> {
       filteredByRail.sort((a, b) => b.rating.compareTo(a.rating));
     }
 
-    // High-rated items for "Popular" section
     final popularFoods = allFoods.where((f) => f.rating >= 4.4).toList();
     final effectivePopularFoods = popularFoods.isNotEmpty ? popularFoods : allFoods.take(6).toList();
-
-    // Recommended for you list
-    final recommendedFoods = allFoods.reversed.take(6).toList();
+    final recommendedFoods = allFoods.reversed.take(8).toList();
 
     final hasUnreadNotifications = (notifProvider?.unreadCount ?? 0) > 0;
-    final currentAddressTitle = addressProvider?.defaultAddress?.label ?? 'Select Address';
+    final userName = auth.currentUser?.name;
+    final greetingText = (userName != null && userName.isNotEmpty)
+        ? 'Hello, ${userName.split(' ').first}! 🥊'
+        : 'Food Fight Kitchen 🥊';
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        bottom: false,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Left Vertical Category Rail (Reference A)
-            CategoryRail(
-              categories: categories,
-              selectedCategory: _selectedRailCategory,
-              onCategorySelected: _onCategorySelected,
-              onMenuTap: () => _openMenuDrawerSheet(context),
-              onSearchTap: () => Navigator.of(context).pushNamed('/search'),
-              onFilterTap: () => _openFilterSheet(context),
+    final categoriesWithAll = ['All', ...categories.map((c) => c.name)];
+
+    Widget mainContent = Builder(
+      builder: (context) {
+        if (menuProvider.isLoading && allFoods.isEmpty) {
+          return const LoadingIndicator(message: 'Loading delicious dishes...');
+        }
+
+        if (menuProvider.errorMessage != null && allFoods.isEmpty) {
+          return ErrorView(
+            message: menuProvider.errorMessage!,
+            onRetry: () {
+              categoryProvider.fetchCategories();
+              menuProvider.fetchMenuItems();
+            },
+          );
+        }
+
+        return RefreshIndicator(
+          color: AppColors.brandYellow,
+          backgroundColor: AppColors.brandMaroon,
+          onRefresh: () async {
+            await categoryProvider.fetchCategories();
+            await menuProvider.fetchMenuItems();
+          },
+          child: CustomScrollView(
+            controller: _contentScrollController,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
+            slivers: [
+              // 0. Offline Banner
+              const SliverToBoxAdapter(
+                child: OfflineBanner(),
+              ),
 
-            // 2. Right Content Area (White / Background Surface)
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  if (menuProvider.isLoading && allFoods.isEmpty) {
-                    return const LoadingIndicator(message: 'Loading delicious dishes...');
-                  }
-
-                  if (menuProvider.errorMessage != null && allFoods.isEmpty) {
-                    return ErrorView(
-                      message: menuProvider.errorMessage!,
-                      onRetry: () {
-                        categoryProvider.fetchCategories();
-                        menuProvider.fetchMenuItems();
-                      },
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    color: AppColors.brandYellow,
-                    backgroundColor: AppColors.brandMaroon,
-                    onRefresh: () async {
-                      await categoryProvider.fetchCategories();
-                      await menuProvider.fetchMenuItems();
-                    },
-                    child: CustomScrollView(
-                      controller: _contentScrollController,
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
+              // 1. Mobile & Desktop Header Top Row
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              greetingText,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                                letterSpacing: -0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Freshly cooked fast food',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
-                      slivers: [
-                        // Top Row: Address chip + Branch chip + Bell + Heart
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-                            child: Row(
-                              children: [
-                                // Delivery address chip
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: () => Navigator.of(context).pushNamed('/addresses'),
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isDark ? AppColors.darkBorder : AppColors.border,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.location_on_rounded,
-                                            color: AppColors.tomato,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Expanded(
-                                            child: Text(
-                                              currentAddressTitle,
-                                              style: TextStyle(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w700,
-                                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const Icon(Icons.keyboard_arrow_down_rounded, size: 14),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(width: 8),
-
-                                // Branch selector chip
-                                InkWell(
-                                  onTap: () => _openBranchSelectionSheet(context),
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    constraints: const BoxConstraints(maxWidth: 125),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: isDark ? AppColors.darkBorder : AppColors.border,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.storefront_rounded,
-                                          color: AppColors.brandMaroon,
-                                          size: 15,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Text(
-                                            selectedBranch?.name ?? 'Branch',
-                                            style: TextStyle(
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                // Loyalty tokens chip
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pushNamed('/loyalty'),
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.brandYellow.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.4)),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Text('🎁', style: TextStyle(fontSize: 12)),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${context.watch<LoyaltyProvider>().balance}',
-                                          style: TextStyle(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: isDark ? AppColors.brandYellow : AppColors.onYellow,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(width: 8),
-
-                                // Heart (Favorites)
-                                IconButton(
-                                  icon: const Icon(Icons.favorite_border_rounded, size: 22),
-                                  color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                  tooltip: 'Favorites',
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                  onPressed: () => Navigator.of(context).pushNamed('/favorites'),
-                                ),
-
-                                // Bell (Notifications) with unread dot
-                                Stack(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.notifications_none_rounded, size: 22),
-                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                      tooltip: 'Notifications',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                      onPressed: () => Navigator.of(context).pushNamed('/notifications'),
-                                    ),
-                                    if (hasUnreadNotifications)
-                                      Positioned(
-                                        top: 6,
-                                        right: 6,
-                                        child: Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.tomato,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                      // Loyalty tokens chip
+                      InkWell(
+                        onTap: () => Navigator.of(context).pushNamed('/loyalty'),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.brandYellow.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.4)),
                           ),
-                        ),
-
-                        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                        // Heading: "Find your" (light) / "favourite foods" (bold 28) (Ref A)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Find your',
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('🥊', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 4),
+                              Consumer<LoyaltyProvider>(
+                                builder: (_, lp, __) => Text(
+                                  '${lp.tokensBalance}',
                                   style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w400,
-                                    color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
-                                    letterSpacing: -0.3,
-                                    height: 1.15,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                   ),
                                 ),
-                                Text(
-                                  'favourite foods',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                    letterSpacing: -0.5,
-                                    height: 1.15,
-                                  ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Bell Notifications
+                      Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_none_rounded, size: 24),
+                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            tooltip: 'Notifications',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                            onPressed: () => Navigator.of(context).pushNamed('/notifications'),
+                          ),
+                          if (hasUnreadNotifications)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.tomato,
+                                  shape: BoxShape.circle,
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                        // Deals Carousel
-                        if (dealProvider.activeDeals.isNotEmpty)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: HomeDealsCarousel(
-                                controller: _promoController,
-                                currentIndex: _promoIndex,
-                                deals: dealProvider.activeDeals,
-                                onPageChanged: (idx) => setState(() => _promoIndex = idx),
-                                onDealTap: (deal) {
-                                  context.read<CartProvider>().addDealToCart(deal);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Added "${deal.title}" combo deal to cart!'),
-                                      backgroundColor: AppColors.success,
-                                      action: SnackBarAction(
-                                        label: 'View Cart',
-                                        textColor: Colors.white,
-                                        onPressed: () => Navigator.of(context).pushNamed('/cart'),
-                                      ),
-                                    ),
-                                  );
-                                },
                               ),
                             ),
-                          ),
-
-                        // Text Tabs: Popular / Recommended / New / All with 3px yellow underline (Ref A)
-                        SliverToBoxAdapter(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Row(
-                              children: _textTabs.map((tab) {
-                                final isSelected = _selectedTextTab == tab;
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() => _selectedTextTab = tab);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          tab,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                            color: isSelected
-                                                ? (isDark ? AppColors.brandYellow : AppColors.textPrimary)
-                                                : (isDark ? AppColors.darkTextMuted : AppColors.textSecondary),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        AnimatedContainer(
-                                          duration: const Duration(milliseconds: 200),
-                                          curve: Curves.easeOutCubic,
-                                          height: 3,
-                                          width: isSelected ? 24 : 0,
-                                          decoration: BoxDecoration(
-                                            color: isSelected ? AppColors.brandYellow : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-
-                        const SliverToBoxAdapter(child: SizedBox(height: 10)),
-
-                        // Animated cross-fade for products
-                        SliverToBoxAdapter(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: (menuProvider.isLoading && allFoods.isEmpty)
-                                ? SizedBox(
-                                    height: 324,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                                      itemCount: 4,
-                                      separatorBuilder: (_, __) => const SizedBox(width: 14),
-                                      itemBuilder: (_, __) => const SizedBox(
-                                        width: 180,
-                                        child: FoodCardSkeleton(),
-                                      ),
-                                    ),
-                                  )
-                                : filteredByRail.isEmpty
-                                    ? Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                                        child: EmptyStateView(
-                                          icon: Icons.fastfood_outlined,
-                                          title: 'No Dishes Found',
-                                          description: 'No items found matching $_selectedRailCategory / $_selectedTextTab.',
-                                        ),
-                                      )
-                                    : SizedBox(
-                                    height: 324,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                                      itemCount: filteredByRail.length,
-                                      itemBuilder: (context, index) {
-                                        final food = filteredByRail[index];
-                                        return ProductCard(
-                                          food: food,
-                                          onTap: () => Navigator.of(context).pushNamed(
-                                            '/food-detail',
-                                            arguments: food,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                          ),
-                        ),
-
-                        const SliverToBoxAdapter(child: SizedBox(height: 18)),
-
-                        // "Recommended for you" Section (Ref A)
-                        if (recommendedFoods.isNotEmpty) ...[
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Recommended for you',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => Navigator.of(context).pushNamed('/menu'),
-                                    child: Text(
-                                      'See all',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: 324,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                itemCount: recommendedFoods.length,
-                                itemBuilder: (context, index) {
-                                  final food = recommendedFoods[index];
-                                  return ProductCard(
-                                    food: food,
-                                    heroTag: 'rec-food-${food.id}',
-                                    onTap: () => Navigator.of(context).pushNamed(
-                                      '/food-detail',
-                                      arguments: {
-                                        'food': food,
-                                        'heroTag': 'rec-food-${food.id}',
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 18)),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
-                        // "Popular" Section (Master prompt Part 2)
-                        if (effectivePopularFoods.isNotEmpty) ...[
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Popular',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => Navigator.of(context).pushNamed('/menu'),
-                                    child: Text(
-                                      'See all',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+              // 2. Read-only Auto Delivery Location Pill
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkBorder : AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_rounded,
+                          color: AppColors.brandYellow,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            branchProvider.getDeliveryLabel(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.success,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // 3. Out of Delivery Area Banner (If GPS out of bounds)
+              if (branchProvider.isOutOfDeliveryArea)
+                SliverToBoxAdapter(
+                  child: OutOfDeliveryAreaBanner(
+                    nearestBranchName: branchProvider.nearestBranchOutOfRange?.name,
+                    distanceKm: branchProvider.distanceToNearestKm,
+                    onSwitchCity: () => branchProvider.selectCityFallback('Lahore'),
+                  ),
+                ),
+
+              // 4. Closed Branch Temporary Fallback Notice
+              if (branchProvider.closedBranchFallbackNotice != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF59E0B)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              branchProvider.closedBranchFallbackNotice!,
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // 5. Search Bar Tap Target
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pushNamed('/search'),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorder : AppColors.border,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.search_rounded,
+                            color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Search burgers, pizzas, broast...',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
                               ),
                             ),
                           ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: 324,
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.brandYellow.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.tune_rounded, size: 16, color: AppColors.brandMaroon),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // 6. Mobile Horizontally Scrolling Category Chips
+              if (isMobile)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 44,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: categoriesWithAll.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (ctx, index) {
+                        final cat = categoriesWithAll[index];
+                        final isSelected = cat.toLowerCase() == _selectedRailCategory.toLowerCase();
+                        final emoji = _getCategoryEmoji(cat);
+
+                        return InkWell(
+                          onTap: () => _onCategorySelected(cat),
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.brandYellow
+                                  : (isDark ? AppColors.darkSurfaceElevated : AppColors.surface),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.brandYellow
+                                    : (isDark ? AppColors.darkBorder : AppColors.border),
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColors.brandYellow.withValues(alpha: 0.35),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(emoji, style: const TextStyle(fontSize: 14)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  cat,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSelected
+                                        ? AppColors.brandMaroon
+                                        : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+              // 7. Active Admin Deals Carousel
+              if (dealProvider.activeDeals.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: HomeDealsCarousel(
+                      controller: _promoController,
+                      currentIndex: _promoIndex,
+                      deals: dealProvider.activeDeals,
+                      onPageChanged: (idx) => setState(() => _promoIndex = idx),
+                      onDealTap: (deal) {
+                        context.read<CartProvider>().addDealToCart(deal);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added "${deal.title}" combo deal to cart!'),
+                            backgroundColor: AppColors.success,
+                            action: SnackBarAction(
+                              label: 'View Cart',
+                              textColor: Colors.white,
+                              onPressed: () => Navigator.of(context).pushNamed('/cart'),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+              // 8. Text Tabs: Popular / Recommended / New / All
+              SliverToBoxAdapter(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: _textTabs.map((tab) {
+                      final isSelected = _selectedTextTab == tab;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => _selectedTextTab = tab);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tab,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                                  color: isSelected
+                                      ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                      : (isDark ? AppColors.darkTextMuted : AppColors.textSecondary),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeOutCubic,
+                                height: 3,
+                                width: isSelected ? 24 : 0,
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 6)),
+
+              // 9. Horizontal Filtered Dish Row
+              SliverToBoxAdapter(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: (menuProvider.isLoading && allFoods.isEmpty)
+                      ? SizedBox(
+                          height: 320,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: 4,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (_, __) => const SizedBox(
+                              width: 180,
+                              child: FoodCardSkeleton(),
+                            ),
+                          ),
+                        )
+                      : filteredByRail.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                              child: EmptyStateView(
+                                icon: Icons.fastfood_outlined,
+                                title: 'No Dishes Found',
+                                description: 'No items found matching $_selectedRailCategory / $_selectedTextTab.',
+                              ),
+                            )
+                          : SizedBox(
+                              height: 320,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                itemCount: effectivePopularFoods.length,
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: filteredByRail.length,
                                 itemBuilder: (context, index) {
-                                  final food = effectivePopularFoods[index];
+                                  final food = filteredByRail[index];
                                   return ProductCard(
                                     food: food,
-                                    heroTag: 'pop-food-${food.id}',
                                     onTap: () => Navigator.of(context).pushNamed(
                                       '/food-detail',
                                       arguments: food,
@@ -1104,20 +806,183 @@ class _HomeScreenState extends State<HomeScreen> {
                                 },
                               ),
                             ),
-                          ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                        ],
+                ),
+              ),
 
-                        // Bottom padding for scroll clearance above floating nav and cart pill
-                        const SliverToBoxAdapter(child: SizedBox(height: 135)),
+              // 10. "Popular" Section
+              if (effectivePopularFoods.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('🔥', style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Popular Dishes',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pushNamed('/menu'),
+                          child: Text(
+                            'See all',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 320,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: effectivePopularFoods.length,
+                      itemBuilder: (context, index) {
+                        final food = effectivePopularFoods[index];
+                        return ProductCard(
+                          food: food,
+                          heroTag: 'pop-food-${food.id}',
+                          onTap: () => Navigator.of(context).pushNamed(
+                            '/food-detail',
+                            arguments: food,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+
+              // 11. "Recommended for you" Responsive Grid (2 columns on mobile, 3 on tablet)
+              if (recommendedFoods.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('⭐', style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Recommended for you',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pushNamed('/menu'),
+                          child: Text(
+                            'See all',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isTablet ? 3 : (isMobile ? 2 : 4),
+                      childAspectRatio: 0.58,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 14,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final food = recommendedFoods[index];
+                        return ProductCard(
+                          food: food,
+                          inGrid: true,
+                          heroTag: 'rec-food-${food.id}',
+                          onTap: () => Navigator.of(context).pushNamed(
+                            '/food-detail',
+                            arguments: {
+                              'food': food,
+                              'heroTag': 'rec-food-${food.id}',
+                            },
+                          ),
+                        );
+                      },
+                      childCount: recommendedFoods.length,
+                    ),
+                  ),
+                ),
+              ],
+
+              // Bottom padding clearance above floating nav and cart pill
+              const SliverToBoxAdapter(child: SizedBox(height: 140)),
+            ],
+          ),
+        );
+      },
+    );
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SafeArea(
+        bottom: false,
+        child: isMobile
+            ? mainContent
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Side rail only when width >= 600
+                  CategoryRail(
+                    categories: categories,
+                    selectedCategory: _selectedRailCategory,
+                    onCategorySelected: _onCategorySelected,
+                    onMenuTap: () => _openMenuDrawerSheet(context),
+                    onSearchTap: () => Navigator.of(context).pushNamed('/search'),
+                    onFilterTap: () => _openFilterSheet(context),
+                  ),
+                  Expanded(child: mainContent),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

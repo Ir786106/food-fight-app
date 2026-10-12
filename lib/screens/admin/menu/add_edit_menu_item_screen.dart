@@ -9,8 +9,9 @@ import 'package:food_fight/providers/menu_provider.dart';
 import 'package:food_fight/providers/category_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/providers/option_template_provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:food_fight/services/supabase/supabase_image_storage_service.dart';
+import 'package:food_fight/services/app_image_storage_service.dart';
+import 'package:food_fight/core/constants/image_storage.dart';
+import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
 
 class VariantFormEntry {
@@ -87,6 +88,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
 
   bool _isLoadingCategories = true;
   bool _isSaving = false;
+  double _uploadProgress = 0.0;
 
   @override
   void initState() {
@@ -175,7 +177,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
   }
 
   Future<void> _pickImage() async {
-    final img = await SupabaseImageStorageService.pickImage();
+    final img = await AppImageStorageService.pickImage();
     if (img != null) {
       setState(() => _pickedImage = img);
     }
@@ -345,45 +347,16 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
     try {
       String? finalImageUrl = _imageUrl;
 
-      // Upload image to Supabase Storage if a new one was picked
+      // Upload image to active storage provider if a new one was picked
       if (_pickedImage != null) {
-        try {
-          final supabase = Supabase.instance.client;
-          final imageBytes = await _pickedImage!.readAsBytes();
-
-          // Determine extension and proper MIME type dynamically
-          final rawExt = _pickedImage!.name.split('.').last.toLowerCase();
-          final ext = (rawExt == 'png' || rawExt == 'webp' || rawExt == 'gif') ? rawExt : 'jpg';
-          final mimeType = ext == 'png'
-              ? 'image/png'
-              : ext == 'webp'
-                  ? 'image/webp'
-                  : ext == 'gif'
-                      ? 'image/gif'
-                      : 'image/jpeg';
-
-          final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final filePath = 'products/product_$timestamp.$ext';
-
-          await supabase.storage
-              .from('food-images')
-              .uploadBinary(
-                filePath,
-                imageBytes,
-                fileOptions: FileOptions(
-                  contentType: mimeType,
-                  upsert: false,
-                ),
-              );
-
-          finalImageUrl = supabase.storage
-              .from('food-images')
-              .getPublicUrl(filePath);
-        } catch (e, stackTrace) {
-          debugPrint('SUPABASE STORAGE ERROR: $e');
-          debugPrint('$stackTrace');
-          rethrow;
-        }
+        final storage = AppImageStorageService();
+        finalImageUrl = await storage.uploadImage(
+          image: _pickedImage!,
+          path: StoragePaths.productImagesPath,
+          onProgress: (p) {
+            if (mounted) setState(() => _uploadProgress = p);
+          },
+        );
       }
 
       double basePrice;
@@ -442,21 +415,20 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error('Error saving menu item: $e\n$stack', tag: 'AddEditMenuItem');
       if (mounted) {
         setState(() => _isSaving = false);
-        final String errorMsg;
-        if (e is StorageException) {
-          final statusCode = e.statusCode != null ? '[Storage ${e.statusCode}] ' : '';
-          final details = e.message.isNotEmpty ? e.message : (e.error?.toString() ?? 'Permission denied (RLS policy)');
-          errorMsg = 'Image upload failed: $statusCode$details';
-        } else {
-          errorMsg = 'Error saving menu item: $e';
-        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMsg),
+            content: const Text('No connection. Please check your internet and try again.'),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _saveItem,
+            ),
           ),
         );
       }
@@ -1250,11 +1222,23 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                       ),
                       onPressed: _isSaving ? null : _saveItem,
                       child: _isSaving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2.5),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2.5),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  _uploadProgress > 0 && _uploadProgress < 1.0
+                                      ? 'Uploading image (${(_uploadProgress * 100).toInt()}%)...'
+                                      : 'Saving...',
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             )
                           : Text(
                               widget.item == null

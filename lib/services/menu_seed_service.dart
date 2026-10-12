@@ -710,6 +710,9 @@ class MenuSeedService {
           final docRef = _menuCollection.doc();
           final data = item.toJson();
           data['id'] = docRef.id;
+          if (data['imageUrl'] == null || (data['imageUrl'] as String).isEmpty) {
+            data['imageUrl'] = 'assets/images/branding/food_fight_logo_icon.png';
+          }
           await docRef.set(data);
           itemsCreated++;
         }

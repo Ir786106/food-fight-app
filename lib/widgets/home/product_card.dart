@@ -22,6 +22,7 @@ class ProductCard extends StatefulWidget {
   final String? heroTag;
   final double width;
   final bool isHorizontalInList;
+  final bool inGrid;
 
   const ProductCard({
     super.key,
@@ -30,6 +31,7 @@ class ProductCard extends StatefulWidget {
     this.heroTag,
     this.width = 176.0,
     this.isHorizontalInList = false,
+    this.inGrid = false,
   });
 
   @override
@@ -121,8 +123,8 @@ class _ProductCardState extends State<ProductCard>
 
     final isAvailable = food.isAvailable;
     final effectiveHeroTag = widget.heroTag ?? 'food-${food.id}';
-    final cardWidth = widget.width;
-    final photoDiameter = cardWidth * 0.62;
+    final cardWidth = widget.inGrid ? null : widget.width;
+    final photoDiameter = widget.inGrid ? 104.0 : (widget.width * 0.62);
 
     final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
         (food.sizePrices != null && food.sizePrices!.length > 1);
@@ -139,7 +141,9 @@ class _ProductCardState extends State<ProductCard>
       label: '${food.name}, price $displayPrice',
       child: Container(
         width: cardWidth,
-        margin: const EdgeInsets.only(top: 14, bottom: 6, right: 14),
+        margin: widget.inGrid
+            ? const EdgeInsets.only(top: 14, bottom: 6)
+            : const EdgeInsets.only(top: 14, bottom: 6, right: 14),
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,

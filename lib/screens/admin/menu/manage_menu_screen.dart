@@ -14,6 +14,7 @@ import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/services/menu_seed_service.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'add_edit_menu_item_screen.dart';
+import 'reupload_missing_images_screen.dart';
 
 class ManageMenuScreen extends StatefulWidget {
   const ManageMenuScreen({super.key});
@@ -155,6 +156,14 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.broken_image_rounded),
+            tooltip: 'Re-upload Missing Images',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ReuploadMissingImagesScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.cloud_upload_rounded),
             tooltip: 'Seed Real Menu',
