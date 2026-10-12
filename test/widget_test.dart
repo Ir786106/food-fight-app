@@ -11,8 +11,11 @@ import 'package:food_fight/widgets/food_card.dart';
 
 void main() {
   testWidgets('FoodFight app builds smoke test', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const FoodFightApp());
     expect(find.byType(MaterialApp), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump(const Duration(milliseconds: 500));
   });
 
   testWidgets('FoodCard should not produce a right overflow in a narrow layout', (tester) async {
