@@ -78,7 +78,8 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     }
 
     String? orderNumber;
-    String targetBranchId = branchProv.selectedBranch?.id ?? 'branch_1';
+    String targetBranchId = branchProv.selectedBranch?.id ??
+        (branchProv.activeBranches.isNotEmpty ? branchProv.activeBranches.first.id : '');
 
     if (orderId != null && orderId.isNotEmpty) {
       final foundOrder = orderProv.getOrderById(orderId);

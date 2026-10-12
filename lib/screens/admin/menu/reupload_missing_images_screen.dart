@@ -203,12 +203,9 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
         displayedItems = allItems.where(_isItemValid).toList();
         break;
       case ImageIssueType.all:
-      default:
         displayedItems = allItems;
         break;
     }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: AdminTheme.getBackground(context),

@@ -51,6 +51,7 @@ class LoyaltyProvider extends ChangeNotifier with SafeChangeNotifier {
   LoyaltyAccount? get account => _account;
   List<LoyaltyTransaction> get transactions => _transactions;
   int get balance => _account?.balance ?? 0;
+  int get tokensBalance => balance;
   bool get isLoading => _isLoading;
   String? get error => _error;
 

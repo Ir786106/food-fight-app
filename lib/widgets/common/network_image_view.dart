@@ -30,7 +30,7 @@ class NetworkImageView extends StatefulWidget {
     this.height,
     this.fit = BoxFit.cover,
     this.borderRadius = 8,
-    this.fallbackEmoji = '',
+    this.fallbackEmoji = '🥊',
     this.fallbackIcon = Icons.fastfood_rounded,
     this.enableRetry = true,
   });
@@ -158,16 +158,10 @@ class _NetworkImageViewState extends State<NetworkImageView> {
       child: Center(
         child: widget.fallbackEmoji.isNotEmpty
             ? Text(widget.fallbackEmoji, style: TextStyle(fontSize: size))
-            : Image.asset(
-                'assets/images/branding/food_fight_logo_icon.png',
-                width: size * 1.5,
-                height: size * 1.5,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Icon(
-                  widget.fallbackIcon,
-                  color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                  size: size,
-                ),
+            : Icon(
+                widget.fallbackIcon,
+                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                size: size,
               ),
       ),
     );

@@ -14,6 +14,8 @@ import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/core/utils/validator_utils.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:food_fight/widgets/common/location_picker_map_dialog.dart';
 
 class SuperAdminManageAdminsScreen extends StatefulWidget {
   const SuperAdminManageAdminsScreen({super.key});
@@ -56,6 +58,9 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
     final cityCtrl = TextEditingController(text: 'Lahore');
     final addressCtrl = TextEditingController();
     final branchPhoneCtrl = TextEditingController();
+    final latCtrl = TextEditingController();
+    final lngCtrl = TextEditingController();
+    final radiusCtrl = TextEditingController(text: '12.0');
     final adminNameCtrl = TextEditingController();
     final adminEmailCtrl = TextEditingController();
     final adminPhoneCtrl = TextEditingController();
@@ -160,6 +165,99 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: latCtrl,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                              decoration: InputDecoration(
+                                labelText: 'Latitude',
+                                hintText: '31.5204',
+                                filled: true,
+                                fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              controller: lngCtrl,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                              decoration: InputDecoration(
+                                labelText: 'Longitude',
+                                hintText: '74.3587',
+                                filled: true,
+                                fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              controller: radiusCtrl,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'Radius (km)',
+                                hintText: '12.0',
+                                filled: true,
+                                fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.my_location_rounded, size: 16),
+                              label: const Text('Current GPS', style: TextStyle(fontSize: 12)),
+                              onPressed: () async {
+                                try {
+                                  final pos = await Geolocator.getCurrentPosition(
+                                    locationSettings: const LocationSettings(
+                                      accuracy: LocationAccuracy.high,
+                                      timeLimit: Duration(seconds: 5),
+                                    ),
+                                  );
+                                  setDialogState(() {
+                                    latCtrl.text = pos.latitude.toStringAsFixed(6);
+                                    lngCtrl.text = pos.longitude.toStringAsFixed(6);
+                                  });
+                                } catch (_) {}
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.map_rounded, size: 16),
+                              label: const Text('Pick on Map', style: TextStyle(fontSize: 12)),
+                              onPressed: () async {
+                                final initialLat = double.tryParse(latCtrl.text.trim()) ?? 31.5204;
+                                final initialLng = double.tryParse(lngCtrl.text.trim()) ?? 74.3587;
+                                final loc = await LocationPickerMapDialog.show(
+                                  dialogContext,
+                                  initialLatitude: initialLat,
+                                  initialLongitude: initialLng,
+                                );
+                                if (loc != null) {
+                                  setDialogState(() {
+                                    latCtrl.text = loc.latitude.toStringAsFixed(6);
+                                    lngCtrl.text = loc.longitude.toStringAsFixed(6);
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 18),
                       const Divider(height: 1),
                       const SizedBox(height: 12),
@@ -234,6 +332,9 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                       address: addressCtrl.text.trim(),
                       city: city,
                       phone: branchPhoneCtrl.text.trim(),
+                      latitude: double.tryParse(latCtrl.text.trim()),
+                      longitude: double.tryParse(lngCtrl.text.trim()),
+                      deliveryRadiusKm: double.tryParse(radiusCtrl.text.trim()) ?? 12.0,
                       status: 'active',
                       revenue: 0.0,
                       orderCount: 0,

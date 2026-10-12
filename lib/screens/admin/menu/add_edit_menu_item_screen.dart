@@ -427,7 +427,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
             action: SnackBarAction(
               label: 'Retry',
               textColor: Colors.white,
-              onPressed: _save,
+              onPressed: _saveItem,
             ),
           ),
         );
@@ -1222,11 +1222,23 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                       ),
                       onPressed: _isSaving ? null : _saveItem,
                       child: _isSaving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2.5),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2.5),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  _uploadProgress > 0 && _uploadProgress < 1.0
+                                      ? 'Uploading image (${(_uploadProgress * 100).toInt()}%)...'
+                                      : 'Saving...',
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             )
                           : Text(
                               widget.item == null

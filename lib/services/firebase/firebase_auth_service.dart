@@ -13,8 +13,8 @@ import 'package:food_fight/services/loyalty_service.dart';
 
 /// Firebase Authentication Service Implementation
 class FirebaseAuthService implements IAuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   CollectionReference get _usersCollection =>
       _firestore.collection(FirestoreCollections.users);

@@ -225,7 +225,6 @@ class FoodCard extends StatelessWidget {
         : 'Rs. ${food.price.toStringAsFixed(0)}';
 
     return Container(
-      height: 92,
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.surface,
@@ -251,18 +250,18 @@ class FoodCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppDimens.foodCardRadius),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Circular Food Photo (72px circle with ring and shadow)
+                // Food Photo (80px circle with ring and shadow)
                 _buildCircularImage(
-                  diameter: 72.0,
+                  diameter: 80.0,
                   effectiveTag: effectiveTag,
                   isDark: isDark,
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
 
                 // Details Column
                 Expanded(
@@ -270,15 +269,15 @@ class FoodCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Food Name + Spicy badge (max 1-2 lines)
+                      // Food Name + Spicy badge
                       Row(
                         children: [
                           Expanded(
                             child: Text(
                               food.name,
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w800,
                                 color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                               ),
                               maxLines: 1,
@@ -287,31 +286,34 @@ class FoodCard extends StatelessWidget {
                           ),
                           if (food.isSpicy) ...[
                             const SizedBox(width: 4),
-                            const Icon(
-                              Icons.local_fire_department_rounded,
-                              color: AppColors.tomato,
-                              size: 15,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.tomato.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('🌶️ Spicy', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.tomato)),
                             ),
                           ],
                         ],
                       ),
 
-                      const SizedBox(height: 2),
-
-                      // Description
-                      Text(
-                        food.description,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                      if (food.description.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          food.description,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      ],
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
 
-                      // Price and Rating aligned on center with flexible price
+                      // Price and Rating
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -319,7 +321,7 @@ class FoodCard extends StatelessWidget {
                             child: Text(
                               priceText,
                               style: TextStyle(
-                                fontSize: 13.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w800,
                                 color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                               ),
@@ -327,16 +329,21 @@ class FoodCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.star_rounded, color: AppColors.mustard, size: 12),
-                          const SizedBox(width: 2),
-                          Text(
-                            food.rating.toStringAsFixed(1),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
-                            ),
+                          const SizedBox(width: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded, color: AppColors.mustard, size: 14),
+                              const SizedBox(width: 2),
+                              Text(
+                                food.rating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -344,9 +351,9 @@ class FoodCard extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
-                // Add to bag button
+                // Add to bag button (48px touch target)
                 _buildAddButton(context, cart, isDark),
               ],
             ),

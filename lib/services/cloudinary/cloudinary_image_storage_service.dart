@@ -51,9 +51,9 @@ class CloudinaryImageStorageService implements IImageStorageService {
         quality: quality,
       );
 
-      final cloudName = StorageProviderConfig.cloudinaryCloudName;
-      final uploadPreset = StorageProviderConfig.cloudinaryUploadPreset;
-      final uploadUrl = 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+      const cloudName = StorageProviderConfig.cloudinaryCloudName;
+      const uploadPreset = StorageProviderConfig.cloudinaryUploadPreset;
+      const uploadUrl = 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
 
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(

@@ -22,9 +22,11 @@ class _OfflineBannerState extends State<OfflineBanner> {
   @override
   void initState() {
     super.initState();
-    _checkConnectivity();
-    // Periodically check connection every 10 seconds
-    _checkTimer = Timer.periodic(const Duration(seconds: 10), (_) => _checkConnectivity());
+    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+      _checkConnectivity();
+      // Periodically check connection every 10 seconds
+      _checkTimer = Timer.periodic(const Duration(seconds: 10), (_) => _checkConnectivity());
+    }
   }
 
   @override
