@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
-import 'package:food_fight/services/supabase/supabase_image_storage_service.dart';
+import 'package:food_fight/services/app_image_storage_service.dart';
 
 /// Menu Item Management Service (Firestore backed, Supabase image storage)
 class MenuService {
@@ -118,9 +118,9 @@ class MenuService {
     await _collection.doc(id).delete();
     if (imageUrl != null && imageUrl.isNotEmpty) {
       try {
-        await SupabaseImageStorageService().deleteImage(imageUrl);
+        await AppImageStorageService().deleteImage(imageUrl);
       } catch (e) {
-        AppLogger.error('Failed to remove image from Supabase: $e', tag: 'MenuService');
+        AppLogger.error('Failed to remove image: $e', tag: 'MenuService');
       }
     }
     AppLogger.info('Deleted menu item: $id', tag: 'MenuService');

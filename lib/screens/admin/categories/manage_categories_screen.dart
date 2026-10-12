@@ -5,7 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:food_fight/models/category_model.dart';
 import 'package:food_fight/providers/category_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
-import 'package:food_fight/services/supabase/supabase_image_storage_service.dart';
+import 'package:food_fight/services/app_image_storage_service.dart';
+import 'package:food_fight/core/constants/image_storage.dart';
+import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_drawer.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
@@ -113,7 +115,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                             right: 0,
                             child: InkWell(
                               onTap: () async {
-                                final img = await SupabaseImageStorageService.pickImage();
+                                final img = await AppImageStorageService.pickImage();
                                 if (img != null) {
                                   setDialogState(() => pickedImage = img);
                                 }
@@ -198,10 +200,10 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                         try {
                           String? finalImageUrl = imageUrl;
                           if (pickedImage != null) {
-                            final storage = SupabaseImageStorageService();
+                            final storage = AppImageStorageService();
                             finalImageUrl = await storage.uploadImage(
                               image: pickedImage!,
-                              path: 'categories/',
+                              path: StoragePaths.categoryImagesPath,
                             );
                           }
 
@@ -236,11 +238,15 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           }
 
                           if (ctx.mounted) Navigator.pop(ctx);
-                        } catch (e) {
+                        } catch (e, stack) {
+                          AppLogger.error('Category save error: $e\n$stack', tag: 'ManageCategories');
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                              const SnackBar(
+                                content: Text('No connection. Please check your internet and try again.'),
+                                backgroundColor: AppColors.error,
+                              ),
                             );
                           }
                         }

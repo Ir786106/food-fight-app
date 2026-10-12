@@ -5,17 +5,19 @@ import '../core/utils/logger.dart';
 import '../models/chat_model.dart';
 import '../models/chat_message_model.dart';
 import 'interfaces/chat_service_interface.dart';
-import 'supabase/supabase_image_storage_service.dart';
+
+import 'package:food_fight/services/interfaces/image_storage_service_interface.dart';
+import 'package:food_fight/services/app_image_storage_service.dart';
 
 class ChatService implements IChatService {
   final FirebaseFirestore _firestore;
-  final SupabaseImageStorageService _storageService;
+  final IImageStorageService _storageService;
 
   ChatService({
     FirebaseFirestore? firestore,
-    SupabaseImageStorageService? storageService,
+    IImageStorageService? storageService,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _storageService = storageService ?? SupabaseImageStorageService();
+        _storageService = storageService ?? AppImageStorageService();
 
   CollectionReference<Map<String, dynamic>> get _chatsRef =>
       _firestore.collection(FirestoreCollections.chats);

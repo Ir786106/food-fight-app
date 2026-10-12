@@ -13,24 +13,49 @@ service firebase.storage {
 
     function isAdmin() {
       return isAuthenticated() && (
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin']
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin', 'sub_admin', 'staff']
       );
     }
 
-    // Customer profile photos
-    match /profile_photos/{userId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin())
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
     }
 
-    // Restaurant menu item images & food banners
+    // Customer profile photos (supports profiles/ and profile_photos/)
+    match /profile_photos/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin())
+                   && request.resource.size < 5 * 1024 * 1024
+                   && isImage();
+    }
+
+    match /profiles/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin())
+                   && request.resource.size < 5 * 1024 * 1024
+                   && isImage();
+    }
+
+    match /profiles/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+                   && request.resource.size < 5 * 1024 * 1024
+                   && isImage();
+    }
+
+    // Products & Restaurant menu item images
+    match /products/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && isImage();
+    }
+
     match /menu_items/{fileName} {
       allow read: if true;
       allow write: if isAdmin()
                    && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && isImage();
     }
 
     // Categories images
@@ -38,10 +63,42 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin()
                    && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && isImage();
     }
 
-    // Default deny
+    // Banners & Promos
+    match /banners/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && isImage();
+    }
+
+    // Special Offers
+    match /offers/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && isImage();
+    }
+
+    // Rider profile documents / photos
+    match /riders/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin()
+                   && request.resource.size < 5 * 1024 * 1024
+                   && isImage();
+    }
+
+    // User reviews media
+    match /reviews/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+                   && request.resource.size < 5 * 1024 * 1024
+                   && isImage();
+    }
+
+    // Default deny for unlisted paths unless Super Admin
     match /{allPaths=**} {
       allow read, write: if isSuperAdmin();
     }
