@@ -2,6 +2,21 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.7.2+10] — 2026-10-13
+
+### Storage Provider Agnostic & Firebase Storage Primary
+- **Provider-Agnostic Image Storage**: Added `AppImageStorageService`, `FirebaseImageStorageService`, and `CloudinaryImageStorageService` supporting smooth fallback and resilient upload/download paths.
+- **Admin Image Re-uploader**: Added `reupload_missing_images_screen.dart` allowing admins to audit and restore menu item images directly in-app.
+- **Image Compression**: Integrated client-side `ImageCompressor` to reduce image upload sizes and latency.
+
+### Geolocation & Automatic Branch Selection
+- **Automatic Geolocation Branch Selection**: Enabled GPS-based branch detection with distance radius, out-of-delivery warnings, and city picker dialogs (`CityPickerSheet`, `LocationPrimerDialog`, `LocationPickerMapDialog`).
+- **Offline & Delivery Banners**: Added `OfflineBanner` and `OutOfDeliveryAreaBanner` to inform users of network drops and coverage limitations.
+
+### Mobile Customer Panel Responsiveness & Code Audit
+- **Zero RenderFlex Overflow**: Re-engineered customer home screen and product cards with responsive layout builders and flexible text wrapping, verified across screen widths (320dp to 412dp) and font scales up to 1.5x.
+- **Test Suite Expansion**: Comprehensive unit and widget tests covering branch selection, image resolution, responsive mobile home, and contrast ratios (180 tests total, all passing).
+
 ## [1.7.1+9] — 2026-10-11
 
 ### Problem A — Installer Compatibility & In-App Updater Pre-Verification
