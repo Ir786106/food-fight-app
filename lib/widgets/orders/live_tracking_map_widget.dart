@@ -11,12 +11,14 @@ class LiveTrackingMapWidget extends StatefulWidget {
   final String orderId;
   final String deliveryAddress;
   final bool isOutForDelivery;
+  final double height;
 
   const LiveTrackingMapWidget({
     super.key,
     required this.orderId,
     required this.deliveryAddress,
     this.isOutForDelivery = true,
+    this.height = 260,
   });
 
   @override
@@ -105,7 +107,7 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget>
 
     return Container(
       width: double.infinity,
-      height: 260,
+      height: widget.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),

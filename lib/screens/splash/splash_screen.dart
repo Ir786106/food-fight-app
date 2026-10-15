@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../../services/firebase/firebase_auth_service.dart';
 import '../../core/utils/logger.dart';
 import '../../core/metrics/app_startup_metrics.dart';
+import '../../routes/role_router.dart';
 
 /// Professional restaurant splash screen displaying the official FoodFight logo.
 class SplashScreen extends StatefulWidget {
@@ -95,32 +96,79 @@ class _SplashScreenState extends State<SplashScreen>
     Future.wait([minAnimationDelay, routeResolution])
         .timeout(
           const Duration(milliseconds: 3800),
-          onTimeout: () => [null, _fallbackOfflineRoute()],
+          onTimeout: () => [null, null],
         )
-        .then((results) {
+        .then((results) async {
       if (!mounted || _hasNavigated) return;
-      _hasNavigated = true;
 
-      final destination = (results.length > 1 && results[1] != null)
+      String? destination = (results.length > 1 && results[1] != null)
           ? results[1] as String
-          : _fallbackOfflineRoute();
+          : await _fallbackOfflineRoute();
 
+      if (destination == null) {
+        // Profile unavailable: show retry dialog instead of falling back to customer home
+        await _showRetryDialog();
+        return;
+      }
+
+      _hasNavigated = true;
       final elapsed = widget.startupStopwatch?.elapsedMilliseconds ?? AppStartupMetrics.elapsedMs;
       AppLogger.info(
         '[PERF] Cold start to routed screen: $destination at +${elapsed}ms',
         tag: 'Performance',
       );
 
-      Navigator.of(context).pushReplacementNamed(destination);
-    }).catchError((e) {
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(destination);
+      }
+    }).catchError((e) async {
       if (!mounted || _hasNavigated) return;
-      _hasNavigated = true;
-      final fallback = _fallbackOfflineRoute();
-      Navigator.of(context).pushReplacementNamed(fallback);
+      final fallback = await _fallbackOfflineRoute();
+      if (fallback != null) {
+        _hasNavigated = true;
+        if (mounted) Navigator.of(context).pushReplacementNamed(fallback);
+      } else {
+        await _showRetryDialog();
+      }
     });
   }
 
-  Future<String> _decideDestinationRoute() async {
+  Future<void> _showRetryDialog() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Could not load your account'),
+        content: const Text(
+          'We could not load your account profile from the server. Please check your internet connection and retry, or sign out.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await context.read<AuthProvider>().signOut();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+            child: const Text('Sign Out'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _hasNavigated = false;
+              _startParallelRouting();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _decideDestinationRoute() async {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser == null) {
@@ -133,44 +181,38 @@ class _SplashScreenState extends State<SplashScreen>
       // User has active session: load cached profile instantly
       final auth = context.read<AuthProvider>();
       await auth.init(preferCache: true).timeout(
-        const Duration(seconds: 2),
+        const Duration(seconds: 3),
         onTimeout: () {
-          AppLogger.warn('Auth cache init exceeded 2s, using direct cached role', tag: 'Splash');
+          AppLogger.warn('Auth cache init exceeded 3s, checking cached role', tag: 'Splash');
         },
       );
 
       if (auth.isLoggedIn && auth.currentUser != null) {
-        return _resolveRoleRoute(auth.currentUser!.role);
+        return RoleRouter.homeRouteFor(auth.currentUser);
       }
 
       // If network is slow or offline, use local cached role
       final cachedRole = await FirebaseAuthService.getCachedUserRole(firebaseUser.uid);
-      return _resolveRoleRoute(cachedRole ?? 'customer');
+      if (cachedRole != null && cachedRole.isNotEmpty) {
+        return RoleRouter.homeRouteForRole(cachedRole);
+      }
+
+      return null;
     } catch (e) {
       AppLogger.warn('Route determination notice: $e', tag: 'Splash');
       return _fallbackOfflineRoute();
     }
   }
 
-  String _resolveRoleRoute(String? role) {
-    final normalized = (role ?? '').trim().toLowerCase();
-    if (normalized == 'superadmin' || normalized == 'super_admin') {
-      return '/super-admin/dashboard';
-    } else if (normalized == 'admin') {
-      return '/admin/dashboard';
-    } else if (normalized == 'rider') {
-      return '/rider/dashboard';
-    } else {
-      return '/home';
-    }
-  }
-
-  String _fallbackOfflineRoute() {
+  Future<String?> _fallbackOfflineRoute() async {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
-      // Logged-in user is NEVER sent to /login just because network is offline or slow!
       if (firebaseUser != null) {
-        return '/home';
+        final cachedRole = await FirebaseAuthService.getCachedUserRole(firebaseUser.uid);
+        if (cachedRole != null && cachedRole.isNotEmpty) {
+          return RoleRouter.homeRouteForRole(cachedRole);
+        }
+        return null;
       }
     } catch (_) {
       // In headless test environments where Firebase is not initialized

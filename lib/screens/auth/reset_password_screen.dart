@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
-import '../../services/auth_service.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/custom_textfield.dart';
 import '../../widgets/custom_button.dart';
 
@@ -38,15 +38,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _handleReset(String email) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    final auth = context.read<AuthService>();
-    final error = await auth.resetPassword(
-      email: email,
-      newPassword: _newPasswordController.text,
-    );
+    final auth = context.read<AuthProvider>();
+    final success = await auth.sendPasswordResetEmail(email);
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (error != null) {
+    if (!success) {
+      final error = auth.errorMessage ?? 'Failed to send reset link. Please check your email.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: AppColors.error),
       );

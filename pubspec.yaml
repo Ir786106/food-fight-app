@@ -1,7 +1,7 @@
 name: food_fight
 description: "Food Fight - Fast Food Ordering System (5 Branches)"
 publish_to: 'none'
-version: 1.7.2+10
+version: 1.7.3+11
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

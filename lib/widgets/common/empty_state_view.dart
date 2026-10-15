@@ -27,7 +27,8 @@ class EmptyStateView extends StatelessWidget {
         : AppColors.textSecondary;
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,

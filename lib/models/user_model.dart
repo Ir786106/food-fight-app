@@ -1,4 +1,7 @@
 import '../core/utils/safe_convert.dart';
+import 'user_role.dart';
+
+export 'user_role.dart';
 
 class UserModel {
   static const String roleCustomer = 'customer';
@@ -10,7 +13,7 @@ class UserModel {
   final String name;
   final String email;
   final String phone;
-  final String role; // 'customer', 'admin', 'super_admin', 'delivery_rider'
+  final String role; // Raw stored role string
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -37,15 +40,27 @@ class UserModel {
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
-  bool get isSuperAdmin => role.toLowerCase() == 'super_admin';
-  bool get isAdmin => role.toLowerCase() == 'admin' || isSuperAdmin;
-  bool get isCustomer => role.toLowerCase() == 'customer';
-  bool get isRider =>
-      role.toLowerCase() == 'delivery_rider' || role.toLowerCase() == 'rider';
+  /// Canonical parsed UserRole
+  UserRole get userRole => UserRole.fromString(role);
+
+  /// True if role has platform Super Administrator clearance
+  bool get isSuperAdmin => userRole.isSuperAdmin;
+
+  /// True if role has admin-level access (Super Admin, Branch Admin, Sub-Admin, Staff)
+  bool get isAdmin => userRole.isAdminLevel;
+
+  /// True if role is regular customer
+  bool get isCustomer => userRole.isCustomer;
+
+  /// True if role is delivery rider
+  bool get isRider => userRole.isRider;
+
+  /// True if role is staff member
+  bool get isStaff => userRole.isStaff;
 
   /// Whether this account is a Sub-Admin under a parent Branch Admin
   bool get isSubAdmin =>
-      role.toLowerCase() == roleAdmin &&
+      (userRole == UserRole.subAdmin || userRole == UserRole.admin) &&
       parentAdminId != null &&
       parentAdminId!.isNotEmpty;
 
@@ -92,14 +107,15 @@ class UserModel {
     );
   }
 
+  /// Never stores passwords in Firestore (only retained if explicitly set for local mock storage)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'email': email,
       'phone': phone,
-      'role': role,
-      'isActive': isActive ? 1 : 0,
+      'role': userRole.firestoreValue,
+      'isActive': isActive,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'profileImage': profileImage,
@@ -116,13 +132,24 @@ class UserModel {
       parsedPermissions = List<String>.from(json['permissions']);
     }
 
+    // If isActive is missing or null, treat it as true (only explicit false/0 deactivates)
+    final rawActive = json['isActive'];
+    final bool parsedIsActive = (rawActive == null)
+        ? true
+        : (rawActive == true || rawActive == 1 || rawActive == '1' || rawActive == 'true');
+
+    final rawRole = json['role']?.toString();
+    final parsedRole = rawRole != null && rawRole.trim().isNotEmpty
+        ? UserRole.fromString(rawRole).firestoreValue
+        : 'customer';
+
     return UserModel(
       id: json['id'] ?? json['uid'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      role: json['role'] ?? 'customer',
-      isActive: json['isActive'] == 1 || json['isActive'] == true,
+      role: parsedRole,
+      isActive: parsedIsActive,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       profileImage: json['profileImage'],

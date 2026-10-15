@@ -6,9 +6,9 @@ import '../../providers/delivery_area_provider.dart';
 import '../../providers/payment_method_provider.dart';
 import '../../models/delivery_area_model.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/common/responsive_layout.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/network_image_view.dart';
+import '../../core/responsive/responsive.dart';
 import '../../widgets/custom_button.dart';
 import '../../models/address_model.dart';
 import '../../providers/address_provider.dart';
@@ -228,13 +228,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: ResponsiveContainer.content(
-          maxWidth: 860,
-          child: areaProvider.isLoading && deliveryAreas.isEmpty
-              ? const LoadingIndicator(message: 'Loading delivery coverage...')
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
-                  child: Column(
+        child: areaProvider.isLoading && deliveryAreas.isEmpty
+            ? const LoadingIndicator(message: 'Loading delivery coverage...')
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 840;
+                  final leftPane = Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 0. Selected Preparing Branch Card
@@ -258,46 +257,60 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 6,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryYellow.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.storefront_rounded,
-                                        color: AppColors.primaryYellow,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Preparing Branch',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                          ),
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: (context.screenWidth - 70).clamp(140.0, 400.0)),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryYellow.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(10),
                                         ),
-                                        Text(
-                                          currentBranch?.name ?? 'Food Fight Express Kitchen',
-                                          style: TextStyle(
-                                            fontSize: 14.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: colorScheme.onSurface,
-                                          ),
+                                        child: const Icon(
+                                          Icons.storefront_rounded,
+                                          color: AppColors.primaryYellow,
+                                          size: 20,
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Flexible(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Preparing Branch',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                              ),
+                                            ),
+                                            Text(
+                                              currentBranch?.name ?? 'Food Fight Express Kitchen',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14.5,
+                                                fontWeight: FontWeight.w800,
+                                                color: colorScheme.onSurface,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -363,14 +376,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Delivery Address',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: colorScheme.onSurface,
+                          Expanded(
+                            child: Text(
+                              'Delivery Address',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           InkWell(
                             onTap: () async {
                               final res = await Navigator.of(context).pushNamed('/add-address');
@@ -382,6 +400,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               }
                             },
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.add_rounded,
@@ -718,8 +737,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         );
                       }),
-                      const SizedBox(height: 24),
+                    ],
+                  );
 
+                  final rightPane = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       // 4. Items in Order Breakdown (Reference F)
                       Text(
                         'Items in Order (${cart.itemCount})',
@@ -797,12 +820,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                 ),
-                                Text(
-                                  'Rs. ${item.totalPrice.toStringAsFixed(0)}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -874,63 +904,212 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-        ),
+                  );
+
+                  if (isWide) {
+                    return ResponsiveBox(
+                      maxWidth: 1200,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 7, child: leftPane),
+                            const SizedBox(width: 28),
+                            Expanded(
+                              flex: 5,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  rightPane,
+                                  const SizedBox(height: 20),
+                                  _buildWidePlaceOrderButton(cart, auth, isDark, colorScheme),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ResponsiveBox.form(
+                    maxWidth: 600,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          leftPane,
+                          const SizedBox(height: 24),
+                          rightPane,
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
       ),
 
-      // Sticky "Place Order" Action Bar
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Grand Total',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+      // Sticky "Place Order" Action Bar (only shown on compact/medium when below 840px)
+      bottomNavigationBar: (context.screenWidth < 840)
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
+                ],
+              ),
+              child: SafeArea(
+                child: (context.screenWidth < 360 || context.textScale > 1.2)
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Grand Total',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Rs. ${cart.total.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          CustomButton(
+                            text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+                            isLoading: _isPlacingOrder,
+                            icon: Icons.check_circle_outline_rounded,
+                            onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Grand Total',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Rs. ${cart.total.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: CustomButton(
+                              text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+                              isLoading: _isPlacingOrder,
+                              icon: Icons.check_circle_outline_rounded,
+                              onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildWidePlaceOrderButton(CartProvider cart, AuthProvider auth, bool isDark, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Grand Total',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
                     'Rs. ${cart.total.toStringAsFixed(0)}',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: CustomButton(
-                  text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
-                  isLoading: _isPlacingOrder,
-                  icon: Icons.check_circle_outline_rounded,
-                  onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          CustomButton(
+            text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+            isLoading: _isPlacingOrder,
+            icon: Icons.check_circle_outline_rounded,
+            onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
+          ),
+        ],
       ),
     );
   }
@@ -945,6 +1124,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Expanded(
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: isBold ? 16 : 13.5,
               fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
@@ -952,15 +1133,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: isBold ? 18 : 13.5,
-              fontWeight: FontWeight.w900,
-              color: color ?? (isBold ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon) : colorScheme.onSurface),
+        const SizedBox(width: 10),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: isBold ? 18 : 13.5,
+                fontWeight: FontWeight.w900,
+                color: color ?? (isBold ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon) : colorScheme.onSurface),
+              ),
             ),
           ),
         ),

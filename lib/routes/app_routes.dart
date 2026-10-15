@@ -165,6 +165,16 @@ class AdminRouteGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
+    // Show loading state while auth initializes instead of denying access
+    if (auth.isLoading) {
+      return Scaffold(
+        backgroundColor: AdminTheme.getBackground(context),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     // Case 1: Unauthenticated
     if (!auth.isLoggedIn) {
       return _buildAccessDeniedScreen(
@@ -178,8 +188,13 @@ class AdminRouteGuard extends StatelessWidget {
       );
     }
 
-    // Case 2: Authenticated but neither Admin nor Super Admin
-    if (!auth.isAdmin && !auth.isSuperAdmin) {
+    // Fast pass for platform Super Admin
+    if (auth.isSuperAdmin) {
+      return child;
+    }
+
+    // Case 2: Authenticated but not Admin
+    if (!auth.isAdmin) {
       return _buildAccessDeniedScreen(
         context: context,
         title: 'Access Restricted',
@@ -332,6 +347,21 @@ class SuperAdminRouteGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
+    // Show loading state while auth initializes instead of denying access
+    if (auth.isLoading) {
+      return Scaffold(
+        backgroundColor: SuperAdminTheme.getBackground(context),
+        body: const Center(
+          child: CircularProgressIndicator(color: SuperAdminTheme.primary),
+        ),
+      );
+    }
+
+    // Authorized Super Admin - fast pass, never redirect
+    if (auth.isSuperAdmin) {
+      return child;
+    }
+
     // Case 1: Unauthenticated
     if (!auth.isLoggedIn) {
       return _buildAccessDeniedScreen(
@@ -346,26 +376,21 @@ class SuperAdminRouteGuard extends StatelessWidget {
     }
 
     // Case 2: Authenticated but not Super Admin
-    if (!auth.isSuperAdmin) {
-      return _buildAccessDeniedScreen(
-        context: context,
-        title: 'Super Admin Clearance Required',
-        message: 'Your account has restaurant-level permissions, but lacks platform governance clearance to access the Super Admin control suite.',
-        actionLabel: auth.isAdmin ? 'Return to Admin Dashboard' : 'Return to Customer App',
-        onAction: () {
-          if (auth.isAdmin) {
-            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
-          } else {
-            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
-          }
-        },
-        icon: Icons.gavel_rounded,
-        accentColor: SuperAdminTheme.primary,
-      );
-    }
-
-    // Case 3: Authorized Super Admin
-    return child;
+    return _buildAccessDeniedScreen(
+      context: context,
+      title: 'Super Admin Clearance Required',
+      message: 'Your account has restaurant-level permissions, but lacks platform governance clearance to access the Super Admin control suite.',
+      actionLabel: auth.isAdmin ? 'Return to Admin Dashboard' : 'Return to Customer App',
+      onAction: () {
+        if (auth.isAdmin) {
+          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
+        } else {
+          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
+        }
+      },
+      icon: Icons.gavel_rounded,
+      accentColor: SuperAdminTheme.primary,
+    );
   }
 
   Widget _buildAccessDeniedScreen({
@@ -488,6 +513,20 @@ class RiderRouteGuard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+
+    // Show loading state while auth initializes instead of denying access
+    if (auth.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    // Fast pass for platform Super Admin or Branch Admin
+    if (auth.isSuperAdmin || auth.isAdmin) {
+      return child;
+    }
 
     // Case 1: Unauthenticated
     if (!auth.isLoggedIn) {

@@ -12,6 +12,8 @@ import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/services/loyalty_service.dart';
 
 /// Firebase Authentication Service Implementation
+/// Enforces strict role resolution, server-first sign-in verification,
+/// and prevents customer fallback contamination for administrative roles.
 class FirebaseAuthService implements IAuthService {
   FirebaseAuth get _auth => FirebaseAuth.instance;
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
@@ -21,15 +23,30 @@ class FirebaseAuthService implements IAuthService {
 
   @override
   Future<UserModel?> getCurrentUser({bool preferCache = true}) async {
-    try {
-      final firebaseUser = _auth.currentUser;
-      if (firebaseUser == null) return null;
-      return await _getUserData(firebaseUser, preferCache: preferCache);
-    } catch (e) {
-      AppLogger.error('Error getting current user: $e', tag: 'FirebaseAuthService');
-      final firebaseUser = _auth.currentUser;
-      if (firebaseUser != null) {
-        final cachedRole = await getCachedUserRole(firebaseUser.uid) ?? 'customer';
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return null;
+
+    // 1. If preferCache is true, check local Firestore cache first for instant startup
+    if (preferCache) {
+      try {
+        final cacheDoc = await _usersCollection
+            .doc(firebaseUser.uid)
+            .get(const GetOptions(source: Source.cache));
+
+        if (cacheDoc.exists && cacheDoc.data() != null) {
+          final data = cacheDoc.data() as Map<String, dynamic>;
+          data['id'] = firebaseUser.uid;
+          final cachedUser = UserModel.fromJson(data);
+          unawaited(cacheRoleLocally(firebaseUser.uid, cachedUser.role));
+          return cachedUser;
+        }
+      } catch (_) {
+        // Cache miss or local database not yet populated
+      }
+
+      // Check SharedPreferences cached role as local fallback
+      final cachedRole = await getCachedUserRole(firebaseUser.uid);
+      if (cachedRole != null && cachedRole.isNotEmpty) {
         return UserModel(
           id: firebaseUser.uid,
           name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
@@ -41,7 +58,46 @@ class FirebaseAuthService implements IAuthService {
           updatedAt: DateTime.now(),
         );
       }
-      return null;
+    }
+
+    // 2. Fetch from server with 12s timeout and 1 retry
+    try {
+      return await _fetchUserFromServerWithRetry(firebaseUser);
+    } on ProfileUnavailableException {
+      // Re-check cached role before throwing
+      final cachedRole = await getCachedUserRole(firebaseUser.uid);
+      if (cachedRole != null && cachedRole.isNotEmpty) {
+        return UserModel(
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
+          email: firebaseUser.email ?? '',
+          phone: firebaseUser.phoneNumber ?? '',
+          role: cachedRole,
+          isActive: true,
+          createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
+      rethrow;
+    } catch (e) {
+      AppLogger.error('Error getting current user: $e', tag: 'FirebaseAuthService');
+      final cachedRole = await getCachedUserRole(firebaseUser.uid);
+      if (cachedRole != null && cachedRole.isNotEmpty) {
+        return UserModel(
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
+          email: firebaseUser.email ?? '',
+          phone: firebaseUser.phoneNumber ?? '',
+          role: cachedRole,
+          isActive: true,
+          createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
+      throw ProfileUnavailableException(
+        message: 'Could not load your account profile. Please check your connection and retry or sign out.',
+        originalException: e,
+      );
     }
   }
 
@@ -83,11 +139,13 @@ class FirebaseAuthService implements IAuthService {
         updatedAt: DateTime.now(),
       );
 
-      // Write user document to Cloud Firestore
+      // Explicit sign-up creates the initial customer document in Cloud Firestore
       await _usersCollection
           .doc(user.id)
           .set(user.toJson())
           .timeout(const Duration(seconds: 15));
+      await cacheRoleLocally(user.id, user.role);
+
       AppLogger.info('User signed up and saved to Firestore: ${user.email}', tag: 'FirebaseAuthService');
 
       // Credit welcome tokens from global_settings
@@ -146,7 +204,8 @@ class FirebaseAuthService implements IAuthService {
         throw AppException(message: 'Login failed: no user returned');
       }
 
-      final user = await _getUserData(firebaseUser);
+      // Always read users/{uid} directly from the SERVER (12s timeout + 1 retry)
+      final user = await _fetchUserFromServerWithRetry(firebaseUser);
 
       // Check if account has been deactivated by Admin
       if (!user.isActive) {
@@ -235,8 +294,8 @@ class FirebaseAuthService implements IAuthService {
         throw AppException(message: 'Google authentication failed: no user returned');
       }
 
-      // Fetch existing user record or create new users/{uid} document with default role 'customer'
-      final user = await _getUserData(firebaseUser);
+      // Always read users/{uid} directly from the SERVER (12s timeout + 1 retry)
+      final user = await _fetchUserFromServerWithRetry(firebaseUser);
 
       // Check if account has been blocked by Admin
       if (!user.isActive) {
@@ -385,23 +444,36 @@ class FirebaseAuthService implements IAuthService {
     try {
       final user = _auth.currentUser;
       if (user == null) return null;
-      final doc = await _usersCollection.doc(user.uid).get();
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>?;
-        return data?['role'] as String? ?? 'customer';
+      final doc = await _usersCollection
+          .doc(user.uid)
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 6));
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        final rawRole = data['role']?.toString().trim();
+        if (rawRole != null && rawRole.isNotEmpty) {
+          final normalized = UserRole.fromString(rawRole).firestoreValue;
+          await cacheRoleLocally(user.uid, normalized);
+          return normalized;
+        }
       }
-      return 'customer';
+      return await getCachedUserRole(user.uid);
     } catch (e) {
       AppLogger.error('Error getting user role: $e', tag: 'FirebaseAuthService');
-      return 'customer';
+      final user = _auth.currentUser;
+      if (user != null) {
+        return await getCachedUserRole(user.uid);
+      }
+      return null;
     }
   }
 
   /// Cache user role locally in SharedPreferences for instantaneous offline routing
   static Future<void> cacheRoleLocally(String uid, String role) async {
     try {
+      final normalized = UserRole.fromString(role).firestoreValue;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ff_cached_role_$uid', role);
+      await prefs.setString('ff_cached_role_$uid', normalized);
       await prefs.setString('ff_last_active_uid', uid);
     } catch (_) {}
   }
@@ -410,94 +482,80 @@ class FirebaseAuthService implements IAuthService {
   static Future<String?> getCachedUserRole(String uid) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('ff_cached_role_$uid');
+      final stored = prefs.getString('ff_cached_role_$uid');
+      if (stored == null || stored.isEmpty) return null;
+      return UserRole.fromString(stored).firestoreValue;
     } catch (_) {
       return null;
     }
   }
 
-  /// Helper method to get user data from Firestore cache/network or create fallback record
-  Future<UserModel> _getUserData(User firebaseUser, {bool preferCache = true}) async {
-    // 1. Try local Firestore cache first for instant (<10ms) frame rendering
-    if (preferCache) {
+  /// Reads users/{uid} directly from SERVER with 12s timeout and 1 retry.
+  /// NEVER falls back to role 'customer' for existing users.
+  /// NEVER writes a fallback document to Firestore.
+  /// If doc is missing for an authenticated user, signs out and throws an exception.
+  Future<UserModel> _fetchUserFromServerWithRetry(User firebaseUser) async {
+    Exception? lastError;
+
+    for (int attempt = 1; attempt <= 2; attempt++) {
       try {
-        final cacheDoc = await _usersCollection
+        final doc = await _usersCollection
             .doc(firebaseUser.uid)
-            .get(const GetOptions(source: Source.cache));
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 12));
 
-        if (cacheDoc.exists && cacheDoc.data() != null) {
-          final data = cacheDoc.data() as Map<String, dynamic>;
-          final rawRole = data['role']?.toString().trim();
-          if (rawRole == null || rawRole.isEmpty) {
-            data['role'] = 'customer';
-          }
-          final cachedUser = UserModel.fromJson(data);
-          unawaited(cacheRoleLocally(firebaseUser.uid, cachedUser.role));
-          // Refresh asynchronously in background without blocking startup
-          unawaited(_refreshUserDoc(firebaseUser.uid));
-          return cachedUser;
+        if (!doc.exists || doc.data() == null) {
+          // Document does not exist for this Auth user. Do NOT write customer doc!
+          await _auth.signOut();
+          throw AppException(
+            message: 'Account profile not found, contact admin',
+            code: 'profile-missing',
+          );
         }
-      } catch (_) {
-        // Cache miss or local database not populated yet, proceed to network
-      }
-    }
 
-    // 2. Fetch from network with short 3s timeout
-    try {
-      final doc = await _usersCollection
-          .doc(firebaseUser.uid)
-          .get()
-          .timeout(const Duration(seconds: 3));
-
-      if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
-        final rawRole = data['role']?.toString().trim();
-        if (rawRole == null || rawRole.isEmpty) {
-          data['role'] = 'customer';
-        }
+        data['id'] = firebaseUser.uid;
         final user = UserModel.fromJson(data);
-        unawaited(cacheRoleLocally(firebaseUser.uid, user.role));
+        await cacheRoleLocally(firebaseUser.uid, user.role);
         return user;
+      } on AppException {
+        rethrow;
+      } catch (e) {
+        lastError = e is Exception ? e : Exception(e.toString());
+        AppLogger.warn(
+          'Attempt $attempt to fetch profile for ${firebaseUser.uid} failed: $e',
+          tag: 'FirebaseAuthService',
+        );
+        if (attempt == 1) {
+          await Future.delayed(const Duration(milliseconds: 600));
+        }
       }
-    } catch (e) {
-      AppLogger.warn('Firestore user fetch timed out or failed ($e), proceeding with cached fallback', tag: 'FirebaseAuthService');
     }
 
-    final fallbackRole = await getCachedUserRole(firebaseUser.uid) ?? 'customer';
+    // Both server read attempts failed: check if a cached role exists
+    final cachedRole = await getCachedUserRole(firebaseUser.uid);
+    if (cachedRole != null && cachedRole.isNotEmpty) {
+      AppLogger.info(
+        'Server fetch failed after 2 attempts, utilizing cached role: $cachedRole',
+        tag: 'FirebaseAuthService',
+      );
+      return UserModel(
+        id: firebaseUser.uid,
+        name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
+        email: firebaseUser.email ?? '',
+        phone: firebaseUser.phoneNumber ?? '',
+        role: cachedRole,
+        isActive: true,
+        createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
 
-    // 3. Fallback user record (never treat authenticated user as logged out!)
-    final newUser = UserModel(
-      id: firebaseUser.uid,
-      name: firebaseUser.displayName ?? (firebaseUser.email?.split('@').first ?? 'User'),
-      email: firebaseUser.email ?? '',
-      phone: firebaseUser.phoneNumber ?? '',
-      role: fallbackRole,
-      isActive: true,
-      createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
-      updatedAt: DateTime.now(),
+    // No cached role exists and server read failed:
+    throw ProfileUnavailableException(
+      message: 'Could not load your account profile. Please check your connection and retry or sign out.',
+      originalException: lastError,
     );
-
-    // Save initial record in background if missing
-    try {
-      unawaited(_usersCollection
-          .doc(newUser.id)
-          .set(newUser.toJson(), SetOptions(merge: true))
-          .timeout(const Duration(seconds: 5))
-          .catchError((_) {}));
-    } catch (_) {}
-
-    return newUser;
-  }
-
-  Future<void> _refreshUserDoc(String uid) async {
-    try {
-      final doc = await _usersCollection.doc(uid).get(const GetOptions(source: Source.server));
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data() as Map<String, dynamic>;
-        final role = data['role']?.toString().trim() ?? 'customer';
-        await cacheRoleLocally(uid, role);
-      }
-    } catch (_) {}
   }
 
   AppException _getFirebaseException(FirebaseAuthException e) {

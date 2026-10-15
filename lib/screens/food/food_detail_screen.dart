@@ -11,6 +11,7 @@ import '../../providers/menu_provider.dart';
 import '../../providers/review_provider.dart';
 import '../../widgets/common/network_image_view.dart';
 import '../../widgets/home/product_card.dart';
+import '../../core/responsive/responsive.dart';
 
 class FoodDetailScreen extends StatefulWidget {
   const FoodDetailScreen({super.key});
@@ -336,13 +337,14 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
+        titleSpacing: 8,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: Center(
             child: Container(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
                 shape: BoxShape.circle,
@@ -363,36 +365,43 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                 icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   color: colorScheme.onSurface,
-                  size: 17,
+                  size: 16,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
           ),
         ),
-        title: Column(
-          children: [
-            Text(
-              food.category.toUpperCase(),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+        title: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: (context.screenWidth - 150).clamp(100.0, 600.0)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                food.category.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              food.name,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSurface,
+              const SizedBox(height: 1),
+              Text(
+                food.name,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           // Favorite Heart Button with bounce animation and tomato color (Ref A)
@@ -497,94 +506,94 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-
-            // Large Circular Hero Product Image on soft cream plate (Ref A & Audit 11)
-            Center(
-              child: GestureDetector(
-                onTap: () => _openImagePreview(context, foodItem),
-                child: Hero(
-                  tag: customHeroTag ?? 'food-${food.id}',
-                  child: Container(
-                    width: 236,
-                    height: 236,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                      border: Border.all(
-                        color: isDark ? AppColors.darkBorder : AppColors.yellowSoft,
-                        width: 3,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
-                          blurRadius: 28,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 10),
+      body: Builder(
+        builder: (context) {
+          final food = foodItem;
+          final heroPlate = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: GestureDetector(
+                  onTap: () => _openImagePreview(context, foodItem),
+                  child: Hero(
+                    tag: customHeroTag ?? 'food-${food.id}',
+                    child: Container(
+                      width: 236,
+                      height: 236,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorder : AppColors.yellowSoft,
+                          width: 3,
                         ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: food.imageUrl != null && food.imageUrl!.isNotEmpty
-                          ? NetworkImageView(
-                              imageUrl: food.imageUrl,
-                              width: 220,
-                              height: 220,
-                              fit: BoxFit.cover,
-                              fallbackEmoji: food.imageEmoji,
-                            )
-                          : Center(
-                              child: Text(
-                                food.imageEmoji,
-                                style: const TextStyle(fontSize: 100),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                            blurRadius: 28,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: food.imageUrl != null && food.imageUrl!.isNotEmpty
+                            ? NetworkImageView(
+                                imageUrl: food.imageUrl,
+                                width: 220,
+                                height: 220,
+                                fit: BoxFit.cover,
+                                fallbackEmoji: food.imageEmoji,
+                              )
+                            : Center(
+                                child: Text(
+                                  food.imageEmoji,
+                                  style: const TextStyle(fontSize: 100),
+                                ),
                               ),
-                            ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Under Image portion description and live price (Ref A)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    Text(
-                      _selectedVariant != null
-                          ? '${_selectedVariant!.label} size • ${_selectedVariant!.description ?? "Freshly made standard portion"}'
-                          : (food.description.isNotEmpty ? food.description : 'Standard Portion'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+              const SizedBox(height: 12),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      Text(
+                        _selectedVariant != null
+                            ? '${_selectedVariant!.label} size • ${_selectedVariant!.description ?? "Freshly made standard portion"}'
+                            : (food.description.isNotEmpty ? food.description : 'Standard Portion'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Live price: Rs. ${unitPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.brandMaroon,
+                      const SizedBox(height: 4),
+                      Text(
+                        'Live price: Rs. ${unitPrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.brandMaroon,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
+            ],
+          );
 
-            // Food Details Card
-            Padding(
+          final detailsCard = Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,7 +601,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   // Title + Live Unit Price
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
@@ -606,12 +614,17 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Rs. ${unitPrice.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 23,
-                          fontWeight: FontWeight.w900,
-                          color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Rs. ${unitPrice.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 23,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -619,7 +632,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   const SizedBox(height: 8),
 
                   // Rating + Time + Spicy Badges
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -643,7 +659,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
@@ -669,7 +684,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
                       if (food.isSpicy)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -702,20 +716,29 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Spice Intensity',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.onSurface,
+                        Expanded(
+                          child: Text(
+                            'Spice Intensity',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Text(
-                          _spiceName(_spiceLevel),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.error,
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _spiceName(_spiceLevel),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.error,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -775,10 +798,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
 
                   // S / M / L Rounded-Square Selector (Ref A)
                   if (food.hasVariants) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
-                        Row(
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'Size / Portion',
@@ -788,7 +817,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                                 color: colorScheme.onSurface,
                               ),
                             ),
-                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                               decoration: BoxDecoration(
@@ -835,8 +863,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            width: 56,
-                            height: 56,
+                            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.brandYellow
@@ -862,24 +890,30 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  shortCode,
-                                  style: TextStyle(
-                                    fontSize: shortCode.length <= 2 ? 15 : 12,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.1,
-                                    color: isSelected ? AppColors.brandMaroon : AppColors.textSecondary,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    shortCode,
+                                    style: TextStyle(
+                                      fontSize: shortCode.length <= 2 ? 15 : 12,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.1,
+                                      color: isSelected ? AppColors.brandMaroon : AppColors.textSecondary,
+                                    ),
                                   ),
                                 ),
-                                Text(
-                                  'Rs.${v.finalPrice.toStringAsFixed(0)}',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.1,
-                                    color: isSelected
-                                        ? AppColors.brandMaroon
-                                        : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Rs.${v.finalPrice.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.1,
+                                      color: isSelected
+                                          ? AppColors.brandMaroon
+                                          : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -895,12 +929,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Quantity',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
+                      Expanded(
+                        child: Text(
+                          'Quantity',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Container(
@@ -1276,68 +1313,116 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   const SizedBox(height: 110), // clearance for bottom action bar
                 ],
               ),
+            );
+
+          return AdaptiveLayout(
+            compact: (context, constraints, sizeClass) => SingleChildScrollView(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      heroPlate,
+                      detailsCard,
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
+            medium: (context, constraints, sizeClass) => Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 260,
+                        child: heroPlate,
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: detailsCard,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
 
       // Sticky Bottom MaroonDeep Pill "Add to cart · Rs X" CTA with yellow bag square (Ref A)
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _handleAddToCart(foodItem, cart, totalPrice),
-              borderRadius: BorderRadius.circular(28),
-              child: Container(
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.maroonDeep, // MaroonDeep #4A1517
+        child: Center(
+          heightFactor: 1.0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _handleAddToCart(foodItem, cart, totalPrice),
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.maroonDeep.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // Yellow bag icon square
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.brandYellow,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.shopping_bag_rounded,
-                        color: AppColors.brandMaroon,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        'Add to cart · Rs. ${totalPrice.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
+                  child: Container(
+                    height: 56,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.maroonDeep, // MaroonDeep #4A1517
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.maroonDeep.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
+                      ],
                     ),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: AppColors.brandYellow,
-                      size: 20,
+                    child: Row(
+                      children: [
+                        // Yellow bag icon square
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.brandYellow,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.shopping_bag_rounded,
+                            color: AppColors.brandMaroon,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Add to cart · Rs. ${totalPrice.toStringAsFixed(0)}',
+                              maxLines: 1,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: AppColors.brandYellow,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1364,21 +1449,29 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 13.5,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13.5,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                ),
               ),
             ),
           ],

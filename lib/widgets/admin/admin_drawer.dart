@@ -306,8 +306,8 @@ class AdminDrawer extends StatelessWidget {
 
                   _buildItem(
                     context,
-                    title: 'Switch to Customer View',
-                    icon: Icons.swap_horiz_rounded,
+                    title: 'Preview Customer App',
+                    icon: Icons.preview_rounded,
                     route: '/home',
                     color: AppColors.primaryYellow,
                   ),
@@ -420,7 +420,7 @@ class AdminDrawer extends StatelessWidget {
               if (route == '/admin/dashboard') {
                 Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
               } else if (route == '/home') {
-                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+                Navigator.of(context).pushNamed('/home');
               } else {
                 if (currentRoute == '/admin/dashboard') {
                   Navigator.of(context).pushNamed(route);

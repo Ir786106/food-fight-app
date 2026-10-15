@@ -12,7 +12,7 @@ import '../../services/rider_location_service.dart';
 import '../../services/rider_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/empty_state_view.dart';
-import '../../widgets/common/responsive_layout.dart';
+import '../../core/responsive/responsive.dart';
 
 class RiderDashboardScreen extends StatefulWidget {
   const RiderDashboardScreen({super.key});
@@ -54,8 +54,11 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
     });
   }
 
+  bool _isDisposed = false;
+
   @override
   void dispose() {
+    _isDisposed = true;
     _tabController.dispose();
     _positionStream?.cancel();
     _stopGpsBroadcast();
@@ -109,19 +112,29 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
     });
   }
 
-  void _stopGpsBroadcast() {
+  void _stopGpsBroadcast([String? riderId]) {
     _gpsTimer?.cancel();
     _gpsTimer = null;
-    final riderId = context.read<AuthProvider>().currentUser?.id ?? 'rider_1';
+    String id = riderId ?? '';
+    if (id.isEmpty && mounted) {
+      try {
+        id = context.read<AuthProvider>().currentUser?.id ?? 'rider_1';
+      } catch (_) {
+        id = 'rider_1';
+      }
+    } else if (id.isEmpty) {
+      id = 'rider_1';
+    }
     if (_activeOrderId != null) {
       RiderLocationService.stopBroadcasting(
         orderId: _activeOrderId!,
-        riderId: riderId,
+        riderId: id,
       );
       _activeOrderId = null;
     }
-    if (mounted) {
-      setState(() => _isBroadcasting = false);
+    _isBroadcasting = false;
+    if (mounted && !_isDisposed) {
+      setState(() {});
     }
   }
 
@@ -352,14 +365,39 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return;
+        }
         if (auth.isSuperAdmin) {
           Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
         } else if (auth.isAdmin) {
           Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
         } else {
-          Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Exit App?'),
+              content: const Text('Are you sure you want to exit the application?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Exit'),
+                ),
+              ],
+            ),
+          );
+          if (shouldExit == true) {
+            SystemNavigator.pop();
+          }
         }
       },
       child: Scaffold(
@@ -379,18 +417,25 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
                 child: const Icon(Icons.two_wheeler_rounded, color: AppColors.brandMaroon, size: 20),
               ),
               const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rider Dispatch Console',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                  ),
-                  Text(
-                    'Food Fight Delivery Operations',
-                    style: TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.normal),
-                  ),
-                ],
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Rider Dispatch Console',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    ),
+                    Text(
+                      'Food Fight Delivery Operations',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.normal),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -414,8 +459,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
             ),
           ],
         ),
-        body: ResponsiveContainer.content(
-          maxWidth: 880,
+        body: ResponsiveBox(
+          maxWidth: 1200,
           child: Column(
             children: [
               // Admin Switch Banner (when Admin / Super Admin is viewing Rider Console)
@@ -474,224 +519,266 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
                 ),
 
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // Rider Status & GPS Card
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: _isOnline
-                              ? const [Color(0xFF2E090B), Color(0xFF190406)]
-                              : const [Color(0xFF262626), Color(0xFF151515)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: _isOnline
-                              ? AppColors.brandYellow.withValues(alpha: 0.4)
-                              : Colors.white12,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+                child: AdaptiveLayout(
+                  compact: (context, constraints, sizeClass) => ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _buildStatusCard(user, isDark, activeDeliveries.length, completedDeliveries.length, codPending),
+                      const SizedBox(height: 20),
+                      _buildTabSelector(colorScheme, isDark, activeDeliveries.length, completedDeliveries.length),
+                      const SizedBox(height: 16),
+                      _buildTabViews(context, isDark, colorScheme, activeDeliveries, completedDeliveries),
+                    ],
+                  ),
+                  expanded: (context, constraints, sizeClass) => Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: SingleChildScrollView(
+                            child: _buildStatusCard(user, isDark, activeDeliveries.length, completedDeliveries.length, codPending),
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          flex: 7,
+                          child: Column(
                             children: [
-                              Stack(
-                                children: [
-                                  const CircleAvatar(
-                                    radius: 28,
-                                    backgroundColor: AppColors.brandYellow,
-                                    child: Icon(
-                                      Icons.two_wheeler_rounded,
-                                      color: AppColors.brandMaroon,
-                                      size: 30,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 0,
-                                    bottom: 0,
-                                    child: Container(
-                                      width: 14,
-                                      height: 14,
-                                      decoration: BoxDecoration(
-                                        color: _isOnline ? AppColors.success : Colors.grey,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 2),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 14),
+                              _buildTabSelector(colorScheme, isDark, activeDeliveries.length, completedDeliveries.length),
+                              const SizedBox(height: 16),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user?.name ?? 'Delivery Champion',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 17,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: _isOnline
-                                                ? (_isBroadcasting ? Colors.redAccent : AppColors.success)
-                                                : Colors.grey,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            _isOnline
-                                                ? (_isBroadcasting
-                                                    ? 'LIVE GPS BROADCASTING'
-                                                    : 'ONLINE • READY FOR DELIVERIES')
-                                                : 'OFFLINE • SHIFT PAUSED',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              color: _isOnline
-                                                  ? (_isBroadcasting ? Colors.redAccent : AppColors.brandYellow)
-                                                  : Colors.white60,
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: 0.4,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                child: SingleChildScrollView(
+                                  child: _buildTabViews(context, isDark, colorScheme, activeDeliveries, completedDeliveries),
                                 ),
                               ),
-                              Switch(
-                                value: _isOnline,
-                                activeThumbColor: AppColors.brandYellow,
-                                activeTrackColor: AppColors.brandMaroon,
-                                onChanged: (val) async {
-                                  setState(() => _isOnline = val);
-                                  if (!val) _stopGpsBroadcast();
-                                  if (user != null) {
-                                    try {
-                                      await RiderService.setRiderOnline(user.id, val);
-                                    } catch (_) {}
-                                  }
-                                },
-                              ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          const Divider(color: Colors.white12, height: 1),
-                          const SizedBox(height: 14),
-
-                          // Quick Shift Stats Row
-                          Row(
-                            children: [
-                              _buildHeaderStat(
-                                label: 'Active Tasks',
-                                value: activeDeliveries.length.toString(),
-                                icon: Icons.pending_actions_rounded,
-                                color: AppColors.brandYellow,
-                              ),
-                              Container(width: 1, height: 32, color: Colors.white12),
-                              _buildHeaderStat(
-                                label: 'Delivered Today',
-                                value: completedDeliveries.length.toString(),
-                                icon: Icons.task_alt_rounded,
-                                color: AppColors.success,
-                              ),
-                              Container(width: 1, height: 32, color: Colors.white12),
-                              _buildHeaderStat(
-                                label: 'COD Cash Pool',
-                                value: 'Rs. ${codPending.toStringAsFixed(0)}',
-                                icon: Icons.payments_outlined,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Tab Selector: Active vs Completed
-                    Container(
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
                         ),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        labelColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                        unselectedLabelColor: colorScheme.onSurfaceVariant,
-                        indicatorColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                        indicatorWeight: 3,
-                        tabs: [
-                          Tab(
-                            icon: const Icon(Icons.two_wheeler_rounded, size: 18),
-                            text: 'Active Tasks (${activeDeliveries.length})',
-                          ),
-                          Tab(
-                            icon: const Icon(Icons.history_rounded, size: 18),
-                            text: 'Completed Today (${completedDeliveries.length})',
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // Tab Views
-                    AnimatedBuilder(
-                      animation: _tabController,
-                      builder: (context, _) {
-                        if (_tabController.index == 0) {
-                          return _buildActiveDeliveriesTab(
-                            context: context,
-                            orders: activeDeliveries,
-                            isDark: isDark,
-                            colorScheme: colorScheme,
-                          );
-                        } else {
-                          return _buildCompletedDeliveriesTab(
-                            context: context,
-                            orders: completedDeliveries,
-                            isDark: isDark,
-                            colorScheme: colorScheme,
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStatusCard(dynamic user, bool isDark, int activeCount, int completedCount, double codPending) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _isOnline
+              ? const [Color(0xFF2E090B), Color(0xFF190406)]
+              : const [Color(0xFF262626), Color(0xFF151515)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: _isOnline
+              ? AppColors.brandYellow.withValues(alpha: 0.4)
+              : Colors.white12,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Stack(
+                children: [
+                  const CircleAvatar(
+                    radius: 28,
+                    backgroundColor: AppColors.brandYellow,
+                    child: Icon(
+                      Icons.two_wheeler_rounded,
+                      color: AppColors.brandMaroon,
+                      size: 30,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: _isOnline ? AppColors.success : Colors.grey,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.name ?? 'Delivery Champion',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _isOnline
+                                ? (_isBroadcasting ? Colors.redAccent : AppColors.success)
+                                : Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            _isOnline
+                                ? (_isBroadcasting
+                                    ? 'LIVE GPS BROADCASTING'
+                                    : 'ONLINE • READY FOR DELIVERIES')
+                                : 'OFFLINE • SHIFT PAUSED',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _isOnline
+                                  ? (_isBroadcasting ? Colors.redAccent : AppColors.brandYellow)
+                                  : Colors.white60,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _isOnline,
+                activeThumbColor: AppColors.brandYellow,
+                activeTrackColor: AppColors.brandMaroon,
+                onChanged: (val) async {
+                  setState(() => _isOnline = val);
+                  if (!val) _stopGpsBroadcast();
+                  if (user != null) {
+                    try {
+                      await RiderService.setRiderOnline(user.id, val);
+                    } catch (_) {}
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: Colors.white12, height: 1),
+          const SizedBox(height: 14),
+
+          // Quick Shift Stats Row
+          Row(
+            children: [
+              _buildHeaderStat(
+                label: 'Active Tasks',
+                value: activeCount.toString(),
+                icon: Icons.pending_actions_rounded,
+                color: AppColors.brandYellow,
+              ),
+              Container(width: 1, height: 32, color: Colors.white12),
+              _buildHeaderStat(
+                label: 'Delivered Today',
+                value: completedCount.toString(),
+                icon: Icons.task_alt_rounded,
+                color: AppColors.success,
+              ),
+              Container(width: 1, height: 32, color: Colors.white12),
+              _buildHeaderStat(
+                label: 'COD Cash Pool',
+                value: 'Rs. ${codPending.toStringAsFixed(0)}',
+                icon: Icons.payments_outlined,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabSelector(ColorScheme colorScheme, bool isDark, int activeCount, int completedCount) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+        indicatorWeight: 3,
+        tabs: [
+          Tab(
+            icon: const Icon(Icons.two_wheeler_rounded, size: 18),
+            text: 'Active Tasks ($activeCount)',
+          ),
+          Tab(
+            icon: const Icon(Icons.history_rounded, size: 18),
+            text: 'Completed Today ($completedCount)',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabViews(
+    BuildContext context,
+    bool isDark,
+    ColorScheme colorScheme,
+    List<OrderModel> activeDeliveries,
+    List<OrderModel> completedDeliveries,
+  ) {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        if (_tabController.index == 0) {
+          return _buildActiveDeliveriesTab(
+            context: context,
+            orders: activeDeliveries,
+            isDark: isDark,
+            colorScheme: colorScheme,
+          );
+        } else {
+          return _buildCompletedDeliveriesTab(
+            context: context,
+            orders: completedDeliveries,
+            isDark: isDark,
+            colorScheme: colorScheme,
+          );
+        }
+      },
     );
   }
 

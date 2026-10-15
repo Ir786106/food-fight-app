@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_constants.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/admin/stat_card.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 import 'package:food_fight/providers/admin_dashboard_provider.dart';
@@ -60,31 +61,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Navigator.of(context).pop();
           return;
         }
-        final shouldSwitch = await showDialog<bool>(
+        final shouldExit = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Exit Admin Portal?'),
-            content: const Text('Do you want to return to the Customer Storefront?'),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Exit App?'),
+            content: const Text('Are you sure you want to exit the application?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Stay'),
+                child: const Text('Cancel'),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: AdminTheme.primaryBlue),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Go to Storefront'),
+                child: const Text('Exit'),
               ),
             ],
           ),
         );
-        if (shouldSwitch == true && context.mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+        if (shouldExit == true) {
+          SystemNavigator.pop();
         }
       },
-      child: Scaffold(
+      child: AdminScaffold(
+        currentRoute: '/admin/dashboard',
         backgroundColor: AdminTheme.getBackground(context),
-        drawer: const AdminDrawer(currentRoute: '/admin/dashboard'),
       appBar: AppBar(
         title: Row(
           children: [
@@ -684,14 +686,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   ),
                                 ),
                                 onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                                    ),
-                                    builder: (_) => OrderDetailModal(order: order),
-                                  );
+                                  if (MediaQuery.sizeOf(context).width >= 600) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => Dialog(
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 720),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(24),
+                                            child: OrderDetailModal(order: order),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                      ),
+                                      builder: (_) => OrderDetailModal(order: order),
+                                    );
+                                  }
                                 },
                               ),
                             ),

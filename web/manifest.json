@@ -1,12 +1,12 @@
 {
-    "name": "food_fight",
-    "short_name": "food_fight",
+    "name": "Food Fight - Fast Food Ordering System",
+    "short_name": "Food Fight",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#FAF7F2",
+    "theme_color": "#FFD505",
+    "description": "Order fresh fast food from Food Fight across 5 branches with live tracking and fast delivery.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

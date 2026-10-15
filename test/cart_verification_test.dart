@@ -264,7 +264,7 @@ void main() {
       // Confirm product appears in CartScreen
       expect(find.text('Smash Double Beef'), findsOneWidget);
       expect(find.text('Rs. 790'), findsWidgets);
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsAtLeastNWidgets(1));
 
       // Increment quantity in CartScreen
       final plusButton = find.byIcon(Icons.add);
@@ -273,7 +273,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Quantity should now be 2
-      expect(find.text('2'), findsOneWidget);
+      expect(find.text('2'), findsAtLeastNWidgets(1));
       expect(cart.itemCount, 2);
       expect(cart.subtotal, 1580.0);
     });

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/theme/super_admin_theme.dart';
 import 'package:food_fight/theme/app_theme.dart';
-import 'package:food_fight/widgets/super_admin/super_admin_drawer.dart';
+import 'package:food_fight/widgets/super_admin/super_admin_scaffold.dart';
 import 'package:food_fight/widgets/admin/stat_card.dart';
 import 'package:food_fight/providers/super_admin_provider.dart';
 import 'package:food_fight/providers/branch_provider.dart';
@@ -29,31 +30,32 @@ class SuperAdminDashboardScreen extends StatelessWidget {
           Navigator.of(context).pop();
           return;
         }
-        final shouldSwitch = await showDialog<bool>(
+        final shouldExit = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Exit Super Admin HQ?'),
-            content: const Text('Do you want to return to the Customer Storefront?'),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Exit App?'),
+            content: const Text('Are you sure you want to exit the application?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Stay'),
+                child: const Text('Cancel'),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: SuperAdminTheme.primary),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Go to Storefront'),
+                child: const Text('Exit'),
               ),
             ],
           ),
         );
-        if (shouldSwitch == true && context.mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+        if (shouldExit == true) {
+          SystemNavigator.pop();
         }
       },
-      child: Scaffold(
+      child: SuperAdminScaffold(
+        currentRoute: '/super-admin/dashboard',
         backgroundColor: SuperAdminTheme.getBackground(context),
-        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/dashboard'),
       appBar: AppBar(
         title: const Row(
           children: [

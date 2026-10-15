@@ -21,6 +21,8 @@ import '../../widgets/common/error_view.dart';
 import '../../widgets/common/offline_banner.dart';
 import '../../widgets/common/out_of_delivery_area_banner.dart';
 import '../../widgets/skeleton/food_card_skeleton.dart';
+import '../../routes/role_router.dart';
+import '../../core/responsive/responsive.dart';
 
 class HomeScreen extends StatefulWidget {
   final ScrollController? parentScrollController;
@@ -130,10 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               const Text('Filter & Sort Dishes', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
               const SizedBox(height: 16),
               SwitchListTile(
@@ -207,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -221,9 +226,11 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Quick Navigation', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
@@ -260,6 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ],
+          ),
           ),
         ),
       ),
@@ -380,6 +388,84 @@ class _HomeScreenState extends State<HomeScreen> {
               const SliverToBoxAdapter(
                 child: OfflineBanner(),
               ),
+
+              // 0.1 Admin/Super Admin Storefront Preview Banner
+              if (auth.isSuperAdmin || auth.isAdmin)
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: auth.isSuperAdmin
+                            ? [const Color(0xFF1E1B4B), const Color(0xFF312E81)]
+                            : [AppColors.brandMaroon, AppColors.maroonDeep],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          auth.isSuperAdmin ? Icons.shield_rounded : Icons.storefront_rounded,
+                          color: AppColors.brandYellow,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            auth.isSuperAdmin
+                                ? 'Super Admin Preview Mode'
+                                : 'Branch Admin Preview Mode',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            } else {
+                              RoleRouter.navigateHome(context, auth.currentUser);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.brandYellow,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.arrow_back_rounded, size: 14, color: AppColors.brandMaroon),
+                                const SizedBox(width: 4),
+                                Text(
+                                  auth.isSuperAdmin ? 'Back to Super Admin' : 'Back to Admin',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.brandMaroon,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
               // 1. Mobile & Desktop Header Top Row
               SliverToBoxAdapter(
@@ -980,7 +1066,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     onSearchTap: () => Navigator.of(context).pushNamed('/search'),
                     onFilterTap: () => _openFilterSheet(context),
                   ),
-                  Expanded(child: mainContent),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: ResponsiveTokens.dashboardMaxWidth),
+                        child: mainContent,
+                      ),
+                    ),
+                  ),
                 ],
               ),
       ),

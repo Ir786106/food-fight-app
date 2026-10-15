@@ -238,12 +238,18 @@ class CustomButton extends StatelessWidget {
                         Icon(icon, size: 18),
                         const SizedBox(width: 8),
                       ],
-                      Text(
-                        text,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: AppColors.error,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            text,
+                            maxLines: 1,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppColors.error,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -284,12 +290,18 @@ class CustomButton extends StatelessWidget {
                         Icon(icon, size: 18),
                         const SizedBox(width: 8),
                       ],
-                      Text(
-                        text,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: textColor ?? (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            text,
+                            maxLines: 1,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: textColor ?? (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -309,6 +321,7 @@ class CustomButton extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: btnColor,
               foregroundColor: fgColor,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               disabledBackgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
               disabledForegroundColor: AppColors.textMuted,
               elevation: 0,
@@ -333,14 +346,17 @@ class CustomButton extends StatelessWidget {
                         Icon(icon, size: 19, color: fgColor),
                         const SizedBox(width: 8),
                       ],
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          text,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15.5,
-                            color: fgColor,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            text,
+                            maxLines: 1,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15.5,
+                              color: fgColor,
+                            ),
                           ),
                         ),
                       ),

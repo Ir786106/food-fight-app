@@ -9,7 +9,8 @@ import '../../widgets/admin/status_badge.dart';
 import '../../providers/cart_provider.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/error_view.dart';
-import '../../widgets/common/responsive_layout.dart';
+import '../../core/responsive/responsive.dart';
+import '../../widgets/custom_button.dart';
 import '../../widgets/skeleton/order_card_skeleton.dart';
 import '../../widgets/orders/order_speed_dial_fab.dart';
 import '../../core/constants/app_dimens.dart';
@@ -25,7 +26,7 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
+  OrderModel? _selectedOrder;
   String? _watchedCustomerId;
 
   @override
@@ -155,17 +156,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         ),
       ),
       body: SafeArea(
-        child: ResponsiveContainer.content(
-          maxWidth: 860,
-          child: customerId.isEmpty
-              ? EmptyStateView(
+        child: customerId.isEmpty
+            ? ResponsiveBox.form(
+                maxWidth: 500,
+                child: EmptyStateView(
                   icon: Icons.receipt_long_outlined,
                   title: 'Please Sign In',
                   description: 'Log in to your account to view your active deliveries and order history.',
                   buttonText: 'Log In Now',
                   onButtonPressed: () => Navigator.of(context).pushNamed('/login'),
-                )
-              : Builder(
+                ),
+              )
+            : Builder(
                   builder: (context) {
                     if (orderProvider.isLoading && orderProvider.customerOrders.isEmpty) {
                       return ListView.builder(
@@ -190,9 +192,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                     final pastOrders = allOrders.where((o) =>
                         o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled).toList();
 
-                    return TabBarView(
-                      controller: _tabController,
-                      children: [
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 840;
+                        final activeOrder = _selectedOrder ??
+                            (currentOrders.isNotEmpty
+                                ? currentOrders.first
+                                : (pastOrders.isNotEmpty ? pastOrders.first : null));
+
+                        final ordersView = TabBarView(
+                          controller: _tabController,
+                          children: [
                         // Tab 1: Current Orders with Horizontal Progress Indicator
                         RefreshIndicator(
                           color: AppColors.primary,
@@ -221,10 +231,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                     final order = currentOrders[index];
                                     final step = _getProgressStep(order.status);
 
+                                    final isSelected = isWide && activeOrder?.id == order.id;
+
                                     return Container(
                                       decoration: BoxDecoration(
                                         color: colorScheme.surface,
                                         borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                          width: 2,
+                                        ),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
@@ -237,10 +253,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                         color: Colors.transparent,
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(20),
-                                          onTap: () => Navigator.of(context).pushNamed(
-                                            '/order-tracking',
-                                            arguments: order,
-                                          ),
+                                          onTap: () {
+                                            if (isWide) {
+                                              setState(() => _selectedOrder = order);
+                                            } else {
+                                              Navigator.of(context).pushNamed(
+                                                '/order-tracking',
+                                                arguments: order,
+                                              );
+                                            }
+                                          },
                                           child: Padding(
                                             padding: const EdgeInsets.all(18),
                                             child: Column(
@@ -355,10 +377,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                   itemBuilder: (context, index) {
                                     final order = pastOrders[index];
 
+                                    final isSelected = isWide && activeOrder?.id == order.id;
+
                                     return Container(
                                       decoration: BoxDecoration(
                                         color: colorScheme.surface,
                                         borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                          width: 2,
+                                        ),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
@@ -371,10 +399,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                         color: Colors.transparent,
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(20),
-                                          onTap: () => Navigator.of(context).pushNamed(
-                                            '/order-tracking',
-                                            arguments: order,
-                                          ),
+                                          onTap: () {
+                                            if (isWide) {
+                                              setState(() => _selectedOrder = order);
+                                            } else {
+                                              Navigator.of(context).pushNamed(
+                                                '/order-tracking',
+                                                arguments: order,
+                                              );
+                                            }
+                                          },
                                           child: Padding(
                                             padding: const EdgeInsets.all(18),
                                             child: Column(
@@ -481,9 +515,37 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                         ),
                       ],
                     );
+
+                    if (isWide) {
+                      return ResponsiveBox(
+                        maxWidth: 1240,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: ordersView,
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 7,
+                                child: _buildOrderDetailPane(activeOrder, colorScheme, isDark),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ResponsiveBox.form(
+                      child: ordersView,
+                    );
                   },
-                ),
-        ),
+                );
+              },
+            ),
       ),
     );
   }
@@ -576,6 +638,206 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           label: 'VIEW CART',
           textColor: Colors.white,
           onPressed: () => Navigator.of(context).pushNamed('/cart'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderDetailPane(OrderModel? order, ColorScheme colorScheme, bool isDark) {
+    if (order == null) {
+      return Container(
+        height: 380,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.touch_app_rounded, size: 48, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+            const SizedBox(height: 12),
+            Text(
+              'Select an order to view live details',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final step = _getProgressStep(order.status);
+
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      order.orderNumber,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(order.createdAt),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                StatusBadge(status: order.status.name),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on_rounded, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      order.deliveryAddress,
+                      style: TextStyle(fontSize: 12.5, color: colorScheme.onSurface),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Delivery Progress',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildHorizontalProgress(step, colorScheme),
+            const SizedBox(height: 20),
+            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            const SizedBox(height: 16),
+            Text(
+              'Ordered Items (${order.items.length})',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...order.items.map((item) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryYellow.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${item.quantity}',
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: AppColors.brandMaroon),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        item.food.name,
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: colorScheme.onSurface),
+                      ),
+                    ),
+                    Text(
+                      'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: colorScheme.onSurface),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 16),
+            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total Paid', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
+                Text(
+                  'Rs. ${order.total.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'Live Map Tracking',
+                    icon: Icons.map_rounded,
+                    onPressed: () => Navigator.of(context).pushNamed(
+                      '/order-tracking',
+                      arguments: order,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () => _reorder(context, order),
+                  icon: const Icon(Icons.replay_rounded, size: 16),
+                  label: const Text('Reorder', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -177,11 +177,13 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
@@ -298,6 +300,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                 ),
               ),
             ],
+          ),
           ),
         );
       },

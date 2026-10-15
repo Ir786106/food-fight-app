@@ -162,8 +162,8 @@ class SuperAdminDrawer extends StatelessWidget {
                   ),
                   _buildNavItem(
                     context: context,
-                    icon: Icons.fastfood_rounded,
-                    title: 'Customer Storefront',
+                    icon: Icons.preview_rounded,
+                    title: 'Preview Customer App',
                     route: '/home',
                     isSecondary: true,
                   ),
@@ -260,7 +260,7 @@ class SuperAdminDrawer extends StatelessWidget {
               if (route == '/super-admin/dashboard') {
                 Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
               } else if (route == '/home') {
-                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+                Navigator.of(context).pushNamed('/home');
               } else if (route == '/admin/dashboard') {
                 Navigator.of(context).pushNamed(route);
               } else {

@@ -6,6 +6,7 @@ import 'package:food_fight/core/config/supabase_config.dart';
 import 'package:food_fight/services/interfaces/image_storage_service_interface.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/utils/image_compressor.dart';
 
 /// Supabase Image Storage Service Implementation
 /// Supabase is used EXCLUSIVELY for image storage (menu items, categories, profile photos)
@@ -166,7 +167,12 @@ class SupabaseImageStorageService implements IImageStorageService {
       throw StorageException(message: 'Supabase storage is not initialized');
     }
 
-    final Uint8List bytes = await image.readAsBytes();
+    final Uint8List rawBytes = await image.readAsBytes();
+    final Uint8List bytes = await ImageCompressor.compressAndResize(
+      rawBytes,
+      maxDimension: 1080,
+      quality: 80,
+    );
     final String rawExt = image.name.split('.').last.toLowerCase();
     final String cleanExt = supportedImageExtensions.contains(rawExt) ? rawExt : 'jpg';
 
@@ -212,9 +218,40 @@ class SupabaseImageStorageService implements IImageStorageService {
   Future<String> uploadCompressedImage({
     required XFile image,
     required String path,
-    int quality = 85,
+    int quality = 80,
   }) async {
-    return uploadImage(image: image, path: path);
+    final client = _client;
+    if (client == null) {
+      throw StorageException(message: 'Supabase storage is not initialized');
+    }
+
+    final Uint8List rawBytes = await image.readAsBytes();
+    final Uint8List bytes = await ImageCompressor.compressAndResize(
+      rawBytes,
+      maxDimension: 1080,
+      quality: quality,
+    );
+    final String rawExt = image.name.split('.').last.toLowerCase();
+    final String cleanExt = supportedImageExtensions.contains(rawExt) ? rawExt : 'jpg';
+
+    final String cleanPath = path.endsWith('/') ? path : '$path/';
+    final String fileName = generateUniqueFileName(cleanPath, image.name, cleanExt);
+    final String fullStoragePath = '$cleanPath$fileName';
+    final String contentType = getMimeType(cleanExt);
+
+    try {
+      await client.storage.from(_bucket).uploadBinary(
+        fullStoragePath,
+        bytes,
+        fileOptions: FileOptions(
+          contentType: contentType,
+          upsert: false,
+        ),
+      );
+      return client.storage.from(_bucket).getPublicUrl(fullStoragePath);
+    } catch (e) {
+      throw StorageException(message: 'Compressed upload failed: $e');
+    }
   }
 
   /// Upload banner image (delegates to uploadImage with banners folder path)

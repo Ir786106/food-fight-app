@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/firebase/firebase_auth_service.dart';
 import 'package:food_fight/services/fcm_service.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/core/utils/safe_change_notifier.dart';
+import 'package:food_fight/core/constants/firestore_collections.dart';
 
 /// Authentication state provider for role-based access & user session
 class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
   final FirebaseAuthService _authService = FirebaseAuthService();
+  StreamSubscription<DocumentSnapshot>? _userDocSubscription;
 
   UserModel? _currentUser;
   bool _isLoading = false;
@@ -32,17 +36,95 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _currentUser = await _authService.getCurrentUser(preferCache: preferCache);
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
+        _listenToUserDoc(_currentUser!.id);
+        // Refresh from server in background to ensure up-to-date role
+        unawaited(_refreshFromServerAsync(_currentUser!.id));
       }
       AppLogger.info('Auth initialized: ${_currentUser?.email} (${_currentUser?.role})', tag: 'AuthProvider');
     } catch (e) {
       AppLogger.error('Auth initialization error: $e', tag: 'AuthProvider');
       try {
         _currentUser = await _authService.getCurrentUser(preferCache: true);
+        if (_currentUser != null) {
+          FcmService.registerUserToken(_currentUser!.id);
+          _listenToUserDoc(_currentUser!.id);
+          unawaited(_refreshFromServerAsync(_currentUser!.id));
+        }
       } catch (_) {}
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Listen to user's own users/{uid} document for live role updates and deactivation
+  void _listenToUserDoc(String uid) {
+    _userDocSubscription?.cancel();
+    _userDocSubscription = FirebaseFirestore.instance
+        .collection(FirestoreCollections.users)
+        .doc(uid)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        if (!snapshot.exists || snapshot.data() == null) return;
+        final data = snapshot.data()!;
+        data['id'] = uid;
+        final updatedUser = UserModel.fromJson(data);
+
+        // Live deactivation: immediately sign out deactivated user
+        if (!updatedUser.isActive) {
+          AppLogger.warn('User ${updatedUser.id} deactivated in real-time. Signing out.', tag: 'AuthProvider');
+          signOut();
+          _errorMessage = 'Your account has been deactivated by administrator.';
+          notifyListeners();
+          return;
+        }
+
+        // Live role change: update currentUser and cache
+        final roleChanged = updatedUser.role != _currentUser?.role;
+        _currentUser = updatedUser;
+        FirebaseAuthService.cacheRoleLocally(uid, updatedUser.role);
+
+        if (roleChanged) {
+          AppLogger.info('Live role changed for $uid: ${updatedUser.role}', tag: 'AuthProvider');
+        }
+        notifyListeners();
+      },
+      onError: (e) {
+        AppLogger.warn('Error in user doc snapshot listener: $e', tag: 'AuthProvider');
+      },
+    );
+  }
+
+  /// Background refresh from server to ensure fresh profile data
+  Future<void> _refreshFromServerAsync(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection(FirestoreCollections.users)
+          .doc(uid)
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 8));
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        data['id'] = uid;
+        final freshUser = UserModel.fromJson(data);
+        if (!freshUser.isActive) {
+          await signOut();
+          _errorMessage = 'Your account has been deactivated by administrator.';
+          notifyListeners();
+          return;
+        }
+
+        if (freshUser.role != _currentUser?.role ||
+            freshUser.name != _currentUser?.name ||
+            freshUser.profileImage != _currentUser?.profileImage) {
+          _currentUser = freshUser;
+          await FirebaseAuthService.cacheRoleLocally(uid, freshUser.role);
+          notifyListeners();
+        }
+      }
+    } catch (_) {}
   }
 
   /// Sign In with Email & Password
@@ -54,6 +136,7 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _currentUser = await _authService.signIn(email: email, password: password);
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
+        _listenToUserDoc(_currentUser!.id);
       }
       return true;
     } on AppException catch (e) {
@@ -86,6 +169,7 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       );
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
+        _listenToUserDoc(_currentUser!.id);
       }
       return true;
     } on AppException catch (e) {
@@ -111,9 +195,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         return false;
       }
       _currentUser = user;
-      if (_currentUser != null) {
-        FcmService.registerUserToken(_currentUser!.id);
-      }
+      FcmService.registerUserToken(_currentUser!.id);
+      _listenToUserDoc(_currentUser!.id);
       return true;
     } on AppException catch (e) {
       _errorMessage = e.message;
@@ -129,6 +212,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
   /// Sign Out
   Future<void> signOut() async {
     try {
+      _userDocSubscription?.cancel();
+      _userDocSubscription = null;
       await _authService.signOut();
       _currentUser = null;
       notifyListeners();
@@ -179,6 +264,12 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     if (e == null) return fallback;
     if (e is AppException) return e.message;
     final str = e.toString().toLowerCase();
+    if (str.contains('profile-missing') || str.contains('profile not found')) {
+      return 'Account profile not found, contact admin.';
+    }
+    if (str.contains('profile-unavailable')) {
+      return 'Could not load your account profile. Please check your connection and retry or sign out.';
+    }
     if (str.contains('permission-denied')) {
       return "You don't have permission to perform this action.";
     }
@@ -210,5 +301,11 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
   void _clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _userDocSubscription?.cancel();
+    super.dispose();
   }
 }

@@ -174,12 +174,16 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    _isOpen ? 'Close' : 'Support & Reorder',
-                    style: const TextStyle(
-                      color: AppColors.brandMaroon,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                  Flexible(
+                    child: Text(
+                      _isOpen ? 'Close' : 'Support & Reorder',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.brandMaroon,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
@@ -224,12 +228,16 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
           children: [
             Icon(icon, size: 17, color: AppColors.primary),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
           ],

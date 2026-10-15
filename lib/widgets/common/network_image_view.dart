@@ -111,12 +111,20 @@ class _NetworkImageViewState extends State<NetworkImageView> {
     }
     // 3. Network URL
     else {
+      final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
+      final int? memWidth = safeWidth != null ? (safeWidth * dpr).round().clamp(48, 1080) : null;
+      final int? memHeight = safeHeight != null ? (safeHeight * dpr).round().clamp(48, 1080) : null;
+
       content = CachedNetworkImage(
         key: ValueKey('${_resolvedUrl}_retry_$_retryAttempt'),
         imageUrl: _resolvedUrl!,
         width: safeWidth,
         height: safeHeight,
         fit: widget.fit,
+        memCacheWidth: memWidth,
+        memCacheHeight: memHeight,
+        maxWidthDiskCache: 1080,
+        maxHeightDiskCache: 1080,
         placeholder: (context, url) => ShimmerContainer(
           width: safeWidth,
           height: safeHeight,

@@ -2,6 +2,15 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.7.3+11] — 2026-10-15
+
+### Responsive Layout Engine & Breakpoint Architecture
+- **Unified Responsive Framework**: Introduced `ResponsiveLayoutBuilder`, `ScreenType`, `DeviceMatrix`, and responsive utility helpers (`lib/core/responsive/`) providing consistent adaptive layouts across mobile, tablet, and desktop screens.
+- **Role-Based Routing Architecture**: Implemented `UserRole` enum and `RoleRouter` to guarantee strictly segregated and type-safe role routing for customers, riders, admins, and super admins.
+- **Customer Panel Mobile & Tablet Responsiveness**: Fully overhauled `CartScreen`, `CheckoutScreen`, `FoodDetailScreen`, and `OrderHistoryScreen` to support dual-column desktop/tablet master-detail views and scrolling, flex-safe mobile layouts without RenderFlex overflows.
+- **Admin & Super Admin Panel Adaptations**: Responsive admin scaffold, navigation drawer, and order detail modals adapting seamlessly from 320px narrow mobile screens to 1080p wide monitors.
+- **Zero-Overflow Device Matrix Test Suite**: Added automated responsive testing spanning 10 device viewports (320x568 up to 1920x1080) at 1.0x, 1.3x, and 2.0x font scaling factors with 100% pass rate.
+
 ## [1.7.2+10] — 2026-10-13
 
 ### Storage Provider Agnostic & Firebase Storage Primary

@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_textfield.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/common/google_sign_in_button.dart';
+import '../../routes/role_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -84,15 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      if (auth.isSuperAdmin) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
-      } else if (auth.isAdmin) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
-      } else if (auth.isRider) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/rider/dashboard', (r) => false);
-      } else {
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
-      }
+      RoleRouter.navigateHome(context, auth.currentUser);
     } else {
       final error = auth.errorMessage ?? 'Login failed. Please check your credentials.';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,15 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isGoogleLoading = false);
 
     if (success) {
-      if (auth.isSuperAdmin) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
-      } else if (auth.isAdmin) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
-      } else if (auth.isRider) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/rider/dashboard', (r) => false);
-      } else {
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
-      }
+      RoleRouter.navigateHome(context, auth.currentUser);
     } else if (auth.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
