@@ -31,7 +31,7 @@ dependencies:
   uuid: ^4.5.0
   path: ^1.9.0
   # Charts & Data Viz
-  fl_chart: ^0.68.0
+  fl_chart: ^1.2.0
   # Location & Maps
   geolocator: ^13.0.2
   google_maps_flutter: ^2.9.0
