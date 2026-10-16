@@ -83,6 +83,16 @@ service cloud.firestore {
       );
     }
 
+    function getUserBranchId() {
+      return (request.auth.token != null && request.auth.token.get('branchId', '') != '')
+        ? request.auth.token.get('branchId', '')
+        : (existingUser() ? getUserData().get('branchId', '') : '');
+    }
+
+    function isBranchStaffOrAdmin(branchId) {
+      return isAdmin() && (isSuperAdmin() || getUserBranchId() == branchId);
+    }
+
     function incomingRole() {
       return request.resource.data.get('role', '');
     }
@@ -117,8 +127,13 @@ service cloud.firestore {
     // 3. USERS & ACCOUNTS (STRICT ROLE PRIVILEGES)
     // =========================================================================
     match /users/{userId} {
-      // Read: Users can read their own profile. Admins can read all profiles. Riders can read for assignment details.
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || isDeliveryRider());
+      // Read: Users read self; Super Admin reads all; Branch Admin/Staff read within branch or customers; Riders read assigned
+      allow read: if isAuthenticated() && (
+        isOwner(userId) ||
+        isSuperAdmin() ||
+        (isAdmin() && (resource.data.get('branchId', '') == getUserBranchId() || resource.data.get('role', '') == 'customer')) ||
+        isDeliveryRider()
+      );
 
       // Create:
       // - Customer self-signup: only allowed with role == 'customer' and no elevated flags
@@ -227,35 +242,38 @@ service cloud.firestore {
     // =========================================================================
     match /orders/{orderId} {
       // Read:
-      // - Admin/Staff: all orders (or filtered by branch)
-      // - Customer: their own orders (supports where('customerId', isEqualTo: auth.uid))
-      // - Delivery Rider: assigned orders (supports where('riderId', isEqualTo: auth.uid))
-      allow read: if isAdmin() ||
-                     (isAuthenticated() && (resource == null || resource.data.customerId == request.auth.uid)) ||
+      // - Super Admin: all orders across all branches
+      // - Branch Admin/Staff: strictly scoped to own branchId and orders permission
+      // - Customer: their own orders (no odd resource == null clause)
+      // - Delivery Rider: assigned orders
+      allow read: if isSuperAdmin() ||
+                     (isAdmin() && canManage('orders') && resource.data.get('branchId', '') == getUserBranchId()) ||
+                     (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
                      (isDeliveryRider() && (
-                       resource == null ||
                        resource.data.riderId == request.auth.uid ||
                        resource.data.get('rider_id', '') == request.auth.uid
                      ));
 
       // Create:
-      // - Admin/Staff can place orders on behalf
-      // - Customer can only create an order with their own customerId, and
-      //   the total must equal subtotal + deliveryCharge - discount (server validation)
-      allow create: if isAdmin() || (
-        isAuthenticated() &&
-        request.resource.data.customerId == request.auth.uid &&
-        request.resource.data.status != 'cancelled' &&
-        request.resource.data.status != 'delivered' &&
-        request.resource.data.get('total', 0) >= 0 &&
-        request.resource.data.get('subtotal', 0) >= 0
-      );
+      // - Super Admin: full placement
+      // - Branch Admin/Staff: placement within their branch
+      // - Customer: own customerId, pending status, non-negative amounts, verified
+      allow create: if isSuperAdmin() ||
+        (isAdmin() && canManage('orders') && request.resource.data.get('branchId', '') == getUserBranchId()) ||
+        (
+          isAuthenticated() &&
+          request.resource.data.customerId == request.auth.uid &&
+          request.resource.data.status == 'pending' &&
+          request.resource.data.get('total', 0) >= 0 &&
+          request.resource.data.get('subtotal', 0) >= 0
+        );
 
       // Update:
       // - Admin/Staff: can update order statuses, assign riders, update financials
       // - Customer: can only cancel their own order (cannot alter prices or items)
       // - Delivery Rider: can only update delivery status & cancellation reason (cannot modify financials or items)
-      allow update: if canManage('orders') ||
+      allow update: if isSuperAdmin() ||
+        (isAdmin() && canManage('orders') && resource.data.get('branchId', '') == getUserBranchId()) ||
         (
           isAuthenticated() &&
           resource.data.customerId == request.auth.uid &&
@@ -351,8 +369,8 @@ service cloud.firestore {
     // 12. AUDIT LOGS (IMMUTABLE LOGS)
     // =========================================================================
     match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
+      allow read: if isSuperAdmin() || (isAdmin() && (resource.data.get('branchId', '') == '' || resource.data.get('branchId', '') == getUserBranchId()));
+      allow create: if isSuperAdmin() || (isAdmin() && (request.resource.data.get('branchId', '') == '' || request.resource.data.get('branchId', '') == getUserBranchId()));
       allow update, delete: if isSuperAdmin();
     }
 
@@ -445,19 +463,20 @@ service cloud.firestore {
     // 17. CHATS & MESSAGES (REAL-TIME TWO-WAY SUPPORT & ORDER CHAT)
     // =========================================================================
     match /chats/{chatId} {
-      allow read: if isAdmin() || (
-        isAuthenticated() && (
-          resource == null ||
+      allow read: if isSuperAdmin() ||
+        (isAdmin() && canManage('chats') && (resource.data.get('branchId', '') == '' || resource.data.get('branchId', '') == getUserBranchId())) ||
+        (isAuthenticated() && (
           resource.data.customerId == request.auth.uid ||
           resource.data.get('customerId', '') == request.auth.uid
-        )
-      );
+        ));
       allow create: if isAuthenticated() && (
         request.resource.data.customerId == request.auth.uid ||
-        isAdmin()
+        isSuperAdmin() ||
+        (isAdmin() && canManage('chats') && (request.resource.data.get('branchId', '') == '' || request.resource.data.get('branchId', '') == getUserBranchId()))
       );
       allow update: if isAuthenticated() && (
-        isAdmin() ||
+        isSuperAdmin() ||
+        (isAdmin() && canManage('chats') && (resource.data.get('branchId', '') == '' || resource.data.get('branchId', '') == getUserBranchId())) ||
         resource.data.customerId == request.auth.uid
       );
       allow delete: if isSuperAdmin();
@@ -468,7 +487,7 @@ service cloud.firestore {
           request.resource.data.senderId == request.auth.uid ||
           isAdmin()
         );
-        allow update, delete: if isAdmin();
+        allow update, delete: if isSuperAdmin() || (isAdmin() && canManage('chats'));
       }
     }
 

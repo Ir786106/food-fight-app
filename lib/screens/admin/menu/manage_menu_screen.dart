@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -86,7 +87,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AdminTheme.getCardBg(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Seed Real Food Fight Menu? 🥊'),
+        title: const Text('Seed Real Food Fight Menu'),
         content: const Text(
           'This will populate all official categories and menu items with multi-size '
           'variants (S/M/L/XL, Quarter/Half/Full, 3/5/10 Pcs, Regular/Large/Family) '
@@ -164,11 +165,12 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
               MaterialPageRoute(builder: (_) => const ReuploadMissingImagesScreen()),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.cloud_upload_rounded),
-            tooltip: 'Seed Real Menu',
-            onPressed: _confirmSeedMenu,
-          ),
+          if (kDebugMode && context.watch<AuthProvider>().isSuperAdmin)
+            IconButton(
+              icon: const Icon(Icons.cloud_upload_rounded),
+              tooltip: 'Seed Real Menu (Dev Only)',
+              onPressed: _confirmSeedMenu,
+            ),
           IconButton(
             icon: const Icon(Icons.add_rounded),
             tooltip: 'Add Menu Item',
@@ -294,8 +296,17 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                               description: menuProvider.menuItems.isEmpty
                                   ? 'You can quickly seed the official Food Fight menu or add custom items.'
                                   : 'Try changing category filter or search keywords.',
-                              buttonText: menuProvider.menuItems.isEmpty ? 'Seed Official Menu' : null,
-                              onButtonPressed: menuProvider.menuItems.isEmpty ? _confirmSeedMenu : null,
+                              buttonText: menuProvider.menuItems.isEmpty
+                                  ? ((kDebugMode && context.watch<AuthProvider>().isSuperAdmin) ? 'Seed Official Menu' : 'Add Menu Item')
+                                  : null,
+                              onButtonPressed: menuProvider.menuItems.isEmpty
+                                  ? ((kDebugMode && context.watch<AuthProvider>().isSuperAdmin)
+                                      ? _confirmSeedMenu
+                                      : () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const AddEditMenuItemScreen()),
+                                          ))
+                                  : null,
                             )
                           : RefreshIndicator(
                               onRefresh: () => menuProvider.fetchMenuItems(),

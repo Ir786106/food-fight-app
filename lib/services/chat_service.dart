@@ -53,9 +53,10 @@ class ChatService implements IChatService {
   }
 
   @override
-  Stream<List<ChatModel>> streamCustomerChats(String customerId) {
+  Stream<List<ChatModel>> streamCustomerChats(String customerId, {int limit = 50}) {
     return _chatsRef
         .where('customerId', isEqualTo: customerId)
+        .limit(limit)
         .snapshots()
         .map((snapshot) {
           final list = snapshot.docs
@@ -71,6 +72,7 @@ class ChatService implements IChatService {
     String branchId, {
     String? statusFilter,
     bool isSuperAdmin = false,
+    int limit = 50,
   }) {
     Query<Map<String, dynamic>> query = _chatsRef;
 
@@ -84,6 +86,8 @@ class ChatService implements IChatService {
         statusFilter != 'all') {
       query = query.where('status', isEqualTo: statusFilter);
     }
+
+    query = query.limit(limit);
 
     return query.snapshots().map((snapshot) {
       final list = snapshot.docs

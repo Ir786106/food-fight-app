@@ -15,19 +15,19 @@ void main() {
       HttpOverrides.global = null;
       SharedPreferences.setMockInitialValues({});
     });
-    test('SupabaseConfig holds correct URL, publishable key and bucket name', () {
-      expect(SupabaseConfig.url, 'https://acevokhgphqrtvitukzv.supabase.co');
-      expect(SupabaseConfig.publishableKey, 'sb_publishable_IAGhxF2xmeKLKOR5ZqITcw_ksW0Ghdc');
+    test('SupabaseConfig securely defaults without committed credentials', () {
       expect(SupabaseConfig.bucketName, 'food-images');
       expect(StoragePaths.bucketName, 'food-images');
-      expect(SupabaseConfig.isConfigured, isTrue);
-
       // Verify no secret or service_role key is exposed
       expect(SupabaseConfig.publishableKey.toLowerCase().contains('service_role'), isFalse);
       expect(SupabaseConfig.publishableKey.toLowerCase().contains('secret'), isFalse);
     });
 
-    test('Supabase can initialize without errors using publishable key', () async {
+    test('Supabase can initialize when credentials are provided', () async {
+      if (!SupabaseConfig.isConfigured) {
+        expect(SupabaseConfig.isConfigured, isFalse);
+        return;
+      }
       await Supabase.initialize(
         url: SupabaseConfig.url,
         publishableKey: SupabaseConfig.publishableKey,
@@ -36,7 +36,6 @@ void main() {
       final client = Supabase.instance.client;
       expect(client, isNotNull);
 
-      // Verify storage bucket access can be targeted through client
       final storageBucket = client.storage.from(SupabaseConfig.bucketName);
       expect(storageBucket, isNotNull);
       final url = storageBucket.getPublicUrl('test.jpg');
@@ -44,15 +43,20 @@ void main() {
       expect(url, contains('food-images/test.jpg'));
     });
 
-    test('SupabaseImageStorageService generates valid public URLs for food-images bucket', () {
+    test('SupabaseImageStorageService generates consistent paths for food-images bucket', () {
       final storageService = SupabaseImageStorageService();
-      final sampleUrl = storageService.getImageUrl('foods/sample_burger.jpg');
-      
-      expect(sampleUrl, contains('https://acevokhgphqrtvitukzv.supabase.co'));
-      expect(sampleUrl, contains('/storage/v1/object/public/food-images/foods/sample_burger.jpg'));
+      if (!SupabaseConfig.isConfigured) {
+        expect(storageService.getImageUrl('foods/sample_burger.jpg'), isEmpty);
+      } else {
+        final sampleUrl = storageService.getImageUrl('foods/sample_burger.jpg');
+        expect(sampleUrl, contains('foods/sample_burger.jpg'));
+      }
     });
 
     test('Supabase live upload test against food-images bucket', () async {
+      if (!SupabaseConfig.isConfigured) {
+        return;
+      }
       try {
         final client = Supabase.instance.client;
         final filePath = 'products/product_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -69,7 +73,7 @@ void main() {
         expect(res, contains('food-images/products/product_'));
 
         final imageUrl = client.storage.from('food-images').getPublicUrl(filePath);
-        expect(imageUrl, contains('https://acevokhgphqrtvitukzv.supabase.co'));
+        expect(imageUrl, contains(SupabaseConfig.url));
         expect(imageUrl, contains('food-images/products/product_'));
       } catch (e) {
         // Live integration test graceful handling in offline environments

@@ -18,9 +18,9 @@ class StorageProviderConfig {
   static const bool enableSupabaseReadFallback = true;
 
   /// Optional Cloudinary configuration if Firebase Blaze plan is not yet active
-  static const String cloudinaryCloudName = 'foodfight-pk';
-  static const String cloudinaryUploadPreset = 'foodfight_public';
-  static const String cloudinaryApiKey = '';
+  static const String cloudinaryCloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME', defaultValue: '');
+  static const String cloudinaryUploadPreset = String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET', defaultValue: '');
+  static const String cloudinaryApiKey = String.fromEnvironment('CLOUDINARY_API_KEY', defaultValue: '');
 
   /// Diagnostic logger to track image URL types
   static void logImageDiagnostic(String? rawUrl, {String? tag}) {

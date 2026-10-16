@@ -30,9 +30,6 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget>
   GoogleMapController? _mapController;
   late AnimationController _pulseController;
 
-  // Default Lahore center if no GPS data yet
-  static const LatLng _defaultCenter = LatLng(31.5204, 74.3587);
-
   LatLng? _riderLatLng;
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -81,6 +78,13 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget>
           _mapController?.animateCamera(
             CameraUpdate.newLatLng(newPos),
           );
+        } else {
+          if (mounted && _riderLatLng != null) {
+            setState(() {
+              _riderLatLng = null;
+              _markers.clear();
+            });
+          }
         }
       },
     );
@@ -104,6 +108,59 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final hasGps = _riderLatLng != null;
+
+    if (!hasGps) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E2430) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.location_off_rounded, color: AppColors.primary, size: 28),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Rider location not available yet',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.isOutForDelivery
+                  ? 'Your rider is heading to you. Live GPS will appear here as soon as broadcasting starts.'
+                  : 'Your meal is being prepared. Live map will activate once picked up by the rider.',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       width: double.infinity,
@@ -132,8 +189,8 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget>
                 onMapCreated: _onMapCreated,
                 style: isDark ? _darkMapStyle : null,
                 initialCameraPosition: CameraPosition(
-                  target: _riderLatLng ?? _defaultCenter,
-                  zoom: 14,
+                  target: _riderLatLng!,
+                  zoom: 15,
                 ),
                 markers: _markers,
                 polylines: _polylines,

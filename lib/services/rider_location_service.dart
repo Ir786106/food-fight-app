@@ -18,10 +18,13 @@ class RiderLocationData {
     this.isActive = true,
   });
 
-  factory RiderLocationData.fromMap(Map<String, dynamic> data) {
+  static RiderLocationData? fromMap(Map<String, dynamic> data) {
+    final lat = (data['latitude'] as num?)?.toDouble();
+    final lng = (data['longitude'] as num?)?.toDouble();
+    if (lat == null || lng == null) return null;
     return RiderLocationData(
-      latitude: (data['latitude'] as num?)?.toDouble() ?? 31.5204,
-      longitude: (data['longitude'] as num?)?.toDouble() ?? 74.3587,
+      latitude: lat,
+      longitude: lng,
       heading: (data['heading'] as num?)?.toDouble() ?? 0.0,
       speed: (data['speed'] as num?)?.toDouble() ?? 0.0,
       updatedAt: data['updatedAt'] is Timestamp

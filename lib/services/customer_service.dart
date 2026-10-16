@@ -10,9 +10,9 @@ class CustomerService {
   static final CollectionReference _ordersCollection =
       FirebaseFirestore.instance.collection(FirestoreCollections.orders);
 
-  /// Watch all registered customers (optionally scoped to a branch)
-  static Stream<List<UserModel>> watchCustomers({String? search, bool? isActive, String? branchId}) {
-    Query query = _usersCollection.where('role', isEqualTo: 'customer');
+  /// Watch all registered customers (optionally scoped to a branch) with pagination limit
+  static Stream<List<UserModel>> watchCustomers({String? search, bool? isActive, String? branchId, int limit = 100}) {
+    Query query = _usersCollection.where('role', isEqualTo: 'customer').limit(limit);
 
     return query.snapshots().asyncMap((snapshot) async {
       Set<String>? branchCustomerIds;

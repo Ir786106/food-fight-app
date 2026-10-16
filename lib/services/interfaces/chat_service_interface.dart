@@ -4,13 +4,14 @@ import '../../models/chat_message_model.dart';
 /// Contract interface for real-time customer <-> admin chat service
 abstract class IChatService {
   /// Stream chats belonging to a customer
-  Stream<List<ChatModel>> streamCustomerChats(String customerId);
+  Stream<List<ChatModel>> streamCustomerChats(String customerId, {int limit = 50});
 
   /// Stream chats routed to a specific branch (or all branches for Super Admin)
   Stream<List<ChatModel>> streamBranchChats(
     String branchId, {
     String? statusFilter,
     bool isSuperAdmin = false,
+    int limit = 50,
   });
 
   /// Stream messages in a specific chat

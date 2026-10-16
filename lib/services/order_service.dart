@@ -44,7 +44,7 @@ class OrderService {
         await notifService.createNotification(NotificationModel(
           id: '',
           userId: order.customerId,
-          title: 'Order Placed! 🥊',
+          title: 'Order Placed!',
           message: 'Your order #${data['orderNumber']} has been received and sent to the kitchen.',
           type: 'order',
           referenceId: docRef.id,
@@ -59,18 +59,19 @@ class OrderService {
   }
 
   /// Watch orders for a specific customer in real-time
-  static Stream<List<OrderModel>> watchCustomerOrders(String customerId) {
-    return _collection
+  static Stream<List<OrderModel>> watchCustomerOrders(String customerId, {int? limit}) {
+    Query query = _collection
         .where('customerId', isEqualTo: customerId)
-        .snapshots()
-        .map((snapshot) {
-      final orders = snapshot.docs.map((doc) {
+        .orderBy('createdAt', descending: true);
+    if (limit != null && limit > 0) {
+      query = query.limit(limit);
+    }
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return OrderModel.fromJson(data);
       }).toList();
-      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return orders;
     });
   }
 
@@ -84,30 +85,35 @@ class OrderService {
     });
   }
 
-  /// Watch all orders (Admin panel), optionally filtered by status and branchId
-  static Stream<List<OrderModel>> watchAllOrders({String? status, String? branchId}) {
-    return _collection
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      var orders = snapshot.docs.map((doc) {
+  /// Watch all orders (Admin panel), strictly scoped by branchId and status at query level
+  static Stream<List<OrderModel>> watchAllOrders({
+    String? status,
+    String? branchId,
+    int? limit,
+  }) {
+    Query query = _collection;
+
+    if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+      query = query.where('branchId', isEqualTo: branchId);
+    }
+
+    if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
+      final s = status.toLowerCase().replaceAll(' ', '');
+      query = query.where('status', isEqualTo: s);
+    }
+
+    query = query.orderBy('createdAt', descending: true);
+
+    if (limit != null && limit > 0) {
+      query = query.limit(limit);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return OrderModel.fromJson(data);
       }).toList();
-
-      if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
-        orders = orders.where((o) => o.branchId == branchId).toList();
-      }
-
-      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
-        final s = status.toLowerCase().replaceAll(' ', '');
-        orders = orders.where((o) =>
-            o.status.name.toLowerCase() == s ||
-            o.status.displayName.toLowerCase().replaceAll(' ', '') == s).toList();
-      }
-
-      return orders;
     });
   }
 

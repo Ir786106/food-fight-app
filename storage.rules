@@ -39,6 +39,7 @@ service firebase.storage {
     match /profiles/{fileName} {
       allow read: if true;
       allow write: if isAuthenticated()
+                   && (fileName.matches('^' + request.auth.uid + '.*') || isAdmin())
                    && request.resource.size < 5 * 1024 * 1024
                    && isImage();
     }

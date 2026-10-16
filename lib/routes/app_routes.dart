@@ -5,6 +5,8 @@ import 'package:food_fight/core/theme/super_admin_theme.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/theme/app_theme.dart';
 
+import 'package:food_fight/routes/role_router.dart';
+
 // Customer Screens
 import '../screens/splash/splash_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
@@ -81,7 +83,7 @@ class AppRoutes {
     '/reset-password': (context) => const ResetPasswordScreen(),
 
     // Customer Navigation & Food Discovery
-    '/home': (context) => const MainNavigationScreen(),
+    '/home': (context) => const CustomerRouteGuard(child: MainNavigationScreen()),
     '/restaurant-detail': (context) => const RestaurantDetailScreen(),
     '/food-detail': (context) => const FoodDetailScreen(),
     '/menu': (context) => const MenuScreen(),
@@ -587,6 +589,55 @@ class RiderRouteGuard extends StatelessWidget {
     }
 
     // Case 3: Authorized
+    return child;
+  }
+}
+
+/// Route guard protecting Customer Storefront routes from accidental landing
+/// by specialized roles (Super Admin, Delivery Rider).
+class CustomerRouteGuard extends StatelessWidget {
+  final Widget child;
+
+  const CustomerRouteGuard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    if (auth.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    // Super Admin must never land on customer storefront
+    if (auth.isLoggedIn && auth.isSuperAdmin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil(RoleRouter.superAdminHome, (r) => false);
+      });
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    // Active Delivery Rider should land on Rider dashboard unless they have admin permissions
+    if (auth.isLoggedIn && auth.isRider && !auth.isAdmin && !auth.isSuperAdmin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil(RoleRouter.riderHome, (r) => false);
+      });
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return child;
   }
 }

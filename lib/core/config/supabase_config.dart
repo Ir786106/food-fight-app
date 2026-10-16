@@ -2,16 +2,16 @@ import '../constants/app_constants.dart';
 
 /// Configuration for Supabase image and media storage
 class SupabaseConfig {
-  /// Supabase Project URL
-  static const String url = 'https://acevokhgphqrtvitukzv.supabase.co';
+  /// Supabase Project URL (optional fallback)
+  static const String url = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
 
-  /// Supabase Publishable Key (safe for client apps, NEVER use service_role)
-  static const String publishableKey = 'sb_publishable_IAGhxF2xmeKLKOR5ZqITcw_ksW0Ghdc';
+  /// Supabase Publishable Key (injected via environment / dart-define, never committed)
+  static const String publishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: '');
 
   /// Legacy alias for publishableKey
   static const String anonKey = publishableKey;
 
-  /// Existing Supabase Storage bucket for food fight media assets
+  /// Storage bucket for food fight media assets
   static const String bucketName = AppConstants.supabaseImagesBucket;
 
   /// Storage folder categories (food-images/products, categories, banners, profiles, videos)

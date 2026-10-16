@@ -501,10 +501,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final isDelivered = order.status == OrderStatus.delivered;
     final currentStepIndex = _getTimelineStepIndex(order.status);
 
-    final hasRider = (order.riderId != null && order.riderId!.trim().isNotEmpty) ||
-        (order.riderName != null && order.riderName!.trim().isNotEmpty);
-    final riderDisplayName = (order.riderName != null && order.riderName!.trim().isNotEmpty)
-        ? order.riderName!
+    final rawRiderId = order.riderId?.trim() ?? '';
+    final rawRiderName = order.riderName?.trim() ?? '';
+    final isPlaceholderRider = rawRiderName.toLowerCase() == 'all' || rawRiderId.toLowerCase() == 'all';
+    final hasRider = !isPlaceholderRider && (rawRiderId.isNotEmpty || rawRiderName.isNotEmpty);
+    final riderDisplayName = (rawRiderName.isNotEmpty && !isPlaceholderRider)
+        ? rawRiderName
         : 'Express Champion';
     final riderDisplayPhone = order.riderPhone ?? '';
 
@@ -522,7 +524,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          title: Text('${order.orderNumber} Tracking'),
+          title: Text(
+            order.orderNumber,
+            overflow: TextOverflow.ellipsis,
+          ),
           elevation: 0,
           actions: [
             Padding(
