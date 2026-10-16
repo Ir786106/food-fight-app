@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/common/network_image_view.dart';
 import '../../../models/chat_model.dart';
+import '../../../models/chat_message_model.dart';
 import '../../../models/order_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/branch_provider.dart';
@@ -579,16 +580,20 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
               children: [
                 Text(
                   chat.customerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
                   ),
                 ),
                 Text(
                   chat.customerPhone.isNotEmpty
-                      ? '${chat.customerPhone} • Branch: ${chat.branchId}'
+                      ? '${chat.customerPhone} • ${chat.branchId}'
                       : 'Branch: ${chat.branchId}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -597,8 +602,13 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
         if (chat != null) ...[
           if (chat.status == 'resolved')
             TextButton.icon(
-              icon: Icon(Icons.replay_rounded, size: 18, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
-              label: Text('Reopen', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon)),
+              icon: Icon(Icons.replay_rounded, size: 16, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+              label: Text('Reopen', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon)),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               onPressed: () {
                 chatProv.updateStatus(
                   'open',
@@ -610,13 +620,22 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
               },
             )
           else
-            FilledButton.tonalIcon(
+            FilledButton.tonal(
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.successSoft,
                 foregroundColor: AppColors.success,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: const Text('Mark Resolved', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_outline_rounded, size: 15),
+                  SizedBox(width: 4),
+                  Text('Resolve', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+                ],
+              ),
               onPressed: () {
                 chatProv.updateStatus(
                   'resolved',
@@ -709,89 +728,130 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                       child: Text('No messages yet in this channel.', style: TextStyle(color: AppColors.textMuted)),
                     )
                   : ListView.builder(
-                      controller: _scrollController,
-                      reverse: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      itemCount: chatProv.activeMessages.length,
-                      itemBuilder: (context, index) {
-                        final msg = chatProv.activeMessages[index];
-                        final isAdmin = msg.isAdmin;
-                        final timeStr = DateFormat('h:mm a').format(msg.createdAt);
+                        controller: _scrollController,
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        itemCount: chatProv.activeMessages.length,
+                        itemBuilder: (context, index) {
+                          final msg = chatProv.activeMessages[index];
+                          final isAdmin = msg.isAdmin;
+                          final timeStr = DateFormat('h:mm a').format(msg.createdAt);
+                          final isRead = msg.readBy.length > 1;
+                          final showDate = _shouldShowDateSeparator(chatProv.activeMessages, index);
 
-                        return Align(
-                          alignment: isAdmin ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-                            decoration: BoxDecoration(
-                              color: isAdmin
-                                  ? (isDark ? AppColors.maroonDeep : AppColors.brandMaroon)
-                                  : (isDark ? AppColors.darkSurfaceElevated : AppColors.surface),
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(14),
-                                topRight: const Radius.circular(14),
-                                bottomLeft: Radius.circular(isAdmin ? 14 : 4),
-                                bottomRight: Radius.circular(isAdmin ? 4 : 14),
-                              ),
-                              border: isAdmin
-                                  ? null
-                                  : Border.all(color: isDark ? AppColors.darkBorder : AppColors.border, width: 1),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            child: Column(
-                              crossAxisAlignment: isAdmin ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                              children: [
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (showDate)
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    isAdmin ? (msg.senderName.isNotEmpty ? msg.senderName : 'Support') : chat.customerName,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isAdmin
-                                          ? AppColors.brandYellow
-                                          : (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? Colors.white10 : Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        _formatDateSeparator(msg.createdAt),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white70 : Colors.grey.shade700,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                if (msg.imageUrl != null && msg.imageUrl!.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: NetworkImageView(
-                                      imageUrl: msg.imageUrl,
-                                      height: 180,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      borderRadius: 8,
-                                      fallbackIcon: Icons.broken_image_rounded,
-                                    ),
-                                  ),
-                                if (msg.text.isNotEmpty)
-                                  Text(
-                                    msg.text,
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      color: isAdmin
-                                          ? Colors.white
-                                          : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
-                                    ),
-                                  ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  timeStr,
-                                  style: TextStyle(
-                                    fontSize: 10,
+                              Align(
+                                alignment: isAdmin ? Alignment.centerRight : Alignment.centerLeft,
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+                                  decoration: BoxDecoration(
                                     color: isAdmin
-                                        ? Colors.white.withValues(alpha: 0.6)
-                                        : colorScheme.onSurfaceVariant,
+                                        ? (isDark ? AppColors.maroonDeep : AppColors.brandMaroon)
+                                        : (isDark ? AppColors.darkSurfaceElevated : AppColors.surface),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: const Radius.circular(14),
+                                      topRight: const Radius.circular(14),
+                                      bottomLeft: Radius.circular(isAdmin ? 14 : 4),
+                                      bottomRight: Radius.circular(isAdmin ? 4 : 14),
+                                    ),
+                                    border: isAdmin
+                                        ? null
+                                        : Border.all(color: isDark ? AppColors.darkBorder : AppColors.border, width: 1),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  child: Column(
+                                    crossAxisAlignment: isAdmin ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          isAdmin ? (msg.senderName.isNotEmpty ? msg.senderName : 'Support') : chat.customerName,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: isAdmin
+                                                ? AppColors.brandYellow
+                                                : (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                                          ),
+                                        ),
+                                      ),
+                                      if (msg.imageUrl != null && msg.imageUrl!.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 6),
+                                          child: NetworkImageView(
+                                            imageUrl: msg.imageUrl,
+                                            height: 180,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            borderRadius: 8,
+                                            fallbackIcon: Icons.broken_image_rounded,
+                                          ),
+                                        ),
+                                      if (msg.text.isNotEmpty)
+                                        Text(
+                                          msg.text,
+                                          style: TextStyle(
+                                            fontSize: 13.5,
+                                            color: isAdmin
+                                                ? Colors.white
+                                                : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                                          ),
+                                        ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            timeStr,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: isAdmin
+                                                  ? Colors.white.withValues(alpha: 0.7)
+                                                  : colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                          if (isAdmin) ...[
+                                            const SizedBox(width: 4),
+                                            Icon(
+                                              isRead ? Icons.done_all_rounded : Icons.check_rounded,
+                                              size: 13,
+                                              color: isRead ? AppColors.brandYellow : Colors.white70,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
         ),
 
         // Canned Replies Carousel
@@ -799,13 +859,16 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
           height: 38,
           margin: const EdgeInsets.symmetric(vertical: 4),
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             scrollDirection: Axis.horizontal,
             itemCount: _cannedReplies.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final reply = _cannedReplies[index];
               return ActionChip(
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 label: Text(reply, style: TextStyle(fontSize: 11.5, color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon)),
                 backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.yellowSoft,
                 side: isDark ? const BorderSide(color: AppColors.darkBorder) : BorderSide.none,
@@ -875,6 +938,24 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
         ),
       ],
     );
+  }
+
+  bool _shouldShowDateSeparator(List<ChatMessageModel> messages, int index) {
+    if (index == messages.length - 1) return true;
+    final current = messages[index].createdAt;
+    final older = messages[index + 1].createdAt;
+    return current.day != older.day || current.month != older.month || current.year != older.year;
+  }
+
+  String _formatDateSeparator(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final check = DateTime(dt.year, dt.month, dt.day);
+
+    if (check == today) return 'Today';
+    if (check == yesterday) return 'Yesterday';
+    return DateFormat('EEE, d MMM').format(dt);
   }
 
   Widget _buildNoChatSelectedPlaceholder() {

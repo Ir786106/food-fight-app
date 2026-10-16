@@ -124,7 +124,7 @@ void main() {
   });
 
   group('NetworkImageView Fallback Widget Tests', () {
-    testWidgets('Renders placeholder and fallback emoji when imageUrl is null', (tester) async {
+    testWidgets('Renders neutral branded fallback icon when imageUrl is null', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -137,8 +137,8 @@ void main() {
         ),
       );
 
-      // Verify default brand emoji appears
-      expect(find.text('🥊'), findsOneWidget);
+      // Verify neutral branded fallback icon appears
+      expect(find.byIcon(Icons.fastfood_rounded), findsOneWidget);
     });
 
     testWidgets('Renders fallback icon when fallbackEmoji is empty and imageUrl is empty string', (tester) async {

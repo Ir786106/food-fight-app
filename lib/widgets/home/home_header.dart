@@ -126,7 +126,7 @@ class HomeHeader extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'favourite foods 🥊',
+            'favourite foods',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,

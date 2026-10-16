@@ -53,6 +53,11 @@
         </provider>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <!-- Google Maps Android API Key from google-services.json -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCQvloEItg5cCuZpWBaBK73bM6YIvMhwSc" />
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

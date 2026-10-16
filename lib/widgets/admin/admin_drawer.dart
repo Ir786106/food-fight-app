@@ -89,7 +89,9 @@ class AdminDrawer extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                user?.isSubAdmin == true ? 'SUB-ADMIN' : 'BRANCH ADMIN',
+                                user?.isSuperAdmin == true
+                                    ? 'SUPER ADMIN'
+                                    : (user?.isSubAdmin == true ? 'SUB-ADMIN' : 'BRANCH ADMIN'),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 9.5,
@@ -98,12 +100,21 @@ class AdminDrawer extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            if (user?.branchId != null) ...[
+                            if (user?.branchId != null && user!.branchId!.isNotEmpty) ...[
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  user!.branchId!,
+                                  user.branchId!,
                                   style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ] else if (user?.isSuperAdmin == true) ...[
+                              const SizedBox(width: 4),
+                              const Expanded(
+                                child: Text(
+                                  'HQ (All)',
+                                  style: TextStyle(color: Colors.white70, fontSize: 10),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -208,7 +219,7 @@ class AdminDrawer extends StatelessWidget {
                     if (user == null || user.can('riders'))
                       _buildItem(
                         context,
-                        title: 'Fleet & Delivery Riders',
+                        title: 'Delivery Riders',
                         icon: Icons.delivery_dining_rounded,
                         route: '/admin/riders',
                       ),
@@ -329,10 +340,34 @@ class AdminDrawer extends StatelessWidget {
                     style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 13.5),
                   ),
                   onTap: () async {
-                    Navigator.pop(context);
-                    await auth.signOut();
-                    if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold)),
+                        content: const Text('Are you sure you want to sign out of the Admin Portal?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Sign Out'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true && context.mounted) {
+                      Navigator.pop(context);
+                      await auth.signOut();
+                      if (context.mounted) {
+                        Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false);
+                      }
                     }
                   },
                 ),
@@ -406,6 +441,8 @@ class AdminDrawer extends StatelessWidget {
               : null,
           title: Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: isSelected
                   ? (Theme.of(context).brightness == Brightness.dark ? AppColors.brandYellow : AppColors.brandMaroon)

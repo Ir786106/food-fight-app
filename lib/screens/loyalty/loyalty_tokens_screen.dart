@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../models/loyalty_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/loyalty_provider.dart';
 import '../../widgets/common/empty_state_view.dart';
@@ -338,9 +339,7 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    tx.description.isNotEmpty
-                                        ? tx.description
-                                        : (isCredit ? 'Tokens Earned' : 'Tokens Redeemed'),
+                                    _formatLoyaltyReason(tx),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
@@ -431,5 +430,39 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
         ),
       ],
     );
+  }
+
+  String _formatLoyaltyReason(LoyaltyTransaction tx) {
+    final type = tx.type.toLowerCase();
+    String orderRef = '';
+
+    if (tx.orderId != null && tx.orderId!.isNotEmpty) {
+      if (tx.orderId!.startsWith('FF-')) {
+        orderRef = tx.orderId!;
+      } else if (tx.orderId!.length > 6) {
+        orderRef = 'FF-${tx.orderId!.substring(0, 4).toUpperCase()}';
+      } else {
+        orderRef = 'FF-${tx.orderId!}';
+      }
+    } else if (tx.description.contains('#')) {
+      final raw = tx.description.split('#').last.trim();
+      if (raw.startsWith('FF-')) {
+        orderRef = raw;
+      } else if (raw.length > 6) {
+        orderRef = 'FF-${raw.substring(0, 4).toUpperCase()}';
+      } else if (raw.isNotEmpty) {
+        orderRef = 'FF-$raw';
+      }
+    }
+
+    if (type == 'bonus' || tx.description.toLowerCase().contains('welcome')) {
+      return 'Welcome Bonus';
+    } else if (type == 'refund') {
+      return orderRef.isNotEmpty ? 'Refunded on $orderRef' : 'Refunded';
+    } else if (type == 'redeem' || tx.amount < 0) {
+      return orderRef.isNotEmpty ? 'Redeemed on $orderRef' : 'Tokens Redeemed';
+    } else {
+      return orderRef.isNotEmpty ? 'Earned on $orderRef' : 'Tokens Earned';
+    }
   }
 }

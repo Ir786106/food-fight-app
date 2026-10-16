@@ -12,7 +12,7 @@ class RestaurantService {
     RestaurantModel(
       id: 'food_fight_hq',
       name: 'Food Fight Kitchen',
-      imageEmoji: '🥊',
+      imageEmoji: '🍔',
       cuisine: 'Fast Food • Burgers • Pizza • Wings',
       rating: 4.9,
       deliveryTimeMinutes: 20,

@@ -765,13 +765,15 @@ class _CartScreenState extends State<CartScreen> {
                               fontSize: 14,
                             ),
                           ),
-                          Text(
-                            context.watch<LoyaltyProvider>().balance > 0
-                                ? '${context.watch<LoyaltyProvider>().balance} tokens available (Rs. ${context.watch<LoyaltyProvider>().balance})'
-                                : 'Earn 1 token for every Rs. 100 on delivered orders!',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: colorScheme.onSurfaceVariant,
+                          Consumer<LoyaltyProvider>(
+                            builder: (context, loyalty, _) => Text(
+                              loyalty.balance > 0
+                                  ? '${loyalty.balance} tokens available (Rs. ${(loyalty.balance * loyalty.tokenValueInCurrency).toStringAsFixed(0)})'
+                                  : 'Earn 1 token for every Rs. ${loyalty.earnRateInCurrency} on delivered orders!',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         ],

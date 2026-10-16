@@ -1057,7 +1057,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen>
                     tilePadding: EdgeInsets.zero,
                     childrenPadding: const EdgeInsets.only(bottom: 8),
                     title: Text(
-                      '${order.items.length} items ordered • Rs. ${order.total.toStringAsFixed(0)}',
+                      '${order.items.length} ${order.items.length == 1 ? "item" : "items"} ordered • Rs. ${order.total.toStringAsFixed(0)}',
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,

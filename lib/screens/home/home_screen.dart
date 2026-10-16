@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedRailCategory = 'All';
-  String _selectedTextTab = 'All';
+  String _selectedTextTab = 'Popular';
   final PageController _promoController = PageController();
   final ScrollController _contentScrollController = ScrollController();
   Timer? _promoTimer;
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _filterOnlySpicy = false;
   String _sortBy = 'popular';
 
-  final List<String> _textTabs = const ['Popular', 'Recommended', 'New', 'All'];
+  final List<String> _textTabs = const ['Popular', 'Recommended', 'New'];
 
   final Map<String, String> _categoryEmojiMap = {
     'all': '🍽️',
@@ -64,9 +64,14 @@ class _HomeScreenState extends State<HomeScreen> {
     'dessert': '🍰',
     'desserts': '🍰',
     'deals': '🏷️',
-    'combos': '🥊',
+    'combos': '🍱',
     'fast food': '🍔',
   };
+
+  String _cleanCategoryTitle(String cat) {
+    final cleaned = cat.replaceAll(RegExp(r'[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]', unicode: true), '').trim();
+    return cleaned.isNotEmpty ? cleaned : cat;
+  }
 
   String _getCategoryEmoji(String categoryName) {
     final lower = categoryName.toLowerCase().trim();
@@ -350,8 +355,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final hasUnreadNotifications = (notifProvider?.unreadCount ?? 0) > 0;
     final userName = auth.currentUser?.name;
     final greetingText = (userName != null && userName.isNotEmpty)
-        ? 'Hello, ${userName.split(' ').first}! 🥊'
-        : 'Food Fight Kitchen 🥊';
+        ? 'Hello, ${userName.split(' ').first}!'
+        : 'Food Fight Kitchen';
 
     final categoriesWithAll = ['All', ...categories.map((c) => c.name)];
 
@@ -515,7 +520,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text('🥊', style: TextStyle(fontSize: 12)),
+                              const Icon(Icons.stars_rounded, size: 14, color: AppColors.brandYellow),
                               const SizedBox(width: 4),
                               Consumer<LoyaltyProvider>(
                                 builder: (_, lp, __) => Text(
@@ -751,7 +756,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Text(emoji, style: const TextStyle(fontSize: 14)),
                                 const SizedBox(width: 6),
                                 Text(
-                                  cat,
+                                  _cleanCategoryTitle(cat),
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
@@ -797,45 +802,58 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              // 8. Text Tabs: Popular / Recommended / New / All
+              // 8. Filter / Sort Row: Popular / Recommended / New
               SliverToBoxAdapter(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: Row(
                     children: _textTabs.map((tab) {
                       final isSelected = _selectedTextTab == tab;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() => _selectedTextTab = tab);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                tab,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                  color: isSelected
-                                      ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                                      : (isDark ? AppColors.darkTextMuted : AppColors.textSecondary),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeOutCubic,
-                                height: 3,
-                                width: isSelected ? 24 : 0,
-                                decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.brandYellow : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ],
+                      IconData tabIcon;
+                      if (tab == 'Popular') {
+                        tabIcon = Icons.local_fire_department_rounded;
+                      } else if (tab == 'Recommended') {
+                        tabIcon = Icons.thumb_up_alt_rounded;
+                      } else {
+                        tabIcon = Icons.auto_awesome_rounded;
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          showCheckmark: false,
+                          avatar: Icon(
+                            tabIcon,
+                            size: 15,
+                            color: isSelected
+                                ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                : (isDark ? AppColors.darkTextMuted : AppColors.textSecondary),
+                          ),
+                          label: Text(tab),
+                          labelStyle: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected
+                                ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                : (isDark ? AppColors.darkTextMuted : AppColors.textSecondary),
+                          ),
+                          selected: isSelected,
+                          onSelected: (_) {
+                            setState(() => _selectedTextTab = tab);
+                          },
+                          backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                          selectedColor: isDark
+                              ? AppColors.brandYellow.withValues(alpha: 0.2)
+                              : AppColors.brandYellow.withValues(alpha: 0.35),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.brandYellow
+                                  : (isDark ? AppColors.darkBorder : AppColors.border),
+                              width: isSelected ? 1.2 : 0.8,
+                            ),
                           ),
                         ),
                       );
@@ -868,9 +886,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? Padding(
                               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                               child: EmptyStateView(
-                                icon: Icons.fastfood_outlined,
-                                title: 'No Dishes Found',
-                                description: 'No items found matching $_selectedRailCategory / $_selectedTextTab.',
+                                icon: branchProvider.selectedBranch == null
+                                    ? Icons.location_on_outlined
+                                    : Icons.fastfood_outlined,
+                                title: branchProvider.selectedBranch == null
+                                    ? 'Select your area'
+                                    : 'No Dishes Found',
+                                description: branchProvider.selectedBranch == null
+                                    ? 'Please choose your area or branch to view the local menu, pricing, and live deals.'
+                                    : 'No items found matching $_selectedRailCategory / $_selectedTextTab.',
+                                buttonText: branchProvider.selectedBranch == null
+                                    ? 'Select Area'
+                                    : null,
+                                onButtonPressed: branchProvider.selectedBranch == null
+                                    ? () => branchProvider.promptManualCitySelection(context)
+                                    : null,
                               ),
                             )
                           : SizedBox(

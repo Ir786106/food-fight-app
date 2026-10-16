@@ -87,7 +87,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         rating: args.rating,
         deliveryTimeMinutes: 25,
         deliveryFee: 150,
-        imageEmoji: '🥊',
+        imageEmoji: '',
         address: args.address.isNotEmpty ? args.address : '${args.city} Branch',
       );
     } else if (currentBranch != null) {
@@ -98,7 +98,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         rating: currentBranch.rating,
         deliveryTimeMinutes: 25,
         deliveryFee: 150,
-        imageEmoji: '🥊',
+        imageEmoji: '',
         address: currentBranch.address.isNotEmpty ? currentBranch.address : '${currentBranch.city} Branch',
       );
     }
@@ -210,7 +210,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Sharing "${activeRestaurant.name}" with friends! 🥊'),
+                          content: Text('Sharing "${activeRestaurant.name}" with friends!'),
                           duration: const Duration(seconds: 1),
                         ),
                       );

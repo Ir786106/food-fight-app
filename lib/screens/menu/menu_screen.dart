@@ -43,7 +43,7 @@ class _MenuScreenState extends State<MenuScreen> {
     'dessert': '🍰',
     'desserts': '🍰',
     'deals': '🏷️',
-    'combos': '🥊',
+    'combos': '🍱',
   };
 
   String _getCategoryEmoji(String categoryName) {
@@ -104,7 +104,7 @@ class _MenuScreenState extends State<MenuScreen> {
       appBar: AppBar(
         title: const Row(
           children: [
-            Text('Food Menu 🥊'),
+            Text('Food Menu'),
           ],
         ),
         automaticallyImplyLeading: false,

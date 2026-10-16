@@ -30,7 +30,7 @@ class NetworkImageView extends StatefulWidget {
     this.height,
     this.fit = BoxFit.cover,
     this.borderRadius = 8,
-    this.fallbackEmoji = '🥊',
+    this.fallbackEmoji = '',
     this.fallbackIcon = Icons.fastfood_rounded,
     this.enableRetry = true,
   });

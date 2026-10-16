@@ -339,7 +339,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _showDocumentSheet('Privacy Policy', _privacyPolicyContent);
             } else if (title == 'App Version') {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Food Fight v1.2.0 is running the latest build')),
+                SnackBar(content: Text('Food Fight ${_appVersion.isNotEmpty ? "v$_appVersion" : ""} is running the latest build')),
               );
             }
           },

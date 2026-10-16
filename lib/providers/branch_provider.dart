@@ -369,6 +369,9 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
     }
   }
 
+  /// Manually prompt customer to pick their city/area
+  Future<void> promptManualCitySelection(BuildContext context) => _promptCityPicker(context);
+
   Future<void> _promptCityPicker(BuildContext context) async {
     final availableCities = activeBranches.map((b) => b.city).toSet().toList();
     if (availableCities.isEmpty) {
@@ -398,7 +401,7 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   /// User-friendly read-only delivery label with estimated time
   String getDeliveryLabel() {
     final branch = selectedBranch;
-    if (branch == null) return 'Food Fight Express Kitchen';
+    if (branch == null) return 'Select your area';
     
     // Dynamic estimated delivery time calculation
     int minutes = 20;

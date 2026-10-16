@@ -71,7 +71,7 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('No active delivery to track right now 🥊'),
+          content: const Text('No active delivery to track right now'),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius12)),

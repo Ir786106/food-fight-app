@@ -187,6 +187,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     // Payment options list: default COD + saved cards/wallets + fallbacks
+    // Only Cash on Delivery is active until official payment gateway keys are provisioned
     final List<Map<String, dynamic>> paymentOptions = [
       {
         'id': 'Cash on Delivery',
@@ -198,27 +199,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (payProvider.methods.isNotEmpty) {
       for (var m in payProvider.methods) {
+        final isWallet = m.type == 'jazzcash' || m.type == 'easypaisa' || m.gateway.contains('jazz') || m.gateway.contains('easy');
         final brandName = (m.cardBrand ?? m.gateway).toUpperCase();
         paymentOptions.add({
           'id': '$brandName ${m.maskedNumber}',
-          'title': '$brandName Card',
+          'title': isWallet ? '$brandName Wallet' : '$brandName Card',
           'subtitle': '${m.maskedNumber} (Saved)',
-          'icon': Icons.credit_card_rounded,
+          'icon': isWallet ? Icons.account_balance_wallet_rounded : Icons.credit_card_rounded,
         });
       }
-    } else {
-      paymentOptions.add({
-        'id': 'Credit / Debit Card (Online)',
-        'title': 'Credit / Debit Card',
-        'subtitle': 'Visa, Mastercard with 256-bit encryption',
-        'icon': Icons.credit_card_outlined,
-      });
-      paymentOptions.add({
-        'id': 'Easypaisa / JazzCash',
-        'title': 'E-Wallets',
-        'subtitle': 'JazzCash, Easypaisa instant mobile transfer',
-        'icon': Icons.account_balance_wallet_outlined,
-      });
     }
 
     return Scaffold(
@@ -297,7 +286,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                               ),
                                             ),
                                             Text(
-                                              currentBranch?.name ?? 'Food Fight Express Kitchen',
+                                              currentBranch?.name ?? 'Select your area',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -636,7 +625,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                           ),
                           child: Text(
-                            'Standard Express Delivery: Rs. 150 (Citywide)',
+                            'Standard Express Delivery: ${cart.deliveryFee == 0 ? "FREE" : "Rs. ${cart.deliveryFee.toInt()}"} (${cart.selectedArea?.name ?? currentBranch?.city ?? "Citywide"})',
                             style: TextStyle(
                               color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                               fontWeight: FontWeight.bold,

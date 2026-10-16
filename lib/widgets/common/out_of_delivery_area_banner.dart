@@ -33,7 +33,7 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
               children: [
                 Icon(Icons.notifications_active_rounded, color: AppColors.brandMaroon),
                 SizedBox(width: 8),
-                Text('Get Notified! 🥊', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Get Notified!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
             content: Column(

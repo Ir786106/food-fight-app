@@ -11,6 +11,8 @@ import '../../widgets/common/responsive_layout.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/loyalty_provider.dart';
+import '../../providers/branch_provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,6 +23,22 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _watchedUserId;
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() => _appVersion = 'v${info.version}+${info.buildNumber}');
+      }
+    } catch (_) {}
+  }
 
   @override
   void didChangeDependencies() {
@@ -136,6 +154,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final branch = context.read<BranchProvider>().selectedBranch;
+    final supportPhone = (branch != null && branch.phone.isNotEmpty) ? branch.phone : '+92 300 1234567';
+    final cleanPhone = supportPhone.replaceAll(RegExp(r'[^0-9+]'), '');
+    const supportEmail = 'support@foodfight.pk';
 
     showModalBottomSheet(
       context: context,
@@ -182,16 +204,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Icon(Icons.call_outlined, color: AppColors.success, size: 20),
               ),
               title: Text('24/7 Support Hotline', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              subtitle: Text('0800-FOODFIGHT (Toll-Free)', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              subtitle: Text('$supportPhone (Customer Help)', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
               trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
               onTap: () async {
                 Navigator.pop(ctx);
-                final uri = Uri(scheme: 'tel', path: '08003663344');
+                final uri = Uri(scheme: 'tel', path: cleanPhone);
                 try {
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri);
                   } else {
-                    await Clipboard.setData(const ClipboardData(text: '08003663344'));
+                    await Clipboard.setData(ClipboardData(text: cleanPhone));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Hotline phone copied to clipboard!')),
@@ -199,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }
                   }
                 } catch (_) {
-                  await Clipboard.setData(const ClipboardData(text: '08003663344'));
+                  await Clipboard.setData(ClipboardData(text: cleanPhone));
                 }
               },
             ),
@@ -234,13 +256,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Icon(Icons.mail_outline_rounded, color: AppColors.info, size: 20),
               ),
               title: Text('Email Support', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              subtitle: Text('support@foodfight.pk', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+              subtitle: Text(supportEmail, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
               trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
               onTap: () async {
                 Navigator.pop(ctx);
                 final uri = Uri(
                   scheme: 'mailto',
-                  path: 'support@foodfight.pk',
+                  path: supportEmail,
                   queryParameters: {'subject': 'Food Fight Customer Support Inquiry'},
                 );
                 try {
@@ -671,7 +693,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
               Center(
                 child: Text(
-                  'Food Fight v1.2.0 • Premium Fast-Food Experience',
+                  'Food Fight ${_appVersion.isNotEmpty ? _appVersion : "v1.7.3+11"} • Premium Fast-Food Experience',
                   style: TextStyle(
                     fontSize: 11,
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),

@@ -494,14 +494,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                             size: 24,
                           ),
                         ),
-                        title: Row(
+                        title: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
                           children: [
                             Text(
                               method.title,
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
                             ),
-                            if (isDefault) ...[
-                              const SizedBox(width: 8),
+                            if (isDefault)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
@@ -518,7 +520,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                   ),
                                 ),
                               ),
-                            ],
                           ],
                         ),
                         subtitle: Column(

@@ -221,9 +221,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       AppLogger.error('Failed to update profile: $e\n$stack', tag: 'EditProfileScreen');
       if (mounted) {
         setState(() => _isLoading = false);
+        final errText = e.toString().toLowerCase();
+        final isNetwork = errText.contains('socketexception') ||
+            errText.contains('network') ||
+            errText.contains('unavailable') ||
+            errText.contains('timeout');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('No connection. Please check your internet and try again.'),
+            content: Text(isNetwork
+                ? 'Network connection issue. Please check your internet.'
+                : 'Unable to update profile. Please try again.'),
             backgroundColor: AppColors.error,
             duration: const Duration(seconds: 4),
             action: SnackBarAction(

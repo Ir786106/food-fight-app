@@ -254,8 +254,17 @@ class FirebaseAuthService implements IAuthService {
       try {
         googleUser = await googleSignIn.signIn();
       } catch (e) {
-        AppLogger.error('Google sign-in client error: $e', tag: 'FirebaseAuthService');
         final errStr = e.toString().toLowerCase();
+        // Silent handling for user cancellation
+        if (errStr.contains('sign_in_canceled') ||
+            errStr.contains('canceled') ||
+            errStr.contains('cancelled') ||
+            errStr.contains('12501')) {
+          AppLogger.info('User cancelled Google Sign-In', tag: 'FirebaseAuthService');
+          return null;
+        }
+
+        AppLogger.error('Google sign-in client error: $e', tag: 'FirebaseAuthService');
         if (errStr.contains('service_missing') ||
             errStr.contains('service_version_update_required') ||
             errStr.contains('service_disabled') ||
@@ -265,7 +274,7 @@ class FirebaseAuthService implements IAuthService {
             message: 'Google Play services is unavailable or outdated on this device. Please sign in with Email & Password or update Google Play services.',
           );
         }
-        throw AppException(message: 'Google Sign-In was cancelled or encountered an issue. Please sign in with Email & Password.');
+        throw AppException(message: 'Google Sign-In encountered an issue. Please try again or use Email & Password.');
       }
 
       if (googleUser == null) {

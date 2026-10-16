@@ -21,7 +21,9 @@ class AdminOrdersScreen extends StatefulWidget {
 class _AdminOrdersScreenState extends State<AdminOrdersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _searchCtrl = TextEditingController();
   String? _lastBranchId;
+  String _dateFilter = 'all'; // 'all', 'today', 'yesterday', 'week'
 
   static const List<Map<String, String>> _tabs = [
     {'title': 'All', 'status': 'all'},
@@ -58,6 +60,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -83,90 +86,179 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
             'Order Management',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-        backgroundColor: AdminTheme.primaryBlue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Orders',
-            onPressed: () => context.read<OrderProvider>().watchAdminOrders(),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: _tabs.map((t) {
-            final statusKey = t['status']!;
-            int count = 0;
-            switch (statusKey) {
-              case 'all':
-                count = orderProvider.allCount;
-                break;
-              case 'pending':
-                count = orderProvider.pendingCount;
-                break;
-              case 'preparing':
-                count = orderProvider.preparingCount;
-                break;
-              case 'ready':
-                count = orderProvider.readyCount;
-                break;
-              case 'outForDelivery':
-                count = orderProvider.outForDeliveryCount;
-                break;
-              case 'delivered':
-                count = orderProvider.deliveredCount;
-                break;
-              case 'cancelled':
-                count = orderProvider.cancelledCount;
-                break;
-              default:
-                count = orderProvider.adminOrders.where((o) => o.status.name.toLowerCase() == statusKey.toLowerCase()).length;
-                break;
-            }
+          backgroundColor: AdminTheme.primaryBlue,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh Orders',
+              onPressed: () => context.read<OrderProvider>().watchAdminOrders(),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(108),
+            child: Column(
+              children: [
+                // Search and Date Filter Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            controller: _searchCtrl,
+                            onChanged: (_) => setState(() {}),
+                            style: const TextStyle(fontSize: 13, color: Colors.black87),
+                            decoration: InputDecoration(
+                              hintText: 'Search order #, customer, address...',
+                              hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
+                              prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
+                              suffixIcon: _searchCtrl.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 16, color: Colors.grey),
+                                      onPressed: () {
+                                        _searchCtrl.clear();
+                                        setState(() {});
+                                      },
+                                    )
+                                  : null,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _dateFilter,
+                            icon: const Icon(Icons.calendar_today_rounded, size: 15, color: AdminTheme.primaryBlue),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AdminTheme.primaryBlue),
+                            items: const [
+                              DropdownMenuItem(value: 'all', child: Text('All Dates')),
+                              DropdownMenuItem(value: 'today', child: Text('Today')),
+                              DropdownMenuItem(value: 'yesterday', child: Text('Yesterday')),
+                              DropdownMenuItem(value: 'week', child: Text('This Week')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setState(() => _dateFilter = val);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  indicatorColor: Colors.white,
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  tabs: _tabs.map((t) {
+                    final statusKey = t['status']!;
+                    int count = 0;
+                    switch (statusKey) {
+                      case 'all':
+                        count = orderProvider.allCount;
+                        break;
+                      case 'pending':
+                        count = orderProvider.pendingCount;
+                        break;
+                      case 'preparing':
+                        count = orderProvider.preparingCount;
+                        break;
+                      case 'ready':
+                        count = orderProvider.readyCount;
+                        break;
+                      case 'outForDelivery':
+                        count = orderProvider.outForDeliveryCount;
+                        break;
+                      case 'delivered':
+                        count = orderProvider.deliveredCount;
+                        break;
+                      case 'cancelled':
+                        count = orderProvider.cancelledCount;
+                        break;
+                      default:
+                        count = orderProvider.adminOrders
+                            .where((o) => o.status.name.toLowerCase() == statusKey.toLowerCase())
+                            .length;
+                        break;
+                    }
 
-            return Tab(
-              child: Row(
-                children: [
-                  Text(t['title']!),
-                  if (count > 0) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(10),
+                    return Tab(
+                      child: Row(
+                        children: [
+                          Text(t['title']!),
+                          if (count > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: Colors.white24,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          }).toList(),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          children: _tabs.map((t) => _OrdersTabList(
+            status: t['status']!,
+            searchQuery: _searchCtrl.text.trim().toLowerCase(),
+            dateFilter: _dateFilter,
+            onClearFilter: () {
+              _searchCtrl.clear();
+              setState(() => _dateFilter = 'all');
+            },
+          )).toList(),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _tabs.map((t) => _OrdersTabList(status: t['status']!)).toList(),
-      ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _OrdersTabList extends StatelessWidget {
   final String status;
+  final String searchQuery;
+  final String dateFilter;
+  final VoidCallback onClearFilter;
 
-  const _OrdersTabList({required this.status});
+  const _OrdersTabList({
+    required this.status,
+    required this.searchQuery,
+    required this.dateFilter,
+    required this.onClearFilter,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -189,21 +281,56 @@ class _OrdersTabList extends StatelessWidget {
     }
 
     final allOrders = orderProvider.adminOrders;
-    final orders = status == 'all'
-        ? allOrders
-        : allOrders.where((o) {
-            final orderStatus = o.status.name.toLowerCase();
-            final targetStatus = status.toLowerCase();
-            return orderStatus == targetStatus;
-          }).toList();
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfYesterday = startOfToday.subtract(const Duration(days: 1));
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    final orders = allOrders.where((o) {
+      // 1. Status filter
+      if (status != 'all') {
+        final orderStatus = o.status.name.toLowerCase();
+        final targetStatus = status.toLowerCase();
+        if (orderStatus != targetStatus) return false;
+      }
+
+      // 2. Search query filter
+      if (searchQuery.isNotEmpty) {
+        final matchesOrderNum = o.orderNumber.toLowerCase().contains(searchQuery);
+        final matchesCustomer = o.customerName.toLowerCase().contains(searchQuery);
+        final matchesAddress = o.deliveryAddress.toLowerCase().contains(searchQuery);
+        final matchesPhone = o.customerPhone.toLowerCase().contains(searchQuery);
+        if (!matchesOrderNum && !matchesCustomer && !matchesAddress && !matchesPhone) {
+          return false;
+        }
+      }
+
+      // 3. Date filter
+      if (dateFilter == 'today') {
+        if (o.createdAt.isBefore(startOfToday)) return false;
+      } else if (dateFilter == 'yesterday') {
+        if (o.createdAt.isBefore(startOfYesterday) || o.createdAt.isAfter(startOfToday)) return false;
+      } else if (dateFilter == 'week') {
+        if (o.createdAt.isBefore(sevenDaysAgo)) return false;
+      }
+
+      return true;
+    }).toList();
 
     if (orders.isEmpty) {
+      final isFiltered = searchQuery.isNotEmpty || dateFilter != 'all';
       return EmptyStateView(
         icon: Icons.receipt_long_rounded,
-        title: 'No Orders In This Tab',
-        description: status == 'all'
-            ? 'Incoming customer orders will appear here in real-time.'
-            : 'No orders currently matching "$status" status.',
+        title: isFiltered ? 'No Orders Match Filter' : 'No Orders In This Tab',
+        description: isFiltered
+            ? 'No orders found matching "$searchQuery" or the selected date range.'
+            : (status == 'all'
+                ? 'Incoming customer orders will appear here in real-time.'
+                : 'No orders currently matching "$status" status.'),
+        buttonText: isFiltered ? 'Clear Filters' : 'Refresh Orders',
+        onButtonPressed: isFiltered
+            ? onClearFilter
+            : () => context.read<OrderProvider>().watchAdminOrders(),
       );
     }
 

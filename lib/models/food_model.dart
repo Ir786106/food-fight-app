@@ -28,7 +28,7 @@ class FoodModel {
     this.variants,
     this.addons,
     this.sizePrices,
-    this.imageEmoji = '🥊',
+    this.imageEmoji = '',
     this.imageUrl,
     required this.category,
     this.rating = 4.8,
@@ -138,7 +138,7 @@ class FoodModel {
       variants: parsedVariants,
       addons: parsedAddons,
       sizePrices: parsedSizePrices,
-      imageEmoji: json['imageEmoji']?.toString() ?? '🥊',
+      imageEmoji: json['imageEmoji']?.toString() ?? '',
       imageUrl: json['imageUrl']?.toString() ??
           json['image_url']?.toString() ??
           json['image']?.toString() ??
@@ -164,7 +164,7 @@ class FoodModel {
       variants: item.variants,
       addons: item.addons,
       sizePrices: item.sizePrices,
-      imageEmoji: '🥊',
+      imageEmoji: '',
       imageUrl: item.imageUrl,
       category: categoryName.isNotEmpty ? categoryName : item.categoryId,
       rating: item.rating > 0 ? item.rating : 4.8,

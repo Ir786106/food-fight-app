@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:food_fight/core/constants/app_constants.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/admin/stat_card.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 import 'package:food_fight/providers/admin_dashboard_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
+import 'package:food_fight/providers/branch_provider.dart';
 import 'package:food_fight/providers/chat_provider.dart';
 import 'package:food_fight/screens/admin/orders/order_detail_modal.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
@@ -28,12 +28,14 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _initialized = false;
   String? _lastBranchId;
+  String _timePeriod = 'today'; // 'today', 'week', 'month'
+  String? _selectedBranchId; // For Super Admin override
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = context.read<AuthProvider>();
-    final branchId = auth.currentUser?.branchId;
+    final branchId = _selectedBranchId ?? auth.currentUser?.branchId;
     if (!_initialized || _lastBranchId != branchId) {
       _initialized = true;
       _lastBranchId = branchId;
@@ -88,58 +90,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         currentRoute: '/admin/dashboard',
         backgroundColor: AdminTheme.getBackground(context),
       appBar: AppBar(
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: Image.asset(
-                      AppConstants.logoIconPath,
-                      width: 18,
-                      height: 18,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'FOOD FIGHT',
-                    style: TextStyle(
-                      color: AdminTheme.primaryBlue,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ],
-              ),
+            const Text(
+              'Admin Portal',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Admin Portal',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  Text(
-                    user?.branchId != null ? 'Branch: ${user!.branchId}' : 'All Branches (HQ)',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                ],
-              ),
+            Text(
+              _selectedBranchId != null
+                  ? 'Branch: $_selectedBranchId'
+                  : (user?.branchId != null ? 'Branch: ${user!.branchId}' : 'All Branches (HQ)'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
           ],
         ),
@@ -172,6 +137,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             );
           }
 
+          final isSuperAdmin = user?.isSuperAdmin == true || user?.role == 'super_admin';
+          final branches = context.watch<BranchProvider>().branches;
+
           return RefreshIndicator(
             onRefresh: () => dashboard.refresh(),
             child: ResponsiveContainer.content(
@@ -195,7 +163,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 22,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                   color: textDark,
                                 ),
@@ -205,7 +173,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   color: textMuted,
                                 ),
                               ),
@@ -213,7 +181,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: isDark ? 0.2 : 0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -236,7 +204,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 style: TextStyle(
                                   color: AppColors.success,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                                  fontSize: 11.5,
                                 ),
                               ),
                             ],
@@ -244,14 +212,87 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                    // Primary Sales & Order Summary (4-Card Grid)
+                    // Controls: Time Period Toggle & Super Admin Branch Selector
+                    Row(
+                      children: [
+                        // Period Selector: Today / Week / Month
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildPeriodButton('Today', 'today', isDark),
+                              _buildPeriodButton('Week', 'week', isDark),
+                              _buildPeriodButton('Month', 'month', isDark),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        if (isSuperAdmin && branches.isNotEmpty)
+                          Container(
+                            height: 34,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark ? Colors.white12 : Colors.grey.shade300,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String?>(
+                                value: _selectedBranchId,
+                                hint: const Text('All Branches (HQ)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: textDark,
+                                ),
+                                icon: const Icon(Icons.arrow_drop_down, size: 18),
+                                items: [
+                                  const DropdownMenuItem<String?>(
+                                    value: null,
+                                    child: Text('All Branches (HQ)'),
+                                  ),
+                                  ...branches.map((b) => DropdownMenuItem<String?>(
+                                    value: b.id,
+                                    child: Text(b.name),
+                                  )),
+                                ],
+                                onChanged: (bId) {
+                                  setState(() => _selectedBranchId = bId);
+                                  context.read<AdminDashboardProvider>().watchDashboardData(branchId: bId);
+                                },
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Primary Sales & Order Summary (Responsive Grid)
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isNarrow = constraints.maxWidth < 400;
                         final isWide = constraints.maxWidth >= 720;
                         final unreadChats = context.watch<ChatProvider>().totalAdminUnread;
+
+                        // Dynamically resolve sales and subtitle by selected time period
+                        final revenueTitle = _timePeriod == 'today'
+                            ? "Today's Revenue"
+                            : (_timePeriod == 'week' ? "Weekly Revenue" : "Monthly Revenue");
+                        final revenueVal = _timePeriod == 'today'
+                            ? dashboard.todaySales
+                            : (_timePeriod == 'week' ? dashboard.weeklySales : dashboard.monthlySales);
+                        final revenueSubtitle = _timePeriod == 'today'
+                            ? '${dashboard.todayOrdersCount} Orders'
+                            : (_timePeriod == 'week' ? 'Last 7 Days' : 'Last 30 Days');
 
                         return GridView(
                           shrinkWrap: true,
@@ -260,15 +301,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             maxCrossAxisExtent: 260,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
-                            childAspectRatio: isNarrow ? 2.1 : (isWide ? 1.75 : 1.5),
+                            childAspectRatio: isNarrow ? 1.9 : (isWide ? 1.6 : 1.4),
                           ),
                           children: [
                             StatCard(
-                              title: "Today's Revenue",
-                              value: 'Rs. ${dashboard.todaySales.toStringAsFixed(0)}',
+                              title: revenueTitle,
+                              value: 'Rs. ${revenueVal.toStringAsFixed(0)}',
                               icon: Icons.monetization_on_rounded,
                               color: AppColors.success,
-                              subtitle: 'Week: Rs. ${dashboard.weeklySales.toStringAsFixed(0)}',
+                              subtitle: revenueSubtitle,
                               onTap: () => Navigator.of(context).pushNamed('/admin/reports'),
                             ),
                             StatCard(
@@ -331,7 +372,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             maxCrossAxisExtent: 170,
                             crossAxisSpacing: 10,
                             mainAxisSpacing: 10,
-                            childAspectRatio: isWide ? 1.4 : 1.2,
+                            childAspectRatio: isWide ? 1.65 : 1.4,
                           ),
                           children: [
                             _buildPipelineTile(
@@ -671,7 +712,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     children: [
                                       Expanded(
                                         child: Text(
-                                          '${order.items.length} items • Rs. ${order.total.toStringAsFixed(0)} • ${order.customerName}',
+                                          '${order.items.length} ${order.items.length == 1 ? "item" : "items"} • Rs. ${order.total.toStringAsFixed(0)} • ${order.customerName}',
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(color: textMuted, fontSize: 12.5),
@@ -723,6 +764,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         },
       ),
+      ),
+    );
+  }
+
+  Widget _buildPeriodButton(String label, String period, bool isDark) {
+    final isSelected = _timePeriod == period;
+    return GestureDetector(
+      onTap: () => setState(() => _timePeriod = period),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AdminTheme.primaryBlue : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white70 : Colors.black87),
+          ),
+        ),
       ),
     );
   }

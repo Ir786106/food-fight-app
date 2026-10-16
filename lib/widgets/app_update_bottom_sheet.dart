@@ -75,7 +75,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          release.releaseNotes!.trim().length > 600 ? '${release.releaseNotes!.trim().substring(0, 600)}...' : release.releaseNotes!.trim(),
+                          _cleanMarkdown(release.releaseNotes!),
                           style: TextStyle(fontSize: 12.5, color: isDark ? Colors.white60 : Colors.grey.shade700, height: 1.5),
                         ),
                       ),
@@ -218,6 +218,8 @@ class AppUpdateBottomSheet extends StatelessWidget {
                             final success = await prov.installApk();
                             if (!success && context.mounted) {
                               if (prov.precheckResult?.status == ApkInstallStatus.signatureMismatch) {
+                                // Dismiss bottom sheet first to avoid duplicate stacked dialog
+                                Navigator.pop(context);
                                 showDialog(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
@@ -288,5 +290,15 @@ class AppUpdateBottomSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _cleanMarkdown(String raw) {
+    return raw
+        .replaceAll(RegExp(r'^#+\s*', multiLine: true), '')
+        .replaceAll(RegExp(r'\*\*([^*]+)\*\*'), r'$1')
+        .replaceAll(RegExp(r'\*([^*]+)\*'), r'$1')
+        .replaceAll(RegExp(r'`([^`]+)`'), r'$1')
+        .replaceAll(RegExp(r'\[([^\]]+)\]\([^)]+\)'), r'$1')
+        .trim();
   }
 }

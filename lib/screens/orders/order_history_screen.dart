@@ -628,9 +628,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         selectedAddons: item.selectedAddons,
       );
     }
+    final itemCount = order.items.length;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Added ${order.items.length} items from ${order.orderNumber} to cart! 🥊'),
+        content: Text('Added $itemCount ${itemCount == 1 ? "item" : "items"} from ${order.orderNumber} to cart!'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

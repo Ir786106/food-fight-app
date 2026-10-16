@@ -44,7 +44,7 @@ class LocationPrimerDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Find Your Nearest Kitchen 🥊',
+              'Find Your Nearest Kitchen',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
