@@ -200,11 +200,13 @@ class _FloatingNavBarState extends State<FloatingNavBar>
     final navSurface = isDark ? AppColors.darkSurfaceElevated : AppColors.surface;
     final navBorder = isDark ? AppColors.darkBorder : AppColors.border;
 
-    return AnimatedSlide(
-      offset: widget.isVisible ? Offset.zero : const Offset(0, 1.6),
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      child: SafeArea(
+    return IgnorePointer(
+      ignoring: !widget.isVisible,
+      child: AnimatedSlide(
+        offset: widget.isVisible ? Offset.zero : const Offset(0, 1.6),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        child: SafeArea(
         top: false,
         left: false,
         right: false,
@@ -400,8 +402,9 @@ class _FloatingNavBarState extends State<FloatingNavBar>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBarTabItem({
     required int index,

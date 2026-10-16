@@ -52,6 +52,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     (_) => GlobalKey<NavigatorState>(),
   );
 
+  late final List<NavigatorObserver> _tabObservers = List.generate(
+    5,
+    (index) => _TabNavigatorObserver(() {
+      if (mounted) setState(() {});
+    }),
+  );
+
   void _onTabTapped(int index) {
     if (_currentIndex == index) {
       // Pop to first route in the current tab's navigator
@@ -137,6 +144,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget _buildTabNavigator(int index, Widget rootScreen) {
     return Navigator(
       key: _navigatorKeys[index],
+      observers: [_tabObservers[index]],
       onGenerateRoute: (routeSettings) {
         if (routeSettings.name == null || routeSettings.name == '/') {
           return MaterialPageRoute(
@@ -166,6 +174,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final cart = context.watch<CartProvider>();
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isTablet = screenWidth >= 840;
+
+    // Check if the current tab's nested navigator can pop (i.e. inside detail flows like checkout/tracking)
+    final currentNavState = _navigatorKeys[_currentIndex].currentState;
+    final bool isNestedFlow = currentNavState != null && currentNavState.canPop();
+    final bool isCartTab = _currentIndex == 2;
+    final bool shouldShowFloatingNav = !isTablet && _isNavVisible && !isNestedFlow && !isCartTab;
+
+    final double safeBottom = MediaQuery.paddingOf(context).bottom;
+    final double cartPillBottomOffset = shouldShowFloatingNav
+        ? (104.0 + safeBottom)
+        : (18.0 + safeBottom);
 
     // 5 Navigation Tabs (Home | Orders | Cart | Chat | Profile)
     final tabViews = [
@@ -219,11 +238,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       children: tabViews,
                     ),
 
-                    // Floating Cart Bar (shows above nav bar on Home screen when cart has items)
+                    // Floating Cart Bar (shows cleanly above nav bar on Home screen when cart has items)
                     if (_currentIndex == 0 && cart.itemCount > 0)
                       FloatingCartBar(
                         onTap: () => _onTabTapped(2),
-                        bottomOffset: 94.0,
+                        bottomOffset: cartPillBottomOffset,
                       ),
                   ],
                 ),
@@ -233,10 +252,41 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   currentIndex: _currentIndex,
                   onTabSelected: _onTabTapped,
                   onCartSelected: () => _onTabTapped(2),
-                  isVisible: _isNavVisible,
+                  isVisible: shouldShowFloatingNav,
                 ),
         ),
       ),
     );
+  }
+}
+
+/// NavigatorObserver that notifies the main scaffold whenever routes are pushed/popped
+/// within any tab, allowing the floating nav bar to automatically hide during detail flows.
+class _TabNavigatorObserver extends NavigatorObserver {
+  final VoidCallback onNavigationChanged;
+  _TabNavigatorObserver(this.onNavigationChanged);
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    WidgetsBinding.instance.addPostFrameCallback((_) => onNavigationChanged());
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    WidgetsBinding.instance.addPostFrameCallback((_) => onNavigationChanged());
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didRemove(route, previousRoute);
+    WidgetsBinding.instance.addPostFrameCallback((_) => onNavigationChanged());
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    WidgetsBinding.instance.addPostFrameCallback((_) => onNavigationChanged());
   }
 }
