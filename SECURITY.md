@@ -113,4 +113,4 @@
 
 ---
 
-*Last updated: 2026-10-11 by automated security hardening run.*
+*Last updated: 2026-10-16 by Food Fight production hardening run (v1.7.4+12).*

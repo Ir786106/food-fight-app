@@ -2,6 +2,39 @@
 
 All notable changes to the "Food Fight" food delivery platform are documented here.
 
+## [1.7.4+12] — 2026-10-16
+
+### Phase 0 — Audit, Project Hygiene & Dead Code Removal
+- **Project Structure Cleanup**: Removed legacy duplicate root mirror directories (`models/`, `screens/`, `services/`, `providers/`) ensuring a clean, single-source-of-truth Flutter package.
+- **Dead Code Elimination**: Permanently purged obsolete `auth_service.dart` containing mock demo credentials in favor of production `FirebaseAuthService`.
+
+### Phase 1 — Security Hardening & Backend Data Integrity
+- **Firestore Security Rules**: Hardened `firestore.rules` with strict branch isolation (`branchId` matching user custom claims for branch admins and staff), tamper-proof order status progression, and locked-down user roles.
+- **Authoritative Order Calculation**: Deployed server-evaluated Cloud Function (`calculateOrderTotal`) verifying menu item pricing, addons, taxes, delivery fees, and loyalty discounts against backend documents, eliminating client-side price tampering.
+- **Idempotent Loyalty System**: Implemented atomic, idempotent loyalty earn and refund ledger operations to prevent double-crediting.
+- **Secrets & API Hygiene**: Scrubbed mock payment secrets (`pi_test_secret_...`) and hardcoded credentials; replaced with environment and runtime configuration.
+- **GPS Location Integrity**: Removed fallback mock coordinates (`31.5204, 74.3587`), enforcing real hardware GPS position streams for delivery riders.
+
+### Phase 2 — UI/UX Functional Bug Fixes (Customer & Admin)
+- **Placeholder Emoji Cleanup**: Systematically eliminated placeholder `🥊` boxing glove emojis across 14+ customer and admin screens, dialogs, banners, models, and notifications.
+- **Neutral Branded Image Fallback**: Replaced broken image placeholders with clean `Icons.fastfood_rounded` and subtle branded containers in `NetworkImageView`.
+- **Dynamic System Strings**: Replaced hardcoded version and branch support strings; app version is resolved dynamically via `package_info_plus`, and branch phone/email reflect the selected physical branch.
+- **Deduplicated Category & Sort Chips**: Separated sorting filters (Price, Rating, Delivery Time) from category chips and removed redundant emoji prefixes.
+- **Modern Back Navigation**: Wrapped root and sub-screens in Flutter 3.x `PopScope` to prevent accidental exits and black-screen traps.
+- **Google Maps API Integration**: Configured production API key meta-data in `android/app/src/main/AndroidManifest.xml` and `web/index.html`.
+- **Admin Management Modernization**: Added date-range filtering, dynamic counter badges, and responsive layouts across Admin Orders, Categories, Dashboard, Chats, and Navigation Drawer.
+
+### Phase 3 — Professional UI/UX System & Layout Overflows
+- **Global Floating Navigation Fix**: Integrated `_TabNavigatorObserver` in `main_navigation_screen.dart` to automatically hide `FloatingNavBar` on nested detail flows (Checkout, Tracking, Loyalty, Food Detail) and the Cart tab, preventing overlay collisions with checkout and cart actions.
+- **Dynamic Floating Cart Bar**: Dynamically adjusted bottom offset to `104.0 + safeBottom` when the bottom nav is visible and `18.0 + safeBottom` when hidden, completely eliminating overlap with the raised center bag button.
+- **Canonical Design System**: Created `lib/core/theme/design_system.dart` standardizing color tokens, typography, spacing, and elevation tokens across customer and admin themes.
+- **Zero-Overflow Device Matrix**: Automated testing across 10 device form factors (320px to 1920px) at 1.0x, 1.3x, and 2.0x font scaling factors with zero RenderFlex overflows.
+
+### Phase 4 — Code Architecture, Modularization & Testing
+- **Screen Modularization**: Decomposed oversized screens (>400 lines) into focused, single-responsibility widgets (`home_filter_sheet`, `home_navigation_sheet`, `home_section_header`, `food_detail_variant_selector`, `food_detail_addons_selector`, `food_detail_bottom_bar`, `tracking_timeline_card`, `checkout_preparing_branch_card`, `rider_status_toggle_header`, `super_admin_admin_role_chip`, `menu_item_availability_switches`).
+- **Strict Lint Compliance**: Enabled strict linter rules (`avoid_print`, `cancel_subscriptions`, `close_sinks`, `prefer_const_constructors`), achieving 0 errors and 0 warnings on `flutter analyze lib/`.
+- **Comprehensive Automated Test Suite**: Expanded test coverage to 330 unit, widget, and integration tests passing with 100% success rate.
+
 ## [1.7.3+11] — 2026-10-15
 
 ### Responsive Layout Engine & Breakpoint Architecture

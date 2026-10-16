@@ -1,4 +1,4 @@
-# 🥊 Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.7.1+9)
+# Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.7.4+12)
 
 Supported Platforms: **Android 7.0+ / API 24+** (minSdk 24, targetSdk 36, universal APK for `arm64-v8a` and `armeabi-v7a`).
 
@@ -350,7 +350,7 @@ To ensure **Google Sign-In** and Firebase Authentication work properly with this
 
 ## 📱 Features Breakdown
 
-### 🥊 Customer Panel
+### Customer Storefront Panel
 
 - **Authentication**: Modern redesigned hero auth flow with email/password and **Continue with Google** sign-in. Password reset support.
 - **Dark Mode**: High-contrast, WCAG-compliant dark theme with full support across all surfaces, cards, and text. Theme toggle available in Profile.
