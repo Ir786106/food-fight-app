@@ -6,6 +6,7 @@ import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/models/food_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/models/order_model.dart';
+import 'package:food_fight/models/payment_method_model.dart';
 import 'package:food_fight/models/restaurant_model.dart';
 import 'package:food_fight/models/review_model.dart';
 import 'package:food_fight/models/rider_model.dart';
@@ -13,7 +14,9 @@ import 'package:food_fight/models/user_model.dart';
 
 void main() {
   group('SafeConvert & Model Parsing Tests', () {
-    test('MenuItemModel safely parses ints, strings, timestamps without crashing', () {
+    test(
+        'MenuItemModel safely parses ints, strings, timestamps without crashing',
+        () {
       final json = {
         'id': 'item-101',
         'name': 'Cheesy Crust Pizza',
@@ -23,6 +26,7 @@ void main() {
         'finalPrice': '1080', // string representation
         'prepTimeMinutes': '25', // string
         'rating': 5, // int
+        'reviewCount': '18',
         'sizePrices': {
           'Small': 800,
           'Medium': 1200.5,
@@ -39,6 +43,7 @@ void main() {
       expect(item.finalPrice, 1080.0);
       expect(item.prepTimeMinutes, 25);
       expect(item.rating, 5.0);
+      expect(item.reviewCount, 18);
       expect(item.sizePrices?['Small'], 800.0);
       expect(item.sizePrices?['Large'], 1600.0);
     });
@@ -49,6 +54,7 @@ void main() {
         'name': 'Gourmet Burger',
         'price': '450',
         'rating': 4,
+        'reviewCount': 3,
         'prepTimeMinutes': '15',
         'sizePrices': {
           'Single': 450,
@@ -59,6 +65,7 @@ void main() {
       final food = FoodModel.fromJson(json);
       expect(food.price, 450.0);
       expect(food.rating, 4.0);
+      expect(food.reviewCount, 3);
       expect(food.prepTimeMinutes, 15);
       expect(food.variants?.length, 2);
       expect(food.variants?.first.label, 'Single');
@@ -147,6 +154,16 @@ void main() {
       expect(user.createdAt, isA<DateTime>());
     });
 
+    test('UserModel never reads or serializes a password field', () {
+      final user = UserModel.fromJson({
+        'id': 'usr-2',
+        'name': 'Test User',
+        'password': 'must-not-persist',
+      });
+
+      expect(user.toJson().containsKey('password'), isFalse);
+    });
+
     test('RestaurantModel and DeliveryAreaModel parse fees cleanly', () {
       final restJson = {
         'id': 'rest-1',
@@ -208,6 +225,27 @@ void main() {
       final rev = ReviewModel.fromJson(json);
       expect(rev.rating, 5.0);
       expect(rev.userName, 'Ali Raza');
+    });
+
+    test('PaymentMethodModel preserves wallet reference without gateway token',
+        () {
+      final method = PaymentMethodModel(
+        id: 'method-1',
+        userId: 'user-1',
+        type: 'jazzcash',
+        gateway: 'jazzcash',
+        maskedNumber: '03•••••4567',
+        title: 'JazzCash wallet (4567)',
+        token: '',
+        accountReference: '03001234567',
+        createdAt: DateTime(2026, 1, 1),
+      );
+
+      final restored = PaymentMethodModel.fromJson(method.toJson());
+
+      expect(restored.accountReference, '03001234567');
+      expect(restored.token, isEmpty);
+      expect(restored.cardBrand, isNull);
     });
   });
 }

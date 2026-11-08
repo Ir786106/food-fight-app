@@ -1,9 +1,12 @@
+import '../../core/localization/app_language.dart';
+import 'package:food_fight/core/utils/app_insets.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/delivery_area_provider.dart';
-import '../../providers/payment_method_provider.dart';
+import '../../services/checkout_service.dart';
 import '../../models/delivery_area_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/loading_indicator.dart';
@@ -13,7 +16,7 @@ import '../../widgets/custom_button.dart';
 import '../../models/address_model.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/branch_provider.dart';
-import '../../providers/loyalty_provider.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -25,7 +28,8 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressCtrl = TextEditingController();
   String _selectedAddressLabel = 'Home';
-  String _selectedPayment = 'Cash on Delivery';
+  String? _selectedAddressId;
+  static const _selectedPayment = 'Cash on Delivery';
   bool _isPlacingOrder = false;
   bool _initialized = false;
 
@@ -35,7 +39,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!_initialized) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
-        context.read<PaymentMethodProvider>().watchMethods(user.id);
         context.read<AddressProvider>().watchAddresses(user.id);
       }
       _initialized = true;
@@ -46,8 +49,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final addressProvider = context.read<AddressProvider>();
       final addresses = addressProvider.addresses;
       if (addresses.isNotEmpty) {
-        final defaultOrFirst = addressProvider.defaultAddress ?? addresses.first;
+        final defaultOrFirst =
+            addressProvider.defaultAddress ?? addresses.first;
         _selectedAddressLabel = defaultOrFirst.label;
+        _selectedAddressId = defaultOrFirst.id;
         _addressCtrl.text = defaultOrFirst.details;
       }
     }
@@ -60,105 +65,95 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _submitOrder(CartProvider cart, AuthProvider auth) async {
-    final addressText = _addressCtrl.text.trim();
-    if (addressText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your full delivery address'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    if (!auth.isLoggedIn || auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in to place your order'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    if (_isPlacingOrder) return;
+    final user = auth.currentUser;
+    if (user == null) {
       Navigator.of(context).pushNamed('/login');
       return;
     }
-
+    final address = _addressCtrl.text.trim();
+    final branches = context.read<BranchProvider>();
+    final branch = branches.selectedBranch;
+    if (address.length < 8 || branch == null || cart.selectedArea == null) {
+      AppSnackbar.showError(
+          context, 'Choose a kitchen, delivery area and complete address.');
+      return;
+    }
+    final phone = user.phone.replaceAll(RegExp(r'[\s()-]'), '');
+    if (!RegExp(r'^(03\d{9}|\+923\d{9})$').hasMatch(phone)) {
+      AppSnackbar.showError(context,
+          'Add a valid mobile number in your profile before checkout.');
+      return;
+    }
+    if (branches.isOutOfDeliveryArea) {
+      AppSnackbar.showError(
+          context, 'Choose an address within this kitchen’s delivery area.');
+      return;
+    }
+    final saved = context
+        .read<AddressProvider>()
+        .addresses
+        .where((a) => a.id == _selectedAddressId && a.details == address)
+        .firstOrNull;
+    if (saved?.latitude != null &&
+        saved?.longitude != null &&
+        branch.distanceToKm(saved!.latitude!, saved.longitude!) >
+            branch.effectiveRadiusKm) {
+      AppSnackbar.showError(
+          context, 'This address is outside the kitchen’s delivery coverage.');
+      return;
+    }
     setState(() => _isPlacingOrder = true);
-
     try {
-      final customerId = auth.currentUser!.id;
-      final customerName = auth.currentUser!.name.isNotEmpty ? auth.currentUser!.name : 'Customer';
-      final customerPhone = auth.currentUser!.phone;
-      final paymentStatus = _selectedPayment == 'Cash on Delivery' ? 'pending' : 'paid';
-      final zoneName = cart.selectedArea != null ? '${cart.selectedArea!.name} - ' : '';
-      final fullAddress = '$zoneName$addressText';
-
-      final branchProv = context.read<BranchProvider>();
-      final selectedBranch = branchProv.selectedBranch;
-      if (selectedBranch != null) {
-        if (branchProv.isOutOfDeliveryArea) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Delivery is not available in your zone. Nearest kitchen (${selectedBranch.name}) is out of range.'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-          return;
-        }
-
-        // Validate coordinates if available on selected address
-        final addressProvider = context.read<AddressProvider>();
-        final matchedAddr = addressProvider.addresses.where((a) => a.label == _selectedAddressLabel).firstOrNull;
-        if (matchedAddr != null && matchedAddr.latitude != null && matchedAddr.longitude != null) {
-          final distKm = selectedBranch.distanceToKm(matchedAddr.latitude!, matchedAddr.longitude!);
-          if (distKm > selectedBranch.effectiveRadiusKm) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Address is ${distKm.toStringAsFixed(1)} km away, exceeding ${selectedBranch.name}\'s ${selectedBranch.effectiveRadiusKm.toStringAsFixed(0)} km delivery radius.'),
-                backgroundColor: AppColors.error,
-              ),
-            );
-            return;
-          }
-        }
-      }
-
-      final branchId = cart.branchId ?? selectedBranch?.id;
-      final restaurantName = selectedBranch?.name ?? 'Food Fight Restaurant';
-
-      final placedOrder = await cart.placeOrder(
-        customerId: customerId,
-        customerName: customerName,
-        customerPhone: customerPhone,
-        deliveryAddress: fullAddress,
-        paymentMethod: _selectedPayment,
-        paymentStatus: paymentStatus,
-        restaurantName: restaurantName,
-        branchId: branchId,
-      );
-
-      // Redeem loyalty tokens atomically if used
-      if (cart.tokensToRedeem > 0 && mounted) {
-        await context.read<LoyaltyProvider>().redeemTokens(
-              userId: customerId,
-              tokensToRedeem: cart.tokensToRedeem,
-              orderId: placedOrder.id,
-            );
-      }
-
+      final order = await cart.placeOrder(
+          customerId: user.id,
+          customerName: user.name,
+          customerPhone: phone,
+          deliveryAddress: address,
+          paymentMethod: _selectedPayment,
+          paymentStatus: 'pending',
+          restaurantName: branch.name,
+          branchId: cart.branchId ?? branch.id,
+          addressId: saved?.id,
+          confirmQuote: (total) async {
+            if (!mounted) return false;
+            return await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text(context.tr('Confirm cash on delivery')),
+                    content: Text(
+                      dialogContext.tr('Pay PKR {amount} when your order arrives.')
+                          .replaceFirst('{amount}', total.toStringAsFixed(2)),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: Text(context.tr('Back')),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: Text(context.tr('Confirm order')),
+                      ),
+                    ],
+                  ),
+                ) ??
+                false;
+          });
       if (!mounted) return;
-      setState(() => _isPlacingOrder = false);
-
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/order-success',
-        (r) => r.settings.name == '/home',
-        arguments: placedOrder,
-      );
-    } catch (e) {
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+          '/order-success', (route) => route.settings.name == '/home',
+          arguments: order);
+    } on CheckoutCancelled {
+      return;
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _isPlacingOrder = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error placing order: $e'), backgroundColor: AppColors.error),
-      );
+      AppSnackbar.showError(
+          context,
+          error is FirebaseFunctionsException
+              ? error.message ?? 'Unable to place your order. Please retry.'
+              : error.toString().replaceFirst('Bad state: ', ''));
+    } finally {
+      if (mounted) setState(() => _isPlacingOrder = false);
     }
   }
 
@@ -167,13 +162,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.watch<CartProvider>();
     final auth = context.watch<AuthProvider>();
     final areaProvider = context.watch<DeliveryAreaProvider>();
-    final payProvider = context.watch<PaymentMethodProvider>();
     final addressProvider = context.watch<AddressProvider>();
     final branchProv = context.watch<BranchProvider>();
     final deliveryAreas = areaProvider.activeAreas;
     final addresses = addressProvider.addresses;
     final activeBranches = branchProv.activeBranches;
-    final currentBranch = activeBranches.where((b) => b.id == (cart.branchId ?? branchProv.selectedBranch?.id)).firstOrNull ?? branchProv.selectedBranch;
+    final currentBranch = activeBranches
+            .where(
+                (b) => b.id == (cart.branchId ?? branchProv.selectedBranch?.id))
+            .firstOrNull ??
+        branchProv.selectedBranch;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -186,34 +184,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       });
     }
 
-    // Payment options list: default COD + saved cards/wallets + fallbacks
-    // Only Cash on Delivery is active until official payment gateway keys are provisioned
-    final List<Map<String, dynamic>> paymentOptions = [
-      {
-        'id': 'Cash on Delivery',
-        'title': 'Cash on Delivery',
-        'subtitle': 'Pay in cash when rider arrives at your doorstep',
-        'icon': Icons.payments_outlined,
-      },
-    ];
-
-    if (payProvider.methods.isNotEmpty) {
-      for (var m in payProvider.methods) {
-        final isWallet = m.type == 'jazzcash' || m.type == 'easypaisa' || m.gateway.contains('jazz') || m.gateway.contains('easy');
-        final brandName = (m.cardBrand ?? m.gateway).toUpperCase();
-        paymentOptions.add({
-          'id': '$brandName ${m.maskedNumber}',
-          'title': isWallet ? '$brandName Wallet' : '$brandName Card',
-          'subtitle': '${m.maskedNumber} (Saved)',
-          'icon': isWallet ? Icons.account_balance_wallet_rounded : Icons.credit_card_rounded,
-        });
-      }
-    }
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Checkout'),
+        title: Text(context.tr('Checkout')),
         elevation: 0,
       ),
       body: SafeArea(
@@ -230,14 +204,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         margin: const EdgeInsets.only(bottom: 20),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade200,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                              color: Colors.black
+                                  .withValues(alpha: isDark ? 0.2 : 0.04),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -253,15 +231,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               runSpacing: 6,
                               children: [
                                 ConstrainedBox(
-                                  constraints: BoxConstraints(maxWidth: (context.screenWidth - 70).clamp(140.0, 400.0)),
+                                  constraints: BoxConstraints(
+                                      maxWidth: (context.screenWidth - 70)
+                                          .clamp(140.0, 400.0)),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primaryYellow.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(10),
+                                          color: AppColors.primaryYellow
+                                              .withValues(alpha: 0.15),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                         ),
                                         child: const Icon(
                                           Icons.storefront_rounded,
@@ -272,21 +254,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       const SizedBox(width: 10),
                                       Flexible(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
-                                              'Preparing Branch',
+                                              context.tr('Preparing Branch'),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
-                                                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                                color: colorScheme.onSurface
+                                                    .withValues(alpha: 0.6),
                                               ),
                                             ),
                                             Text(
-                                              currentBranch?.name ?? 'Select your area',
+                                              currentBranch?.name ??
+                                                  'Select your area',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -302,13 +287,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primaryYellow.withValues(alpha: 0.15),
+                                    color: AppColors.primaryYellow
+                                        .withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    branchProv.getDeliveryLabel().split('•').last.trim(),
+                                    branchProv
+                                        .getDeliveryLabel()
+                                        .split('•')
+                                        .last
+                                        .trim(),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.brandMaroon,
@@ -325,7 +316,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   Icon(
                                     Icons.location_on_outlined,
                                     size: 13,
-                                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
@@ -335,19 +327,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 11.5,
-                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                        color: colorScheme.onSurface
+                                            .withValues(alpha: 0.6),
                                       ),
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.success.withValues(alpha: 0.15),
+                                      color: AppColors.success
+                                          .withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Text(
-                                      'Active',
-                                      style: TextStyle(
+                                    child: Text(
+                                      context.tr('Active'),
+                                      style: const TextStyle(
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.success,
@@ -367,7 +362,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Delivery Address',
+                              context.tr('Delivery Address'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -380,10 +375,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           const SizedBox(width: 8),
                           InkWell(
                             onTap: () async {
-                              final res = await Navigator.of(context).pushNamed('/add-address');
+                              final res = await Navigator.of(context)
+                                  .pushNamed('/add-address');
                               if (res is AddressModel) {
                                 setState(() {
                                   _selectedAddressLabel = res.label;
+                                  _selectedAddressId = res.id;
                                   _addressCtrl.text = res.details;
                                 });
                               }
@@ -393,14 +390,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               children: [
                                 Icon(
                                   Icons.add_rounded,
-                                  color: isDark ? AppColors.brandYellow : AppColors.amberDark,
+                                  color: isDark
+                                      ? AppColors.brandYellow
+                                      : AppColors.amberDark,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Add New',
+                                  context.tr('Add New'),
                                   style: TextStyle(
-                                    color: isDark ? AppColors.brandYellow : AppColors.amberDark,
+                                    color: isDark
+                                        ? AppColors.brandYellow
+                                        : AppColors.amberDark,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
@@ -418,7 +419,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Row(
                           children: [
                             ...addresses.map((addr) {
-                              final isSelected = _selectedAddressLabel == addr.label;
+                              final isSelected =
+                                  _selectedAddressLabel == addr.label;
                               IconData icon = Icons.home_outlined;
                               final type = addr.iconType.toLowerCase();
                               if (type == 'work' || type == 'office') {
@@ -430,26 +432,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 onTap: () {
                                   setState(() {
                                     _selectedAddressLabel = addr.label;
+                                    _selectedAddressId = addr.id;
                                     _addressCtrl.text = addr.details;
                                   });
                                 },
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
                                   margin: const EdgeInsets.only(right: 10),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.brandYellow : colorScheme.surface,
+                                    color: isSelected
+                                        ? AppColors.brandYellow
+                                        : colorScheme.surface,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: isSelected
                                           ? AppColors.yellowPressed
-                                          : colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                          : colorScheme.outlineVariant
+                                              .withValues(alpha: 0.6),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: isSelected
-                                            ? AppColors.brandYellow.withValues(alpha: 0.35)
-                                            : Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                                            ? AppColors.brandYellow
+                                                .withValues(alpha: 0.35)
+                                            : Colors.black.withValues(
+                                                alpha: isDark ? 0.25 : 0.04),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -462,14 +471,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         icon,
                                         color: isSelected
                                             ? AppColors.onYellow
-                                            : (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                                            : (isDark
+                                                ? AppColors.brandYellow
+                                                : AppColors.brandMaroon),
                                         size: 16,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
                                         addr.label,
                                         style: TextStyle(
-                                          color: isSelected ? AppColors.onYellow : colorScheme.onSurface,
+                                          color: isSelected
+                                              ? AppColors.onYellow
+                                              : colorScheme.onSurface,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13,
                                         ),
@@ -481,31 +494,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             }),
                             GestureDetector(
                               onTap: () async {
-                                final res = await Navigator.of(context).pushNamed('/add-address');
+                                final res = await Navigator.of(context)
+                                    .pushNamed('/add-address');
                                 if (res is AddressModel) {
                                   setState(() {
                                     _selectedAddressLabel = res.label;
+                                    _selectedAddressId = res.id;
                                     _addressCtrl.text = res.details;
                                   });
                                 }
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 10),
                                 decoration: BoxDecoration(
                                   color: colorScheme.surface,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                    color: colorScheme.outlineVariant
+                                        .withValues(alpha: 0.6),
                                     style: BorderStyle.solid,
                                   ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.add, color: colorScheme.onSurfaceVariant, size: 16),
+                                    Icon(Icons.add,
+                                        color: colorScheme.onSurfaceVariant,
+                                        size: 16),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Add Address',
+                                      context.tr('Add Address'),
                                       style: TextStyle(
                                         color: colorScheme.onSurfaceVariant,
                                         fontSize: 13,
@@ -531,20 +550,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'House / Apartment #, Street, Block, Nearby Landmark...',
+                          hintText:
+                              'House / Apartment #, Street, Block, Nearby Landmark...',
                           prefixIcon: Icon(
                             Icons.location_on_outlined,
-                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                            color: isDark
+                                ? AppColors.brandYellow
+                                : AppColors.brandMaroon,
                           ),
                           filled: true,
                           fillColor: colorScheme.surface,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: colorScheme.outlineVariant),
+                            borderSide:
+                                BorderSide(color: colorScheme.outlineVariant),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: colorScheme.outlineVariant),
+                            borderSide:
+                                BorderSide(color: colorScheme.outlineVariant),
                           ),
                         ),
                       ),
@@ -563,13 +587,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                       if (deliveryAreas.isNotEmpty)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                                color: Colors.black
+                                    .withValues(alpha: isDark ? 0.25 : 0.04),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
                               ),
@@ -579,19 +605,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: DropdownButton<DeliveryAreaModel>(
                               isExpanded: true,
                               dropdownColor: colorScheme.surface,
-                              value: (cart.selectedArea != null && deliveryAreas.contains(cart.selectedArea))
+                              value: (cart.selectedArea != null &&
+                                      deliveryAreas.contains(cart.selectedArea))
                                   ? cart.selectedArea
-                                  : (deliveryAreas.isNotEmpty ? deliveryAreas.first : null),
+                                  : (deliveryAreas.isNotEmpty
+                                      ? deliveryAreas.first
+                                      : null),
                               items: deliveryAreas.map((area) {
                                 return DropdownMenuItem(
                                   value: area,
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Text(
                                           area.name,
-                                          style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurface),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -600,7 +632,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       Text(
                                         'Rs. ${area.deliveryCharge.toStringAsFixed(0)}',
                                         style: TextStyle(
-                                          color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                          color: isDark
+                                              ? AppColors.brandYellow
+                                              : AppColors.brandMaroon,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -618,16 +652,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
+                            color: isDark
+                                ? AppColors.darkYellowSoft
+                                : AppColors.yellowSoft,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.brandYellow.withValues(alpha: 0.3),
+                              color:
+                                  AppColors.brandYellow.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
                             'Standard Express Delivery: ${cart.deliveryFee == 0 ? "FREE" : "Rs. ${cart.deliveryFee.toInt()}"} (${cart.selectedArea?.name ?? currentBranch?.city ?? "Citywide"})',
                             style: TextStyle(
-                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                              color: isDark
+                                  ? AppColors.brandYellow
+                                  : AppColors.brandMaroon,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -636,7 +675,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                       // 3. Payment Method Selector as Radio List
                       Text(
-                        'Payment Method',
+                        context.tr('Payment Method'),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -645,87 +684,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      ...paymentOptions.map((opt) {
-                        final isSelected = _selectedPayment == opt['id'];
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedPayment = opt['id'] as String),
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surface,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.brandYellow
-                                    : colorScheme.outlineVariant.withValues(alpha: 0.5),
-                                width: isSelected ? 1.8 : 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isSelected
-                                      ? AppColors.brandYellow.withValues(alpha: 0.15)
-                                      : Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? AppColors.brandYellow.withValues(alpha: 0.18)
-                                        : colorScheme.surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    opt['icon'] as IconData,
-                                    color: isSelected
-                                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                                        : colorScheme.onSurfaceVariant,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        opt['title'] as String,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 14.5,
-                                          color: colorScheme.onSurface,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        opt['subtitle'] as String,
-                                        style: TextStyle(
-                                          color: colorScheme.onSurfaceVariant,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                                  color: isSelected
-                                      ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                                      : colorScheme.onSurfaceVariant,
-                                  size: 22,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.payments_outlined),
+                        title: Text(context.tr(_selectedPayment)),
+                        subtitle: Text(context.tr('Pay in cash when your order arrives')),
+                      ),
                     ],
                   );
 
@@ -749,7 +713,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                              color: Colors.black
+                                  .withValues(alpha: isDark ? 0.35 : 0.05),
                               blurRadius: 14,
                               offset: const Offset(0, 4),
                             ),
@@ -761,12 +726,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           itemCount: cart.items.length,
                           separatorBuilder: (_, __) => Divider(
                             height: 16,
-                            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                            color: colorScheme.outlineVariant
+                                .withValues(alpha: 0.4),
                           ),
                           itemBuilder: (context, idx) {
                             final item = cart.items[idx];
                             final hasVariant = item.selectedVariant != null ||
-                                (item.selectedSize != null && item.selectedSize!.isNotEmpty);
+                                (item.selectedSize != null &&
+                                    item.selectedSize!.isNotEmpty);
                             return Row(
                               children: [
                                 NetworkImageView(
@@ -779,7 +746,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.food.name,
@@ -819,7 +787,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 14,
-                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                        color: isDark
+                                            ? AppColors.brandYellow
+                                            : AppColors.brandMaroon,
                                       ),
                                     ),
                                   ),
@@ -833,7 +803,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                       // 5. Order Summary Breakdown
                       Text(
-                        'Fee Breakdown',
+                        context.tr('Fee Breakdown'),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -849,7 +819,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                              color: Colors.black
+                                  .withValues(alpha: isDark ? 0.35 : 0.05),
                               blurRadius: 14,
                               offset: const Offset(0, 4),
                             ),
@@ -859,17 +830,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           children: [
                             _summaryRow(
                               context,
-                              'Subtotal (${cart.itemCount} items)',
+                              context.tr('Subtotal ({count} items)').replaceFirst('{count}', cart.itemCount.toString()),
                               'Rs. ${cart.subtotal.toStringAsFixed(0)}',
                             ),
                             const SizedBox(height: 8),
                             _summaryRow(
                               context,
                               cart.selectedArea != null
-                                  ? 'Delivery Fee (${cart.selectedArea!.name})'
-                                  : 'Delivery Fee',
-                              cart.isFreeDelivery ? 'FREE' : 'Rs. ${cart.deliveryFee.toStringAsFixed(0)}',
-                              color: cart.isFreeDelivery ? AppColors.success : null,
+                                  ? context.tr('Delivery Fee ({area})').replaceFirst('{area}', cart.selectedArea!.name)
+                                  : context.tr('Delivery Fee'),
+                              cart.isFreeDelivery
+                                  ? context.tr('FREE')
+                                  : 'Rs. ${cart.deliveryFee.toStringAsFixed(0)}',
+                              color: cart.isFreeDelivery
+                                  ? AppColors.success
+                                  : null,
                             ),
                             if (cart.loyaltyDiscount > 0) ...[
                               const SizedBox(height: 8),
@@ -881,7 +856,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                             ],
                             const SizedBox(height: 12),
-                            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                            Divider(
+                                height: 1,
+                                color: colorScheme.outlineVariant
+                                    .withValues(alpha: 0.5)),
                             const SizedBox(height: 12),
                             _summaryRow(
                               context,
@@ -899,7 +877,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     return ResponsiveBox(
                       maxWidth: 1200,
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 20),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -912,7 +891,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 children: [
                                   rightPane,
                                   const SizedBox(height: 20),
-                                  _buildWidePlaceOrderButton(cart, auth, isDark, colorScheme),
+                                  _buildWidePlaceOrderButton(
+                                      cart, auth, isDark, colorScheme),
                                 ],
                               ),
                             ),
@@ -925,7 +905,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   return ResponsiveBox.form(
                     maxWidth: 600,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+                      padding: AppInsets.scrollPadding(context,
+                          horizontal: 20, top: 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -940,13 +921,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
       ),
 
-      // Sticky "Place Order" Action Bar (only shown on compact/medium when below 840px)
+      // Sticky checkout action bar (only shown on compact/medium when below 840px)
       bottomNavigationBar: (context.screenWidth < 840)
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.1),
@@ -956,6 +938,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
               child: SafeArea(
+                top: false,
                 child: (context.screenWidth < 360 || context.textScale > 1.2)
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
@@ -966,7 +949,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  'Grand Total',
+                                  context.tr('Grand Total'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -985,7 +968,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
-                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      color: isDark
+                                          ? AppColors.brandYellow
+                                          : AppColors.brandMaroon,
                                     ),
                                   ),
                                 ),
@@ -994,10 +979,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           const SizedBox(height: 8),
                           CustomButton(
-                            text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+                            text: _isPlacingOrder
+                                ? context.tr('Checking order...')
+                                : context.tr('Review order'),
                             isLoading: _isPlacingOrder,
                             icon: Icons.check_circle_outline_rounded,
-                            onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
+                            onPressed: _isPlacingOrder
+                                ? null
+                                : () => _submitOrder(cart, auth),
                           ),
                         ],
                       )
@@ -1008,7 +997,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Grand Total',
+                                context.tr('Grand Total'),
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w500,
@@ -1021,7 +1010,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
-                                  color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                  color: isDark
+                                      ? AppColors.brandYellow
+                                      : AppColors.brandMaroon,
                                 ),
                               ),
                             ],
@@ -1029,10 +1020,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           const SizedBox(width: 14),
                           Expanded(
                             child: CustomButton(
-                              text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+                              text: _isPlacingOrder
+                                  ? context.tr('Checking order...')
+                                  : context.tr('Review order'),
                               isLoading: _isPlacingOrder,
                               icon: Icons.check_circle_outline_rounded,
-                              onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
+                              onPressed: _isPlacingOrder
+                                  ? null
+                                  : () => _submitOrder(cart, auth),
                             ),
                           ),
                         ],
@@ -1043,7 +1038,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildWidePlaceOrderButton(CartProvider cart, AuthProvider auth, bool isDark, ColorScheme colorScheme) {
+  Widget _buildWidePlaceOrderButton(CartProvider cart, AuthProvider auth,
+      bool isDark, ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1065,7 +1061,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Grand Total',
+                  context.tr('Grand Total'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -1084,7 +1080,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                      color: isDark
+                          ? AppColors.brandYellow
+                          : AppColors.brandMaroon,
                     ),
                   ),
                 ),
@@ -1093,7 +1091,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 16),
           CustomButton(
-            text: _isPlacingOrder ? 'Placing Order...' : 'Place Order',
+            text: _isPlacingOrder ? context.tr('Checking order...') : context.tr('Review order'),
             isLoading: _isPlacingOrder,
             icon: Icons.check_circle_outline_rounded,
             onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
@@ -1103,7 +1101,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _summaryRow(BuildContext context, String label, String value, {bool isBold = false, Color? color}) {
+  Widget _summaryRow(BuildContext context, String label, String value,
+      {bool isBold = false, Color? color}) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1118,7 +1117,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               fontSize: isBold ? 16 : 13.5,
               fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
-              color: isBold ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+              color:
+                  isBold ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -1132,7 +1132,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               style: TextStyle(
                 fontSize: isBold ? 18 : 13.5,
                 fontWeight: FontWeight.w900,
-                color: color ?? (isBold ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon) : colorScheme.onSurface),
+                color: color ??
+                    (isBold
+                        ? (isDark
+                            ? AppColors.brandYellow
+                            : AppColors.brandMaroon)
+                        : colorScheme.onSurface),
               ),
             ),
           ),
@@ -1141,4 +1146,3 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 }
-

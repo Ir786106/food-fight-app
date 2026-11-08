@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -53,32 +52,15 @@ void main() {
       }
     });
 
-    test('Supabase live upload test against food-images bucket', () async {
-      if (!SupabaseConfig.isConfigured) {
-        return;
-      }
-      try {
-        final client = Supabase.instance.client;
-        final filePath = 'products/product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final testBytes = Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]);
-
-        final res = await client.storage.from('food-images').uploadBinary(
-          filePath,
-          testBytes,
-          fileOptions: const FileOptions(
-            contentType: 'image/jpeg',
-            upsert: false,
-          ),
-        );
-        expect(res, contains('food-images/products/product_'));
-
-        final imageUrl = client.storage.from('food-images').getPublicUrl(filePath);
-        expect(imageUrl, contains(SupabaseConfig.url));
-        expect(imageUrl, contains('food-images/products/product_'));
-      } catch (e) {
-        // Live integration test graceful handling in offline environments
-        expect(e.toString(), contains('SocketException'));
-      }
+    test('signed image uploads are limited to supported public image paths', () {
+      const purpose = SupabaseImageStorageService.signedPurposeForPath;
+      expect(purpose('products/'), 'product');
+      expect(purpose('categories/'), 'category');
+      expect(purpose('banners/'), 'banner');
+      expect(purpose('profiles/customer-1'), 'profile');
+      expect(purpose('chat_attachments/chat-1'), isNull);
+      expect(purpose('profiles/customer-1/arbitrary.jpg'), isNull);
+      expect(purpose('products/another-branch'), isNull);
     });
   });
 }

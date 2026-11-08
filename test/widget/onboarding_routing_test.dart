@@ -1,12 +1,40 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:food_fight/core/constants/app_constants.dart';
-
-// We test the routing decision logic rather than full screen rendering
-// to avoid needing Firebase/real services in unit tests.
+import 'package:food_fight/screens/onboarding/onboarding_screen.dart';
 
 void main() {
+  for (final viewport in [const Size(320, 640), const Size(1440, 800)]) {
+    testWidgets('onboarding controls fit and Skip opens login at ${viewport.width}px', (tester) async {
+      await tester.binding.setSurfaceSize(viewport);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(MaterialApp(
+        home: const OnboardingScreen(),
+        routes: {'/login': (_) => const Scaffold(body: Text('Login destination'))},
+      ));
+      await tester.pumpAndSettle();
+
+      final next = find.byKey(const ValueKey('onboarding_next_button'));
+      final skip = find.byKey(const ValueKey('onboarding_skip_button'));
+      expect(tester.getSize(next).width, lessThanOrEqualTo(620));
+      expect(next.hitTestable(), findsOneWidget);
+      expect(skip.hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(find.text('Epic Food Battles & Combos'), findsOneWidget);
+      await tester.tap(skip);
+      await tester.pumpAndSettle();
+      expect(find.text('Login destination'), findsOneWidget);
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getBool(AppConstants.storageOnboardingCompleted), isTrue);
+    });
+  }
+
   group('Onboarding routing logic', () {
     test('First launch: onboarding flag is false by default', () async {
       SharedPreferences.setMockInitialValues({});

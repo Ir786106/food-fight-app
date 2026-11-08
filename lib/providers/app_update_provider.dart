@@ -1,10 +1,13 @@
+import '../core/config/local_demo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/utils/logger.dart';
 import '../services/app_update_service.dart';
+
+const autoDownloadUpdatesPreference = 'ff_auto_download_updates';
 
 const _kLastCheckedPref = 'ff_update_last_checked';
 const _kSkippedVersionPref = 'ff_update_skipped_version';
@@ -25,6 +28,9 @@ class ForceUpdateConfig {
 }
 
 class AppUpdateProvider extends ChangeNotifier {
+  static bool get supported =>
+      !kIsWeb && !LocalDemo.enabled && defaultTargetPlatform == TargetPlatform.android;
+
   final AppUpdateService _service = AppUpdateService();
 
   ReleaseInfo? _availableRelease;
@@ -64,6 +70,7 @@ class AppUpdateProvider extends ChangeNotifier {
   Future<void> checkForUpdateNow() => _doCheck();
 
   Future<void> _doCheck() async {
+    if (!supported || _isChecking || _isDownloading || _installReady) return;
     _isChecking = true;
     _errorMessage = null;
     notifyListeners();
@@ -76,10 +83,15 @@ class AppUpdateProvider extends ChangeNotifier {
       if (response.result == UpdateCheckResult.updateAvailable) {
         // Check if user skipped this version recently
         final skipped = await _isVersionSkipped(response.release!.versionName);
-        if (!skipped || isForceUpdate) {
+        if (!skipped || _forceConfig?.forceUpdate == true) {
           _availableRelease = response.release;
         }
+      } else if (response.result == UpdateCheckResult.error) {
+        _errorMessage = response.errorMessage;
+      } else {
+        _availableRelease = null;
       }
+      if (response.result == UpdateCheckResult.error) return;
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_kLastCheckedPref, DateTime.now().millisecondsSinceEpoch);

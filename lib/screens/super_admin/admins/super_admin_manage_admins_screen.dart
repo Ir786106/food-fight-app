@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/admin/admin_account_model.dart';
@@ -368,7 +369,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
 
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context,
                         SnackBar(
                           content: Text('Branch "$branchName" & Admin Account created successfully!'),
                           backgroundColor: AppColors.success,
@@ -378,7 +379,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                   } catch (e) {
                     setDialogState(() => isSaving = false);
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context,
                         SnackBar(content: Text('Error creating branch: $e'), backgroundColor: AppColors.error),
                       );
                     }
@@ -591,7 +592,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     : () async {
                         if (!formKey.currentState!.validate()) return;
                         if (selectedRole != 'super_admin' && (selectedBranchId == null || selectedBranchId!.isEmpty)) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
+                          AppSnackbar.showSnackBar(ctx,
                             const SnackBar(content: Text('Please select an assigned branch for this admin/staff')),
                           );
                           return;
@@ -640,7 +641,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                         } catch (e) {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
+                            AppSnackbar.showSnackBar(ctx,
                               SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
                             );
                           }

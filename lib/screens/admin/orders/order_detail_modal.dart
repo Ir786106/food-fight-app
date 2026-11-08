@@ -1,9 +1,11 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/providers/order_provider.dart';
 import 'package:food_fight/providers/rider_provider.dart';
+import 'package:food_fight/services/order_service.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 
@@ -20,22 +22,8 @@ class OrderDetailModal extends StatefulWidget {
 class _OrderDetailModalState extends State<OrderDetailModal> {
   bool _isUpdating = false;
 
-  OrderStatus? _getNextStatus(OrderStatus current) {
-    switch (current) {
-      case OrderStatus.pending:
-        return OrderStatus.accepted;
-      case OrderStatus.accepted:
-        return OrderStatus.preparing;
-      case OrderStatus.preparing:
-        return OrderStatus.ready;
-      case OrderStatus.ready:
-        return OrderStatus.outForDelivery;
-      case OrderStatus.outForDelivery:
-        return OrderStatus.delivered;
-      default:
-        return null;
-    }
-  }
+  OrderStatus? _getNextStatus(OrderStatus current) =>
+      [OrderStatus.pending, OrderStatus.accepted, OrderStatus.preparing].contains(current) ? current.nextStatus : null;
 
   String _getNextStatusActionName(OrderStatus next) {
     switch (next) {
@@ -54,14 +42,50 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
     }
   }
 
+  Future<void> _runOrderAction(Future<void> Function() action) async {
+    if (_isUpdating) return;
+    setState(() => _isUpdating = true);
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) AppSnackbar.showError(context, error.toString());
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _confirmSettlement(OrderModel order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm rider cash handover'),
+        content: Text(
+          'Have you received PKR ${order.total.toStringAsFixed(2)} from the rider?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Back'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Confirm received'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+    await _runOrderAction(() => OrderService.settleCod(order.id, order.total));
+  }
+
   Future<void> _advanceStatus(OrderStatus nextStatus) async {
     setState(() => _isUpdating = true);
     try {
       final success = await context.read<OrderProvider>().updateOrderStatus(widget.order.id, nextStatus);
-      if (mounted) {
+      if (mounted && context.mounted) {
         Navigator.pop(context);
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackbar.showSnackBar(context,
             SnackBar(
               content: Text('Order status updated to ${nextStatus.name}'),
               backgroundColor: AppColors.success,
@@ -70,9 +94,9 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && context.mounted) {
         setState(() => _isUpdating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(content: Text('Error updating order: $e'), backgroundColor: AppColors.error),
         );
       }
@@ -144,9 +168,9 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                 OrderStatus.cancelled,
                 cancellationReason: reason,
               );
-              if (mounted) {
+              if (mounted && context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
+                AppSnackbar.showSnackBar(context,
                   const SnackBar(
                     content: Text('Order cancelled successfully'),
                     backgroundColor: AppColors.error,
@@ -217,7 +241,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
               Expanded(
                 child: Consumer<RiderProvider>(
                   builder: (context, provider, _) {
-                    final riders = provider.activeRiders;
+                    final riders = provider.onlineRiders;
                     if (provider.isLoading) {
                       return const Center(child: CircularProgressIndicator());
                     }
@@ -236,6 +260,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                       itemBuilder: (context, index) {
                         final rider = riders[index];
                         final isAssigned = widget.order.riderId == rider.id;
+                        final workload = context.watch<OrderProvider>().adminOrders.where((order) => order.riderId == rider.id && !order.status.isTerminal).length;
 
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -254,7 +279,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                             ),
                           ),
                           subtitle: Text(
-                            '${rider.phone} • ${(rider.vehicleType?.toUpperCase() ?? "BIKE")} • ${rider.isOnline ? "Online" : "Offline"}',
+                            '${rider.phone} | $workload active deliveries',
                             style: TextStyle(
                               fontSize: 12,
                               color: AdminTheme.getTextMuted(context),
@@ -270,19 +295,21 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                 ? null
                                 : () async {
                                     Navigator.pop(ctx);
-                                    final messenger = ScaffoldMessenger.of(context);
+                                    setState(() => _isUpdating = true);
                                     final nav = Navigator.of(context);
                                     final success = await provider.assignRider(
                                       orderId: widget.order.id,
                                       riderId: rider.id,
                                       riderName: rider.name,
                                       riderPhone: rider.phone,
+                                      expectedRiderId: widget.order.riderId,
                                     );
-                                    if (mounted) {
+                                    if (mounted && context.mounted) {
                                       setState(() => _isUpdating = false);
+                                      if (!success) AppSnackbar.showError(context, provider.errorMessage ?? 'Could not assign rider.');
                                       if (success) {
                                         nav.pop();
-                                        messenger.showSnackBar(
+                                        AppSnackbar.showSnackBar(context,
                                           SnackBar(
                                             content: Text('Assigned order to ${rider.name}'),
                                             backgroundColor: AppColors.success,
@@ -309,7 +336,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
 
   @override
   Widget build(BuildContext context) {
-    final order = widget.order;
+    final order = context.watch<OrderProvider>().adminOrders.where((o) => o.id == widget.order.id).firstOrNull ?? widget.order;
     final nextStatus = _getNextStatus(order.status);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -466,6 +493,14 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               ),
                             ],
                           ),
+                          if (order.codSettlementStatus == 'pending')
+                            TextButton.icon(
+                              onPressed: _isUpdating ? null : () => _confirmSettlement(order),
+                              icon: const Icon(Icons.payments_outlined),
+                              label: const Text('Confirm rider cash received'),
+                            ),
+                          if (order.codSettlementStatus == 'settled')
+                            const Text('Rider cash received'),
                           if (order.cancellationReason != null && order.cancellationReason!.isNotEmpty) ...[
                             const SizedBox(height: 10),
                             Container(
@@ -516,7 +551,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                   ),
                                 ],
                               ),
-                              if (order.status != OrderStatus.delivered && order.status != OrderStatus.cancelled)
+                              if (order.status == OrderStatus.ready || order.status == OrderStatus.assigned)
                                 TextButton.icon(
                                   onPressed: _isUpdating ? null : _showAssignRiderSheet,
                                   icon: Icon(
@@ -537,6 +572,24 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                             ],
                           ),
                           const SizedBox(height: 8),
+                          if (order.status == OrderStatus.ready)
+                            TextButton.icon(
+                              onPressed: _isUpdating ? null : () => _runOrderAction(
+                                () => OrderService.dispatchRider(order.id),
+                              ),
+                              icon: const Icon(Icons.bolt_outlined),
+                              label: const Text('Find available rider'),
+                            ),
+                          if (order.status == OrderStatus.assigned && order.riderId != null)
+                            TextButton.icon(icon: const Icon(Icons.person_remove_outlined), label: const Text('Unassign rider'),
+                              onPressed: _isUpdating ? null : () async {
+                                setState(() => _isUpdating = true);
+                                final provider = context.read<RiderProvider>();
+                                final ok = await provider.unassignRider(orderId: order.id, expectedRiderId: order.riderId!);
+                                if (!mounted) return;
+                                setState(() => _isUpdating = false);
+                                if (!ok && context.mounted) AppSnackbar.showError(context, provider.errorMessage ?? 'Could not unassign rider.');
+                              }),
                           if (order.riderName != null && order.riderName!.isNotEmpty) ...[
                             Row(
                               children: [
@@ -575,9 +628,9 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                     color: AppColors.darkBrown.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text(
-                                    'DISPATCHED',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.darkBrown),
+                                  child: Text(
+                                    order.status.displayName,
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.darkBrown),
                                   ),
                                 ),
                               ],

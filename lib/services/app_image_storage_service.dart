@@ -88,12 +88,21 @@ class AppImageStorageService implements IImageStorageService {
     return null;
   }
 
+  bool _useSignedSupabase(String path) =>
+      StorageProviderConfig.signedSupabaseUploads &&
+      SupabaseImageStorageService.signedPurposeForPath(path) != null;
+
   @override
   Future<String> uploadImage({
     required XFile image,
     required String path,
     Function(double progress)? onProgress,
   }) {
+    if (_useSignedSupabase(path)) {
+      return SupabaseImageStorageService().uploadImage(
+        image: image, path: path, onProgress: onProgress,
+      );
+    }
     if (StorageProviderConfig.activeProvider == StorageProvider.firebase) {
       return FirebaseImageStorageService().uploadImage(image: image, path: path, onProgress: onProgress);
     } else if (StorageProviderConfig.activeProvider == StorageProvider.cloudinary) {
@@ -109,6 +118,11 @@ class AppImageStorageService implements IImageStorageService {
     int quality = 80,
     Function(double progress)? onProgress,
   }) {
+    if (_useSignedSupabase(path)) {
+      return SupabaseImageStorageService().uploadCompressedImage(
+        image: image, path: path, quality: quality, onProgress: onProgress,
+      );
+    }
     if (StorageProviderConfig.activeProvider == StorageProvider.firebase) {
       return FirebaseImageStorageService().uploadCompressedImage(
         image: image,

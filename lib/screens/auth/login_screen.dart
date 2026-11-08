@@ -1,3 +1,7 @@
+import '../../core/config/local_demo.dart';
+import '../../core/localization/app_language.dart';
+import 'phone_sign_in_dialog.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
       _lastBackPressTime = now;
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(
           content: const Row(
             mainAxisSize: MainAxisSize.min,
@@ -88,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
       RoleRouter.navigateHome(context, auth.currentUser);
     } else {
       final error = auth.errorMessage ?? 'Login failed. Please check your credentials.';
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(
           content: Text(error),
           backgroundColor: AppColors.error,
@@ -96,6 +100,18 @@ class _LoginScreenState extends State<LoginScreen> {
           duration: const Duration(seconds: 4),
         ),
       );
+    }
+  }
+
+  Future<void> _handlePhoneSignIn() async {
+    final auth = context.read<AuthProvider>();
+    final signedIn = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PhoneSignInDialog(),
+    );
+    if (mounted && signedIn == true) {
+      RoleRouter.navigateHome(context, auth.currentUser);
     }
   }
 
@@ -111,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       RoleRouter.navigateHome(context, auth.currentUser);
     } else if (auth.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(
           content: Text(auth.errorMessage!),
           backgroundColor: AppColors.error,
@@ -124,8 +140,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final edition = context.watch<AuthProvider>().edition;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final linkColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandYellow
+        : AppColors.brandMaroon;
     final isDark = theme.brightness == Brightness.dark;
     final size = MediaQuery.sizeOf(context);
     final isLandscape = size.width > size.height;
@@ -188,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Welcome Back',
+                                    edition.allowsCustomerRegistration ? 'Welcome Back' : edition.title,
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w800,
@@ -197,7 +217,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Log in to your account to order delicious meals',
+                                    edition.allowsCustomerRegistration
+                                        ? 'Log in to your account to order delicious meals'
+                                        : 'Sign in with your assigned email and password.',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: colorScheme.onSurfaceVariant,
@@ -209,15 +231,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   CustomTextField(
                                     key: const ValueKey('email_input_field'),
                                     fieldKey: const ValueKey('email_field'),
-                                    semanticsLabel: 'Email Address Field',
+                                    semanticsLabel: context.tr('Email Address Field'),
                                     controller: _emailController,
-                                    label: 'Email Address',
+                                    label: context.tr('Email Address'),
                                     hint: 'name@example.com',
                                     keyboardType: TextInputType.emailAddress,
                                     icon: Icons.email_outlined,
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) return 'Enter your email';
-                                      if (!value.contains('@') || !value.contains('.')) return 'Enter a valid email address';
+                                      if (value == null || value.trim().isEmpty) return context.tr('Enter your email');
+                                      if (!value.contains('@') || !value.contains('.')) return context.tr('Enter a valid email address');
                                       return null;
                                     },
                                   ),
@@ -228,32 +250,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                     key: const ValueKey('password_input_field'),
                                     fieldKey: const ValueKey('password_field'),
                                     toggleKey: const ValueKey('password_visibility_toggle'),
-                                    semanticsLabel: 'Password Field',
+                                    semanticsLabel: context.tr('Password Field'),
                                     controller: _passwordController,
-                                    label: 'Password',
+                                    label: context.tr('Password'),
                                     hint: '••••••••',
                                     isPassword: true,
                                     icon: Icons.lock_outline_rounded,
                                     validator: (value) {
-                                      if (value == null || value.isEmpty) return 'Enter your password';
-                                      if (value.length < 6) return 'Password must be at least 6 characters';
+                                      if (value == null || value.isEmpty) return context.tr('Enter your password');
+                                      if (value.length < 6) return context.tr('Password must be at least 6 characters');
                                       return null;
                                     },
                                   ),
 
                                   // Forgot password
                                   Align(
-                                    alignment: Alignment.centerRight,
+                                    alignment: AlignmentDirectional.centerEnd,
                                     child: TextButton(
                                       key: const ValueKey('forgot_password_button'),
                                       onPressed: () => Navigator.of(context).pushNamed('/forgot-password'),
                                       style: TextButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                                       ),
-                                      child: const Text(
-                                        'Forgot Password?',
+                                      child: Text(
+                                        context.tr('Forgot Password?'),
                                         style: TextStyle(
-                                          color: AppColors.primary,
+                                          color: linkColor,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 13,
                                         ),
@@ -265,84 +287,96 @@ class _LoginScreenState extends State<LoginScreen> {
                                   // Primary Log In Button
                                   CustomButton(
                                     key: const ValueKey('login_button'),
-                                    semanticsLabel: 'Log In Button',
-                                    text: 'Log In',
+                                    semanticsLabel: context.tr('Log In Button'),
+                                    text: context.tr('Log In'),
                                     isLoading: _isLoading,
                                     onPressed: _handleLogin,
                                   ),
-                                  const SizedBox(height: 18),
+                                  if (edition.allowsCustomerRegistration && !LocalDemo.enabled) ...[
+                                    const SizedBox(height: 18),
 
-                                  // Horizontal "OR" Divider
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: colorScheme.outlineVariant.withValues(alpha: 0.8),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                                        child: Text(
-                                          'OR',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: colorScheme.outlineVariant.withValues(alpha: 0.8),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  // Google Sign-In Button
-                                  GoogleSignInButton(
-                                    key: const ValueKey('google_signin_button'),
-                                    semanticsLabel: 'Continue with Google Button',
-                                    isLoading: _isGoogleLoading,
-                                    onPressed: _handleGoogleSignIn,
-                                  ),
-                                  const SizedBox(height: 20),
-
-                                  // Sign up prompt
-                                  Center(
-                                    child: Wrap(
-                                      alignment: WrapAlignment.center,
-                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                    // Horizontal "OR" Divider
+                                    Row(
                                       children: [
-                                        Text(
-                                          "Don't have an account? ",
-                                          style: TextStyle(
-                                            fontSize: 13.5,
-                                            color: colorScheme.onSurfaceVariant,
+                                        Expanded(
+                                          child: Divider(
+                                            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                            thickness: 1,
                                           ),
                                         ),
-                                        GestureDetector(
-                                          key: const ValueKey('signup_button'),
-                                          behavior: HitTestBehavior.opaque,
-                                          onTap: () => Navigator.of(context).pushNamed('/signup'),
-                                          child: const Padding(
-                                            padding: EdgeInsets.symmetric(vertical: 4),
-                                            child: Text(
-                                              'Sign Up',
-                                              style: TextStyle(
-                                                color: AppColors.primary,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 13.5,
-                                              ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          child: Text(
+                                            context.tr('OR'),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                                             ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Divider(
+                                            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                            thickness: 1,
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
+                                    const SizedBox(height: 16),
+
+                                    // Google Sign-In Button
+                                    GoogleSignInButton(
+                                      key: const ValueKey('google_signin_button'),
+                                      semanticsLabel: context.tr('Continue with Google Button'),
+                                      isLoading: _isGoogleLoading,
+                                      onPressed: _handleGoogleSignIn,
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    if (PhoneSignInDialog.isSupported)
+                                      OutlinedButton.icon(
+                                        onPressed: _isLoading || _isGoogleLoading ? null : _handlePhoneSignIn,
+                                        icon: const Icon(Icons.phone_outlined),
+                                        label: Text(context.tr('Continue with phone')),
+                                      ),
+
+                                    // Sign up prompt
+                                  ],
+                                  if (edition.allowsCustomerRegistration) ...[
+                                    const SizedBox(height: 12),
+                                    Center(
+                                      child: Wrap(
+                                        alignment: WrapAlignment.center,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Don't have an account? ",
+                                            style: TextStyle(
+                                              fontSize: 13.5,
+                                              color: colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            key: const ValueKey('signup_button'),
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () => Navigator.of(context).pushNamed('/signup'),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 4),
+                                              child: Text(
+                                                'Sign Up',
+                                                style: TextStyle(
+                                                  color: linkColor,
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 13.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

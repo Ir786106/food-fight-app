@@ -106,6 +106,7 @@ class NotificationService implements INotificationService {
       AppLogger.info('Marked notification $notificationId as read', tag: 'NotificationService');
     } catch (e) {
       AppLogger.error('Failed to mark notification as read: $e', tag: 'NotificationService');
+      rethrow;
     }
   }
 
@@ -117,14 +118,15 @@ class NotificationService implements INotificationService {
           .where('isRead', isEqualTo: 0)
           .get();
 
-      final batch = _firestore.batch();
-      for (var doc in unread.docs) {
-        batch.update(doc.reference, {'isRead': 1});
+      for (var offset = 0; offset < unread.docs.length; offset += 400) {
+        final batch = _firestore.batch();
+        for (final doc in unread.docs.skip(offset).take(400)) { batch.update(doc.reference, {'isRead': 1}); }
+        await batch.commit();
       }
-      await batch.commit();
       AppLogger.info('Marked all notifications as read for $userId', tag: 'NotificationService');
     } catch (e) {
       AppLogger.error('Failed to mark all as read: $e', tag: 'NotificationService');
+      rethrow;
     }
   }
 
@@ -135,6 +137,7 @@ class NotificationService implements INotificationService {
       AppLogger.info('Deleted notification $notificationId', tag: 'NotificationService');
     } catch (e) {
       AppLogger.error('Failed to delete notification: $e', tag: 'NotificationService');
+      rethrow;
     }
   }
 
@@ -142,14 +145,15 @@ class NotificationService implements INotificationService {
   Future<void> deleteAllNotifications(String userId) async {
     try {
       final docs = await _col().where('userId', isEqualTo: userId).get();
-      final batch = _firestore.batch();
-      for (var doc in docs.docs) {
-        batch.delete(doc.reference);
+      for (var offset = 0; offset < docs.docs.length; offset += 400) {
+        final batch = _firestore.batch();
+        for (final doc in docs.docs.skip(offset).take(400)) { batch.delete(doc.reference); }
+        await batch.commit();
       }
-      await batch.commit();
       AppLogger.info('Deleted all notifications for $userId', tag: 'NotificationService');
     } catch (e) {
       AppLogger.error('Failed to delete all notifications: $e', tag: 'NotificationService');
+      rethrow;
     }
   }
 

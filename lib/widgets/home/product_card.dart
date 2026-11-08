@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/constants/app_dimens.dart';
+import '../../core/utils/app_snackbar.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/food_model.dart';
@@ -80,7 +82,8 @@ class _ProductCardState extends State<ProductCard>
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: const Text('Start New Order?'),
           content: const Text(
             'Your cart contains items from a different branch. Adding this item will start a fresh cart for this branch.',
@@ -102,7 +105,8 @@ class _ProductCardState extends State<ProductCard>
               },
               child: const Text(
                 'Start New Cart',
-                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onYellow),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: AppColors.onYellow),
               ),
             ),
           ],
@@ -112,6 +116,11 @@ class _ProductCardState extends State<ProductCard>
     }
 
     cart.addToCart(widget.food);
+    AppSnackbar.showSuccess(context, 'Added to cart',
+        action: SnackBarAction(
+            label: 'View',
+            onPressed: () =>
+                Navigator.of(context, rootNavigator: true).pushNamed('/cart')));
   }
 
   @override
@@ -119,333 +128,77 @@ class _ProductCardState extends State<ProductCard>
     final food = widget.food;
     final cart = context.watch<CartProvider>();
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final isAvailable = food.isAvailable;
-    final effectiveHeroTag = widget.heroTag ?? 'food-${food.id}';
-    final cardWidth = widget.inGrid ? null : widget.width;
-    final photoDiameter = widget.inGrid ? 104.0 : (widget.width * 0.62);
-
-    final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
-        (food.sizePrices != null && food.sizePrices!.length > 1);
-
-    final hasRequiredOptions = food.hasVariants ||
-        (food.variants != null && food.variants!.isNotEmpty);
-
-    final displayPrice = hasMultipleVariants
-        ? 'Rs. ${food.startingPrice.toStringAsFixed(0)}'
-        : 'Rs. ${food.price.toStringAsFixed(0)}';
-
-    return Semantics(
-      button: true,
-      label: '${food.name}, price $displayPrice',
-      child: Container(
-        width: cardWidth,
-        margin: widget.inGrid
-            ? const EdgeInsets.only(top: 14, bottom: 6)
-            : const EdgeInsets.only(top: 14, bottom: 6, right: 14),
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.topCenter,
-          children: [
-            // 1. Rounded Card Body (surface color, radius 24, soft shadow)
-            GestureDetector(
-              onTap: widget.onTap,
-              child: Container(
-                width: cardWidth,
-                margin: EdgeInsets.only(top: photoDiameter * 0.35),
-                padding: EdgeInsets.fromLTRB(
-                  12,
-                  (photoDiameter * 0.65) + 6,
-                  12,
-                  10,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.border,
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withValues(alpha: 0.40)
-                          : AppColors.maroonDeep.withValues(alpha: 0.08),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Veg indicator & Rating Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (food.isVeg)
-                          Container(
-                            padding: const EdgeInsets.all(2.5),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.rectangle,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.lettuce, width: 1.2),
-                            ),
-                            child: const Icon(
-                              Icons.circle,
-                              color: AppColors.lettuce,
-                              size: 7,
-                            ),
-                          )
-                        else
-                          const SizedBox.shrink(),
-
-                        // Rating badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceElevated
-                                : AppColors.surfaceMuted,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDark ? AppColors.darkBorder : AppColors.border,
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.star_rounded,
-                                  color: AppColors.mustard, size: 12),
-                              const SizedBox(width: 2),
-                              Text(
-                                food.rating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark
-                                      ? AppColors.darkTextPrimary
-                                      : AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // Food Name (bold 16)
-                    Text(
-                      food.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        height: 1.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 3),
-
-                    // Subtitle (textSecondary 12, one line ellipsis)
-                    Text(
-                      food.description,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
-                        height: 1.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Bottom Row: Price & Add Button
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Price Column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (hasMultipleVariants)
-                                Text(
-                                  'From',
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    color: isDark
-                                        ? AppColors.darkTextMuted
-                                        : AppColors.textMuted,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              Text(
-                                displayPrice,
-                                style: const TextStyle(
-                                  fontSize: 15.0,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.brandMaroon, // Mandatory contrast
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(width: 6),
-
-                        // Add Button: 44x44 yellow rounded-square (radius 14) with maroon bag/plus
-                        ScaleTransition(
-                          scale: _scaleAnimation,
-                          child: Semantics(
-                            button: true,
-                            enabled: isAvailable,
-                            label: 'Add ${food.name} to cart',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: isAvailable
-                                    ? () => _handleAddTap(context, cart)
-                                    : null,
-                                borderRadius: BorderRadius.circular(14),
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isAvailable
-                                        ? AppColors.brandYellow
-                                        : (isDark
-                                            ? AppColors.darkSurfaceElevated
-                                            : AppColors.surfaceMuted),
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: isAvailable
-                                        ? [
-                                            BoxShadow(
-                                              color: AppColors.brandYellow
-                                                  .withValues(alpha: 0.38),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Icon(
-                                    hasRequiredOptions
-                                        ? Icons.tune_rounded
-                                        : Icons.shopping_bag_outlined,
-                                    color: isAvailable
-                                        ? AppColors.brandMaroon
-                                        : (isDark
-                                            ? AppColors.darkTextMuted
-                                            : AppColors.textMuted),
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // 2. Overlapping Circular Food Photo with blurred soft shadow
-            Positioned(
-              top: 0,
-              child: GestureDetector(
-                onTap: widget.onTap,
+    final hasOptions = food.hasVariants || (food.variants?.isNotEmpty ?? false);
+    final price = 'Rs. ${food.startingPrice.toStringAsFixed(0)}';
+    return SizedBox(
+      width: widget.inGrid ? null : widget.width,
+      child: Card(
+        margin: const EdgeInsets.all(AppDimens.space4),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: widget.onTap,
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            AspectRatio(
+                aspectRatio: 1.5,
                 child: Hero(
-                  tag: effectiveHeroTag,
-                  child: Container(
-                    width: photoDiameter,
-                    height: photoDiameter,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.55)
-                              : AppColors.maroonDeep.withValues(alpha: 0.16),
-                          blurRadius: 18,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 6),
+                  tag: widget.heroTag ?? 'food-${food.id}',
+                  child: NetworkImageView(
+                      imageUrl: food.imageUrl, borderRadius: 0),
+                )),
+            Expanded(
+                child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space12),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(food.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const Spacer(),
+                    Text(
+                        food.reviewCount > 0
+                            ? '★ ${food.rating.toStringAsFixed(1)} (${food.reviewCount})'
+                            : 'New',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium),
+                    const SizedBox(height: AppDimens.space4),
+                    Text(hasOptions ? 'From $price' : price,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: AppDimens.space8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: AppDimens.minTouchTarget,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Semantics(
+                          label: 'Add ${food.name} to cart',
+                          button: true,
+                          child: FilledButton.tonal(
+                            onPressed: food.isAvailable
+                                ? () => _handleAddTap(context, cart)
+                                : null,
+                            style: FilledButton.styleFrom(
+                                padding: EdgeInsets.zero),
+                            child: Text(
+                                food.isAvailable
+                                    ? (hasOptions ? 'Choose' : 'Add')
+                                    : 'Unavailable',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                          ),
                         ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: ColorFiltered(
-                        colorFilter: isAvailable
-                            ? const ColorFilter.mode(
-                                Colors.transparent,
-                                BlendMode.multiply,
-                              )
-                            : const ColorFilter.matrix(<double>[
-                                0.2126, 0.7152, 0.0722, 0, 0,
-                                0.2126, 0.7152, 0.0722, 0, 0,
-                                0.2126, 0.7152, 0.0722, 0, 0,
-                                0,      0,      0,      1, 0,
-                              ]),
-                        child: food.imageUrl != null && food.imageUrl!.isNotEmpty
-                            ? NetworkImageView(
-                                imageUrl: food.imageUrl,
-                                width: photoDiameter,
-                                height: photoDiameter,
-                                fit: BoxFit.cover,
-                                fallbackEmoji: food.imageEmoji,
-                              )
-                            : Container(
-                                color: isDark
-                                    ? AppColors.darkSurfaceElevated
-                                    : AppColors.surfaceMuted,
-                                alignment: Alignment.center,
-                                child: Text(
-                                  food.imageEmoji,
-                                  style: TextStyle(fontSize: photoDiameter * 0.48),
-                                ),
-                              ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-            ),
-
-            // 3. Unavailable Chip
-            if (!isAvailable)
-              Positioned(
-                top: photoDiameter * 0.40 + 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.maroonDeep.withValues(alpha: 0.90),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Unavailable',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+                  ]),
+            )),
+          ]),
         ),
       ),
     );

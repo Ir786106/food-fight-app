@@ -11,6 +11,7 @@ import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/providers/cart_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Part 2.1 — Multi-Branch Data Models & Scoping', () {
     test('BranchModel serialization, deserialization, and financial profit calculation', () {
       final now = DateTime.now();

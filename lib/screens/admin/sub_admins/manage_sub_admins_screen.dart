@@ -1,3 +1,5 @@
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -49,7 +51,8 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final emailCtrl = TextEditingController(text: existing?.email ?? '');
     final phoneCtrl = TextEditingController(text: existing?.phone ?? '');
-    
+    final passwordCtrl = TextEditingController();
+
     // Default initial permissions
     final selectedPerms = <String>{};
     if (existing != null) {
@@ -135,6 +138,11 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      if (existing == null) TextFormField(
+                        controller: passwordCtrl, obscureText: true,
+                        decoration: const InputDecoration(labelText: 'Initial password', helperText: 'Leave blank to link an existing account'),
+                        validator: (v) => v != null && v.isNotEmpty && v.length < 8 ? 'Use at least 8 characters' : null,
+                      ),
                       Text(
                         'Operational Permissions (Restrictions)',
                         style: TextStyle(
@@ -202,41 +210,17 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                         setDialogState(() => isSaving = true);
 
                         try {
-                          final usersRef = FirebaseFirestore.instance.collection(FirestoreCollections.users);
-                          final permissionsMap = <String, bool>{};
-                          for (var p in _availablePermissions) {
-                            permissionsMap[p['id']!] = selectedPerms.contains(p['id']);
-                          }
-
-                          if (existing == null) {
-                            final docRef = usersRef.doc();
-                            await docRef.set({
-                              'id': docRef.id,
-                              'uid': docRef.id,
-                              'name': nameCtrl.text.trim(),
-                              'email': emailCtrl.text.trim().toLowerCase(),
-                              'phone': phoneCtrl.text.trim(),
-                              'role': 'staff',
-                              'status': 'active',
-                              'isActive': 1,
-                              'branchId': currentAdmin.branchId,
-                              'parentAdminId': currentAdmin.id,
-                              'permissions': permissionsMap,
-                              'createdAt': DateTime.now().millisecondsSinceEpoch,
-                              'updatedAt': DateTime.now().millisecondsSinceEpoch,
-                            });
-                          } else {
-                            await usersRef.doc(existing.id).update({
-                              'name': nameCtrl.text.trim(),
-                              'phone': phoneCtrl.text.trim(),
-                              'permissions': permissionsMap,
-                              'updatedAt': DateTime.now().millisecondsSinceEpoch,
-                            });
-                          }
+                          await FirebaseFunctions.instance.httpsCallable('provisionTeamMember').call({
+                            'role': 'staff', 'name': nameCtrl.text.trim(), 'email': emailCtrl.text.trim(),
+                            'phone': phoneCtrl.text.trim(), 'password': passwordCtrl.text,
+                            'linkExisting': passwordCtrl.text.isEmpty, 'userId': existing?.id,
+                            'branchId': currentAdmin.branchId,
+                            'permissions': {for (final p in _availablePermissions) p['id']!: selectedPerms.contains(p['id'])},
+                          });
 
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            AppSnackbar.showSnackBar(context,
                               SnackBar(
                                 content: Text(existing == null ? 'Sub-Admin created successfully!' : 'Sub-Admin updated!'),
                                 backgroundColor: AppColors.success,
@@ -246,7 +230,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                         } catch (e) {
                           setDialogState(() => isSaving = false);
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            AppSnackbar.showSnackBar(context,
                               SnackBar(content: Text('Error saving sub-admin: $e'), backgroundColor: AppColors.error),
                             );
                           }
@@ -272,7 +256,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Sub-admin "${admin.name}" marked as $newStatus'),
             backgroundColor: newStatus == 'active' ? AppColors.success : AppColors.warning,
@@ -281,7 +265,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(content: Text('Failed to update status: $e'), backgroundColor: AppColors.error),
         );
       }

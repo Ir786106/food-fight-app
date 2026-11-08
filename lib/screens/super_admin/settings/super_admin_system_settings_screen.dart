@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/models/admin/system_settings_model.dart';
@@ -102,14 +103,14 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
     if (mounted) {
       setState(() => _isSaving = false);
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           const SnackBar(
             content: Text('Global system settings updated and synchronized! 🎉'),
             backgroundColor: AppColors.success,
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text(provider.errorMessage ?? 'Failed to update settings'),
             backgroundColor: AppColors.error,

@@ -7,6 +7,7 @@ abstract class IImageStorageService {
   Future<String> uploadImage({
     required XFile image,
     required String path,
+    void Function(double)? onProgress,
   });
 
   /// Upload image with compression

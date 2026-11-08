@@ -1,3 +1,4 @@
+import '../core/constants/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
@@ -139,7 +140,7 @@ class AppTheme {
         foregroundColor: AppColors.brandMaroon,
         elevation: 0,
         scrolledUnderElevation: 1.5,
-        centerTitle: false,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: AppColors.brandMaroon),
         titleTextStyle: GoogleFonts.poppins(
           color: AppColors.brandMaroon,
@@ -152,11 +153,20 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimens.radius20),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
         shadowColor: const Color(0x0F2A1415),
       ),
+      iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+              minimumSize: const Size.square(AppDimens.minTouchTarget))),
+      filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+              minimumSize: const Size(
+                  AppDimens.minTouchTarget, AppDimens.minTouchTarget),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.radius16)))),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandYellow,
@@ -167,7 +177,7 @@ class AppTheme {
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimens.radius16),
           ),
           textStyle: GoogleFonts.poppins(
             fontSize: 16,
@@ -181,7 +191,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.brandMaroon, width: 1.5),
           minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppDimens.radius14),
           ),
           textStyle: GoogleFonts.poppins(
             fontSize: 14,
@@ -201,25 +211,27 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceMuted,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.brandMaroon, width: 1.5),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
+          borderSide:
+              const BorderSide(color: AppColors.brandMaroon, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         hintStyle: GoogleFonts.inter(
@@ -270,7 +282,7 @@ class AppTheme {
           fontWeight: FontWeight.w700,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimens.radius20),
           side: BorderSide.none,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -296,21 +308,28 @@ class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radius24)),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.brandMaroon;
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.brandMaroon;
+          }
           return AppColors.textSecondary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.brandYellow;
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.brandYellow;
+          }
           return AppColors.border;
         }),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.brandYellow;
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.brandYellow;
+          }
           return Colors.transparent;
         }),
         checkColor: const WidgetStatePropertyAll(AppColors.brandMaroon),
@@ -342,8 +361,10 @@ class AppTheme {
       shadow: Color(0x66000000),
     );
 
-    final baseTextTheme = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
-    final poppinsHeadingTheme = GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
+    final baseTextTheme =
+        GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
+    final poppinsHeadingTheme =
+        GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
 
     final textTheme = baseTextTheme.copyWith(
       displayLarge: poppinsHeadingTheme.displayLarge?.copyWith(
@@ -412,7 +433,7 @@ class AppTheme {
         foregroundColor: AppColors.darkTextPrimary,
         elevation: 0,
         scrolledUnderElevation: 1.5,
-        centerTitle: false,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
         titleTextStyle: GoogleFonts.poppins(
           color: AppColors.darkTextPrimary,
@@ -425,10 +446,19 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimens.radius20),
           side: const BorderSide(color: AppColors.darkBorder, width: 1),
         ),
       ),
+      iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+              minimumSize: const Size.square(AppDimens.minTouchTarget))),
+      filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+              minimumSize: const Size(
+                  AppDimens.minTouchTarget, AppDimens.minTouchTarget),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.radius16)))),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandYellow,
@@ -438,7 +468,7 @@ class AppTheme {
           minimumSize: const Size(64, 56),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimens.radius16),
           ),
           textStyle: GoogleFonts.poppins(
             fontSize: 16,
@@ -452,7 +482,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.brandYellow, width: 1.5),
           minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppDimens.radius14),
           ),
           textStyle: GoogleFonts.poppins(
             fontSize: 14,
@@ -463,21 +493,23 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.darkSurfaceElevated,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.brandYellow, width: 1.5),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
+          borderSide:
+              const BorderSide(color: AppColors.brandYellow, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radius14),
           borderSide: const BorderSide(color: AppColors.darkError, width: 1.5),
         ),
         hintStyle: GoogleFonts.inter(
@@ -508,7 +540,7 @@ class AppTheme {
           fontWeight: FontWeight.w700,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimens.radius20),
           side: BorderSide.none,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

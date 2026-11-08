@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -69,7 +70,7 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
       final activeOrder = activeOrders.first;
       Navigator.of(context).pushNamed('/order-tracking', arguments: activeOrder);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(
           content: const Text('No active delivery to track right now'),
           behavior: SnackBarBehavior.floating,

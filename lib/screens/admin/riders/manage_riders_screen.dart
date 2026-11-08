@@ -1,3 +1,6 @@
+import '../../../core/config/app_edition.dart';
+import '../../../providers/auth_provider.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -126,13 +129,13 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         controller: passwordCtrl,
                         obscureText: obscurePassword,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Password is required';
-                          if (v.length < 6) return 'Password must be at least 6 characters';
+                          if (v == null || v.isEmpty) return null;
+                          if (v.length < 8) return 'Password must be at least 8 characters';
                           return null;
                         },
                         decoration: InputDecoration(
                           labelText: 'Assign Login Password *',
-                          hintText: 'Min. 6 characters',
+                          hintText: 'Min. 8 characters',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -141,7 +144,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                             ),
                             onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
                           ),
-                          helperText: 'Temporary or initial password for rider',
+                          helperText: 'Leave blank to link an existing customer or rider account',
                         ),
                       ),
                     ],
@@ -224,7 +227,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         }
                         if (mounted) {
                           final err = riderProv.errorMessage;
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          AppSnackbar.showSnackBar(context,
                             SnackBar(
                               content: Text(ok
                                   ? (rider == null
@@ -287,7 +290,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
           backgroundColor: AdminTheme.primaryBlue,
           foregroundColor: Colors.white,
           actions: [
-            IconButton(
+            if (context.watch<AuthProvider>().edition == AppEdition.combined)
+              IconButton(
               icon: const Icon(Icons.two_wheeler_rounded),
               tooltip: 'Open Rider Console',
               onPressed: () => Navigator.pushNamed(context, '/rider/dashboard'),

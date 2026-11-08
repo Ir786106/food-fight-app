@@ -22,13 +22,14 @@ class AddressProvider extends ChangeNotifier with SafeChangeNotifier {
 
   void watchAddresses(String userId) {
     if (userId.isEmpty) {
+      _sub?.cancel(); _sub = null; _currentUserId = null;
       _addresses = [];
       _isLoading = false;
       notifyListenersPostFrame();
       return;
     }
 
-    if (_currentUserId == userId && _sub != null) {
+    if (_currentUserId == userId && _sub != null && _errorMessage == null) {
       return;
     }
 

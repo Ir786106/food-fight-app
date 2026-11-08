@@ -6,6 +6,7 @@ import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/providers/cart_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Cash on Delivery Order & Lifecycle Flow Verification', () {
     final testFood = FoodModel(
       id: 'food_zinger_01',

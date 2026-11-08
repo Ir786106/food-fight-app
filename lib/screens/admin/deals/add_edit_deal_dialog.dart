@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/deal_model.dart';
@@ -453,7 +454,7 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
       setState(() => _isSaving = false);
       if (ok) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text(
               widget.deal == null ? 'Deal created successfully!' : 'Deal updated successfully!',
@@ -462,7 +463,7 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text(dealProvider.error ?? 'Failed to save deal'),
             backgroundColor: AppColors.error,

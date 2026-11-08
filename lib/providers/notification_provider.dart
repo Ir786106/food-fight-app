@@ -20,6 +20,9 @@ class NotificationProvider extends ChangeNotifier with SafeChangeNotifier {
 
   void watchNotifications(String userId) {
     if (userId.isEmpty) {
+      _sub?.cancel();
+      _sub = null;
+      _currentUserId = null;
       _notifications = [];
       _isLoading = false;
       notifyListenersPostFrame();

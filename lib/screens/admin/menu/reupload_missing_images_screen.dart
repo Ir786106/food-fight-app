@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -75,7 +76,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
 
       if (mounted) {
         context.read<MenuProvider>().watchMenuItems();
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Successfully updated image for "${item.name}"!'),
             backgroundColor: AppColors.success,
@@ -85,7 +86,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
     } catch (e, stack) {
       AppLogger.error('Failed to upload image for ${item.id}: $e\n$stack', tag: 'ReuploadTool');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: const Text('No connection. Please check your internet and try again.'),
             backgroundColor: AppColors.error,
@@ -118,7 +119,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
         'updatedAt': FieldValue.serverTimestamp(),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Set branded default icon for "${item.name}"'),
             backgroundColor: AppColors.success,
@@ -168,7 +169,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
       await batch.commit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Updated $count menu items with branded emblem!'),
             backgroundColor: AppColors.success,

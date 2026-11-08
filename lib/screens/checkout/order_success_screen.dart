@@ -13,36 +13,53 @@ class OrderSuccessScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final rawOrder = ModalRoute.of(context)?.settings.arguments;
     if (rawOrder is! OrderModel) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Order Status'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
-          ),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.success),
-                const SizedBox(height: 16),
-                const Text('No Active Order Found', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('Please visit your order history to track existing orders.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
-                const SizedBox(height: 24),
-                CustomButton(
-                  text: 'Go to Home',
-                  icon: Icons.home_rounded,
-                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
-                ),
-              ],
+      return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) {
+              Navigator.of(context, rootNavigator: true)
+                  .pushNamedAndRemoveUntil('/home', (route) => false);
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Order Status'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.of(context, rootNavigator: true)
+                    .pushNamedAndRemoveUntil('/home', (r) => false),
+              ),
             ),
-          ),
-        ),
-      );
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded,
+                        size: 64, color: AppColors.success),
+                    const SizedBox(height: 16),
+                    const Text('No Active Order Found',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text(
+                        'Please visit your order history to track existing orders.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textSecondary)),
+                    const SizedBox(height: 24),
+                    CustomButton(
+                      text: 'Go to Home',
+                      icon: Icons.home_rounded,
+                      onPressed: () =>
+                          Navigator.of(context, rootNavigator: true)
+                              .pushNamedAndRemoveUntil('/home', (r) => false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ));
     }
     final order = rawOrder;
     final theme = Theme.of(context);
@@ -53,186 +70,123 @@ class OrderSuccessScreen extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+          Navigator.of(context, rootNavigator: true)
+              .pushNamedAndRemoveUntil('/home', (r) => false);
         }
       },
       child: Scaffold(
+        appBar: AppBar(
+            title: const Text('Order confirmed'),
+            leading: IconButton(
+                tooltip: 'Back to Home',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context, rootNavigator: true)
+                    .pushNamedAndRemoveUntil('/home', (route) => false))),
         backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
-        child: ResponsiveContainer.content(
-          maxWidth: 600,
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 1. Concentric Yellow Rings with Checkmark (Reference F)
-                  Container(
-                    width: 104,
-                    height: 104,
-                    decoration: BoxDecoration(
-                      color: AppColors.brandYellow.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 80,
-                      height: 80,
+          child: ResponsiveContainer.content(
+            maxWidth: 600,
+            child: Center(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // 1. Concentric Yellow Rings with Checkmark (Reference F)
+                    Container(
+                      width: 104,
+                      height: 104,
                       decoration: BoxDecoration(
-                        color: AppColors.brandYellow.withValues(alpha: 0.28),
+                        color: AppColors.brandYellow.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
                       child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: const BoxDecoration(
-                          color: AppColors.brandYellow,
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.brandYellow.withValues(alpha: 0.28),
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x33FFD505),
-                              blurRadius: 16,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
                         ),
-                        child: const Icon(
-                          Icons.check_rounded,
-                          size: 34,
-                          color: AppColors.onYellow,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Celebratory Title (no raw emoji, Audit 16)
-                  Text(
-                    'Order Placed Successfully!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.3,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Order ID Pill (maroon text on yellowSoft, Audit 1)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.brandYellow.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.receipt_rounded,
-                          size: 15,
-                          color: isDark ? AppColors.brandYellow : AppColors.onYellow,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Order ID: ${order.orderNumber}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? AppColors.brandYellow : AppColors.onYellow,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 2. Estimated Delivery Time Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.timer_rounded,
-                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Estimated Delivery Time',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '25 – 35 minutes',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: colorScheme.onSurface,
-                                ),
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            color: AppColors.brandYellow,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x33FFD505),
+                                blurRadius: 16,
+                                offset: Offset(0, 4),
                               ),
                             ],
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.successSoft,
-                            borderRadius: BorderRadius.circular(8),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            size: 34,
+                            color: AppColors.onYellow,
                           ),
-                          child: const Text(
-                            'On Schedule',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Celebratory Title (no raw emoji, Audit 16)
+                    Text(
+                      'Order Placed Successfully!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.3,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Order ID Pill (maroon text on yellowSoft, Audit 1)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkYellowSoft
+                            : AppColors.yellowSoft,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.brandYellow.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.receipt_rounded,
+                            size: 15,
+                            color: isDark
+                                ? AppColors.brandYellow
+                                : AppColors.onYellow,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Order ID: ${order.orderNumber}',
                             style: TextStyle(
-                              color: AppColors.success,
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
+                              color: isDark
+                                  ? AppColors.brandYellow
+                                  : AppColors.onYellow,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 24),
 
-                  // 3. Items Ordered Card (Reference F)
-                  if (order.items.isNotEmpty) ...[
+                    // 2. Estimated Delivery Time Card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -240,165 +194,266 @@ class OrderSuccessScreen extends StatelessWidget {
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                          color: colorScheme.outlineVariant
+                              .withValues(alpha: isDark ? 0.3 : 0.6),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                            color: Colors.black
+                                .withValues(alpha: isDark ? 0.3 : 0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkYellowSoft
+                                  : AppColors.yellowSoft,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.timer_rounded,
+                              color: isDark
+                                  ? AppColors.brandYellow
+                                  : AppColors.brandMaroon,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Estimated Delivery Time',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '25 – 35 minutes',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.successSoft,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'On Schedule',
+                              style: TextStyle(
+                                color: AppColors.success,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 3. Items Ordered Card (Reference F)
+                    if (order.items.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant
+                                .withValues(alpha: isDark ? 0.3 : 0.6),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black
+                                  .withValues(alpha: isDark ? 0.3 : 0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Items Ordered',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ...order.items.map((item) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    NetworkImageView(
+                                      imageUrl: item.food.imageUrl,
+                                      width: 38,
+                                      height: 38,
+                                      borderRadius: 10,
+                                      fallbackEmoji: item.food.imageEmoji,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.displayName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                              color: colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Qty: ${item.quantity}',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        color: isDark
+                                            ? AppColors.brandYellow
+                                            : AppColors.brandMaroon,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // 4. Receipt & Fee Breakdown Card (Reference F)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant
+                              .withValues(alpha: isDark ? 0.3 : 0.6),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black
+                                .withValues(alpha: isDark ? 0.3 : 0.04),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Items Ordered',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: colorScheme.onSurface,
-                            ),
+                          _row(
+                            context,
+                            'Total Amount',
+                            'Rs. ${order.total.toStringAsFixed(0)}',
+                            isBold: true,
+                            highlightValue: true,
                           ),
                           const SizedBox(height: 10),
-                          ...order.items.map((item) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  NetworkImageView(
-                                    imageUrl: item.food.imageUrl,
-                                    width: 38,
-                                    height: 38,
-                                    borderRadius: 10,
-                                    fallbackEmoji: item.food.imageEmoji,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.displayName,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                            color: colorScheme.onSurface,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Qty: ${item.quantity}',
-                                          style: TextStyle(
-                                            fontSize: 11.5,
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    'Rs. ${item.totalPrice.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
+                          _row(context, 'Payment Method',
+                              order.paymentMethod.toUpperCase()),
+                          const SizedBox(height: 10),
+                          _row(context, 'Kitchen', order.restaurantName),
+                          const SizedBox(height: 10),
+                          _row(context, 'Delivery Address',
+                              order.deliveryAddress,
+                              isMultiline: true),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-                  ],
+                    const SizedBox(height: 16),
 
-                  // 4. Receipt & Fee Breakdown Card (Reference F)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
+                    // Notifications Note
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _row(
-                          context,
-                          'Total Amount',
-                          'Rs. ${order.total.toStringAsFixed(0)}',
-                          isBold: true,
-                          highlightValue: true,
-                        ),
-                        const SizedBox(height: 10),
-                        _row(context, 'Payment Method', order.paymentMethod.toUpperCase()),
-                        const SizedBox(height: 10),
-                        _row(context, 'Kitchen', order.restaurantName),
-                        const SizedBox(height: 10),
-                        _row(context, 'Delivery Address', order.deliveryAddress, isMultiline: true),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Notifications Note
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.notifications_active_outlined, size: 16, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          'Live updates will be sent via push notification, email, and SMS.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                            height: 1.4,
+                        Icon(Icons.notifications_active_outlined,
+                            size: 16, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Live updates will be sent via push notification, email, and SMS.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
 
-                  // 5. Action Buttons (Track Order + Continue Shopping)
-                  CustomButton(
-                    text: 'Track Order',
-                    icon: Icons.delivery_dining_rounded,
-                    onPressed: () => Navigator.of(context)
-                        .pushReplacementNamed('/order-tracking', arguments: order),
-                  ),
-                  const SizedBox(height: 12),
-                  CustomButton.outlined(
-                    text: 'Continue Shopping',
-                    icon: Icons.storefront_rounded,
-                    onPressed: () => Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/home', (r) => false),
-                  ),
-                ],
+                    // 5. Action Buttons (Track Order + Continue Shopping)
+                    CustomButton(
+                      text: 'Track Order',
+                      icon: Icons.delivery_dining_rounded,
+                      onPressed: () => Navigator.of(context)
+                          .pushReplacementNamed('/order-tracking',
+                              arguments: order),
+                    ),
+                    const SizedBox(height: 12),
+                    CustomButton.outlined(
+                      text: 'Continue Shopping',
+                      icon: Icons.storefront_rounded,
+                      onPressed: () =>
+                          Navigator.of(context, rootNavigator: true)
+                              .pushNamedAndRemoveUntil('/home', (r) => false),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _row(
     BuildContext context,
@@ -412,7 +467,8 @@ class OrderSuccessScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
-      crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment:
+          isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(

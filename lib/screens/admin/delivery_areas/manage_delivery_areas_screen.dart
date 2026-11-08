@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -167,7 +168,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                         } catch (e) {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
+                            AppSnackbar.showSnackBar(ctx,
                               SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
                             );
                           }
@@ -207,7 +208,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
               Navigator.pop(ctx);
               final success = await context.read<DeliveryAreaProvider>().deleteArea(area.id);
               if (mounted && success) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                AppSnackbar.showSnackBar(context,
                   SnackBar(content: Text('Zone "${area.name}" deleted')),
                 );
               }

@@ -1,3 +1,5 @@
+import '../../routes/role_router.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
@@ -50,7 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         const SnackBar(
           content: Text('Please agree to the Terms & Conditions to proceed'),
           backgroundColor: AppColors.error,
@@ -76,7 +78,7 @@ class _SignupScreenState extends State<SignupScreen> {
       Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
     } else {
       final error = auth.errorMessage ?? 'Registration failed';
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(
           content: Text(error),
           backgroundColor: AppColors.error,
@@ -96,13 +98,9 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isGoogleLoading = false);
 
     if (success) {
-      if (auth.isAdmin) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
-      } else {
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
-      }
+      RoleRouter.navigateHome(context, auth.currentUser);
     } else if (auth.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(
           content: Text(auth.errorMessage!),
           backgroundColor: AppColors.error,

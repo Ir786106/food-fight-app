@@ -17,6 +17,7 @@ void main() {
       imageEmoji: '🍔',
       category: 'Burgers',
       rating: 4.8,
+      reviewCount: 12,
       prepTimeMinutes: 15,
       restaurantId: 'rest-1',
       isAvailable: true,
@@ -53,7 +54,8 @@ void main() {
       isAvailable: false,
     );
 
-    testWidgets('Renders name, description, rating, and bold price', (tester) async {
+    testWidgets('Renders name, real review count, price and Add action',
+        (tester) async {
       final cart = CartProvider();
 
       await tester.pumpWidget(
@@ -73,12 +75,43 @@ void main() {
       );
 
       expect(find.text('Classic Burger'), findsOneWidget);
-      expect(find.text('Juicy beef patty with fresh cheese'), findsOneWidget);
+      expect(find.text('Add'), findsOneWidget);
       expect(find.text('Rs. 450'), findsOneWidget);
-      expect(find.text('4.8'), findsOneWidget);
+      expect(find.textContaining('4.8 (12)'), findsOneWidget);
     });
 
-    testWidgets('Tapping yellow add button on item without variants adds directly to cart', (tester) async {
+    testWidgets('Hides legacy rating when there are no review records',
+        (tester) async {
+      final cart = CartProvider();
+      final legacyFood = FoodModel(
+        id: 'legacy-food',
+        name: 'Legacy Dish',
+        description: 'Dish with old aggregate rating',
+        price: 400,
+        category: 'Burgers',
+        rating: 4.8,
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<CartProvider>.value(
+          value: cart,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: ProductCard(food: legacyFood, onTap: () {}),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('New'), findsOneWidget);
+      expect(find.text('4.8'), findsNothing);
+    });
+
+    testWidgets(
+        'Tapping yellow add button on item without variants adds directly to cart',
+        (tester) async {
       final cart = CartProvider();
 
       await tester.pumpWidget(
@@ -100,14 +133,16 @@ void main() {
       expect(cart.itemCount, equals(0));
 
       // Tap add button
-      await tester.tap(find.byIcon(Icons.shopping_bag_outlined));
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
       await tester.pumpAndSettle();
 
       expect(cart.itemCount, equals(1));
       expect(cart.items.first.food.name, equals('Classic Burger'));
     });
 
-    testWidgets('Tapping add button on item with variants opens customization sheet', (tester) async {
+    testWidgets(
+        'Tapping add button on item with variants opens customization sheet',
+        (tester) async {
       final cart = CartProvider();
 
       await tester.pumpWidget(
@@ -127,14 +162,15 @@ void main() {
       );
 
       // Tap tune/options button
-      await tester.tap(find.byIcon(Icons.tune_rounded));
+      await tester.tap(find.widgetWithText(FilledButton, 'Choose'));
       await tester.pumpAndSettle();
 
       // Customization bottom sheet should be presented
       expect(find.byType(ItemCustomizationBottomSheet), findsOneWidget);
     });
 
-    testWidgets('Unavailable food item shows chip and disables add action', (tester) async {
+    testWidgets('Unavailable food item shows chip and disables add action',
+        (tester) async {
       final cart = CartProvider();
 
       await tester.pumpWidget(
@@ -157,8 +193,7 @@ void main() {
       expect(cart.itemCount, equals(0));
 
       // Tap disabled button
-      await tester.tap(find.byIcon(Icons.shopping_bag_outlined));
-      await tester.pumpAndSettle();
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Unavailable')).onPressed, isNull);
 
       // Cart count remains 0
       expect(cart.itemCount, equals(0));

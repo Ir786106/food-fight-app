@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/constants/app_colors.dart';
@@ -596,7 +597,7 @@ class _ItemCustomizationBottomSheetState
                                     selectedAddons: _selectedAddons.toList(),
                                   );
                                   Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  AppSnackbar.showSnackBar(context,
                                     SnackBar(
                                       content: Text('${food.name} added to new cart!'),
                                       backgroundColor: AppColors.brandMaroon,
@@ -628,7 +629,7 @@ class _ItemCustomizationBottomSheetState
                       final variantSuffix = _selectedVariant != null
                           ? ' (${_selectedVariant!.label})'
                           : '';
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context,
                         SnackBar(
                           content: Text('${food.name}$variantSuffix added to bucket!'),
                           backgroundColor: AppColors.brandMaroon,

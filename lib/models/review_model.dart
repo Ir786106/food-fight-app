@@ -61,10 +61,12 @@ class ReviewModel {
     return ReviewModel(
       id: json['id']?.toString() ?? '',
       userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
-      orderId: json['orderId']?.toString() ?? json['order_id']?.toString() ?? '',
+      orderId:
+          json['orderId']?.toString() ?? json['order_id']?.toString() ?? '',
       itemId: json['itemId']?.toString() ?? json['item_id']?.toString() ?? '',
-      rating: SafeConvert.toDouble(json['rating'], 5.0),
-      reviewText: json['reviewText']?.toString() ?? json['review_text']?.toString(),
+      rating: SafeConvert.toDouble(json['rating'], 0.0),
+      reviewText:
+          json['reviewText']?.toString() ?? json['review_text']?.toString(),
       imageUrls: json['imageUrls'] != null && json['imageUrls'] is List
           ? (json['imageUrls'] as List).map((e) => e.toString()).toList()
           : null,

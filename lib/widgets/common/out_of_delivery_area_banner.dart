@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
@@ -88,7 +89,7 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                         }
                         if (ctx.mounted) Navigator.of(ctx).pop();
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          AppSnackbar.showSnackBar(context,
                             const SnackBar(
                               content: Text('Thank you! You are on our VIP launch list! 🎉'),
                               backgroundColor: AppColors.success,

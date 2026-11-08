@@ -23,7 +23,8 @@ void main() {
       expect(chatId1, equals(chatId2));
     });
 
-    test('generateChatId produces deterministic ID for general support chat', () {
+    test('generateChatId produces deterministic ID for general support chat',
+        () {
       final chatId1 = ChatService.generateChatId(
         type: 'support',
         customerId: 'cust_456',
@@ -39,7 +40,9 @@ void main() {
       expect(chatId1, equals(chatId2));
     });
 
-    test('generateChatId creates different IDs for different branches or customers', () {
+    test(
+        'generateChatId creates different IDs for different branches or customers',
+        () {
       final chatBranch1 = ChatService.generateChatId(
         type: 'support',
         customerId: 'cust_1',
@@ -97,7 +100,8 @@ void main() {
       expect(fromMap.status, equals('open'));
     });
 
-    test('ChatModel handles null/missing fields gracefully without crashing', () {
+    test('ChatModel handles null/missing fields gracefully without crashing',
+        () {
       final emptyMap = <String, dynamic>{};
       final chat = ChatModel.fromMap(emptyMap, 'test_id');
 
@@ -112,7 +116,32 @@ void main() {
   });
 
   group('ChatMessageModel Serialization Tests', () {
-    test('ChatMessageModel serialization preserves sender, readBy array and type', () {
+    test('messages are ordered oldest to newest for a normal chat list', () {
+      final oldest = ChatMessageModel(
+        id: 'oldest',
+        senderId: 'customer',
+        senderRole: 'customer',
+        senderName: 'Customer',
+        text: 'First',
+        createdAt: DateTime(2026, 1, 1),
+      );
+      final newest = ChatMessageModel(
+        id: 'newest',
+        senderId: 'admin',
+        senderRole: 'admin',
+        senderName: 'Support',
+        text: 'Last',
+        createdAt: DateTime(2026, 1, 2),
+      );
+
+      final ordered = ChatService.sortMessagesOldestFirst([newest, oldest]);
+
+      expect(ordered.map((message) => message.id), ['oldest', 'newest']);
+    });
+
+    test(
+        'ChatMessageModel serialization preserves sender, readBy array and type',
+        () {
       final now = DateTime.now();
       final msg = ChatMessageModel(
         id: 'msg_001',

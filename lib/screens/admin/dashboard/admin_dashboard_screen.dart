@@ -1,3 +1,4 @@
+import '../../../core/config/app_edition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:food_fight/theme/app_theme.dart';
@@ -117,7 +118,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             tooltip: 'Refresh Dashboard',
             onPressed: () => context.read<AdminDashboardProvider>().refresh(),
           ),
-          IconButton(
+          if (auth.edition == AppEdition.combined)
+            IconButton(
             icon: const Icon(Icons.storefront_rounded),
             tooltip: 'Customer View',
             onPressed: () => Navigator.of(context).pushNamed('/home'),

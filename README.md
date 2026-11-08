@@ -1,374 +1,362 @@
-# Food Fight — Commercial Digital Ordering & Multi-Panel Enterprise Platform (v1.7.4+12)
+# Food Fight
 
-Supported Platforms: **Android 7.0+ / API 24+** (minSdk 24, targetSdk 36, universal APK for `arm64-v8a` and `armeabi-v7a`).
+Food Fight is a Flutter application for multi-branch food ordering and restaurant operations. It provides customer ordering and support, branch-level administration, platform administration, and a rider console, backed by Firebase services.
 
-A complete, production-grade Flutter multi-branch fast-food ordering and enterprise management platform for **Food Fight Restaurant** (5 branches), featuring five distinct roles with role-based access control and branch isolation:
+**Highlights**
 
-1. **Customer Storefront**: World-class fast-food ordering UX with floating notch navigation, raised center cart button, vertical category side-rail with curved indicator, dynamic Admin Deals carousel, real Google Maps live rider tracking, size variant & sauce customization, spice level customization (1-5), persistent favorites, shimmer skeleton loading, multi-branch checkout selector, loyalty tokens redemption, and real-time support chat.
-2. **Restaurant Admin Panel**: Collapsible professional desktop/tablet sidebar (260px expanded / 72px collapsed), active live KPI dashboard with interactive `fl_chart` status donut and sales trend charts, CSV analytics reports export, dynamic Option Templates management with Supabase photo uploads, real-time order processing, review moderation, customer & rider management, and branch sales reports.
-3. **Platform Super Admin Panel**: Enterprise HQ with collapsible sidebar, multi-branch comparative revenue bar charts, platform-wide intelligence, master kitchen switches, global loyalty token configurations, admin provisioning & granular sub-admin permission delegation, platform-wide deal & review moderation, and full-spectrum audit logs.
-4. **Delivery Rider Panel**: Dedicated rider console with real device GPS hardware tracking (`geolocator`), live order status progression (`pickedUp`, `outForDelivery`, `delivered`), and real-time coordinate streaming to Firestore.
-5. **Sub-admin Role**: Restricted branch operators with permission-gated access (orders, menu, chat, reviews, riders).
+- Role-aware customer, admin, sub-admin/staff, super-admin, and rider experiences.
+- Branch-aware menu discovery, ordering, administration, and delivery workflows.
+- Firestore-backed orders, reviews, support conversations, notifications, and rider tracking.
+- Responsive layouts, light/dark themes, and reusable design tokens.
+- Cash on Delivery is the active checkout method. Saved wallet numbers are references only; the app does not process card or wallet payments.
 
----
+## Screenshots
 
-## 🎨 Brand Design System (Sampled from Real Brand Logo)
+No application screenshots are currently included. Add reviewed PNG or JPEG captures to [`docs/screenshots/`](docs/screenshots/), then link them here with descriptive alt text. Do not add customer information, tokens, or other private data to screenshots.
 
-Food Fight follows an authoritative, appetizing fast-food brand identity sampled directly from `food_fight_logo.png` & `food_fight_logo_icon.png`:
+| Screen | Preview |
+| --- | --- |
+| Customer storefront | _Screenshot not yet available_ |
+| Order tracking | _Screenshot not yet available_ |
+| Admin dashboard | _Screenshot not yet available_ |
 
-| Token Name | Light Theme Hex | Dark Theme Hex | Role & Usage Guidelines |
-| --- | --- | --- | --- |
-| `brandYellow` | `#FFD505` (`#FFD500`) | `#FFD505` | Primary buttons, active tabs, selected chips, badges |
-| `yellowPressed` | `#E6BF00` | `#CCA800` | Pressed / hover state of brand yellow |
-| `yellowSoft` | `#FFF3B8` | `#332B10` | Tinted containers, selected chip backgrounds |
-| `yellowTint` | `#FFFAE0` | `#231E0D` | Subtle highlight rows, order context cards |
-| `brandMaroon` (`brandBrown`) | `#6D2123` (`#5A1E1B`) | `#FFFFFF` / `#FFD505` | Headings, app bar titles, outline buttons, text on yellow |
-| `maroonDeep` | `#4A1517` | `#1A0809` | Dark headers, gradients, pressed maroon |
-| `background` (`cream`) | `#FAF7F2` (`#FFF8E7`) | `#140C0B` (`#1A0F0D`) | Scaffold background |
-| `surface` | `#FFFFFF` | `#1E1211` (`#26160F`) | Cards, sheets, dialogs, input fill |
-| `surfaceMuted` (`lightCream`) | `#F3EEE6` (`#FFF1C9`) | `#2A1A18` (`#33201A`) | Unselected chips, input fill, skeleton base |
-| `border` | `#E7DFD3` (`#F0E3C0`) | `#3A2725` | Card borders, dividers, outlines |
-| `textPrimary` | `#2A1415` (`#2B1412`) | `#F7EFE6` (`#FFF8E7`) | Headings and primary body copy |
-| `textSecondary` | `#6B5B58` (`#7A6660`) | `#BCA9A3` | Subtitles, helper text, timestamps |
-| `textMuted` | `#8F807C` (`#A8988F`) | `#8F7C77` | Placeholders, captions only |
-| `tomato` (`ketchupRed`) | `#D9482B` (`#E63B2E`) | `#EF5350` | Discounts, favorite heart, sale ribbons |
-| `mustard` (`cheeseOrange`) | `#CC9419` (`#F28C28`) | `#FFB74D` | Rating stars, warnings, accents |
-| `lettuce` (`freshGreen`) | `#4C8C2B` (`#3FA34D`) | `#66BB6A` | Veg indicator, open status, success badges |
+![Flutter](https://img.shields.io/badge/Flutter-3.47.2%20validated-02569B?logo=flutter)
+![Dart](https://img.shields.io/badge/Dart-%3E%3D3.0.0-0175C2?logo=dart)
+![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?logo=firebase)
+![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Desktop-blue)
+![Version](https://img.shields.io/badge/Version-1.7.5%2B13-green)
+![License](https://img.shields.io/badge/License-not%20specified-lightgrey)
 
-### 60-30-10 Design & Accessibility Rules
+## Table of Contents
 
-- **60% Neutrals**: `#FAF7F2` cream background and `#FFFFFF` white cards.
-- **30% Maroon/Brown**: Authoritative typography, secondary buttons, outline buttons, and iconography.
-- **10% Yellow & Accents**: Reserved for high-value CTAs, selected pill indicators, and discount tags.
-- **WCAG 2.1 AA Contrast**: All text/background pairs exceed required contrast ratios (Maroon on Yellow > 7:1, White on Maroon > 9:1, TextPrimary on Background > 12:1). Verified by `test/wcag_contrast_test.dart`.
+1. [Features](#1-features)
+2. [Tech Stack](#2-tech-stack)
+3. [Architecture](#3-architecture)
+4. [Data Model](#4-data-model)
+5. [Security](#5-security)
+6. [Getting Started](#6-getting-started)
+7. [Running, Testing and Quality](#7-running-testing-and-quality)
+8. [Building and Release](#8-building-and-release)
+9. [Performance and Responsive Design](#9-performance-and-responsive-design)
+10. [Troubleshooting and FAQ](#10-troubleshooting-and-faq)
+11. [Known Limitations and Roadmap](#11-known-limitations-and-roadmap)
+12. [Contributing](#12-contributing)
+13. [License, Author and Contact](#13-license-author-and-contact)
 
----
+## 1. Features
 
-## 💬 Real-Time Customer ↔ Admin Chat Architecture
+| Role | Implemented capabilities |
+| --- | --- |
+| **Customer** | Email/password and Google sign-in; onboarding; branch-aware restaurant, menu, and food discovery; search and filters; food details with variants, add-ons, and order notes; favorites; cart; coupons and loyalty tokens; address management; Cash on Delivery checkout; order history and status tracking; reviews; support chat with image attachments; in-app notifications and FCM integration; profile, settings, and light/dark theme. |
+| **Admin** | Branch dashboard and order handling; menu, category, option-template, deal, coupon, and delivery-area management; customer and rider management; support chat and review moderation; sales reports with CSV export. |
+| **Sub-admin / staff** | Admin routes and actions are guarded by role and, where configured, granular permissions. The available permissions are evaluated against the assigned user record and Firestore rules. |
+| **Super-admin** | Platform dashboard, branch and admin management, global settings, audit-log access, and platform-level administration. |
+| **Rider** | Assigned delivery queue, order status updates, and device-location reporting for order tracking. |
 
-Food Fight includes a real-time messaging pipeline connecting customers directly with their chosen branch's administration:
+Feature availability depends on account role, permissions, branch assignment, device permissions, Firebase configuration, and deployed backend rules.
 
-1. **Deterministic Channel IDs**:
-   - Order-linked: `order_{orderId}`
-   - General support: `support_{customerId}_{branchId}`
-2. **Customer Chat (`/chat`)**:
-   - Live order context card with 1-tap navigation to order tracking.
-   - Quick-reply chips ("Where is my order?", "Change address", "Wrong/missing item", "Cancel order").
-   - Brand message bubbles (Brand Yellow for customer, White surface for admin).
-   - Supabase photo upload for item verification and screenshots.
-   - Resolved conversation banner with 1-tap reopen functionality.
-3. **Admin Chat Console (`/admin/chats`)**:
-   - Responsive layout: mobile list/thread navigation; desktop/tablet dual-pane split view.
-   - Granular status management (`open`, `pending`, `resolved`).
-   - Canned quick responses and inline "View Order" modal.
-   - Branch scoping: Branch Admins and sub-admins with `chats` permission access only their branch's conversations.
-4. **Push & In-App Notifications**:
-   - Cloud Function `onChatMessageCreated` dispatches real-time FCM notifications.
+## 2. Tech Stack
 
----
+| Area | Technology |
+| --- | --- |
+| UI and runtime | Flutter; `pubspec.yaml` declares Dart `>=3.0.0 <4.0.0`. Cleanup validation used Flutter 3.47.2 and Dart 3.13.2. |
+| State management | Provider (`ChangeNotifier` providers registered in `lib/main.dart`). |
+| Authentication and data | Firebase Authentication, Cloud Firestore, Firebase Storage, Firebase Cloud Messaging, and Firebase App Check. |
+| Server-side operations | Firebase Cloud Functions, Node.js 20, Firebase Admin SDK, and Firebase Functions SDK. |
+| Maps and location | `google_maps_flutter`, `geolocator`. Google Maps keys must be separately configured and restricted. |
+| Image storage | Firebase Storage is the configured active upload provider. Supabase and Cloudinary adapters remain in the codebase for optional/legacy storage paths. |
+| Charts and reporting | `fl_chart`, `csv`. |
+| Responsive testing | Widget tests include a 10-size viewport matrix with text scales of 1.0, 1.3, and 2.0. |
 
-## 🏗️ Architecture & Backend Stack
+### Flutter packages
 
-- **Primary Backend (Application Data & Auth)**: **Firebase**
-  - **Firebase Authentication**: Customer, Staff, Admin, and Super Admin authentication with Google Sign-In support.
-  - **Cloud Firestore**: Real-time streams and persistent collections for `users`, `categories`, `menuItems`, `orders`, `chats`, `chats/{id}/messages`, `deliveryAreas`, `coupons`, `settings`, `audit_logs`, and `reviews`.
-- **Media & Image Storage**: **Supabase Storage**
-  - Product photos, category banners, chat images, and user media uploaded directly to the Supabase `food-images` bucket using public token access.
-- **State Management**: **Provider (`provider` package)**
-  - Fully reactive architecture: `AuthProvider`, `CartProvider`, `ChatProvider`, `CategoryProvider`, `MenuProvider`, `OrderProvider`, `BranchProvider`, `CouponProvider`, `CustomerProvider`, `DeliveryAreaProvider`, `ReportProvider`, `AdminDashboardProvider`, `SuperAdminProvider`, `AdminAccountProvider`, and `AuditLogProvider`.
-- **Security & Route Guarding**:
-  - Enforced role guards in `AppRoutes`: `AdminRouteGuard` (restricts to `admin` / `super_admin`) and `SuperAdminRouteGuard` (restricts to `super_admin`).
-  - Sensitive files and credentials strictly excluded from version control via `.gitignore`.
+Versions below are the constraints declared in `pubspec.yaml`, not a guarantee that each package's newest release is installed.
 
----
+| Package | Version constraint | Purpose |
+| --- | --- | --- |
+| `cupertino_icons` | `^1.0.6` | Cupertino icon font. |
+| `provider` | `^6.1.2` | Application state and dependency access. |
+| `shared_preferences` | `^2.2.3` | Small local preferences such as onboarding state. |
+| `google_fonts` | `^6.2.1` | Theme typography. |
+| `firebase_core` | `^3.10.0` | Firebase initialization. |
+| `firebase_auth` | `^5.3.0` | User authentication. |
+| `cloud_firestore` | `^5.0.0` | Application database and real-time streams. |
+| `firebase_storage` | `^12.3.7` | Active image storage provider. |
+| `firebase_messaging` | `^15.1.0` | Push notifications. |
+| `firebase_app_check` | `^0.3.1+4` | Firebase App Check integration. |
+| `google_sign_in` | `^6.2.2` | Google authentication. |
+| `supabase_flutter` | `^2.17.2` | Optional Supabase storage integration and legacy media resolution. |
+| `flutter_secure_storage` | `^9.2.2` | Secure device-local storage. |
+| `image_picker` | `^1.1.2` | Image selection. |
+| `cached_network_image` | `^3.4.1` | Cached remote images. |
+| `image` | `^4.1.0` | Image manipulation. |
+| `uuid` | `^4.5.0` | Identifier generation. |
+| `path` | `^1.9.0` | Path utilities. |
+| `fl_chart` | `^0.68.0` | Admin charts. |
+| `geolocator` | `^13.0.2` | Device location and permission handling. |
+| `google_maps_flutter` | `^2.9.0` | Map surfaces. |
+| `shimmer` | `^3.0.0` | Loading placeholders. |
+| `dio` | `^5.7.0` | HTTP client. |
+| `path_provider` | `^2.1.4` | Platform file locations. |
+| `url_launcher` | `^6.3.0` | External links and platform actions. |
+| `intl` | `^0.19.0` | Date and number formatting. |
+| `csv` | `^6.0.0` | CSV report generation. |
+| `package_info_plus` | `^9.0.1` | Installed application metadata. |
+| `open_filex` | `^4.7.0` | Opening local files. |
+| `crypto` | `^3.0.7` | Cryptographic utilities used by application helpers. |
+| `share_plus` | `^12.0.2` | Native share sheet. |
 
-## 📁 Project Directory Structure
+Development dependencies are `flutter_test`, `flutter_lints` (`^4.0.0`), and `flutter_launcher_icons` (`^0.14.4`).
 
-```
+### Cloud Functions packages
+
+`functions/package.json` targets Node.js 20 and declares `firebase-admin`, `firebase-functions`, `@sendgrid/mail`, and `twilio`. Email and SMS dispatch require configured provider credentials. The unused `nodemailer` dependency has been removed.
+
+## 3. Architecture
+
+### Source layout
+
+```text
 lib/
-├── main.dart                          # App initialization (Firebase + Supabase + MultiProvider)
-├── firebase_options.dart              # Firebase configuration
-├── core/
-│   ├── config/
-│   │   └── supabase_config.dart       # Supabase URL, publishable key, bucket name
-│   ├── constants/
-│   │   ├── app_colors.dart            # Consistent design tokens
-│   │   ├── app_constants.dart
-│   │   ├── firestore_collections.dart # Firestore collection constants
-│   │   └── firestore_fields.dart      # Document field constants
-│   ├── theme/
-│   │   ├── app_theme.dart             # Customer storefront theme
-│   │   ├── admin_theme.dart           # Restaurant admin portal theme
-│   │   └── super_admin_theme.dart     # Super admin governance theme
-│   └── utils/
-│       ├── validator_utils.dart       # Form validation logic
-│       └── logger.dart                # Structured logging
-├── models/
-│   ├── user_model.dart                # User schema (id, name, email, phone, role, isActive)
-│   ├── category_model.dart            # Category schema
-│   ├── menu_item_model.dart           # Menu item schema (variants, addons, pricing, discounts)
-│   ├── order_model.dart               # Order schema (orderNumber, status, items, subtotal, charges)
-│   ├── cart_item_model.dart           # Cart item schema with selected variants & extras
-│   ├── coupon_model.dart              # Coupon schema (flat/percentage discounts)
-│   ├── delivery_area_model.dart       # Delivery area schema with pricing
-│   ├── report_model.dart              # Sales analytics schema
-│   └── admin/
-│       ├── admin_account_model.dart   # Admin account management schema
-│       ├── audit_log_model.dart       # Platform audit log schema
-│       └── system_settings_model.dart # System-wide platform settings schema
-│   ├── services/                      # Data services (Firestore, Auth, Supabase Image Storage)
-├── providers/                         # Centralized ChangeNotifier providers
-├── screens/
-│   ├── auth/                          # Login, Signup, Forgot/Reset Password
-│   ├── home/                          # Storefront home & navigation
-│   ├── menu/                          # Menu listing with category filter
-│   ├── cart/ & checkout/              # Cart & COD Checkout
-│   ├── orders/                        # Order history & 6-stage live tracking
-│   ├── admin/                         # Restaurant Admin screens (dashboard, orders, menu, etc.)
-│   └── super_admin/                   # Platform Super Admin screens (dashboard, admins, settings, audit)
-└── widgets/                           # Reusable UI components & design system elements
+├── core/          # Bootstrap, configuration, constants, errors, networking, responsive helpers
+├── models/        # Firestore/application data models
+├── providers/     # Provider state and stream coordination
+├── routes/        # Named routes, role routing, and route guards
+├── screens/       # Customer, admin, super-admin, rider, and shared screens
+├── services/      # Firebase, storage, domain, and reporting operations
+├── theme/         # Customer/admin themes and theme state
+├── widgets/       # Shared and feature-specific UI components
+├── firebase_options.dart
+└── main.dart
+
+functions/         # Node.js Firebase Cloud Functions
+tool/              # Developer-only data seeding and migration helpers
+test/              # Unit, widget, flow, and responsive tests
+assets/            # App images and branding
 ```
 
----
+### Data flow
 
-## 🚀 Quickstart & Setup Guide
+```mermaid
+flowchart LR
+  Customer[Customer app] -->|Checkout request| Functions[Cloud Functions]
+  Functions -->|Validate and write order| Firestore[(Cloud Firestore)]
+  Firestore -->|Order stream| Admin[Branch admin]
+  Admin -->|Assign rider / update status| Firestore
+  Rider[Rider app] -->|Status and location| Firestore
+  Firestore -->|Tracking and notifications| Customer
+```
 
-### 1. Firebase Configuration & Deployment (Automated — No Manual Console Work)
+### Routing, state, and shared UI
 
-The project is configured for Firebase project `food-fight-bd72e`.
+- `AppRoutes` defines named application routes. `RoleRouter` resolves canonical home routes for customer, admin/staff, super-admin, and rider accounts. Route guards are in `app_routes.dart`.
+- Providers are registered in `main.dart`; screens consume them through Provider.
+- Customer, admin, and super-admin themes are defined under `lib/theme/` and `lib/core/theme/`. Shared color, spacing, and responsive helpers are under `lib/core/`.
+- `WindowSizeClass` uses compact `<600 dp`, medium `600–839 dp`, expanded `840–1199 dp`, and large `>=1200 dp` widths. Individual screens may use additional layout decisions.
+- `AppLogger`, `AppException`, and safe conversion helpers are used for logging, surfaced errors, and model parsing. `AppBootstrap` starts App Check, Supabase, and messaging setup without blocking the first frame.
 
-1. **Configure Firebase Options** (Already generated via FlutterFire CLI):
+## 4. Data Model
 
-   ```bash
-   flutterfire configure --project=food-fight-bd72e
+Collection names below are based on the Firestore constants, service queries, and deployed rules. The application also contains legacy aliases in rules; keep those until the corresponding data and queries are migrated.
+
+| Collection / path | Representative data |
+| --- | --- |
+| `users/{uid}` | Name, email, phone, role, status, branch, permissions, profile image, timestamps. |
+| `users/{uid}/payment_methods/{methodId}` | Saved method metadata and optional wallet account reference. The current screen only adds JazzCash/Easypaisa references. |
+| `branches/{branchId}` | Branch details, active status, location, and operational aggregates. |
+| `restaurants/{restaurantId}` | Restaurant information and branch association. |
+| `categories/{categoryId}`, `menuItems/{itemId}` | Category/menu metadata, price, options, availability, branch, and review aggregates. |
+| `orders/{orderId}` | Customer, branch, items, totals, payment label, delivery address, rider, status, and timestamps. |
+| `orders/{orderId}/tracking/{trackingId}` and `rider_locations/{riderId}` | Rider location and tracking updates. |
+| `addresses`, `deliveryAreas`, `riders`, `riderAssignments` | Customer delivery data and rider operations. |
+| `coupons`, `deals`, `option_templates` / `optionTemplates` | Discounts, promotions, and reusable menu options. |
+| `reviews`, `favorites`, `notifications` | Customer feedback, saved items, and user notifications. |
+| `loyaltyAccounts` / `loyalty_accounts`, `loyaltyTransactions` / `loyalty_transactions` | Loyalty balances and transaction history. |
+| `chats/{chatId}/messages/{messageId}` | Support conversations and messages. |
+| `settings`, `auditLogs` | Global configuration and administrative audit events. |
+
+Important shared fields include `id`, `createdAt`, `updatedAt`, `status`, `isActive`, `userId`, `customerId`, `branchId`, `role`, `permissions`, and `items`. Exact serialization is defined in the models and service layer; do not infer an exhaustive schema from this summary.
+
+### Order status lifecycle
+
+```text
+pending → accepted → preparing → ready → assigned → pickedUp → outForDelivery → delivered
+    └──────────────────────────────────────────────────────────────────────→ cancelled
+```
+
+The `OrderStatus` model also includes cancellation. Actual permitted transitions are subject to the deployed Firestore rules and Cloud Functions.
+
+### Role and permission overview
+
+| Role | Application scope |
+| --- | --- |
+| Customer | Own profile, addresses, saved methods, orders, reviews, favorites, notifications, and loyalty data as permitted by rules. |
+| Admin | Branch operations and branch-scoped records; super-admin and permission checks may grant broader operations. |
+| Sub-admin / staff | Branch operations controlled by assigned permissions and route guards. |
+| Super-admin | Platform-level administration and role-management operations. |
+| Rider | Rider console, assigned work, and delivery-location updates. |
+
+The role matrix is a summary only. Firestore and Storage rules are authoritative; review them before deploying changes.
+
+## 5. Security
+
+- Firestore rules require authentication for protected operations and implement role, ownership, permission, and branch checks for supported paths.
+- Storage rules allow public reads for selected images and constrain writes by role, image content type, and size. Unmatched paths are denied except for the super-admin rule.
+- Saved payment-method documents are owner-only. The application does not collect full card numbers or CVV. Wallet numbers saved as references are personal data stored under the user's payment-method subcollection; no card or wallet transaction is processed by the app.
+- Firebase client configuration is generated in `lib/firebase_options.dart` and platform config files. These client identifiers are not substitutes for security rules. Do not commit service-account keys, signing credentials, private keys, or real environment files.
+- Google Maps keys are supplied through ignored local runtime configuration (`android/local.properties` and `web/maps-config.js`). Restrict them by Android package/signing certificate and web referrer, and rotate keys that were previously exposed.
+- Cloud Function provider secrets must be injected into the server-side runtime; do not place them in Flutter client code or `.env.example`.
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+
+## 6. Getting Started
+
+### Prerequisites
+
+- Flutter and Dart. The package declares Dart `>=3.0.0 <4.0.0`; the current validation environment used Flutter 3.47.2 / Dart 3.13.2.
+- Android Studio and Android SDK for Android development; Xcode on macOS for iOS development.
+- Node.js 20 and npm for `functions/`.
+- Firebase CLI and FlutterFire CLI for project configuration and deployment.
+
+### Clone and install
+
+```powershell
+git clone <repository-url>
+cd food_fight
+flutter pub get
+```
+
+Replace `<repository-url>` with the repository URL. Clone and setup commands are environment-specific and must be run by the owner.
+
+### Firebase setup
+
+1. Create or select a Firebase project and register each platform application that will be built.
+2. Enable the Firebase Authentication providers used by the app (email/password and Google).
+3. Enable Cloud Firestore, Firebase Storage, Cloud Messaging, App Check, and Cloud Functions as required by the target environment.
+4. Install and authenticate the Firebase CLI and FlutterFire CLI, then configure the Flutter app:
+
+   ```powershell
+   dart pub global activate flutterfire_cli
+   flutterfire configure
    ```
 
-2. **Deploy Security Rules & Composite Indexes in a Single Command**:
+5. Keep generated `lib/firebase_options.dart` and platform Firebase configuration in the local build environment. Do not replace the existing project configuration without confirming the intended Firebase project.
+6. Install function dependencies and deploy only after reviewing the target project and rules:
 
-   ```bash
-   firebase deploy --only firestore
+   ```powershell
+   Set-Location functions
+   npm ci
+   Set-Location ..
+   firebase deploy --only firestore,storage
+   firebase deploy --only functions
    ```
 
-   *(Or individually: `firebase deploy --only firestore:rules` and `firebase deploy --only firestore:indexes`)*.
-3. **Automatic Collections**:
-   Firestore collections (`users`, `categories`, `menuItems`, `orders`, `deliveryAreas`, `coupons`, `reviews`, `notifications`) are created automatically the first time the app or admin writes to them. No manual collection creation in the console is required.
+   Firebase CLI login, project selection, provider enablement, and deployment were not performed as part of this cleanup.
 
-### 2. Supabase Storage Setup (For Media Assets Only)
+### Runtime configuration
 
-Supabase Storage is pre-configured for food images, category icons, banners, and videos using the public bucket `food-images`:
+- `.env.example` documents optional `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `CLOUDINARY_CLOUD_NAME`, and `CLOUDINARY_UPLOAD_PRESET` values. Flutter does **not** automatically load `.env`; supply Dart defines when using the optional integrations. Firebase Storage is the default upload provider.
+- Android Google Maps: set `GOOGLE_MAPS_API_KEY` in the ignored `android/local.properties`. The Android manifest placeholder reads this value at build time.
+- Web Google Maps: create ignored `web/maps-config.js` containing `window.foodFightGoogleMapsApiKey = 'YOUR_RESTRICTED_KEY';`.
+- Cloud Functions read `SENDGRID_API_KEY`, `TWILIO_SID`, `TWILIO_TOKEN`, and `TWILIO_FROM` from `process.env`. This repository does not declare Secret Manager bindings; the deployment owner must configure secure runtime injection before enabling email or SMS.
+- Do not put private provider secrets in a Flutter `--dart-define`; values compiled into a client application can be extracted.
 
-- **Project URL**: `https://acevokhgphqrtvitukzv.supabase.co`
-- **Publishable Key**: `sb_publishable_IAGhxF2xmeKLKOR5ZqITcw_ksW0Ghdc` *(safe for client apps; zero secret/service_role keys exposed)*.
-- **Storage Bucket**: `food-images` (configured in `lib/core/config/supabase_config.dart` and `lib/core/constants/app_constants.dart`).
-- **Media Upload Flow**: Every media upload uploads to `food-images` via `SupabaseStorageService`, generates an accessible public URL, and saves that URL into the matching Firestore document (`imageUrl` field). No text or application records are stored in Supabase.
+### First super-admin account
 
-### 3. Setting Up an Admin Account
+There is no public client-side super-admin bootstrap flow. Create the initial account through a trusted, owner-controlled Firebase Admin SDK procedure, then verify its Firestore user record and custom claims. The callable `setUserRole` requires an existing super-admin and cannot bootstrap the first one.
 
-To access the Admin Panel:
+### Initial data
 
-1. Register a new account inside the app via the **Sign Up** screen (or in Firebase Auth console).
-2. Go to **Cloud Firestore** -> `users` collection -> locate your user document by UID.
-3. Set the field `role` to string `"admin"` (default is `"customer"`).
-4. When you log in with this account, the app will automatically route you to the **Admin Dashboard**!
+Developer data seeding and migration helpers are kept under `tool/` rather than the production `lib/` tree. They are not configured as standalone commands in this repository. Run them only through an owner-reviewed, authenticated development harness against the intended Firebase project; back up data first.
 
-### 4. Google Sign-In Platform Setup
+## 7. Running, Testing and Quality
 
-Google Sign-In is integrated using Firebase Authentication's Google Provider:
+```powershell
+flutter run
+flutter analyze
+flutter test
+dart format lib test tool
+```
 
-1. **Android Setup**:
-   - Generate your development SHA-1 and SHA-256 fingerprints:
+Run commands from the project root. Formatting changes files; review its diff before accepting it. The repository uses `flutter_lints` through `analysis_options.yaml`.
 
-     ```bash
-     cd android && ./gradlew signingReport
-     ```
+### Manual QA checklist
 
-   - In the [Firebase Console](https://console.firebase.google.com/), select project `food-fight-bd72e` -> Project Settings -> Your Android App.
-   - Add both the **SHA-1** and **SHA-256** fingerprints.
-   - Download the updated `google-services.json` and place it in `android/app/`.
-2. **iOS Setup**:
-   - `ios/Runner/Info.plist` is pre-configured with the reversed client ID URL scheme:
-     `com.googleusercontent.apps.585587375994-5ak89r759o150jh93cubkp5o92b9l6q3`.
-3. **Web Setup**:
-   - `web/index.html` is configured with Google Client ID meta tag:
-     `585587375994-h4ohhnrmellh0ooboa0gpdp9pq2v0m86.apps.googleusercontent.com`.
-4. **Automatic User Provisioning**:
-   - On first Google Sign-In, the app automatically creates the user document in `users/{uid}` in Firestore with `role: 'customer'`, ensuring seamless order placement and admin promotion.
+- **Customer:** sign up/sign in; browse and search; select branch; configure a dish; edit cart; apply coupon/tokens; complete COD checkout; review order history/tracking; submit a review; test support chat, image attachment, address, notification, and theme settings.
+- **Rider:** sign in with a rider account; verify location permission handling; confirm assigned deliveries and allowed status updates; verify tracking updates on a second signed-in device.
+- **Admin / sub-admin:** verify branch scope and permission gates; process orders; manage menu, options, deals, coupons, delivery areas, riders, reviews, chats, and CSV reports.
+- **Super-admin:** verify dashboards, branch/admin management, system settings, role assignment, and audit-log access.
+- Repeat on compact phone, tablet, and desktop widths; verify maps, uploads, FCM, and rule-denied operations against the configured Firebase project.
 
-### 5. Supabase Storage RLS Policies
+## 8. Building and Release
 
-To ensure authenticated app users can upload menu and profile pictures while keeping public read access active, run the migration in `supabase_storage_policies.sql` inside your **Supabase Dashboard -> SQL Editor**:
+```powershell
+flutter build apk --debug
+flutter build apk --release
+flutter build appbundle --release
+flutter build web --release
+```
 
-- Grants authenticated users `INSERT`, `UPDATE`, and `DELETE` access.
-- In `lib/main.dart`, Supabase client is initialized with a Firebase Auth ID token bridge so Supabase recognizes authenticated app requests.
+For iOS, run `flutter build ios --release` on macOS with Xcode and Apple signing configured. Build commands for iOS and release targets are platform-dependent and were not verified on this Windows environment.
 
----
+- Android `minSdk` is explicitly 24. `targetSdk` and `compileSdk` follow the installed Flutter Android toolchain values.
+- Android release signing reads `android/key.properties` and a local keystore. Release builds intentionally fail if the configured keystore is unavailable. Keep both files out of version control and never include them in a report or artifact.
+- `pubspec.yaml` is the single source of truth for release versioning: `version: x.y.z+build`.
 
-## 🚀 Version 1.7.0+8 Updates: Onboarding & In-App Updates
+Release checklist:
 
-### 🌟 Workstream 1: Premium Onboarding
-- 4 custom illustrated brand pages (`fast delivery`, `browse menu/deals`, `live tracking`, `permission primer`).
-- Splash checks `ff_onboarding_completed` in `SharedPreferences`. First-time users see onboarding; returning and authenticated users skip directly to login/app.
-- "Replay App Intro" button in Settings allows users to experience the intro anytime.
+1. Confirm Firebase project, Maps restrictions, provider secrets, rules, indexes, and Storage policy.
+2. Update `pubspec.yaml`, run `flutter pub get`, and review the generated lockfile diff.
+3. Run analysis, tests, platform-specific smoke tests, and a signed build.
+4. Verify permissions, deep links, notifications, maps, image uploads, and payment copy.
+5. Archive/sign artifacts using the owner-controlled release keystore; do not commit build outputs.
 
-### 🔄 Workstream 2: In-App Updates via GitHub Releases
-- **Automatic check**: App checks `GET https://api.github.com/repos/Ir786106/food-fight-app/releases/latest` on launch and on resume (throttled every 6h).
-- **Manual check**: Settings → About → "Check for Updates" button.
-- **Security**: Strict HTTPS allowlist (`github.com`, `objects.githubusercontent.com`), SHA-256 integrity verification before APK installation.
-- **Remote Kill Switch**: Super Admin can set `settings/app_update` in Firestore with `{ minSupportedVersion, forceUpdate: true, message }` to mandate updates.
+## 9. Performance and Responsive Design
 
-### 🔐 Workstream 3: Security Hardening
-- See [SECURITY.md](SECURITY.md) for full threat model and security controls.
+- App bootstrap work for App Check, Supabase, and FCM is initiated in the background with task timeouts, avoiding a wait for all integrations before the first frame.
+- Remote images use a shared image widget and cached-network-image integration.
+- Responsive size classes use 600, 840, and 1200 dp boundaries. The responsive device-matrix test declares ten viewport sizes from 320×568 through 1920×1080 at 1.0×, 1.3×, and 2.0× text scales.
+- Admin layouts and chat surfaces adapt between narrow and wide windows. Verify screens with real devices and assistive text sizes; the test matrix does not represent a certification of every screen or device.
 
----
+## 10. Troubleshooting and FAQ
 
-## 📦 Release Workflow & Signing Protocol
+| Symptom | Checks |
+| --- | --- |
+| Firebase initialization fails | Confirm the generated options match the selected Firebase project, platform app registrations exist, and required platform config is available locally. |
+| Firestore reports a missing index | Use the error's index link to inspect the required query, review it, then update/deploy `firestore.indexes.json`. |
+| Web map is blank | Confirm `web/maps-config.js` exists, the key is enabled for Maps JavaScript API, and HTTP referrer restrictions include the current host. |
+| Android map is blank | Confirm `GOOGLE_MAPS_API_KEY` is set in ignored `android/local.properties`, rebuild, enable Maps SDK for Android, and restrict key by app identity. |
+| Location is unavailable | Check device location services, platform permissions, and user permission state. Location-dependent features cannot return a live position when permission is denied. |
+| Image upload fails | Verify Firebase Storage is enabled and deployed Storage rules allow the authenticated role, MIME type, and file size. For a selected optional provider, verify its runtime configuration too. |
+| FCM is not received | Check platform notification permissions, Firebase Messaging setup, token registration, and the app's foreground/background handling. |
+| Email/SMS is not received | Configure the relevant Firebase Function secrets and verify provider account status. Unconfigured providers do not send notifications. |
+| Release build cannot sign | Configure the local release keystore and matching `android/key.properties`; do not use debug signing for release. |
 
-### Release Prerequisites & Constraints
-1. **Version Code Must Monotonically Increase**:
-   - In `pubspec.yaml`, the build number after `+` (e.g. `1.7.0+8`) MUST increase on each release (e.g., `+9`, `+10`). Android refuses APK updates if the installed `versionCode` is equal to or greater than the new APK's `versionCode`.
-2. **Consistent Release Keystore**:
-   - Every release MUST be signed with the **SAME release keystore**. If a different keystore is used, Android will reject the update with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
-   - Keystore location: `android/app/release.keystore` (configured via `android/key.properties`).
-   - **Backup Notice**: Securely back up `release.keystore` and passwords in an encrypted password manager. Never commit keystores to version control.
-3. **One-Time Signature Transition**:
-   - Any device currently running a **debug-signed APK** must uninstall it first before installing the first release-signed APK (`v1.7.0`). After this one-time step, all future updates will install seamlessly in-app.
+## 11. Known Limitations and Roadmap
 
-### How to Publish a New Release
-1. **Bump Version in `pubspec.yaml`**:
-   ```yaml
-   version: 1.7.0+8 # increment build number and/or semantic version
-   ```
-2. **Commit and Push Changes**:
-   ```bash
-   git add .
-   git commit -m "chore(release): bump to v1.7.0+8"
-   git push origin main
-   ```
-3. **Tag and Push to Trigger GitHub Release Workflow**:
-   ```bash
-   git tag v1.7.0
-   git push origin v1.7.0
-   ```
-4. The `.github/workflows/release.yml` GitHub Action will automatically:
-   - Run tests and analyzer.
-   - Build obfuscated release APK (`flutter build apk --release --obfuscate --split-debug-info=build/symbols`).
-   - Generate `food-fight-v1.7.0.apk.sha256`.
-   - Publish the GitHub Release with downloadable assets.
+- Cash on Delivery is the only active checkout payment method. Saved wallet references do not initiate or settle payments; card and wallet gateway integration remains future work.
+- The first super-admin must be provisioned through a trusted Admin SDK operation.
+- Email and SMS require external provider configuration. Push notification delivery also depends on Firebase/platform configuration.
+- Google Maps runtime keys are local configuration and must be supplied and restricted per platform.
+- The web tracking view displays live coordinates but does not render a road map or calculate an ETA. Native Google Maps is used on mobile.
+- Android still uses the default application ID `com.example.food_fight`; choose the production identifier before store distribution.
+- Developer data-seeding utilities are not packaged as a turnkey command; an owner-reviewed authenticated harness is still required.
+- Branch count, prices, and menu content are backend data and are not guaranteed by the Flutter client.
+- Linux scaffolding exists, but its Firebase configuration and complete runtime support were not verified during cleanup.
 
----
+## 12. Contributing
 
-## 🏃 Running and Building Locally
+1. Create a focused branch such as `fix/order-status` or `docs/setup-guide`.
+2. Keep changes scoped and avoid committing generated output, `.env` files, Firebase service accounts, Maps keys, or signing material.
+3. Follow the existing Dart style and lint configuration. Use imperative commit subjects, for example `fix: guard rider location updates`.
+4. Before opening a pull request, run `flutter analyze` and relevant tests; include manual QA details for platform-dependent changes.
+5. Review Firestore/Storage rule and index changes together with the code that requires them.
 
-### 📦 Fresh Clone Setup
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Ir786106/food-fight-app.git
-   cd food-fight-app
-   ```
-2. **Install dependencies**:
-   ```bash
-   flutter pub get
-   ```
-3. **Environment Setup**:
-   - Copy `.env.example` to `.env` and fill in necessary configuration.
-   - Ensure `android/app/google-services.json` is configured.
-4. **Run & Test**:
-   ```bash
-   flutter test
-   flutter analyze
-   flutter run
-   ```
-5. **Build Signed Release APK**:
-   ```bash
-   flutter build apk --release --obfuscate --split-debug-info=build/symbols
-   ```
+## 13. License, Author and Contact
 
----
+No `LICENSE` file is currently present. The project owner must select a license before redistribution terms can be stated.
 
-## 🛠️ Installing & Troubleshooting Release APKs
-
-When installing or updating Food Fight release APKs (`FoodFight_v1.7.1_release.apk`), Android's Package Manager may report `"App not installed"` without an explicit error message in the UI. Below is the diagnostic guide and recovery steps using `adb`:
-
-### 1. Common Installation Failures & Exact Solutions
-
-| ADB Error Code / UI Symptom | Root Cause | Exact Fix / Manual Resolution |
-| :--- | :--- | :--- |
-| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` ("App not installed") | **Signature Conflict**: The device has an existing install signed with a different key (e.g. Flutter debug key `CN=Android Debug` or a legacy test key) instead of the official release certificate. | **One-time clean uninstall**:<br>`adb uninstall com.example.food_fight` (or long-press icon → Uninstall).<br>Then install the release APK:<br>`adb install -r FoodFight_v1.7.1_release.apk` |
-| `INSTALL_FAILED_VERSION_DOWNGRADE` | **Version Downgrade**: The installed app has a higher `versionCode` than the APK being installed. | Android prevents downgrading without a complete uninstall. Ensure `versionCode` increases with every release. |
-| `INSTALL_FAILED_NO_MATCHING_ABIS` | **ABI Incompatibility**: Device CPU architecture does not match APK ABIs. | Food Fight release APK includes universal 64-bit `arm64-v8a` and 32-bit `armeabi-v7a` ABIs. (Desktop emulators running x86/x86_64 should use debug builds). |
-| `INSTALL_FAILED_INSUFFICIENT_STORAGE` | **Low Disk Space**: Insufficient internal storage partition space. | Free at least 150 MB of storage space on the internal device partition and retry. |
-| **"Install blocked / Unknown sources" (Android 7.x vs 8+)** | **OS Unknown App Sources Setting**: Android 7.x uses a global setting; Android 8.0+ enforces per-app permissions. | - **Android 7.x (API 24–25)**: Go to **Settings → Security → Unknown sources** → Turn ON.<br>- **Android 8.0+ (API 26–36)**: When prompted, tap **Settings** and enable **"Allow from this source"** for Food Fight / your file manager (`ACTION_MANAGE_UNKNOWN_APP_SOURCES`). |
-| **"Blocked by Play Protect"** | Google Play Protect warns on sideloaded APKs signed with private certificates. | In the Play Protect prompt, tap **"More details"** and then select **"Install anyway"**. |
-| **Work Profile / Secure Folder Conflict** | App uninstalled from main user profile but still exists in Work Profile, Secure Folder, or Dual Messenger under old key. | Go to **Settings → Apps → Food Fight** and ensure "Uninstall for all users" is selected, or run:<br>`adb uninstall --user all com.example.food_fight` |
-| **Corrupted Download / "Parse Error"** | The APK file download was interrupted or corrupted. | Verify SHA-256 checksum against `.sha256` release file:<br>`certutil -hashfile FoodFight_v1.7.1_release.apk SHA256` |
-
----
-
-## 📊 Android Compatibility Matrix (API 24 to 36)
-
-| Android Version | API Level | Install & Sideload | Native Splash Screen | Push Notifications | Location Flow | Images & Scoped Storage | In-App Updater | Verification Status |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Android 7.0 / 7.1** | 24–25 | Global "Unknown sources" in Security settings | `androidx.core:core-splashscreen` backward-compatible branded drawable | Channels & POST_NOTIFICATIONS not required (automatic) | Standard coarse/fine location | `READ_EXTERNAL_STORAGE` (`maxSdkVersion="32"`) | FileProvider content URI, settings fallback | Statically verified (minSdk=24, lintRelease, desugaring enabled) |
-| **Android 8.0 / 8.1** | 26–27 | Per-app "Install unknown apps" (`canRequestPackageInstalls`) | `androidx.core:core-splashscreen` | Notification Channels configured in FCM | Standard location | `READ_EXTERNAL_STORAGE` | `ACTION_MANAGE_UNKNOWN_APP_SOURCES` per-app flow | Statically verified |
-| **Android 9** | 28 | Per-app install permission | `androidx.core:core-splashscreen` | Notification Channels | Standard location | `READ_EXTERNAL_STORAGE` | Per-app install permission | Statically verified |
-| **Android 10** | 29 | Per-app install permission | `androidx.core:core-splashscreen` | Notification Channels | Background location separated; app uses foreground-only fine/coarse | Scoped Storage: private app cache via FileProvider (no legacy storage needed) | Scoped app cache APK download, FileProvider URI | Statically verified |
-| **Android 11** | 30 | Per-app install permission | `androidx.core:core-splashscreen` | Notification Channels | One-time permissions handled safely; prompts when needed | Scoped Storage: private cache | Package visibility queries declared for web, tel, mailto, maps, APK | Statically verified |
-| **Android 12 / 12L** | 31–32 | Per-app install permission | System `SplashScreen` API (`values-v31` windowSplashScreenBackground/AnimatedIcon) | Notification Channels | Approximate vs precise location support | Photo Picker fallback / Photo gallery | Full PackageVerifier (cert matching, downgrade, storage check) | Statically verified |
-| **Android 13** | 33 | Per-app install permission | System `SplashScreen` API | Runtime `POST_NOTIFICATIONS` permission requested via Onboarding Primer / after login | Precise/Approximate location | `READ_MEDIA_IMAGES` (granular media); Photo Picker | Full PackageVerifier + friendly Roman Urdu/English dialogs | Statically verified |
-| **Android 14** | 34 | Per-app install permission | System `SplashScreen` API | Runtime `POST_NOTIFICATIONS` | Foreground service location type guarded; app uses standard client location | Partial media access support; Photo Picker | Full PackageVerifier | Statically verified |
-| **Android 15 / 16** | 35–36 | Per-app install permission | System `SplashScreen` API + Edge-to-Edge default | Runtime `POST_NOTIFICATIONS` | Standard location | Photo Picker system component | Full PackageVerifier | Statically verified (compileSdk=36, targetSdk=36) |
-
-> ℹ️ **Device Note**: All manifest merger rules, bytecode desugaring, ABI compatibility, and permissions have been strictly verified statically without a device. Hardware-specific behaviors such as vendor-specific OEM battery optimizers (MIUI, ColorOS) and actual system dialog animations require physical device validation.
-
-### 2. Official Release Certificate Fingerprints
-
-Food Fight release builds are signed with the permanent release keystore (`CN=FoodFight, OU=Engineering, L=Islamabad`):
-- **Certificate SHA-256**: `18167d81cee7ef603131c59913ebd17b947038f9d5ebe198820fd6d044063a0b`
-- **Certificate SHA-1**: `b1882e4e150914051838acb1a59c0c90521f2921`
-- **Signing Schemes**: V1 (JAR), V2 (Full APK), and V3 (APK Signature Scheme v3) enabled.
-
-### 3. Keystore Backup & Security Hygiene
-> ⚠️ **CRITICAL**: The release keystore (`release.keystore`) is the app's permanent cryptographic identity on Android. If lost, existing users will NEVER be able to update the app without uninstalling and losing local data.
-- **Backup Instructions**:
-  1. Store an encrypted copy of `release.keystore` in an enterprise password manager (1Password / KeePass / Bitwarden).
-  2. Maintain the base64-encoded keystore in GitHub Repository Secrets (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`).
-  3. Never commit raw `.keystore`, `.jks`, or `key.properties` files into git (enforced by `.gitignore`).
-
-### 4. Firebase Console Configuration (Google Sign-In)
-To ensure **Google Sign-In** and Firebase Authentication work properly with this release certificate:
-1. Open [Firebase Console](https://console.firebase.google.com/) → Select **Food Fight** project.
-2. Navigate to **Project settings** (gear icon) → **General** tab.
-3. Scroll down to **Your apps** → Select the Android app (`com.example.food_fight`).
-4. Click **Add fingerprint** and add both fingerprints:
-   - **SHA-1**: `B1:88:2E:4E:15:09:14:05:18:38:AC:B1:A5:9C:0C:90:52:1F:29:21`
-   - **SHA-256**: `18:16:7D:81:CE:E7:EF:60:31:31:C5:99:13:EB:D1:7B:94:70:38:F9:D5:EB:E1:98:82:0F:D6:D0:44:06:3A:0B`
-5. Download the updated `google-services.json` file.
-6. Replace `android/app/google-services.json` in your local project workspace.
-
-
----
-
-## 📱 Features Breakdown
-
-### Customer Storefront Panel
-
-- **Authentication**: Modern redesigned hero auth flow with email/password and **Continue with Google** sign-in. Password reset support.
-- **Dark Mode**: High-contrast, WCAG-compliant dark theme with full support across all surfaces, cards, and text. Theme toggle available in Profile.
-- **Home Screen**: Real-time category selector, search bar, active promotional banners, live food dishes from Firestore.
-- **Item Details**: Photo from Supabase, spice level indicator, size selector, quantity adjustment, special instructions, add to cart.
-- **Cart & Deals**: Adjust quantity, enter promo coupon code with instant validation (percentage, flat, or free delivery), automatic subtotal & delivery fee calculations.
-- **Checkout**: Select delivery zone/area to apply accurate delivery charge, input house address, Cash on Delivery payment option.
-- **Live Order Tracking**: Real-time 6-step status timeline (`Pending` -> `Accepted` -> `Preparing` -> `Ready` -> `Out for Delivery` -> `Delivered`).
-- **My Orders**: Complete order history with status badges, item summaries, and polished empty states.
-- **Profile**: Change details, upload profile picture to Supabase Storage, switch theme (Light/Dark/System), and switch to Admin panel if user is an administrator.
-
-### 🛡️ Admin Panel
-
-- **Dashboard**: Live KPI cards (Today's Sales, Orders Count, Pending Action, Delivery Zones), management shortcuts, and real-time live order stream with polished empty state.
-- **Order Management**: Tabbed pipeline (`All`, `Pending`, `Accepted`, `Preparing`, `Ready`, `Out for Delivery`, `Delivered`, `Cancelled`). One-tap action buttons to advance status, or cancel with required reason prompt.
-- **Menu Management**: Searchable menu list with category filters, image preview, active/inactive availability switch, and Add/Edit screen with camera/gallery photo upload to Supabase.
-- **Category Management**: Add and organize food categories with photo upload and display order priority.
-- **Customer Management**: View registered customer directory, search by name/email/phone, view lifetime orders and spent amount, and toggle active/blocked status.
-- **Delivery Areas & Fees**: Create delivery zones with zone-specific delivery charges.
-- **Coupon Management**: Create promo codes with percentage discount, flat discount, or free delivery, min order threshold, max discount cap, and validity duration.
-- **Sales & Analytics**: Filter reports by Today, This Week, This Month, or All Time. View gross revenue, order completion statistics, and top-selling food rankings.
+- **Author:** Muhammad Irfan Waseem
+- **Portfolio:** [Muhammad Irfan Waseem](https://ir786106.github.io/Muhammad_Irfan_Waseem_Portfolio)
+- **GitHub:** [@Ir786106](https://github.com/Ir786106)
+- **Contact:** [muhammadirfan.infosec@gmail.com](mailto:muhammadirfan.infosec@gmail.com)

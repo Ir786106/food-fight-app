@@ -176,6 +176,7 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
       bool isServiceEnabled = false;
+      if (prefs.getBool('location_access') == false) return;
       try {
         isServiceEnabled = await Geolocator.isLocationServiceEnabled();
       } catch (e) {

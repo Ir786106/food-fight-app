@@ -107,6 +107,7 @@ class MenuItemModel {
   final bool isSpicy;
   final int prepTimeMinutes;
   final double rating;
+  final int reviewCount;
   final List<MenuVariant>? variants;
   final List<MenuAddon>? addons;
   final Map<String, double>? sizePrices;
@@ -130,6 +131,7 @@ class MenuItemModel {
     this.isSpicy = false,
     this.prepTimeMinutes = 30,
     this.rating = 0,
+    this.reviewCount = 0,
     this.variants,
     this.addons,
     this.sizePrices,
@@ -144,14 +146,12 @@ class MenuItemModel {
   bool get hasAddons => addons != null && addons!.isNotEmpty;
 
   /// Compatibility getter for popular/featured status
-  bool get isPopular => isFeatured || rating >= 4.5;
+  bool get isPopular => isFeatured || (reviewCount > 0 && rating >= 4.5);
 
   /// Lowest price among variants (or base final price if flat)
   double get minPrice {
     if (hasVariants) {
-      return variants!
-          .map((v) => v.finalPrice)
-          .reduce((a, b) => a < b ? a : b);
+      return variants!.map((v) => v.finalPrice).reduce((a, b) => a < b ? a : b);
     }
     return finalPrice > 0 ? finalPrice : price;
   }
@@ -159,9 +159,7 @@ class MenuItemModel {
   /// Highest price among variants (or base final price if flat)
   double get maxPrice {
     if (hasVariants) {
-      return variants!
-          .map((v) => v.finalPrice)
-          .reduce((a, b) => a > b ? a : b);
+      return variants!.map((v) => v.finalPrice).reduce((a, b) => a > b ? a : b);
     }
     return finalPrice > 0 ? finalPrice : price;
   }
@@ -204,6 +202,7 @@ class MenuItemModel {
       'isSpicy': isSpicy ? 1 : 0,
       'prepTimeMinutes': prepTimeMinutes,
       'rating': rating,
+      'reviewCount': reviewCount,
       'variants': variants?.map((v) => v.toJson()).toList(),
       'addons': addons?.map((a) => a.toJson()).toList(),
       'sizePrices': legacySizes,
@@ -259,8 +258,11 @@ class MenuItemModel {
       isFeatured: json['isFeatured'] == 1 || json['isFeatured'] == true,
       isVeg: json['isVeg'] == 1 || json['isVeg'] == true,
       isSpicy: json['isSpicy'] == 1 || json['isSpicy'] == true,
-      prepTimeMinutes: SafeConvert.toInt(json['prepTimeMinutes'] ?? json['prep_time_minutes'], 30),
-      rating: SafeConvert.toDouble(json['rating'], 4.8),
+      prepTimeMinutes: SafeConvert.toInt(
+          json['prepTimeMinutes'] ?? json['prep_time_minutes'], 30),
+      rating: SafeConvert.toDouble(json['rating'], 0.0),
+      reviewCount:
+          SafeConvert.toInt(json['reviewCount'] ?? json['ratingCount']),
       variants: parsedVariants,
       addons: parsedAddons,
       sizePrices: json['sizePrices'] != null && json['sizePrices'] is Map
@@ -288,6 +290,7 @@ class MenuItemModel {
     bool? isSpicy,
     int? prepTimeMinutes,
     double? rating,
+    int? reviewCount,
     List<MenuVariant>? variants,
     List<MenuAddon>? addons,
     Map<String, double>? sizePrices,
@@ -311,6 +314,7 @@ class MenuItemModel {
       isSpicy: isSpicy ?? this.isSpicy,
       prepTimeMinutes: prepTimeMinutes ?? this.prepTimeMinutes,
       rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
       variants: variants ?? this.variants,
       addons: addons ?? this.addons,
       sizePrices: sizePrices ?? this.sizePrices,

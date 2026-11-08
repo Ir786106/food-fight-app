@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
   -->
   <base href="$FLUTTER_BASE_HREF">
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Food Fight - Digital Fast Food Ordering & Multi-Branch Restaurant Management App">
   <meta name="google-signin-client_id" content="585587375994-h4ohhnrmellh0ooboa0gpdp9pq2v0m86.apps.googleusercontent.com">
 
@@ -25,8 +25,7 @@
   <link rel="manifest" href="manifest.json">
 
   <!-- Google Maps JavaScript API for web live tracking -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBesdyc6ixO-A3pLzLJInPpquKlHsqp42Q"></script>
-
+<script src="maps-config.js"></script>
   <style>
     body {
       margin: 0;
@@ -60,6 +59,11 @@
       margin-bottom: 24px;
       font-size: 48px;
     }
+    .splash-logo img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+    }
     .splash-title {
       font-size: 22px;
       font-weight: 800;
@@ -88,10 +92,11 @@
 </head>
 <body>
   <div id="splash">
-    <div class="splash-logo">🥊</div>
+    <div class="splash-logo"><img src="icons/Icon-192.png" alt=""></div>
     <div class="splash-title">Food Fight</div>
-    <div class="splash-subtitle">Loading kitchen fresh menu...</div>
-    <div class="splash-spinner"></div>
+    <div class="splash-subtitle" id="splash-status" role="status">Loading Food Fight…</div>
+    <div class="splash-spinner" aria-hidden="true"></div>
+    <button id="splash-retry" type="button" hidden>Reload</button>
   </div>
 
   <script>
@@ -105,7 +110,53 @@
       }
     });
   </script>
+  <script>
+    (function () {
+      var started = false;
+      var mapsTimeout;
+      function showStartupError() {
+        var status = document.getElementById('splash-status');
+        if (!status) return;
+        status.textContent = 'Food Fight could not finish loading. Check your connection and reload.';
+        document.querySelector('.splash-spinner').hidden = true;
+        document.getElementById('splash-retry').hidden = false;
+      }
+      document.getElementById('splash-retry').addEventListener('click', function () {
+        window.location.reload();
+      });
+      var startupTimeout = setTimeout(showStartupError, 30000);
+      window.addEventListener('flutter-first-frame', function () {
+        clearTimeout(startupTimeout);
+      }, { once: true });
 
-  <script src="flutter_bootstrap.js" async></script>
+      function loadFlutterApp() {
+        if (started) return;
+        started = true;
+        clearTimeout(mapsTimeout);
+        var flutterScript = document.createElement('script');
+        flutterScript.src = 'flutter_bootstrap.js';
+        flutterScript.async = true;
+        flutterScript.onerror = showStartupError;
+        document.body.appendChild(flutterScript);
+      }
+
+      var apiKey = window.foodFightGoogleMapsApiKey;
+      if (!apiKey) {
+        console.warn('Google Maps is not configured. See README.md for setup.');
+        loadFlutterApp();
+        return;
+      }
+
+      var mapsScript = document.createElement('script');
+      mapsScript.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey);
+      mapsScript.onload = loadFlutterApp;
+      mapsScript.onerror = function () {
+        console.error('Google Maps failed to load. Check the API key and referrer restrictions.');
+        loadFlutterApp();
+      };
+      mapsTimeout = setTimeout(loadFlutterApp, 5000);
+      document.head.appendChild(mapsScript);
+    })();
+  </script>
 </body>
 </html>

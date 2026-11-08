@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/payment_method_model.dart';
-import '../core/utils/logger.dart';
+import 'default_selection_service.dart';
 
 class PaymentMethodService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static CollectionReference _userMethods(String userId) {
-    return _firestore.collection('users').doc(userId).collection('payment_methods');
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('payment_methods');
   }
 
   /// Watch saved payment methods for a customer
@@ -23,52 +26,15 @@ class PaymentMethodService {
     });
   }
 
-  /// Save tokenized payment method (NEVER stores raw card/CVV)
+
   static Future<void> addPaymentMethod(PaymentMethodModel method) async {
-    try {
-      final docRef = _userMethods(method.userId).doc();
-      final data = method.toJson();
-      data['id'] = docRef.id;
-
-      // If this method is set as default, remove default from others
-      if (method.isDefault) {
-        await _clearDefault(method.userId);
-      }
-
-      await docRef.set(data);
-      AppLogger.info('Saved tokenized payment method ${docRef.id}', tag: 'PaymentService');
-    } catch (e) {
-      AppLogger.error('Failed to save payment method: $e', tag: 'PaymentService');
-      rethrow;
-    }
+    if (!['jazzcash', 'easypaisa'].contains(method.type)) throw StateError('Only wallet references can be saved.');
+    final id = method.id.isEmpty ? _userMethods(method.userId).doc().id : method.id;
+    await DefaultSelectionService.write(userId: method.userId, collection: _userMethods(method.userId),
+      pointer: 'defaultPaymentMethodId', id: id, data: {...method.toJson(), 'id': id}, select: method.isDefault);
   }
-
-  /// Remove payment method
-  static Future<void> deletePaymentMethod(String userId, String methodId) async {
-    try {
-      await _userMethods(userId).doc(methodId).delete();
-      AppLogger.info('Deleted payment method $methodId', tag: 'PaymentService');
-    } catch (e) {
-      AppLogger.error('Failed to delete payment method: $e', tag: 'PaymentService');
-      rethrow;
-    }
-  }
-
-  /// Set method as default
-  static Future<void> setDefaultMethod(String userId, String methodId) async {
-    try {
-      await _clearDefault(userId);
-      await _userMethods(userId).doc(methodId).update({'isDefault': 1});
-    } catch (e) {
-      AppLogger.error('Failed to set default method: $e', tag: 'PaymentService');
-      rethrow;
-    }
-  }
-
-  static Future<void> _clearDefault(String userId) async {
-    final existing = await _userMethods(userId).where('isDefault', isEqualTo: 1).get();
-    for (var doc in existing.docs) {
-      await doc.reference.update({'isDefault': 0});
-    }
-  }
+  static Future<void> deletePaymentMethod(String userId, String methodId) => DefaultSelectionService.write(
+    userId: userId, collection: _userMethods(userId), pointer: 'defaultPaymentMethodId', id: methodId, delete: true);
+  static Future<void> setDefaultMethod(String userId, String methodId) => DefaultSelectionService.write(
+    userId: userId, collection: _userMethods(userId), pointer: 'defaultPaymentMethodId', id: methodId, select: true);
 }

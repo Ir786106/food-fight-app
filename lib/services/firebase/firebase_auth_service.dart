@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -101,6 +102,11 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
+  Future<UserModel?> getVerifiedCurrentUser() async {
+    final user = _auth.currentUser;
+    return user == null ? null : _fetchUserFromServerWithRetry(user, allowCachedRole: false);
+  }
+
   @override
   Future<bool> isLoggedIn() async {
     return _auth.currentUser != null;
@@ -190,6 +196,7 @@ class FirebaseAuthService implements IAuthService {
   Future<UserModel?> signIn({
     required String email,
     required String password,
+    bool allowCachedRole = true,
   }) async {
     try {
       final credential = await _auth
@@ -205,7 +212,7 @@ class FirebaseAuthService implements IAuthService {
       }
 
       // Always read users/{uid} directly from the SERVER (12s timeout + 1 retry)
-      final user = await _fetchUserFromServerWithRetry(firebaseUser);
+      final user = await _fetchUserFromServerWithRetry(firebaseUser, allowCachedRole: allowCachedRole);
 
       // Check if account has been deactivated by Admin
       if (!user.isActive) {
@@ -241,7 +248,7 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
-  Future<UserModel?> signInWithGoogle() async {
+  Future<UserModel?> signInWithGoogle({bool allowCachedRole = true}) async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         clientId: kIsWeb
@@ -304,7 +311,7 @@ class FirebaseAuthService implements IAuthService {
       }
 
       // Always read users/{uid} directly from the SERVER (12s timeout + 1 retry)
-      final user = await _fetchUserFromServerWithRetry(firebaseUser);
+      final user = await _fetchUserFromServerWithRetry(firebaseUser, allowCachedRole: allowCachedRole);
 
       // Check if account has been blocked by Admin
       if (!user.isActive) {
@@ -339,6 +346,31 @@ class FirebaseAuthService implements IAuthService {
     } catch (e) {
       AppLogger.error('Google sign-in error: $e', tag: 'FirebaseAuthService');
       throw AppException(message: 'Failed to complete Google sign-in: ${e.toString()}');
+    }
+  }
+
+  Future<UserModel> signInWithPhone(
+    Future<UserCredential> Function(String) confirm,
+    String code,
+  ) async {
+    final credential = await confirm(code);
+    final user = credential.user;
+    if (user == null) {
+      throw AppException(message: 'Phone sign-in did not return an account.');
+    }
+    try {
+      await FirebaseFunctions.instance.httpsCallable('completePhoneProfile').call();
+      final profile = await _fetchUserFromServerWithRetry(user, allowCachedRole: false);
+      if (!profile.isActive || profile.role != 'customer') {
+        throw AppException(message: 'This account cannot use customer phone sign-in.');
+      }
+      return profile;
+    } on FirebaseFunctionsException catch (error) {
+      await _auth.signOut();
+      throw AppException(message: error.message ?? 'Could not verify your profile.');
+    } catch (_) {
+      await _auth.signOut();
+      rethrow;
     }
   }
 
@@ -503,7 +535,10 @@ class FirebaseAuthService implements IAuthService {
   /// NEVER falls back to role 'customer' for existing users.
   /// NEVER writes a fallback document to Firestore.
   /// If doc is missing for an authenticated user, signs out and throws an exception.
-  Future<UserModel> _fetchUserFromServerWithRetry(User firebaseUser) async {
+  Future<UserModel> _fetchUserFromServerWithRetry(
+    User firebaseUser, {
+    bool allowCachedRole = true,
+  }) async {
     Exception? lastError;
 
     for (int attempt = 1; attempt <= 2; attempt++) {
@@ -524,6 +559,12 @@ class FirebaseAuthService implements IAuthService {
 
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = firebaseUser.uid;
+        if (!allowCachedRole &&
+            (UserRole.fromString(data['role']) == UserRole.unknown ||
+                data['isBlocked'] == true || data['status'] == 'blocked')) {
+          await _auth.signOut();
+          throw AppException(message: 'This account cannot sign in.');
+        }
         final user = UserModel.fromJson(data);
         await cacheRoleLocally(firebaseUser.uid, user.role);
         return user;
@@ -541,8 +582,8 @@ class FirebaseAuthService implements IAuthService {
       }
     }
 
-    // Both server read attempts failed: check if a cached role exists
-    final cachedRole = await getCachedUserRole(firebaseUser.uid);
+    // Check the cached role only for sign-in flows that permit fallback.
+    final cachedRole = allowCachedRole ? await getCachedUserRole(firebaseUser.uid) : null;
     if (cachedRole != null && cachedRole.isNotEmpty) {
       AppLogger.info(
         'Server fetch failed after 2 attempts, utilizing cached role: $cachedRole',

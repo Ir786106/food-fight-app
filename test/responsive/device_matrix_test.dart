@@ -1,3 +1,4 @@
+import 'package:food_fight/models/rider_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'package:food_fight/models/branch_model.dart';
 import 'package:food_fight/models/payment_method_model.dart';
 import 'package:food_fight/models/address_model.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
+import 'package:food_fight/models/review_model.dart';
 
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/providers/cart_provider.dart';
@@ -86,6 +88,9 @@ class StubBranchProvider extends ChangeNotifier implements BranchProvider {
 
 class StubReviewProvider extends ChangeNotifier implements ReviewProvider {
   @override
+  List<ReviewModel> get itemReviews => [];
+
+  @override
   bool get isLoading => false;
   @override
   String? get error => null;
@@ -145,6 +150,13 @@ class StubCouponProvider extends ChangeNotifier implements CouponProvider {
 
 class StubRiderProvider extends ChangeNotifier implements RiderProvider {
   @override
+  bool get isOnline => false;
+  @override
+  RiderModel? get currentRider => null;
+  @override
+  String? get errorMessage => null;
+
+  @override
   List<OrderModel> get assignedDeliveries => [];
   @override
   List<OrderModel> get completedDeliveries => [];
@@ -196,6 +208,8 @@ void main() {
     required Size size,
     required double textScale,
     RouteSettings? settings,
+    Brightness brightness = Brightness.light,
+    double bottomInset = 0,
   }) {
     final cart = CartProvider();
     cart.addToCart(testFood);
@@ -219,11 +233,13 @@ void main() {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF800020)),
+        theme: ThemeData(brightness: brightness, useMaterial3: true, colorSchemeSeed: const Color(0xFF800020)),
         builder: (context, materialChild) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
               size: size,
+              padding: EdgeInsets.only(bottom: bottomInset),
+              viewPadding: EdgeInsets.only(bottom: bottomInset),
               textScaler: TextScaler.linear(textScale),
             ),
             child: materialChild ?? const SizedBox.shrink(),
@@ -339,4 +355,21 @@ void main() {
       }
     }
   });
+  for (final brightness in Brightness.values) {
+    for (final bottom in [24.0,48.0]) {
+      for (final size in [const Size(360,640),const Size(411,891),const Size(840,1180)]) {
+        testWidgets('Checkout and cart at $size $brightness with $bottom Android inset', (tester) async {
+          tester.view.physicalSize=size; tester.view.devicePixelRatio=1;
+          addTearDown(tester.view.resetPhysicalSize); addTearDown(tester.view.resetDevicePixelRatio);
+          for (final screen in [const CheckoutScreen(),const CartScreen(),const RiderDashboardScreen()]) {
+            await tester.pumpWidget(createTestApp(child:screen,size:size,textScale:1.3,brightness:brightness,bottomInset:bottom));
+            await tester.pump();
+            expect(tester.takeException(),isNull);
+            await tester.pumpWidget(const SizedBox.shrink());
+          }
+        });
+      }
+    }
+  }
+
 }

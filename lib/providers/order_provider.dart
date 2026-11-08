@@ -28,11 +28,7 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
   /// Filtered orders for Admin Orders screen
   List<OrderModel> get filteredAdminOrders {
     if (_adminFilter == 'all') return _adminOrders;
-    return _adminOrders.where((o) {
-      final s = o.status.name.toLowerCase();
-      final filter = _adminFilter.toLowerCase().replaceAll(' ', '_');
-      return s == filter || s == _adminFilter.toLowerCase();
-    }).toList();
+    return _adminOrders.where((order) => order.status == OrderStatus.fromString(_adminFilter)).toList();
   }
 
   // Status counts for admin tab badges
@@ -43,7 +39,7 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
   int get outForDeliveryCount => _adminOrders.where((o) => o.status == OrderStatus.outForDelivery).length;
   int get deliveredCount => _adminOrders.where((o) => o.status == OrderStatus.delivered).length;
   int get cancelledCount => _adminOrders.where((o) => o.status == OrderStatus.cancelled).length;
-  int get activeOrdersCount => pendingCount + preparingCount + readyCount + outForDeliveryCount;
+  int get activeOrdersCount => _adminOrders.where((order) => !order.status.isTerminal).length;
 
   /// Watch orders for a logged-in customer
   void watchCustomerOrders(String customerId) {
@@ -64,7 +60,6 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
         if (e.toString().contains('permission-denied')) {
           _customerOrdersSub?.cancel();
           _customerOrdersSub = null;
-          return;
         }
         _isLoading = false;
         _errorMessage = 'Failed to load customer orders: $e';
@@ -92,7 +87,6 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
         if (e.toString().contains('permission-denied')) {
           _adminOrdersSub?.cancel();
           _adminOrdersSub = null;
-          return;
         }
         _isLoading = false;
         _errorMessage = 'Failed to load orders: $e';
@@ -113,6 +107,8 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
       },
       onError: (e) {
         AppLogger.error('Order tracking watch error: $e', tag: 'OrderProvider');
+        _errorMessage = 'Unable to load this order. Please try again.';
+        notifyListeners();
       },
     );
   }
@@ -132,6 +128,7 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
     String? cancellationReason,
   }) async {
     try {
+      _errorMessage = null;
       await OrderService.updateOrderStatus(
         orderId,
         newStatus,
@@ -152,6 +149,23 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Remove account-specific streams and cached data when the signed-in account changes.
+  void reset() {
+    _customerOrdersSub?.cancel();
+    _adminOrdersSub?.cancel();
+    _trackingSub?.cancel();
+    _customerOrdersSub = null;
+    _adminOrdersSub = null;
+    _trackingSub = null;
+    _customerOrders = [];
+    _adminOrders = [];
+    _currentOrder = null;
+    _isLoading = false;
+    _errorMessage = null;
+    _adminFilter = 'all';
+    notifyListeners();
   }
 
   /// Cancel order by customer with backend 5-minute window & pending-status validation

@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:image_picker/image_picker.dart';
@@ -204,7 +205,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         _variantEntries.removeAt(index);
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         const SnackBar(
           content: Text('Items with multiple sizes must have at least 2 variants.'),
           backgroundColor: AppColors.warning,
@@ -229,7 +230,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
   Future<void> _saveItem() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         const SnackBar(
             content: Text('Please select a category'), backgroundColor: AppColors.error),
       );
@@ -238,7 +239,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
 
     // Validate photo selection for new item
     if (widget.item == null && _pickedImage == null && (_imageUrl == null || _imageUrl!.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         const SnackBar(
           content: Text('Please select an item photo before saving.'),
           backgroundColor: AppColors.error,
@@ -251,7 +252,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
     List<MenuVariant>? variantsToSave;
     if (_hasVariants) {
       if (_variantEntries.length < 2) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           const SnackBar(
             content: Text('Please provide at least 2 size/portion variants.'),
             backgroundColor: AppColors.error,
@@ -271,7 +272,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         final desc = entry.descCtrl.text.trim();
 
         if (label.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackbar.showSnackBar(context,
             SnackBar(
               content: Text('Variant #${i + 1} is missing a label (e.g. Small, Medium).'),
               backgroundColor: AppColors.error,
@@ -281,7 +282,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         }
 
         if (labelSet.contains(label.toLowerCase())) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackbar.showSnackBar(context,
             SnackBar(
               content: Text('Duplicate variant label "$label". Labels must be unique.'),
               backgroundColor: AppColors.error,
@@ -292,7 +293,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         labelSet.add(label.toLowerCase());
 
         if (price == null || price < 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackbar.showSnackBar(context,
             SnackBar(
               content: Text('Variant "$label" has an invalid price.'),
               backgroundColor: AppColors.error,
@@ -323,7 +324,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
 
         if (name.isNotEmpty) {
           if (price == null || price < 0) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            AppSnackbar.showSnackBar(context,
               SnackBar(
                 content: Text('Add-on "$name" must have a valid non-negative price.'),
                 backgroundColor: AppColors.error,
@@ -390,7 +391,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
         isVeg: _isVeg,
         isSpicy: _isSpicy,
         prepTimeMinutes: prepTime,
-        rating: widget.item?.rating ?? 4.8,
+        rating: widget.item?.rating ?? 0.0,
         variants: _hasVariants ? variantsToSave : null,
         addons: addonsToSave,
         branchId: widget.item?.branchId ?? currentAdminBranchId,
@@ -406,7 +407,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text(widget.item == null
                 ? 'Menu item created!'
@@ -419,7 +420,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
       AppLogger.error('Error saving menu item: $e\n$stack', tag: 'AddEditMenuItem');
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: const Text('No connection. Please check your internet and try again.'),
             backgroundColor: AppColors.error,

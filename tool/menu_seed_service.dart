@@ -5,7 +5,7 @@ import 'package:food_fight/models/category_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/services/category_service.dart';
 
-/// Service to migrate and seed the official Food Fight menu with multi-size variants and extras
+/// Development-only data seeding utility; not part of the production app library.
 class MenuSeedService {
   static final CollectionReference _menuCollection =
       FirebaseFirestore.instance.collection(FirestoreCollections.menuItems);

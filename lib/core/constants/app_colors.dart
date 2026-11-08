@@ -7,10 +7,12 @@ import 'package:flutter/material.dart';
 /// - Mustard Accent: #CC9419
 /// - Orange Accent: #D06419
 class AppColors {
+  static const Color feedbackSuccess = Color(0xFF205C3B);
+  static const Color feedbackWarning = Color(0xFF784900);
   // ==========================================
   // 1. BRAND COLORS (Light Theme)
   // ==========================================
-  static const Color brandYellow = Color(0xFFFFD505);
+  static const Color brandYellow = Color(0xFFFFD504);
   static const Color yellowPressed = Color(0xFFE6BF00);
   static const Color yellowSoft = Color(0xFFFFF3B8);
   static const Color yellowTint = Color(0xFFFFFAE0);
@@ -247,7 +249,8 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
 
   StatusColorInfo forStatus(dynamic status) {
     final raw = status is Enum ? status.name : (status?.toString() ?? '');
-    final s = raw.toLowerCase().replaceAll('_', ' ').replaceAll('-', ' ').trim();
+    final s =
+        raw.toLowerCase().replaceAll('_', ' ').replaceAll('-', ' ').trim();
     switch (s) {
       case 'pending':
         return StatusColorInfo(
@@ -384,7 +387,8 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
       pickedUp: Color.lerp(pickedUp, other.pickedUp, t)!,
       pickedUpSoft: Color.lerp(pickedUpSoft, other.pickedUpSoft, t)!,
       outForDelivery: Color.lerp(outForDelivery, other.outForDelivery, t)!,
-      outForDeliverySoft: Color.lerp(outForDeliverySoft, other.outForDeliverySoft, t)!,
+      outForDeliverySoft:
+          Color.lerp(outForDeliverySoft, other.outForDeliverySoft, t)!,
       delivered: Color.lerp(delivered, other.delivered, t)!,
       deliveredSoft: Color.lerp(deliveredSoft, other.deliveredSoft, t)!,
       cancelled: Color.lerp(cancelled, other.cancelled, t)!,

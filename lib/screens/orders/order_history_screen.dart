@@ -1,3 +1,7 @@
+import '../../core/localization/app_language.dart';
+import '../../widgets/orders/order_review_dialog.dart';
+import 'package:food_fight/core/utils/app_insets.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/order_provider.dart';
@@ -12,8 +16,6 @@ import '../../widgets/common/error_view.dart';
 import '../../core/responsive/responsive.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/skeleton/order_card_skeleton.dart';
-import '../../widgets/orders/order_speed_dial_fab.dart';
-import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_colors.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -94,9 +96,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      floatingActionButton: const OrderSpeedDialFab(),
       appBar: AppBar(
-        title: const Text('My Orders'),
+        title: Text(context.tr('My Orders')),
         elevation: 0,
         actions: [
           Consumer<ChatProvider>(
@@ -171,7 +172,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   builder: (context) {
                     if (orderProvider.isLoading && orderProvider.customerOrders.isEmpty) {
                       return ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, AppDimens.navBarScrollPadding),
+                        padding: AppInsets.scrollPadding(context, horizontal: 20, top: 20),
                         itemCount: 4,
                         itemBuilder: (_, __) => const OrderCardSkeleton(),
                       );
@@ -218,13 +219,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                         description: 'You have no orders currently in preparation or delivery.',
                                         buttonText: 'Order Food Now',
                                         onButtonPressed: () =>
-                                            Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
+                                            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false),
                                       ),
                                     ),
                                   ],
                                 )
                               : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, AppDimens.navBarScrollPadding),
+                                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 20),
                                   itemCount: currentOrders.length,
                                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                                   itemBuilder: (context, index) {
@@ -339,7 +340,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                         arguments: order,
                                                       ),
                                                       icon: const Icon(Icons.location_searching_rounded, size: 14),
-                                                      label: const Text('Track Live', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                                                      label: Text(context.tr('Track Live'), style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
                                                     ),
                                                   ],
                                                 ),
@@ -371,7 +372,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                   ],
                                 )
                               : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, AppDimens.navBarScrollPadding),
+                                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 20),
                                   itemCount: pastOrders.length,
                                   separatorBuilder: (_, __) => const SizedBox(height: 14),
                                   itemBuilder: (context, index) {
@@ -454,6 +455,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                 Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
                                                 const SizedBox(height: 12),
 
+                                                Wrap(children: [
+                                                  TextButton.icon(onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id), icon: const Icon(Icons.chat_outlined), label: Text(context.tr('Support'))),
+                                                  if (order.status == OrderStatus.delivered) TextButton.icon(onPressed: () => showDialog(context: context, builder: (_) => OrderReviewDialog(order: order)), icon: const Icon(Icons.star_border), label: Text(context.tr('Rate'))),
+                                                ]),
                                                 // Bottom row: Total & Reorder Action
                                                 Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -481,9 +486,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                                           ),
                                                           onPressed: () => _reorder(context, order),
                                                           icon: const Icon(Icons.replay_rounded, size: 13),
-                                                          label: const Text(
-                                                            'Reorder',
-                                                            style: TextStyle(
+                                                          label: Text(
+                                                            context.tr('Reorder'),
+                                                            style: const TextStyle(
                                                               fontSize: 11,
                                                               fontWeight: FontWeight.bold,
                                                             ),
@@ -629,7 +634,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       );
     }
     final itemCount = order.items.length;
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppSnackbar.showSnackBar(context,
       SnackBar(
         content: Text('Added $itemCount ${itemCount == 1 ? "item" : "items"} from ${order.orderNumber} to cart!'),
         backgroundColor: AppColors.success,
@@ -802,7 +807,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total Paid', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
+                Text(context.tr('Total Paid'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
                 Text(
                   'Rs. ${order.total.toStringAsFixed(0)}',
                   style: TextStyle(
@@ -834,7 +839,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   ),
                   onPressed: () => _reorder(context, order),
                   icon: const Icon(Icons.replay_rounded, size: 16),
-                  label: const Text('Reorder', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(context.tr('Reorder'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -844,4 +849,3 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     );
   }
 }
-

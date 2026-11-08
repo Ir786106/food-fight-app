@@ -1,9 +1,9 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/common/network_image_view.dart';
+import 'package:food_fight/widgets/common/chat_image_view.dart';
 import '../../../models/chat_model.dart';
 import '../../../models/chat_message_model.dart';
 import '../../../models/order_model.dart';
@@ -32,6 +32,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   String? _selectedBranchFilter;
   ChatModel? _selectedChat;
   bool _isComposing = false;
+  ChatProvider? _roomProvider;
+  String? _observedChatId;
+  String? _observedLatestMessageId;
 
   static const List<String> _cannedReplies = [
     'Your order is being prepared.',
@@ -44,6 +47,24 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   @override
   void initState() {
     super.initState();
+    _roomProvider = context.read<ChatProvider>();
+    _scrollController.addListener(() async {
+      final provider = _roomProvider!;
+      if (!_scrollController.hasClients || _scrollController.offset > 48 ||
+          !provider.hasMoreMessages || provider.isLoadingOlderMessages) {
+        return;
+      }
+      final before = _scrollController.position.maxScrollExtent;
+      final offset = _scrollController.offset;
+      await provider.loadOlderMessages();
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(
+          (offset + _scrollController.position.maxScrollExtent - before).clamp(0.0, _scrollController.position.maxScrollExtent));
+        }
+      });
+    });
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -65,13 +86,21 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
       }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       _initAdminChatStream();
+      final args = ModalRoute.of(context)?.settings.arguments;
+      final user = context.read<AuthProvider>().currentUser;
+      if (args is Map && args['chatId'] != null && user != null) {
+        await _roomProvider!.openChatById(args['chatId'].toString(), user.id, user.role);
+        if (mounted) setState(() => _selectedChat = _roomProvider!.activeChat);
+      }
     });
   }
 
   @override
   void dispose() {
+    _roomProvider?.closeActiveChat();
     _tabController.dispose();
     _searchCtrl.dispose();
     _replyCtrl.dispose();
@@ -129,23 +158,12 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
       text: text,
     );
 
-    if (success && _scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    }
+    if (success) { _scrollToLatestMessage(); }
+    else if (mounted && customText == null && _replyCtrl.text.isEmpty) { _replyCtrl.text = text; }
   }
 
   Future<void> _handleAttachImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 80,
-    );
+    final image = await pickChatImage(context);
 
     if (image == null || !mounted) return;
 
@@ -162,6 +180,39 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     );
   }
 
+  void _followLatestMessage(String? chatId, List<ChatMessageModel> messages) {
+    if (chatId != _observedChatId) {
+      _observedChatId = chatId;
+      _observedLatestMessageId = null;
+    }
+
+    final latestMessageId = messages.isEmpty ? null : messages.last.id;
+    if (latestMessageId == _observedLatestMessageId) return;
+
+    final hasScrollMetrics = _scrollController.hasClients &&
+        _scrollController.position.hasContentDimensions;
+    final shouldFollow = _observedLatestMessageId == null ||
+        !hasScrollMetrics ||
+        _scrollController.position.extentAfter < 120;
+    _observedLatestMessageId = latestMessageId;
+    if (shouldFollow) _scrollToLatestMessage();
+  }
+
+  void _scrollToLatestMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          !_scrollController.hasClients ||
+          !_scrollController.position.hasContentDimensions) {
+        return;
+      }
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   void _openOrderModal(String orderId) async {
     final orderProv = context.read<OrderProvider>();
     OrderModel? order = orderProv.getOrderById(orderId);
@@ -175,7 +226,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
         builder: (_) => OrderDetailModal(order: order!),
       );
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         const SnackBar(content: Text('Order details could not be found.')),
       );
     }
@@ -229,6 +280,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final isSuper = user?.isSuperAdmin ?? false;
     final isLarge = MediaQuery.of(context).size.width >= 720;
     final chatProv = context.watch<ChatProvider>();
+    _followLatestMessage(chatProv.activeChat?.id, chatProv.activeMessages);
 
     final filteredChats = _filterChats(chatProv.adminChats);
 
@@ -554,7 +606,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   }
 
   PreferredSizeWidget _buildThreadAppBar({required bool isLarge}) {
-    final chat = _selectedChat;
+    final chat = context.watch<ChatProvider>().activeChat ?? _selectedChat;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -653,7 +705,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   }
 
   Widget _buildThreadView({required bool isLarge}) {
-    final chat = _selectedChat;
+    final chat = context.watch<ChatProvider>().activeChat ?? _selectedChat;
     if (chat == null) return _buildNoChatSelectedPlaceholder();
 
     final theme = Theme.of(context);
@@ -729,7 +781,6 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                     )
                   : ListView.builder(
                         controller: _scrollController,
-                        reverse: true,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         itemCount: chatProv.activeMessages.length,
                         itemBuilder: (context, index) {
@@ -802,7 +853,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                                       if (msg.imageUrl != null && msg.imageUrl!.isNotEmpty)
                                         Padding(
                                           padding: const EdgeInsets.only(bottom: 6),
-                                          child: NetworkImageView(
+                                          child: ChatImageView(
                                             imageUrl: msg.imageUrl,
                                             height: 180,
                                             width: double.infinity,
@@ -878,6 +929,11 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
           ),
         ),
 
+        if (chatProv.uploadProgress != null) LinearProgressIndicator(value: chatProv.uploadProgress == 0 ? null : chatProv.uploadProgress),
+        if (chatProv.sendErrorMessage != null) Padding(padding: const EdgeInsets.all(8), child: Wrap(children: [
+          Text(chatProv.sendErrorMessage!),
+          if (chatProv.hasFailedImage) TextButton(onPressed: chatProv.isSending ? null : chatProv.retryFailedImage, child: const Text('Retry photo')),
+        ])),
         // Admin Input Composer
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -890,7 +946,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
               IconButton(
                 icon: Icon(Icons.photo_camera_back_outlined, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
                 tooltip: 'Attach Image',
-                onPressed: _handleAttachImage,
+                onPressed: context.watch<ChatProvider>().isSending ? null : _handleAttachImage,
               ),
               Expanded(
                 child: TextField(
@@ -930,7 +986,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                         ? (isDark ? AppColors.brandMaroon : AppColors.brandYellow)
                         : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                   ),
-                  onPressed: _isComposing ? () => _handleAdminSend() : null,
+                  onPressed: _isComposing && !chatProv.isSending ? () => _handleAdminSend() : null,
                 ),
               ),
             ],
@@ -941,10 +997,12 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   }
 
   bool _shouldShowDateSeparator(List<ChatMessageModel> messages, int index) {
-    if (index == messages.length - 1) return true;
+    if (index == 0) return true;
     final current = messages[index].createdAt;
-    final older = messages[index + 1].createdAt;
-    return current.day != older.day || current.month != older.month || current.year != older.year;
+    final previous = messages[index - 1].createdAt;
+    return current.day != previous.day ||
+        current.month != previous.month ||
+        current.year != previous.year;
   }
 
   String _formatDateSeparator(DateTime dt) {

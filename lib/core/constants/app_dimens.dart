@@ -31,13 +31,16 @@ class AppDimens {
   static const double buttonHeightSm = 40.0;
 
   // Floating Nav Bar Specs
-  static const double navBarHeight = 68.0;
+  static const double navBarHeight = 64.0;
   static const double navBarCenterButtonSize = 58.0;
   static const double navBarNotchRadius = 36.0;
   static const double navBarNotchSmoothness = 12.0;
   static const double navBarHorizontalMargin = 18.0;
   static const double navBarBottomMargin = 14.0;
-  static const double navBarScrollPadding = 120.0;
+  static const double cartPillHeight = 52.0;
+  static const double bottomActionBarHeight = 72.0;
+  static const double iconSize = 24.0;
+  static const double iconSizeSmall = 20.0;
 
   // Product Card Specs
   static const double foodCardRadius = 24.0;
@@ -53,7 +56,9 @@ class AppDimens {
         ),
       ];
 
-  static List<BoxShadow> floatingPillShadow({Color? color, double opacity = 0.12}) => [
+  static List<BoxShadow> floatingPillShadow(
+          {Color? color, double opacity = 0.12}) =>
+      [
         BoxShadow(
           color: (color ?? const Color(0xFF2A1415)).withValues(alpha: opacity),
           blurRadius: 22,
@@ -62,7 +67,9 @@ class AppDimens {
         ),
       ];
 
-  static List<BoxShadow> glowShadow({required Color color, double opacity = 0.35}) => [
+  static List<BoxShadow> glowShadow(
+          {required Color color, double opacity = 0.35}) =>
+      [
         BoxShadow(
           color: color.withValues(alpha: opacity),
           blurRadius: 16,

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../utils/logger.dart';
-import '../../services/branch_service.dart';
-import '../../services/option_template_service.dart';
+import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/services/branch_service.dart';
+import 'package:food_fight/services/option_template_service.dart';
 
 /// Database Seed & Migration Script for Food Fight Platform
 /// Initializes global settings, 5 branches, option templates, and migrates

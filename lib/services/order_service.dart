@@ -1,12 +1,9 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_fight/models/order_model.dart';
-import 'package:food_fight/models/notification_model.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
-import 'notification_service.dart';
-import 'branch_service.dart';
-import 'loyalty_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 /// Order Service for Customer ordering and Admin order management
 class OrderService {
@@ -19,43 +16,6 @@ class OrderService {
     final timeTail = (now.millisecondsSinceEpoch % 100000).toString().padLeft(5, '0');
     final random = Random().nextInt(90) + 10;
     return 'FF-$timeTail$random';
-  }
-
-  /// Place a new order
-  static Future<String> placeOrder(OrderModel order) async {
-    final docRef = _collection.doc();
-    final data = order.toJson();
-    data['id'] = docRef.id;
-    if (order.orderNumber.isEmpty) {
-      data['orderNumber'] = generateOrderNumber();
-    }
-    await docRef.set(data);
-    AppLogger.info('Order placed: ${data['orderNumber']} (${docRef.id})', tag: 'OrderService');
-
-    // Automatically update branch financial metrics
-    if (order.branchId != null && order.branchId!.isNotEmpty) {
-      await BranchService.recordOrderFinancials(order.branchId!, order.total);
-    }
-
-    // Create real notification for customer
-    if (order.customerId.isNotEmpty) {
-      try {
-        final notifService = NotificationService();
-        await notifService.createNotification(NotificationModel(
-          id: '',
-          userId: order.customerId,
-          title: 'Order Placed!',
-          message: 'Your order #${data['orderNumber']} has been received and sent to the kitchen.',
-          type: 'order',
-          referenceId: docRef.id,
-          createdAt: DateTime.now(),
-        ));
-      } catch (e) {
-        AppLogger.warn('Could not emit order notification: $e', tag: 'OrderService');
-      }
-    }
-
-    return docRef.id;
   }
 
   /// Watch orders for a specific customer in real-time
@@ -98,7 +58,7 @@ class OrderService {
     }
 
     if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
-      final s = status.toLowerCase().replaceAll(' ', '');
+      final s = OrderStatus.fromString(status).name;
       query = query.where('status', isEqualTo: s);
     }
 
@@ -117,68 +77,45 @@ class OrderService {
     });
   }
 
-  /// Update order status (Advance status or cancel)
+  /// The backend validates the actor and records the transition atomically.
   static Future<void> updateOrderStatus(
     String orderId,
     OrderStatus newStatus, {
     String? cancellationReason,
+    bool codCollected = false,
   }) async {
-    final Map<String, dynamic> updates = {
+    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+      'action': 'transition',
+      'orderId': orderId,
       'status': newStatus.name,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
-    };
-    if (cancellationReason != null && cancellationReason.isNotEmpty) {
-      updates['cancellationReason'] = cancellationReason;
-    }
-
-    await _collection.doc(orderId).update(updates);
-    AppLogger.info('Updated order $orderId to ${newStatus.name}', tag: 'OrderService');
-
-    // Emit live status notification and award/refund loyalty tokens
-    try {
-      final order = await getOrder(orderId);
-      if (order != null && order.customerId.isNotEmpty) {
-        await NotificationService().sendOrderUpdateNotification(
-          order.customerId,
-          order.orderNumber.isNotEmpty ? order.orderNumber : orderId,
-          newStatus.displayName,
-        );
-
-        if (newStatus == OrderStatus.delivered) {
-          await LoyaltyService().earnTokensForOrder(
-            userId: order.customerId,
-            orderId: orderId,
-            orderAmount: order.total,
-          );
-        } else if (newStatus == OrderStatus.cancelled && order.tokensUsed > 0) {
-          await LoyaltyService().refundTokensForCancelledOrder(
-            userId: order.customerId,
-            orderId: orderId,
-            tokensToRefund: order.tokensUsed,
-          );
-        }
-      }
-    } catch (e) {
-      AppLogger.warn('Could not emit order status notification / tokens: $e', tag: 'OrderService');
-    }
+      'reason': cancellationReason,
+      'codCollected': codCollected,
+    });
   }
 
-  /// Cancel order by customer with strict 5-minute window & pending-state check
+  /// The server checks ownership, pending state and the cancellation window.
   static Future<bool> cancelOrderByCustomer(String orderId, {String? reason}) async {
-    final order = await getOrder(orderId);
-    if (order == null) throw Exception('Order not found');
-
-    if (order.status != OrderStatus.pending) {
-      throw Exception('Only pending orders can be cancelled. Kitchen has already started preparing your food.');
-    }
-
-    final diff = DateTime.now().difference(order.createdAt);
-    if (diff.inMinutes >= 5) {
-      throw Exception('The 5-minute cancellation window has passed. Please contact the branch directly.');
-    }
-
-    await updateOrderStatus(orderId, OrderStatus.cancelled, cancellationReason: reason ?? 'Cancelled by customer');
+    await updateOrderStatus(
+      orderId,
+      OrderStatus.cancelled,
+      cancellationReason: reason ?? 'Cancelled by customer',
+    );
     return true;
+  }
+
+  static Future<void> dispatchRider(String orderId) async {
+    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+      'action': 'dispatch',
+      'orderId': orderId,
+    });
+  }
+
+  static Future<void> settleCod(String orderId, double amountPkr) async {
+    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+      'action': 'settle',
+      'orderId': orderId,
+      'amountPkr': amountPkr,
+    });
   }
 
   /// Fetch single order by ID

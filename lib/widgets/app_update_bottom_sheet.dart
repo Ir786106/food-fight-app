@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,15 +9,26 @@ import '../services/app_update_service.dart';
 class AppUpdateBottomSheet extends StatelessWidget {
   const AppUpdateBottomSheet({super.key});
 
-  static Future<void> show(BuildContext context) async {
-    await showModalBottomSheet(
+  static bool _showing = false;
+
+  static Future<void> show(BuildContext context, {bool autoDownload = false}) async {
+    if (_showing) return;
+    _showing = true;
+    try {
+      final provider = context.read<AppUpdateProvider>();
+      final closed = showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       isDismissible: false,
       enableDrag: false,
       builder: (_) => const AppUpdateBottomSheet(),
-    );
+      );
+      if (autoDownload && !provider.installReady) await provider.startDownload();
+      await closed;
+    } finally {
+      _showing = false;
+    }
   }
 
   @override
@@ -259,7 +271,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                                   ),
                                 );
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                AppSnackbar.showSnackBar(context,
                                   SnackBar(content: Text(prov.errorMessage ?? 'Install failed. Please try manually.')),
                                 );
                               }

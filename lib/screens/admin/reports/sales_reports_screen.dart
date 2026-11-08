@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
@@ -443,7 +444,7 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
       await file.writeAsString(csvString);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Report exported: ${file.path.split(Platform.pathSeparator).last}'),
             backgroundColor: AppColors.success,
@@ -454,7 +455,7 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Failed to export report: $e'),
             backgroundColor: Colors.redAccent,
@@ -469,4 +470,3 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
     }
   }
 }
-

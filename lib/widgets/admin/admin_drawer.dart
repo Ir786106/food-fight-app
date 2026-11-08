@@ -1,3 +1,4 @@
+import '../../core/config/app_edition.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -315,7 +316,8 @@ class AdminDrawer extends StatelessWidget {
                     ),
                   ),
 
-                  _buildItem(
+                  if (auth.edition == AppEdition.combined)
+                    _buildItem(
                     context,
                     title: 'Preview Customer App',
                     icon: Icons.preview_rounded,

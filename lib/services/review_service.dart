@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/utils/logger.dart';
 import '../models/review_model.dart';
@@ -6,7 +8,8 @@ import 'interfaces/review_service_interface.dart';
 class ReviewService implements IReviewService {
   final FirebaseFirestore? _customFirestore;
   ReviewService({FirebaseFirestore? firestore}) : _customFirestore = firestore;
-  FirebaseFirestore get _firestore => _customFirestore ?? FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore =>
+      _customFirestore ?? FirebaseFirestore.instance;
   final String _collection = 'reviews';
 
   CollectionReference<Map<String, dynamic>> get _reviewsRef =>
@@ -15,20 +18,23 @@ class ReviewService implements IReviewService {
   @override
   Future<List<ReviewModel>> getReviewsForItem(String itemId) async {
     try {
-      final snapshot = await _reviewsRef
-          .where('itemId', isEqualTo: itemId)
-          .get();
+      final snapshot =
+          await _reviewsRef.where('itemId', isEqualTo: itemId).get();
 
-      final list = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return ReviewModel.fromJson(data);
-      }).where((r) => !r.isHidden).toList();
+      final list = snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return ReviewModel.fromJson(data);
+          })
+          .where((r) => !r.isHidden)
+          .toList();
 
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
     } catch (e) {
-      AppLogger.error('Error fetching reviews for $itemId: $e', tag: 'ReviewService');
+      AppLogger.error('Error fetching reviews for $itemId: $e',
+          tag: 'ReviewService');
       return [];
     }
   }
@@ -39,17 +45,21 @@ class ReviewService implements IReviewService {
           .where('itemId', isEqualTo: itemId)
           .snapshots()
           .map((snapshot) {
-        final list = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return ReviewModel.fromJson(data);
-        }).where((r) => !r.isHidden).toList();
+        final list = snapshot.docs
+            .map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return ReviewModel.fromJson(data);
+            })
+            .where((r) => !r.isHidden)
+            .toList();
 
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return list;
       });
     } catch (e) {
-      AppLogger.error('Error streaming reviews for item $itemId: $e', tag: 'ReviewService');
+      AppLogger.error('Error streaming reviews for item $itemId: $e',
+          tag: 'ReviewService');
       return Stream.value(<ReviewModel>[]);
     }
   }
@@ -80,7 +90,8 @@ class ReviewService implements IReviewService {
       data['id'] = doc.id;
       return ReviewModel.fromJson(data);
     } catch (e) {
-      AppLogger.error('Error fetching review $reviewId: $e', tag: 'ReviewService');
+      AppLogger.error('Error fetching review $reviewId: $e',
+          tag: 'ReviewService');
       return null;
     }
   }
@@ -106,31 +117,18 @@ class ReviewService implements IReviewService {
 
   @override
   Future<ReviewModel?> createReview(ReviewModel review) async {
-    try {
-      final docRef = review.id.isNotEmpty ? _reviewsRef.doc(review.id) : _reviewsRef.doc();
-      final toSave = review.copyWith(id: docRef.id);
-      await docRef.set(toSave.toJson());
-
-      // Update aggregate rating for item asynchronously
-      if (review.itemId.isNotEmpty && review.targetType == 'item') {
-        _updateItemAggregateRating(review.itemId);
-      }
-
-      AppLogger.info('Review created: ${docRef.id}', tag: 'ReviewService');
-      return toSave;
-    } catch (e) {
-      AppLogger.error('Error creating review: $e', tag: 'ReviewService');
-      return null;
-    }
+    final result = await FirebaseFunctions.instance.httpsCallable('submitOrderReview').call({
+      'orderId': review.orderId, 'itemId': review.itemId, 'targetType': review.targetType,
+      'rating': review.rating, 'reviewText': review.reviewText,
+    });
+    return ReviewModel.fromJson(jsonDecode(jsonEncode(result.data)) as Map<String,dynamic>);
   }
 
   @override
   Future<void> updateReview(ReviewModel review) async {
     try {
       await _reviewsRef.doc(review.id).update(review.toJson());
-      if (review.itemId.isNotEmpty && review.targetType == 'item') {
-        _updateItemAggregateRating(review.itemId);
-      }
+
       AppLogger.info('Review updated: ${review.id}', tag: 'ReviewService');
     } catch (e) {
       AppLogger.error('Error updating review: $e', tag: 'ReviewService');
@@ -141,11 +139,8 @@ class ReviewService implements IReviewService {
   @override
   Future<void> deleteReview(String reviewId) async {
     try {
-      final review = await getReviewById(reviewId);
       await _reviewsRef.doc(reviewId).delete();
-      if (review != null && review.itemId.isNotEmpty) {
-        _updateItemAggregateRating(review.itemId);
-      }
+
       AppLogger.info('Review deleted: $reviewId', tag: 'ReviewService');
     } catch (e) {
       AppLogger.error('Error deleting review: $e', tag: 'ReviewService');
@@ -157,11 +152,11 @@ class ReviewService implements IReviewService {
   Future<double> getAverageRating(String itemId) async {
     try {
       final reviews = await getReviewsForItem(itemId);
-      if (reviews.isEmpty) return 4.8; // default
+      if (reviews.isEmpty) return 0.0;
       final total = reviews.fold(0.0, (acc, r) => acc + r.rating);
       return total / reviews.length;
     } catch (e) {
-      return 4.8;
+      return 0.0;
     }
   }
 
@@ -194,7 +189,8 @@ class ReviewService implements IReviewService {
         return list;
       });
     } catch (e) {
-      AppLogger.error('Error streaming branch reviews: $e', tag: 'ReviewService');
+      AppLogger.error('Error streaming branch reviews: $e',
+          tag: 'ReviewService');
       return Stream.value(<ReviewModel>[]);
     }
   }
@@ -212,21 +208,4 @@ class ReviewService implements IReviewService {
     });
   }
 
-  /// Update item average rating in menuItems
-  Future<void> _updateItemAggregateRating(String itemId) async {
-    try {
-      final reviews = await getReviewsForItem(itemId);
-      if (reviews.isEmpty) return;
-
-      final avgRating = reviews.fold(0.0, (acc, r) => acc + r.rating) / reviews.length;
-      final roundedRating = double.parse(avgRating.toStringAsFixed(1));
-
-      await _firestore.collection('menuItems').doc(itemId).update({
-        'rating': roundedRating,
-      });
-      AppLogger.info('Item $itemId rating updated to $roundedRating', tag: 'ReviewService');
-    } catch (e) {
-      AppLogger.error('Failed to update item aggregate rating: $e', tag: 'ReviewService');
-    }
-  }
 }

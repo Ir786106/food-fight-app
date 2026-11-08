@@ -1,3 +1,5 @@
+import 'package:food_fight/core/utils/app_insets.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -208,7 +210,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   child: IconButton(
                     icon: Icon(Icons.share_outlined, color: colorScheme.onSurface, size: 20),
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context,
                         SnackBar(
                           content: Text('Sharing "${activeRestaurant.name}" with friends!'),
                           duration: const Duration(seconds: 1),
@@ -238,7 +240,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     ),
                     onPressed: () {
                       setState(() => _isFavorite = !_isFavorite);
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context,
                         SnackBar(
                           content: Text(
                             _isFavorite
@@ -429,7 +431,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 0),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -502,7 +504,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         : restaurant.rating;
 
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+      padding: AppInsets.scrollPadding(context, horizontal: 20, top: 0),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
           // Rating Summary Card
@@ -653,7 +655,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     bool isDark,
   ) {
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+      padding: AppInsets.scrollPadding(context, horizontal: 20, top: 0),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
           // Address & Location
@@ -696,7 +698,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   tooltip: 'Copy Address',
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: restaurant.address));
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    AppSnackbar.showSnackBar(context,
                       const SnackBar(content: Text('Kitchen address copied to clipboard')),
                     );
                   },
@@ -803,7 +805,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       } else {
                         await Clipboard.setData(const ClipboardData(text: '+923008765432'));
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          AppSnackbar.showSnackBar(context,
                             const SnackBar(content: Text('Hotline phone copied to clipboard')),
                           );
                         }
@@ -964,7 +966,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     );
                     context.read<ReviewProvider>().submitReview(review);
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    AppSnackbar.showSnackBar(context,
                       SnackBar(
                         content: Text('Thank you! Your review for ${restaurant.name} has been published ⭐️'),
                         backgroundColor: AppColors.brandMaroon,
@@ -981,4 +983,3 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     );
   }
 }
-

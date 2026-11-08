@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
@@ -47,7 +48,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       );
     } else {
       final err = auth.errorMessage ?? 'Failed to send password reset email';
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context,
         SnackBar(content: Text(err), backgroundColor: AppColors.error),
       );
     }

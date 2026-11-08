@@ -1,3 +1,11 @@
+import '../../providers/auth_provider.dart';
+import '../../core/localization/app_language.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+import 'package:geolocator/geolocator.dart';
+import '../../services/fcm_service.dart';
+import 'policy_screen.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -21,11 +29,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _locationAccess = true;
   String _appVersion = '';
   bool _isCheckingUpdate = false;
+  bool _autoDownloadUpdates = false;
+  bool _changingLanguage = false;
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _autoDownloadUpdates = prefs.getBool(autoDownloadUpdatesPreference) ?? false;
+      _pushNotifications = prefs.getBool('push_notifications') ?? true;
+      _emailOffers = prefs.getBool('email_offers') ?? true;
+      _locationAccess = prefs.getBool('location_access') ?? true;
+    });
+  }
+
+  Future<void> _savePreference(String key, bool value) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (key == 'push_notifications') await FcmService.setPushEnabled(value, user?.uid);
+      if (key == 'email_offers') await FcmService.setOffersEnabled(value);
+      if (key == 'location_access' && value) {
+        var permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          throw StateError('Enable location permission in your device settings.');
+        }
+      }
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid)
+        .set({'preferences': {key: value}}, SetOptions(merge: true));
+      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(key, value);
+      await _loadPreferences();
+    } catch (error) {
+      if (mounted) AppSnackbar.showError(context, error.toString().replaceFirst('Bad state: ', ''));
+    }
   }
 
   Future<void> _loadVersion() async {
@@ -39,13 +85,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isCheckingUpdate = true);
     final prov = context.read<AppUpdateProvider>();
     await prov.checkForUpdateNow();
-    setState(() => _isCheckingUpdate = false);
     if (!mounted) return;
+    setState(() => _isCheckingUpdate = false);
     if (prov.hasUpdate) {
       await AppUpdateBottomSheet.show(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Food Fight is up to date.')),
+      AppSnackbar.showSnackBar(context,
+        SnackBar(content: Text(prov.errorMessage ?? 'Food Fight is up to date.')),
       );
     }
   }
@@ -99,13 +145,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final language = context.watch<AppLanguage?>();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(context.tr('Settings')),
         elevation: 0,
       ),
       body: SafeArea(
@@ -113,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              'PREFERENCES',
+              context.tr('PREFERENCES'),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
@@ -123,27 +170,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 12),
             _buildSwitchTile(
-              'Push Notifications',
-              'Get notified about order updates',
+              context.tr('Push Notifications'),
+              context.tr('Get notified about order updates'),
               _pushNotifications,
-              (v) => setState(() => _pushNotifications = v),
+              (v) => _savePreference('push_notifications', v),
             ),
             _buildSwitchTile(
-              'Email Offers',
-              'Receive deals and promotions via email',
+              context.tr('Email Offers'),
+              context.tr('Receive deals and promotions via email'),
               _emailOffers,
-              (v) => setState(() => _emailOffers = v),
+              (v) => _savePreference('email_offers', v),
             ),
+            if (language != null)
+              ListTile(
+                leading: const Icon(Icons.language),
+                title: Text(context.tr('Language')),
+                trailing: DropdownButton<Locale>(
+                  value: language.locale,
+                  onChanged: _changingLanguage ? null : (locale) async {
+                    if (locale == null) return;
+                    setState(() => _changingLanguage = true);
+                    try {
+                      await language.select(locale);
+                    } catch (_) {
+                      if (context.mounted) {
+                        AppSnackbar.showError(
+                          context, context.tr('Could not save language preference.'),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => _changingLanguage = false);
+                    }
+                  },
+                  items: const [
+                    DropdownMenuItem(value: AppLanguage.english, child: Text('English')),
+                    DropdownMenuItem(value: AppLanguage.urdu, child: Text('اردو')),
+                  ],
+                ),
+              ),
             _buildThemeTile(themeProvider),
             _buildSwitchTile(
-              'Location Access',
-              'Allow app to access your location',
+              context.tr('Location Access'),
+              context.tr('Allow app to access your location'),
               _locationAccess,
-              (v) => setState(() => _locationAccess = v),
+              (v) => _savePreference('location_access', v),
             ),
             const SizedBox(height: 20),
             Text(
-              'ABOUT & UPDATES',
+              context.tr('ABOUT & UPDATES'),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
@@ -153,24 +227,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 12),
             _buildInfoTile('App Version', _appVersion.isNotEmpty ? _appVersion : '…'),
-            _buildActionTile(
+            if (AppUpdateProvider.supported)
+              _buildSwitchTile(
+                'Automatically download updates',
+                'Download when Food Fight is open. Android may ask you to confirm installation.',
+                _autoDownloadUpdates,
+                (enabled) async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool(autoDownloadUpdatesPreference, enabled);
+                  if (mounted) setState(() => _autoDownloadUpdates = enabled);
+                },
+              ),
+            if (AppUpdateProvider.supported)
+              _buildActionTile(
               icon: Icons.system_update_rounded,
-              title: 'Check for Updates',
-              subtitle: 'See if a newer version is available',
+              title: context.tr('Check for Updates'),
+              subtitle: context.tr('See if a newer version is available'),
               trailing: _isCheckingUpdate
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : null,
               onTap: _isCheckingUpdate ? null : _checkForUpdates,
             ),
-            _buildActionTile(
+            if (context.watch<AuthProvider?>()?.edition.allowsCustomerRegistration ?? true)
+              _buildActionTile(
               icon: Icons.play_circle_outline_rounded,
-              title: 'Replay App Intro',
-              subtitle: 'See the onboarding screens again',
+              title: context.tr('Replay App Intro'),
+              subtitle: context.tr('See the onboarding screens again'),
               onTap: _replayOnboarding,
             ),
             const SizedBox(height: 20),
             Text(
-              'LEGAL',
+              context.tr('LEGAL'),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
@@ -193,9 +280,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     final modes = <ThemeMode, String>{
-      ThemeMode.light: 'Light',
-      ThemeMode.dark: 'Dark',
-      ThemeMode.system: 'System',
+      ThemeMode.light: context.tr('Light'),
+      ThemeMode.dark: context.tr('Dark'),
+      ThemeMode.system: context.tr('System'),
     };
 
     return Container(
@@ -210,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Theme',
+            context.tr('Theme'),
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 14,
@@ -313,7 +400,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           title: Text(
-            title,
+            context.tr(title),
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 14,
@@ -334,11 +421,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: colorScheme.onSurfaceVariant, size: 20),
           onTap: onTap ?? () {
             if (title == 'Terms of Service') {
-              _showDocumentSheet('Terms of Service', _termsOfServiceContent);
+              _showDocumentSheet('Terms of Service', 'termsOfService');
             } else if (title == 'Privacy Policy') {
-              _showDocumentSheet('Privacy Policy', _privacyPolicyContent);
+              _showDocumentSheet('Privacy Policy', 'privacyPolicy');
             } else if (title == 'App Version') {
-              ScaffoldMessenger.of(context).showSnackBar(
+              AppSnackbar.showSnackBar(context,
                 SnackBar(content: Text('Food Fight ${_appVersion.isNotEmpty ? "v$_appVersion" : ""} is running the latest build')),
               );
             }
@@ -348,86 +435,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showDocumentSheet(String title, String content) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: colorScheme.onSurface),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: Text(
-                    content,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13.5, height: 1.6),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _showDocumentSheet(String title, String field) {
+    final localizedTitle = context.tr(title);
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PolicyScreen(title: localizedTitle, field: field),
+    ));
   }
-
-  static const String _termsOfServiceContent = '''
-Welcome to Food Fight! By using our platform and ordering delicious meals, you agree to our Terms of Service.
-
-1. Ordering & Fulfillment
-All orders placed via Food Fight are dispatched from our verified local partner kitchens. Estimated delivery times are approximations influenced by real-time traffic and kitchen volume.
-
-2. Pricing & Payments
-Prices listed reflect current kitchen menu rates. Payment may be executed via Cash on Delivery or approved card/e-wallet methods.
-
-3. Cancellations & Refunds
-Cancellations are accepted within 10 minutes of order placement prior to kitchen preparation commencement.
-
-4. Account Security
-You are responsible for maintaining the confidentiality of your credentials and linked communication channels.
-''';
-
-  static const String _privacyPolicyContent = '''
-At Food Fight, your privacy and data security are paramount.
-
-1. Data Collection
-We collect account information (name, contact number, delivery address) necessary to fulfill your orders safely.
-
-2. Location Data
-Location access is utilized exclusively while using the app to identify nearby partner kitchens and estimate precise arrival times. You may manage location permissions via your device settings at any time.
-
-3. Security
-All transactions and communication channels are encrypted with industry-standard protocols.
-''';
 }

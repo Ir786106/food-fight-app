@@ -5,6 +5,7 @@ import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/providers/cart_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Part 1 Core Customer Flows Verification', () {
     test('1. Profile - Model serialization, fields, and update mapping', () {
       final user = UserModel(

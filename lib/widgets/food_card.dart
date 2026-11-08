@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
@@ -50,10 +51,12 @@ class FoodCard extends StatelessWidget {
 
     const cardWidth = 172.0;
     const photoDiameter = 96.0;
-    final effectiveTag = heroTag ?? (food.id.isNotEmpty ? 'food-${food.id}' : null);
+    final effectiveTag =
+        heroTag ?? (food.id.isNotEmpty ? 'food-${food.id}' : null);
 
-    final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
-        (food.sizePrices != null && food.sizePrices!.length > 1);
+    final hasMultipleVariants =
+        (food.variants != null && food.variants!.length > 1) ||
+            (food.sizePrices != null && food.sizePrices!.length > 1);
 
     return Container(
       width: cardWidth,
@@ -82,7 +85,8 @@ class FoodCard extends StatelessWidget {
                         offset: const Offset(0, 6),
                       ),
                     ]
-                  : AppDimens.softShadow(color: AppColors.maroonDeep, opacity: 0.07),
+                  : AppDimens.softShadow(
+                      color: AppColors.maroonDeep, opacity: 0.07),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +98,9 @@ class FoodCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                     height: 1.25,
                   ),
                   maxLines: 1,
@@ -108,7 +114,9 @@ class FoodCard extends StatelessWidget {
                   food.description,
                   style: TextStyle(
                     fontSize: 11.5,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.textSecondary,
                     height: 1.2,
                   ),
                   maxLines: 1,
@@ -133,7 +141,9 @@ class FoodCard extends StatelessWidget {
                               'From',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                                color: isDark
+                                    ? AppColors.darkTextMuted
+                                    : AppColors.textMuted,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -144,7 +154,9 @@ class FoodCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                              color: isDark
+                                  ? AppColors.brandYellow
+                                  : AppColors.brandMaroon,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -168,28 +180,44 @@ class FoodCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                color: isDark
+                    ? AppColors.darkSurfaceElevated
+                    : AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark ? AppColors.darkBorder : AppColors.border,
                   width: 0.8,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.star_rounded, color: AppColors.mustard, size: 12),
-                  const SizedBox(width: 2),
-                  Text(
-                    food.rating.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              child: food.reviewCount > 0
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded,
+                            color: AppColors.mustard, size: 12),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${food.rating.toStringAsFixed(1)} (${food.reviewCount})',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'New',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: isDark
+                            ? AppColors.brandYellow
+                            : AppColors.brandMaroon,
+                      ),
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
 
@@ -215,10 +243,12 @@ class FoodCard extends StatelessWidget {
     final cart = context.watch<CartProvider>();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final effectiveTag = heroTag ?? (food.id.isNotEmpty ? 'food-${food.id}' : null);
+    final effectiveTag =
+        heroTag ?? (food.id.isNotEmpty ? 'food-${food.id}' : null);
 
-    final hasMultipleVariants = (food.variants != null && food.variants!.length > 1) ||
-        (food.sizePrices != null && food.sizePrices!.length > 1);
+    final hasMultipleVariants =
+        (food.variants != null && food.variants!.length > 1) ||
+            (food.sizePrices != null && food.sizePrices!.length > 1);
 
     final priceText = hasMultipleVariants
         ? 'From Rs. ${food.startingPrice.toStringAsFixed(0)}'
@@ -278,7 +308,9 @@ class FoodCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -287,12 +319,17 @@ class FoodCard extends StatelessWidget {
                           if (food.isSpicy) ...[
                             const SizedBox(width: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.tomato.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text('🌶️ Spicy', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.tomato)),
+                              child: const Text('🌶️ Spicy',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.tomato)),
                             ),
                           ],
                         ],
@@ -304,7 +341,9 @@ class FoodCard extends StatelessWidget {
                           food.description,
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -323,28 +362,55 @@ class FoodCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                color: isDark
+                                    ? AppColors.brandYellow
+                                    : AppColors.brandMaroon,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.star_rounded, color: AppColors.mustard, size: 14),
-                              const SizedBox(width: 2),
-                              Text(
-                                food.rating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                          food.reviewCount > 0
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.star_rounded,
+                                        color: AppColors.mustard, size: 14),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '${food.rating.toStringAsFixed(1)} (${food.reviewCount})',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? AppColors.darkTextMuted
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: (isDark
+                                            ? AppColors.brandYellow
+                                            : AppColors.brandMaroon)
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'New',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark
+                                          ? AppColors.brandYellow
+                                          : AppColors.brandMaroon,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ],
@@ -470,7 +536,8 @@ class FoodCard extends StatelessWidget {
               onTap: () => cart.decrementQuantity(food.id),
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Icon(Icons.remove, size: 14, color: AppColors.brandYellow),
+                child:
+                    Icon(Icons.remove, size: 14, color: AppColors.brandYellow),
               ),
             ),
             Padding(
@@ -508,7 +575,8 @@ class FoodCard extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
                   title: const Text('Start New Order?'),
                   content: const Text(
                     'Your cart contains items from a different branch. Adding this item will start a fresh cart for this branch.',
@@ -527,7 +595,7 @@ class FoodCard extends StatelessWidget {
                         Navigator.pop(ctx);
                         cart.clearCart();
                         cart.addToCart(food);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        AppSnackbar.showSnackBar(context,
                           SnackBar(
                             content: Text('${food.name} added to cart'),
                             duration: const Duration(milliseconds: 900),
@@ -537,7 +605,9 @@ class FoodCard extends StatelessWidget {
                       },
                       child: const Text(
                         'Start New Cart',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onYellow),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.onYellow),
                       ),
                     ),
                   ],
@@ -547,7 +617,7 @@ class FoodCard extends StatelessWidget {
             }
 
             cart.addToCart(food);
-            ScaffoldMessenger.of(context).showSnackBar(
+            AppSnackbar.showSnackBar(context,
               SnackBar(
                 content: Text('${food.name} added to bag'),
                 duration: const Duration(milliseconds: 900),

@@ -1,86 +1,125 @@
+import '../core/config/local_demo.dart';
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../core/constants/firestore_collections.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../firebase_options.dart';
 import '../core/utils/logger.dart';
 
-/// Top-level background message handler required by Firebase Messaging
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  AppLogger.info('FCM Background message: ${message.messageId} - ${message.notification?.title}', tag: 'FCM');
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
 }
 
-/// Central service for FCM token registration, notifications permission, and background handling
+/// One token listener per signed-in account; notification opens can wait for auth.
 class FcmService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  static StreamSubscription<String>? _tokenSubscription;
+  static bool _initialized = false;
+  static String? _userId;
+  static Map<String, dynamic>? _pending;
+  static void Function(Map<String, dynamic>)? onOpen;
+  static void Function(String, Map<String, dynamic>)? onForeground;
 
-  /// Initialize background and foreground listeners without requesting permissions
+  static void routePending() {
+    if (onOpen != null && _pending != null) {
+      final data = _pending!;
+      _pending = null;
+      onOpen!(data);
+    }
+  }
+  static void _open(RemoteMessage message) {
+    _pending = Map<String, dynamic>.from(message.data);
+    routePending();
+  }
+
   static Future<void> initializeListenersOnly() async {
+    if (LocalDemo.enabled || _initialized) return;
+    _initialized = true;
     try {
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        AppLogger.info('FCM Foreground message received: ${message.notification?.title}', tag: 'FCM');
+      FirebaseMessaging.onMessage.listen((message) {
+        final title = message.notification?.title;
+        if (title != null) onForeground?.call(title, Map<String, dynamic>.from(message.data));
       });
-    } catch (e) {
-      AppLogger.warn('FCM listeners initialization warning: $e', tag: 'FCM');
+      FirebaseMessaging.onMessageOpenedApp.listen(_open);
+      final initial = await _messaging.getInitialMessage();
+      if (initial != null) _open(initial);
+    } catch (_) {
+      AppLogger.warn('Push notification initialization unavailable', tag: 'FCM');
     }
   }
+  static Future<void> initialize() => initializeListenersOnly();
 
-  /// Request notification permissions on-demand (e.g. during onboarding primer or after login)
   static Future<NotificationSettings?> requestNotificationPermission() async {
-    try {
-      final settings = await _messaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      AppLogger.info('FCM Notification permission status: ${settings.authorizationStatus}', tag: 'FCM');
-      return settings;
-    } catch (e) {
-      AppLogger.warn('FCM permission request warning: $e', tag: 'FCM');
-      return null;
-    }
+    if (LocalDemo.enabled) return null;
+    try { return await _messaging.requestPermission(alert: true, badge: true, sound: true); }
+    catch (_) { return null; }
   }
 
-  /// Backward-compatible initialize method (now listeners only, non-blocking)
-  static Future<void> initialize() async {
-    await initializeListenersOnly();
-  }
-
-  /// Register FCM push token under the user document in Cloud Firestore
   static Future<void> registerUserToken(String userId) async {
-    if (userId.isEmpty) return;
+    if (LocalDemo.enabled || userId.isEmpty || (_userId == userId && _tokenSubscription != null)) return;
+    await _tokenSubscription?.cancel();
+    _tokenSubscription = null;
+    _userId = userId;
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('push_notifications') ?? true)) return;
+    Future<void> save(String token) async {
+      if (_userId != userId) return;
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'fcmToken': token, 'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
     try {
       final token = await _messaging.getToken();
-      if (token != null) {
-        await FirebaseFirestore.instance
-            .collection(FirestoreCollections.users)
-            .doc(userId)
-            .set({
-          'fcmToken': token,
-          'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
-        AppLogger.info('FCM Token registered for user $userId', tag: 'FCM');
-      }
-
-      // Also listen to token refreshes
-      _messaging.onTokenRefresh.listen((newToken) {
-        FirebaseFirestore.instance
-            .collection(FirestoreCollections.users)
-            .doc(userId)
-            .set({
-          'fcmToken': newToken,
-          'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+      if (token != null) await save(token);
+      if (_userId != userId) return;
+      _tokenSubscription = _messaging.onTokenRefresh.listen((token) {
+        save(token).catchError((Object _) {});
       });
-    } catch (e) {
-      AppLogger.warn('Failed to register FCM token for user $userId: $e', tag: 'FCM');
+    } catch (_) {
+      AppLogger.warn('Push token registration unavailable', tag: 'FCM');
     }
   }
+
+  static Future<void> unregisterUserToken() async {
+    final userId = _userId;
+    _userId = null;
+    await _tokenSubscription?.cancel();
+    _tokenSubscription = null;
+    _pending = null;
+    if (userId == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'fcmToken': FieldValue.delete(), 'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+      });
+      await _messaging.deleteToken();
+    } catch (_) {
+      AppLogger.warn('Push token cleanup could not reach the server', tag: 'FCM');
+    }
+  }
+
+  static Future<void> setPushEnabled(bool enabled, String? userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('push_notifications', enabled);
+    if (enabled) {
+      final settings = await requestNotificationPermission();
+      if (settings?.authorizationStatus == AuthorizationStatus.denied) {
+        await prefs.setBool('push_notifications', false);
+        throw StateError('Enable notifications in your device settings.');
+      }
+      if (userId != null) await registerUserToken(userId);
+    } else {
+      await unregisterUserToken();
+    }
+  }
+
+  static Future<void> setOffersEnabled(bool enabled) => LocalDemo.enabled
+      ? Future<void>.value()
+      : enabled
+      ? _messaging.subscribeToTopic('food_fight_offers')
+      : _messaging.unsubscribeFromTopic('food_fight_offers');
 }

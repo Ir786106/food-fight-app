@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 /// Mixin for [ChangeNotifier] that prevents `notifyListeners()` from being
 /// dispatched after [dispose] has been called, and provides helper to defer
@@ -17,6 +18,19 @@ mixin SafeChangeNotifier on ChangeNotifier {
   @override
   void notifyListeners() {
     if (_isDisposed) return;
+
+    final schedulerPhase = SchedulerBinding.instance.schedulerPhase;
+    final isDuringFrame = schedulerPhase != SchedulerPhase.idle;
+
+    if (isDuringFrame) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_isDisposed) {
+          super.notifyListeners();
+        }
+      });
+      return;
+    }
+
     super.notifyListeners();
   }
 

@@ -175,10 +175,17 @@ class AppUpdateService {
       }
 
       final sha256Asset = assets.firstWhere(
-        (a) => (a['name'] as String).endsWith('.apk.sha256'),
+        (a) => a['name'] == '${apkAsset['name']}.sha256',
         orElse: () => <String, dynamic>{},
       );
       final sha256Url = sha256Asset.isNotEmpty ? sha256Asset['browser_download_url'] as String? : null;
+
+      if (sha256Url == null || !_isAllowedUrl(sha256Url)) {
+        return const UpdateCheckResponse(
+          result: UpdateCheckResult.error,
+          errorMessage: 'Release is missing the APK checksum',
+        );
+      }
 
       final release = ReleaseInfo(
         tagName: tag,
@@ -218,7 +225,7 @@ class AppUpdateService {
       }
 
       final tmpDir = await getTemporaryDirectory();
-      _tempApkPath = '${tmpDir.path}/food-fight-${release.tagName}.apk';
+      _tempApkPath = '${tmpDir.path}/food-fight-update.apk';
       _downloadCancelToken = CancelToken();
 
       await _dio.download(

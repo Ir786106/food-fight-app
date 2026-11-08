@@ -1,14 +1,15 @@
+import '../../core/localization/app_language.dart';
+import '../../widgets/common/account_dialogs.dart';
+import 'package:food_fight/core/utils/app_insets.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/common/network_image_view.dart';
 import '../../widgets/common/responsive_layout.dart';
-import '../../core/constants/app_dimens.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/loyalty_provider.dart';
 import '../../providers/branch_provider.dart';
@@ -56,238 +57,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final currentPassCtrl = TextEditingController();
-    final newPassCtrl = TextEditingController();
-    final confirmPassCtrl = TextEditingController();
-    bool isSaving = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dialogCtx, setDialogState) {
-          final colorScheme = Theme.of(dialogCtx).colorScheme;
-
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            backgroundColor: colorScheme.surface,
-            title: Row(
-              children: [
-                const Icon(Icons.lock_reset_rounded, color: AppColors.brandMaroon),
-                const SizedBox(width: 8),
-                Text('Change Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colorScheme.onSurface)),
-              ],
-            ),
-            content: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: currentPassCtrl,
-                    obscureText: true,
-                    validator: (v) => (v == null || v.isEmpty) ? 'Enter current password' : null,
-                    decoration: const InputDecoration(labelText: 'Current Password *'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: newPassCtrl,
-                    obscureText: true,
-                    validator: (v) => (v == null || v.length < 6) ? 'Must be at least 6 characters' : null,
-                    decoration: const InputDecoration(labelText: 'New Password *'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: confirmPassCtrl,
-                    obscureText: true,
-                    validator: (v) {
-                      if (v != newPassCtrl.text) return 'Passwords do not match';
-                      return null;
-                    },
-                    decoration: const InputDecoration(labelText: 'Confirm New Password *'),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.brandYellow,
-                  foregroundColor: AppColors.brandMaroon,
-                ),
-                onPressed: isSaving
-                    ? null
-                    : () async {
-                        if (!formKey.currentState!.validate()) return;
-                        setDialogState(() => isSaving = true);
-                        final email = context.read<AuthProvider>().currentUser?.email;
-                        if (email != null && email.isNotEmpty) {
-                          await context.read<AuthProvider>().sendPasswordResetEmail(email);
-                        }
-                        if (ctx.mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Password security confirmation sent to your email!'),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
-                        }
-                      },
-                child: isSaving
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: AppColors.brandMaroon, strokeWidth: 2))
-                    : const Text('Update Password', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+  Future<void> _showChangePasswordDialog(BuildContext context) async {
+    final changed = await showDialog<bool>(context: context, builder: (_) => const ChangePasswordDialog());
+    if (context.mounted && changed == true) AppSnackbar.showSuccess(context, 'Password updated.');
   }
 
   void _showHelpCenterDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final branch = context.read<BranchProvider>().selectedBranch;
-    final supportPhone = (branch != null && branch.phone.isNotEmpty) ? branch.phone : '+92 300 1234567';
-    final cleanPhone = supportPhone.replaceAll(RegExp(r'[^0-9+]'), '');
-    const supportEmail = 'support@foodfight.pk';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(22),
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.headset_mic_outlined, color: AppColors.brandMaroon, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Food Fight Help Center',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.call_outlined, color: AppColors.success, size: 20),
-              ),
-              title: Text('24/7 Support Hotline', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              subtitle: Text('$supportPhone (Customer Help)', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final uri = Uri(scheme: 'tel', path: cleanPhone);
-                try {
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri);
-                  } else {
-                    await Clipboard.setData(ClipboardData(text: cleanPhone));
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Hotline phone copied to clipboard!')),
-                      );
-                    }
-                  }
-                } catch (_) {
-                  await Clipboard.setData(ClipboardData(text: cleanPhone));
-                }
-              },
-            ),
-            Divider(color: isDark ? AppColors.darkDivider : AppColors.divider),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.brandYellow.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.brandMaroon, size: 20),
-              ),
-              title: Text('Live Support Chat', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              subtitle: Text('Real-time chat with restaurant support', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/chat');
-              },
-            ),
-            Divider(color: isDark ? AppColors.darkDivider : AppColors.divider),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.mail_outline_rounded, color: AppColors.info, size: 20),
-              ),
-              title: Text('Email Support', style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              subtitle: Text(supportEmail, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final uri = Uri(
-                  scheme: 'mailto',
-                  path: supportEmail,
-                  queryParameters: {'subject': 'Food Fight Customer Support Inquiry'},
-                );
-                try {
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri);
-                  } else {
-                    await Clipboard.setData(const ClipboardData(text: 'support@foodfight.pk'));
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Support email copied to clipboard!')),
-                      );
-                    }
-                  }
-                } catch (_) {
-                  await Clipboard.setData(const ClipboardData(text: 'support@foodfight.pk'));
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    ),
-  ),
-);
-}
+    final phone = context.read<BranchProvider>().selectedBranch?.phone;
+    showModalBottomSheet(context: context, isScrollControlled: true,
+      builder: (_) => HelpCenterSheet(branchPhone: phone));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
+        title: Text(context.tr('Profile'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: AppColors.brandMaroon),
@@ -531,7 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.credit_card_outlined,
                   title: 'Payment Methods',
-                  subtitle: 'Saved debit cards, JazzCash & Easypaisa',
+                  subtitle: 'JazzCash & Easypaisa wallet references',
                   onTap: () => Navigator.of(context).pushNamed('/payment-methods'),
                 ),
               ]),
@@ -547,14 +326,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: '${loyalty.balance} Tokens (Rs. ${(loyalty.balance * loyalty.tokenValueInCurrency).toStringAsFixed(0)} value • $customerTierBadge)',
                   trailingBadge: '${loyalty.balance} PTS',
                   iconColor: AppColors.brandMaroon,
-                  onTap: () => Navigator.of(context).pushNamed('/loyalty'),
-                ),
-                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
-                _buildMenuItem(
-                  icon: Icons.history_rounded,
-                  title: 'Token Activity History',
-                  subtitle: 'Earned and redeemed token statements',
-                  trailingBadge: 'HISTORY',
                   onTap: () => Navigator.of(context).pushNamed('/loyalty'),
                 ),
               ]),
@@ -587,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
                 _buildMenuItem(
                   icon: Icons.settings_outlined,
-                  title: 'Settings',
+                  title: context.tr('Settings'),
                   subtitle: 'App preferences, theme & about',
                   onTap: () => Navigator.of(context).pushNamed('/settings'),
                 ),
@@ -642,7 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       builder: (ctx) => AlertDialog(
                         backgroundColor: colorScheme.surface,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        title: Text('Sign Out', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                        title: Text(context.tr('Sign Out'), style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                         content: Text(
                           'Are you sure you want to sign out from Food Fight?',
                           style: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -650,12 +421,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                            child: Text(context.tr('Cancel'), style: TextStyle(color: colorScheme.onSurfaceVariant)),
                           ),
                           FilledButton(
                             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
                             onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Sign Out'),
+                            child: Text(context.tr('Sign Out')),
                           ),
                         ],
                       ),
@@ -700,7 +471,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimens.navBarScrollPadding),
+              SizedBox(height: AppInsets.bottomBarClearance(context)),
             ],
           ),
         ),

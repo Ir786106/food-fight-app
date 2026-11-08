@@ -28,9 +28,13 @@ node_modules/
 .dart_tool/
 .flutter-plugins-dependencies
 .flutter-plugins
+.packages
 .pub-cache/
 .pub/
 /build/
+**/node_modules/
+android/.gradle/
+android/.kotlin/
 /coverage/
 
 # Symbolication & Obfuscation related
@@ -48,6 +52,20 @@ app.*.map.json
 /android/local.properties
 *.apk
 *.apk.sha256
+*.aab
+*.ipa
+*.zip
+*.tar
+*.7z
+*.bak
+*.old
+*.orig
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+release/
+web/maps-config.js
 
 # Platform ephemeral files
 **/ephemeral/

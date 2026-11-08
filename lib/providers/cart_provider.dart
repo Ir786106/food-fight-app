@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:cloud_functions/cloud_functions.dart';
+import '../services/checkout_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_fight/models/cart_item_model.dart';
@@ -95,7 +97,10 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   double get loyaltyDiscount => (_tokensToRedeem * _tokenValue).clamp(0.0, subtotal);
 
   void setTokensToRedeem(int count, {double tokenValue = 1.0}) {
-    _tokensToRedeem = count.clamp(0, subtotal.toInt());
+    if (!tokenValue.isFinite || tokenValue <= 0) {
+      throw ArgumentError('Token value must be positive');
+    }
+    _tokensToRedeem = count.clamp(0, (subtotal / tokenValue).floor());
     _tokenValue = tokenValue;
     notifyListeners();
   }
@@ -163,9 +168,8 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Apply loyalty tokens for discount at checkout
   void applyTokens(int tokens, {double tokenValue = 1.0}) {
-    _tokensToRedeem = tokens;
-    _tokenValue = tokenValue;
-    notifyListeners();
+    if (tokens > 0) removeCoupon();
+    setTokensToRedeem(tokens, tokenValue: tokenValue);
   }
 
   /// Remove tokens
@@ -368,7 +372,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       return false;
     }
 
-    final result = await CouponService.validateCoupon(code, subtotal);
+    final result = await CouponService.validateCoupon(code, subtotal, branchId: branchId);
     if (!result.isValid) {
       _couponError = result.errorMessage ?? 'Invalid coupon code';
       _appliedCoupon = null;
@@ -428,6 +432,8 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     String paymentStatus = 'pending',
     String restaurantName = 'Food Fight HQ',
     String? branchId,
+    String? addressId,
+    Future<bool> Function(double total)? confirmQuote,
   }) async {
     final effectiveBranchId = branchId ?? this.branchId;
     final effectiveDiscount = loyaltyDiscount > 0 ? loyaltyDiscount : _couponDiscount;
@@ -455,11 +461,35 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       tokensDiscount: loyaltyDiscount,
     );
 
-    final generatedId = await OrderService.placeOrder(order);
-
-    final savedOrder = order.copyWith(id: generatedId);
-
-    clearCart();
-    return savedOrder;
+    if (_selectedArea == null || effectiveBranchId == null) {
+      throw StateError('Choose your branch and delivery area.');
+    }
+    try {
+      final savedOrder = await CheckoutService.place(order,
+        deliveryAreaId: _selectedArea!.id,
+        couponId: _tokensToRedeem > 0 ? null : _appliedCoupon?.id,
+        addressId: addressId,
+        confirmQuote: confirmQuote);
+      clearCart();
+      await _saveCartToPrefs();
+      await CheckoutService.complete();
+      return savedOrder;
+    } on FirebaseFunctionsException catch (error) {
+      final details = error.details;
+      if (details is Map && details['reason'] == 'price-changed' && details['order'] is Map) {
+        await CheckoutService.complete();
+        final updated = OrderModel.fromJson(jsonDecode(jsonEncode(details['order'])) as Map<String, dynamic>);
+        _items..clear()..addAll(updated.items);
+        _tokenValue = (details['tokenValue'] as num?)?.toDouble() ?? _tokenValue;
+        final area = _selectedArea;
+        if (area != null) { _selectedArea = DeliveryAreaModel(id: area.id, name: area.name,
+          deliveryCharge: updated.deliveryCharge, isActive: area.isActive, createdAt: area.createdAt,
+          updatedAt: DateTime.now(), description: area.description, branchId: area.branchId); }
+        _couponDiscount = (updated.discount - updated.tokensDiscount).clamp(0.0, updated.subtotal);
+        await _saveCartToPrefs();
+        notifyListeners();
+      }
+      rethrow;
+    }
   }
 }

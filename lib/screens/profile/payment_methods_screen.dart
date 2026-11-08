@@ -1,5 +1,5 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/payment_method_model.dart';
 import '../../providers/auth_provider.dart';
@@ -32,15 +32,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     }
   }
 
-  void _showAddMethodModal(BuildContext context, String userId) {
-    String selectedGateway = 'card'; // 'card', 'jazzcash', 'easypaisa'
-    final cardHolderCtrl = TextEditingController();
-    final cardNumberCtrl = TextEditingController();
-    final expiryCtrl = TextEditingController();
-    final cvvCtrl = TextEditingController();
-    final walletPhoneCtrl = TextEditingController();
-    bool setAsDefault = true;
-    bool isTokenizing = false;
+  void _showAddMethodModal(BuildContext context, String userId, {PaymentMethodModel? existing}) {
+    String selectedGateway = existing?.gateway ?? 'jazzcash';
+    final walletPhoneCtrl = TextEditingController(text: existing?.accountReference);
+    bool setAsDefault = existing?.isDefault ?? true;
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -95,21 +91,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Card details are securely tokenized with 256-bit encryption. Raw CVV is never stored.',
+                    'Save a wallet account reference for your records. Payments are not processed in this app.',
                     style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 18),
 
-                  // Gateway Selector Tabs
                   Row(
                     children: [
-                      _buildGatewayTab(
-                        label: 'Debit/Credit Card',
-                        icon: Icons.credit_card_rounded,
-                        isSelected: selectedGateway == 'card',
-                        onTap: () => setModalState(() => selectedGateway = 'card'),
-                      ),
-                      const SizedBox(width: 8),
                       _buildGatewayTab(
                         label: 'JazzCash',
                         icon: Icons.account_balance_wallet_rounded,
@@ -127,85 +115,22 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  if (selectedGateway == 'card') ...[
-                    TextFormField(
-                      controller: cardHolderCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Cardholder Name *',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
+                  TextFormField(
+                    controller: walletPhoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: selectedGateway == 'jazzcash'
+                          ? 'JazzCash mobile number *'
+                          : 'Easypaisa mobile number *',
+                      hintText: '03XXXXXXXXX',
+                      prefixIcon: const Icon(Icons.phone_iphone_rounded),
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: cardNumberCtrl,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        _CardNumberFormatter(),
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'Card Number (16 digits) *',
-                        hintText: '0000 0000 0000 0000',
-                        prefixIcon: Icon(Icons.credit_card_outlined),
-                        counterText: '',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: expiryCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              _CardExpiryFormatter(),
-                            ],
-                            decoration: const InputDecoration(
-                              labelText: 'Expiry (MM/YY) *',
-                              hintText: 'MM/YY',
-                              prefixIcon: Icon(Icons.calendar_today_outlined),
-                              counterText: '',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: cvvCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(4),
-                            ],
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                              labelText: 'CVV *',
-                              hintText: '•••',
-                              prefixIcon: Icon(Icons.lock_outline),
-                              counterText: '',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ] else ...[
-                    TextFormField(
-                      controller: walletPhoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: selectedGateway == 'jazzcash'
-                            ? 'JazzCash Mobile Account Number (03XX-XXXXXXX) *'
-                            : 'Easypaisa Mobile Account Number (03XX-XXXXXXX) *',
-                        prefixIcon: const Icon(Icons.phone_iphone_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'You will receive an OTP prompt on your mobile wallet to authorize payments.',
-                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This only saves the wallet number as a reference; it will not authorize or process payments.',
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                  ),
 
                   const SizedBox(height: 14),
                   CheckboxListTile(
@@ -228,78 +153,62 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         foregroundColor: AppColors.onYellow,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      onPressed: isTokenizing
+                      onPressed: isSaving
                           ? null
                           : () async {
-                              if (selectedGateway == 'card') {
-                                final numText = cardNumberCtrl.text.replaceAll(' ', '').trim();
-                                if (numText.length < 15) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Please enter a valid card number')),
-                                  );
-                                  return;
-                                }
-                              } else {
-                                final phone = walletPhoneCtrl.text.trim();
-                                if (phone.length < 10) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Please enter a valid mobile account number')),
-                                  );
-                                  return;
-                                }
+                              final phone = walletPhoneCtrl.text.trim();
+                              if (!RegExp(r'^03\d{9}$').hasMatch(phone)) {
+                                AppSnackbar.showSnackBar(context,
+                                  const SnackBar(
+                                    content: Text('Enter a valid 11-digit mobile number starting with 03'),
+                                  ),
+                                );
+                                return;
                               }
 
-                              setModalState(() => isTokenizing = true);
-
-                              // Perform gateway client tokenization simulation
-                              final last4 = selectedGateway == 'card'
-                                  ? (cardNumberCtrl.text.length >= 4
-                                      ? cardNumberCtrl.text.substring(cardNumberCtrl.text.length - 4)
-                                      : '4242')
-                                  : (walletPhoneCtrl.text.length >= 4
-                                      ? walletPhoneCtrl.text.substring(walletPhoneCtrl.text.length - 4)
-                                      : '0000');
-
-                              final token = 'tok_${selectedGateway}_${DateTime.now().millisecondsSinceEpoch}';
-                              final masked = selectedGateway == 'card'
-                                  ? '•••• •••• •••• $last4'
-                                  : '${walletPhoneCtrl.text.substring(0, 4)} •••• $last4';
+                              setModalState(() => isSaving = true);
+                              final last4 = phone.substring(phone.length - 4);
+                              final masked = '${phone.substring(0, 4)} •••• $last4';
 
                               final newMethod = PaymentMethodModel(
                                 id: '',
                                 userId: userId,
                                 type: selectedGateway,
-                                gateway: selectedGateway == 'card' ? 'stripe' : selectedGateway,
+                                gateway: selectedGateway,
                                 maskedNumber: masked,
-                                title: selectedGateway == 'card'
-                                    ? 'Card ending in $last4'
-                                    : (selectedGateway == 'jazzcash'
-                                        ? 'JazzCash Account ($last4)'
-                                        : 'Easypaisa Account ($last4)'),
-                                token: token,
-                                cardBrand: selectedGateway == 'card' ? 'Visa' : null,
-                                expiry: selectedGateway == 'card' ? expiryCtrl.text.trim() : null,
+                                title: selectedGateway == 'jazzcash'
+                                    ? 'JazzCash Account ($last4)'
+                                    : 'Easypaisa Account ($last4)',
+                                token: '',
+                                accountReference: phone,
                                 isDefault: setAsDefault,
                                 createdAt: DateTime.now(),
                               );
-
-                              final messenger = ScaffoldMessenger.of(context);
-                              final ok = await context.read<PaymentMethodProvider>().addMethod(newMethod);
+                              bool ok = false;
+                              try {
+                                ok = await context
+                                    .read<PaymentMethodProvider>()
+                                    .addMethod(newMethod);
+                              } finally {
+                                if (sheetContext.mounted) {
+                                  setModalState(() => isSaving = false);
+                                }
+                              }
                               if (ctx.mounted) {
                                 Navigator.pop(ctx);
                               }
-                              if (mounted) {
-                                messenger.showSnackBar(
+                              if (mounted && context.mounted) {
+                                AppSnackbar.showSnackBar(context,
                                   SnackBar(
                                     content: Text(ok
-                                        ? 'Payment method safely tokenized and saved!'
+                                        ? 'Wallet reference saved. Payments are not processed in-app.'
                                         : 'Failed to add payment method'),
                                     backgroundColor: ok ? AppColors.success : AppColors.error,
                                   ),
                                 );
                               }
                             },
-                      child: isTokenizing
+                      child: isSaving
                           ? const SizedBox(
                               width: 20,
                               height: 20,
@@ -314,7 +223,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(walletPhoneCtrl.dispose);
   }
 
   Widget _buildGatewayTab({
@@ -388,7 +297,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               }
 
               if (paymentProvider.isLoading && paymentProvider.methods.isEmpty) {
-                return const LoadingIndicator(message: 'Securing payment vault...');
+                return const LoadingIndicator(message: 'Loading saved payment methods...');
               }
 
               if (paymentProvider.errorMessage != null && paymentProvider.methods.isEmpty) {
@@ -409,7 +318,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           icon: Icons.credit_card_off_rounded,
                           title: 'No Saved Payment Methods',
                           description:
-                              'Save your Debit/Credit card or JazzCash/Easypaisa mobile wallet for lightning-fast 1-tap checkout.',
+                              'Save a JazzCash or Easypaisa mobile number as a reference. Payments are not processed in-app.',
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
@@ -444,7 +353,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Tokenized Reference Storage: All credentials are encrypted and stored via secure payment gateway reference tokens.',
+                            'Saved wallet numbers are references only. Card and wallet payments are not processed in-app.',
                             style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
                           ),
                         ),
@@ -541,7 +450,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         trailing: PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert_rounded),
                           onSelected: (val) async {
-                            if (val == 'default') {
+                            if (val == 'edit') {
+                              _showAddMethodModal(context, user.id, existing: method);
+                            } else if (val == 'default') {
                               await paymentProvider.setDefault(user.id, method.id);
                             } else if (val == 'delete') {
                               final confirm = await showDialog<bool>(
@@ -568,6 +479,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                             }
                           },
                           itemBuilder: (ctx) => [
+                            if (method.type != 'card') const PopupMenuItem(value: 'edit', child: Text('Edit wallet reference')),
                             if (!isDefault)
                               const PopupMenuItem(
                                 value: 'default',
@@ -601,52 +513,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ),
         ),
       ),
-      floatingActionButton: user != null && paymentProvider.methods.isNotEmpty
-          ? FloatingActionButton.extended(
-              backgroundColor: AppColors.brandYellow,
-              foregroundColor: AppColors.onYellow,
-              onPressed: () => _showAddMethodModal(context, user.id),
-              icon: const Icon(Icons.add_rounded, color: AppColors.onYellow),
-              label: const Text('Add Method', style: TextStyle(fontWeight: FontWeight.bold)),
-            )
-          : null,
+      bottomNavigationBar: user == null ? null : SafeArea(top: false, child: Padding(
+        padding: const EdgeInsets.all(16), child: FilledButton.icon(
+          onPressed: () => _showAddMethodModal(context, user.id), icon: const Icon(Icons.add), label: const Text('Add wallet reference')))),
     );
   }
 }
-
-class _CardNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var text = newValue.text.replaceAll(' ', '');
-    if (text.length > 16) text = text.substring(0, 16);
-    final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      if (i > 0 && i % 4 == 0) buffer.write(' ');
-      buffer.write(text[i]);
-    }
-    final str = buffer.toString();
-    return TextEditingValue(
-      text: str,
-      selection: TextSelection.collapsed(offset: str.length),
-    );
-  }
-}
-
-class _CardExpiryFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var text = newValue.text.replaceAll('/', '');
-    if (text.length > 4) text = text.substring(0, 4);
-    final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      if (i == 2) buffer.write('/');
-      buffer.write(text[i]);
-    }
-    final str = buffer.toString();
-    return TextEditingValue(
-      text: str,
-      selection: TextSelection.collapsed(offset: str.length),
-    );
-  }
-}
-

@@ -1,3 +1,5 @@
+import '../core/config/app_edition.dart';
+import '../screens/admin/menu/menu_reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
@@ -68,7 +70,13 @@ import '../screens/super_admin/audit/super_admin_audit_logs_screen.dart';
 /// This ensures unauthorized roles cannot reach restricted screens even if navigated
 /// to directly.
 class AppRoutes {
+  static Map<String, WidgetBuilder> routesFor(AppEdition edition) => {
+    for (final entry in routes.entries)
+      if (edition.allowsRoute(entry.key)) entry.key: entry.value,
+  };
+
   static Map<String, WidgetBuilder> routes = {
+    '/admin/menu-reports': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: MenuReportsScreen()),
     // -------------------------------------------------------------------------
     // 1. Shared & Customer Storefront Routes
     // -------------------------------------------------------------------------
@@ -123,7 +131,7 @@ class AppRoutes {
     '/admin/riders': (context) => const AdminRouteGuard(requiredPermission: 'riders', child: ManageRidersScreen()),
     '/admin/coupons': (context) => const AdminRouteGuard(requiredPermission: 'coupons', child: ManageCouponsScreen()),
     '/admin/deals': (context) => const AdminRouteGuard(child: ManageDealsScreen()),
-    '/admin/reviews': (context) => const AdminRouteGuard(child: AdminReviewsScreen()),
+    '/admin/reviews': (context) => const AdminRouteGuard(requiredPermission: 'reviews', child: AdminReviewsScreen()),
     '/admin/reports': (context) => const AdminRouteGuard(requiredPermission: 'reports', child: SalesReportsScreen()),
     '/admin/sub-admins': (context) => const AdminRouteGuard(blockSubAdmin: true, child: ManageSubAdminsScreen()),
 

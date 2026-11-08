@@ -13,6 +13,8 @@ export '../../widgets/common/empty_state_view.dart';
 export '../../widgets/common/error_view.dart';
 export '../../widgets/common/loading_indicator.dart';
 export '../../widgets/common/network_image_view.dart';
+export '../utils/app_insets.dart';
+export '../utils/app_snackbar.dart';
 
 /// Food Fight Canonical Design System Tokens & Utility Helpers
 /// Provides unified access to typography, spacing, radius, elevations,
@@ -51,11 +53,10 @@ class DesignSystem {
   static const Curve curveEmphasis = Curves.easeInOutCubic;
 
   // Component Paddings
-  static const EdgeInsets screenPadding = EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0);
+  static const EdgeInsets screenPadding =
+      EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0);
   static const EdgeInsets cardPadding = EdgeInsets.all(16.0);
   static const EdgeInsets dialogPadding = EdgeInsets.all(24.0);
-  static const EdgeInsets buttonPadding = EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0);
-
-  // Nav Inset Constant (Reserved bottom scroll padding when floating nav is present)
-  static const double floatingNavContentInset = 110.0;
+  static const EdgeInsets buttonPadding =
+      EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0);
 }

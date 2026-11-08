@@ -25,8 +25,10 @@ class ReviewProvider extends ChangeNotifier with SafeChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  bool get hasReviews => _itemReviews.isNotEmpty;
+
   double get averageRating {
-    if (_itemReviews.isEmpty) return 4.8;
+    if (_itemReviews.isEmpty) return 0.0;
     final sum = _itemReviews.fold(0.0, (acc, r) => acc + r.rating);
     return double.parse((sum / _itemReviews.length).toStringAsFixed(1));
   }

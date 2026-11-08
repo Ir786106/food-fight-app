@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
@@ -85,7 +86,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 if (userId.isNotEmpty) {
                   await notifProvider.markAllAsRead(userId);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    AppSnackbar.showSnackBar(context,
                       const SnackBar(content: Text('All notifications marked as read')),
                     );
                   }
@@ -202,12 +203,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               notifProvider.markAsRead(n.id);
                             }
                             final refId = n.referenceId;
-                            if (n.type == 'chat' ||
-                                refId?.startsWith('chat_') == true ||
-                                refId?.startsWith('order_') == true) {
-                              Navigator.pushNamed(context, '/chat', arguments: refId);
-                            } else if (refId != null && refId.isNotEmpty) {
-                              Navigator.pushNamed(context, '/order-tracking', arguments: refId);
+                            final user = context.read<AuthProvider>().currentUser;
+                            if (n.type == 'chat' && refId != null) {
+                              Navigator.pushNamed(context, user?.isAdmin == true ? '/admin/chats' : '/chat', arguments: {'chatId': refId});
+                            } else if (n.type == 'order' && refId != null) {
+                              Navigator.pushNamed(context, user?.isRider == true ? '/rider' : user?.isAdmin == true ? '/admin/orders' : '/order-tracking', arguments: refId);
                             }
                           },
                           child: Container(

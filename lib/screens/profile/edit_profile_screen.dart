@@ -1,11 +1,12 @@
-import 'dart:io';
+import 'package:food_fight/core/utils/app_insets.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/app_image_storage_service.dart';
-import '../../core/constants/image_storage.dart';
 import '../../core/utils/logger.dart';
 import '../../core/constants/app_colors.dart';
 import '../../theme/app_theme.dart';
@@ -27,6 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _emailController;
   String? _profileImageUrl;
   XFile? _pickedImage;
+  Uint8List? _pickedBytes;
   bool _removePhoto = false;
   bool _isLoading = false;
 
@@ -106,7 +108,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onTap: () async {
                   Navigator.pop(ctx);
                   final img = await AppImageStorageService.pickImage(source: ImageSource.camera);
-                  if (img != null) {
+                  if (img != null && mounted) {
+                    final bytes = await img.readAsBytes();
+                    if (!mounted) return;
+                    _pickedBytes = bytes;
                     setState(() {
                       _pickedImage = img;
                       _removePhoto = false;
@@ -131,7 +136,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onTap: () async {
                   Navigator.pop(ctx);
                   final img = await AppImageStorageService.pickImage(source: ImageSource.gallery);
-                  if (img != null) {
+                  if (img != null && mounted) {
+                    final bytes = await img.readAsBytes();
+                    if (!mounted) return;
+                    _pickedBytes = bytes;
                     setState(() {
                       _pickedImage = img;
                       _removePhoto = false;
@@ -169,6 +177,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _save() async {
+    if (_isLoading) return;
+    if (_nameController.text.trim().length < 2) {
+      AppSnackbar.showError(context, 'Enter your full name.'); return;
+    }
+    if (!RegExp(r'^(03\d{9}|\+923\d{9})$').hasMatch(_phoneController.text.replaceAll(RegExp(r'[\s()-]'), ''))) {
+      AppSnackbar.showError(context, 'Enter a valid Pakistani mobile number.');
+      return;
+    }
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     if (user == null) return;
@@ -182,7 +198,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final storage = AppImageStorageService();
         finalPhotoUrl = await storage.uploadImage(
           image: _pickedImage!,
-          path: StoragePaths.userImagesPath,
+          path: 'profiles/${user.id}',
         );
       }
 
@@ -196,7 +212,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _isLoading = false);
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           const SnackBar(
             content: Text('Profile updated successfully'),
             backgroundColor: AppColors.success,
@@ -205,7 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Navigator.of(context).pop();
       } else {
         final err = auth.errorMessage ?? 'Failed to update profile. Please try again.';
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text(err),
             backgroundColor: AppColors.error,
@@ -226,7 +242,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             errText.contains('network') ||
             errText.contains('unavailable') ||
             errText.contains('timeout');
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text(isNetwork
                 ? 'Network connection issue. Please check your internet.'
@@ -260,7 +276,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: ResponsiveContainer.content(
           maxWidth: 680,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+            padding: AppInsets.scrollPadding(context, horizontal: 20, top: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -293,8 +309,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   ),
                                 )
                               : (_pickedImage != null
-                                  ? Image.file(
-                                      File(_pickedImage!.path),
+                                  ? Image.memory(
+                                      _pickedBytes!,
                                       width: 104,
                                       height: 104,
                                       fit: BoxFit.cover,
@@ -418,6 +434,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ],
         ),
         child: SafeArea(
+                top: false,
           child: CustomButton(
             text: 'Save Changes',
             isLoading: _isLoading,

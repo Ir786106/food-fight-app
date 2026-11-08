@@ -1,3 +1,8 @@
+import 'core/config/local_demo.dart';
+import 'core/config/app_edition.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/localization/app_language.dart';
+import 'widgets/common/session_bindings.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -41,20 +46,26 @@ import 'core/utils/logger.dart';
 import 'routes/app_routes.dart';
 import 'screens/common/not_found_screen.dart';
 
-void main() async {
+Future<void> main() => runFoodFight();
+
+Future<void> runFoodFight({AppEdition edition = AppEdition.combined}) async {
   AppStartupMetrics.start();
   AppLogger.info('[PERF] main() started (+0ms)', tag: 'Startup');
 
   WidgetsFlutterBinding.ensureInitialized();
   AppLogger.info('[PERF] WidgetsFlutterBinding initialized (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    AppLogger.info('[PERF] Firebase.initializeApp finished (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
-  } catch (e) {
-    AppLogger.warn('Firebase initialization notice: $e', tag: 'Startup');
+  if (LocalDemo.enabled) {
+    await LocalDemo.connect();
+  } else {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      AppLogger.info('[PERF] Firebase.initializeApp finished (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+    } catch (e) {
+      AppLogger.warn('Firebase initialization notice: $e', tag: 'Startup');
+    }
   }
 
   final themeProvider = ThemeProvider();
@@ -62,15 +73,24 @@ void main() async {
   AppLogger.info('[PERF] ThemeProvider loaded (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
 
   // Trigger non-blocking background bootstrap concurrently with first frame
-  unawaited(AppBootstrap.startBackgroundBootstrap());
+  if (!LocalDemo.enabled) unawaited(AppBootstrap.startBackgroundBootstrap());
 
-  runApp(FoodFightApp(themeProvider: themeProvider));
+  final language = AppLanguage();
+  await language.load();
+  runApp(FoodFightApp(themeProvider: themeProvider, language: language, edition: edition));
 }
 
 class FoodFightApp extends StatelessWidget {
   final ThemeProvider? themeProvider;
 
-  const FoodFightApp({super.key, this.themeProvider});
+  final AppLanguage? language;
+
+  final AppEdition edition;
+
+  const FoodFightApp({
+    super.key, this.themeProvider, this.language,
+    this.edition = AppEdition.combined,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -79,9 +99,10 @@ class FoodFightApp extends StatelessWidget {
     });
     final effectiveTheme = themeProvider ?? ThemeProvider();
 
-    return MultiProvider(
+    return ChangeNotifierProvider(create: (_) => AuthProvider(edition: edition),
+      child: Consumer<AuthProvider>(builder: (context, auth, _) => MultiProvider(
+      key: ValueKey(auth.currentUser?.id ?? 'guest'),
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
 
         ChangeNotifierProvider(create: (_) => CartProvider()),
 
@@ -132,11 +153,16 @@ class FoodFightApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppUpdateProvider()),
         
         ChangeNotifierProvider.value(value: effectiveTheme),
+        if (language != null) ChangeNotifierProvider.value(value: language!),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp(
-            title: AppConstants.appName,
+            navigatorKey: navigatorKeyForSession(auth.currentUser?.id),
+            title: edition == AppEdition.combined ? AppConstants.appName : edition.title,
+            locale: context.watch<AppLanguage?>()?.locale ?? AppLanguage.english,
+            supportedLocales: AppLanguage.supportedLocales,
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
             debugShowCheckedModeBanner: false,
 
             theme: AppTheme.lightTheme,
@@ -153,11 +179,19 @@ class FoodFightApp extends StatelessWidget {
               );
               return MediaQuery(
                 data: mediaQuery.copyWith(textScaler: clampedScaler),
-                child: child ?? const SizedBox.shrink(),
+                child: SessionBindings(
+                  child: Padding(
+                    // Firebase Auth's web emulator notice is outside Flutter.
+                    padding: const EdgeInsets.only(
+                      bottom: LocalDemo.enabled ? 40 : 0,
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               );
             },
 
-            routes: AppRoutes.routes,
+            routes: AppRoutes.routesFor(edition),
             onUnknownRoute: (settings) => MaterialPageRoute(
               settings: settings,
               builder: (context) => NotFoundScreen(routeName: settings.name),
@@ -165,6 +199,6 @@ class FoodFightApp extends StatelessWidget {
           );
         },
       ),
-    );
+    )));
   }
 }

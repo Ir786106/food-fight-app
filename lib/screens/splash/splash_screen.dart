@@ -1,3 +1,4 @@
+import '../../core/config/app_edition.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
@@ -92,10 +93,13 @@ class _SplashScreenState extends State<SplashScreen>
   void _startParallelRouting() {
     final minAnimationDelay = Future.delayed(const Duration(milliseconds: 1400));
     final routeResolution = _decideDestinationRoute();
+    final edition = context.read<AuthProvider>().edition;
 
     Future.wait([minAnimationDelay, routeResolution])
         .timeout(
-          const Duration(milliseconds: 3800),
+          edition == AppEdition.combined
+              ? const Duration(milliseconds: 3800)
+              : const Duration(seconds: 26),
           onTimeout: () => [null, null],
         )
         .then((results) async {
@@ -170,16 +174,23 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<String?> _decideDestinationRoute() async {
     try {
+      final auth = context.read<AuthProvider>();
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser == null) {
+        if (!auth.edition.allowsCustomerRegistration) return RoleRouter.loginRoute;
         final prefs = await SharedPreferences.getInstance();
         final onboardingCompleted =
             prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
         return onboardingCompleted ? '/login' : '/onboarding';
       }
 
+      if (auth.edition != AppEdition.combined) {
+        await auth.init(preferCache: false);
+        if (auth.currentUser != null) return RoleRouter.homeRouteFor(auth.currentUser);
+        return FirebaseAuth.instance.currentUser == null ? RoleRouter.loginRoute : null;
+      }
+
       // User has active session: load cached profile instantly
-      final auth = context.read<AuthProvider>();
       await auth.init(preferCache: true).timeout(
         const Duration(seconds: 3),
         onTimeout: () {
@@ -205,7 +216,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<String?> _fallbackOfflineRoute() async {
+    if (!mounted) return null;
     try {
+      final auth = context.read<AuthProvider>();
+      if (auth.edition != AppEdition.combined) return null;
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null) {
         final cachedRole = await FirebaseAuthService.getCachedUserRole(firebaseUser.uid);

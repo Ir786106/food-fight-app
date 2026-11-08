@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -243,7 +244,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           AppLogger.error('Category save error: $e\n$stack', tag: 'ManageCategories');
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
+                            AppSnackbar.showSnackBar(ctx,
                               const SnackBar(
                                 content: Text('No connection. Please check your internet and try again.'),
                                 backgroundColor: AppColors.error,
@@ -289,7 +290,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
               Navigator.pop(ctx);
               final success = await context.read<CategoryProvider>().deleteCategory(category.id);
               if (mounted && success) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                AppSnackbar.showSnackBar(context,
                   SnackBar(content: Text('Category "${category.name}" deleted')),
                 );
               }

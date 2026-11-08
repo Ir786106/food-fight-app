@@ -1,3 +1,7 @@
+import '../core/config/app_edition.dart';
+import 'package:firebase_auth/firebase_auth.dart'
+    show FirebaseAuthException, UserCredential;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,7 +15,23 @@ import 'package:food_fight/core/constants/firestore_collections.dart';
 
 /// Authentication state provider for role-based access & user session
 class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
-  final FirebaseAuthService _authService = FirebaseAuthService();
+  AuthProvider({this.edition = AppEdition.combined, FirebaseAuthService? authService})
+      : _authService = authService ?? FirebaseAuthService();
+
+  final AppEdition edition;
+  bool get _restricted => edition != AppEdition.combined;
+
+  Future<UserModel?> _admit(UserModel? user) async {
+    if (_restricted && user != null &&
+        (!user.isActive || !edition.allowsRole(user.userRole))) {
+      _currentUser = null;
+      await _authService.signOut();
+      throw AppException(message: 'This account cannot sign in to ${edition.title}.');
+    }
+    return user;
+  }
+
+  final FirebaseAuthService _authService;
   StreamSubscription<DocumentSnapshot>? _userDocSubscription;
 
   UserModel? _currentUser;
@@ -33,7 +53,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     notifyListeners();
 
     try {
-      _currentUser = await _authService.getCurrentUser(preferCache: preferCache);
+      _currentUser = await _admit(_restricted
+          ? await _authService.getVerifiedCurrentUser()
+          : await _authService.getCurrentUser(preferCache: preferCache));
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
         _listenToUserDoc(_currentUser!.id);
@@ -43,6 +65,11 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       AppLogger.info('Auth initialized: ${_currentUser?.email} (${_currentUser?.role})', tag: 'AuthProvider');
     } catch (e) {
       AppLogger.error('Auth initialization error: $e', tag: 'AuthProvider');
+      if (_restricted) {
+        _currentUser = null;
+        _errorMessage = _parseError(e, 'Could not verify your account.');
+        return;
+      }
       try {
         _currentUser = await _authService.getCurrentUser(preferCache: true);
         if (_currentUser != null) {
@@ -66,13 +93,19 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         .snapshots()
         .listen(
       (snapshot) {
-        if (!snapshot.exists || snapshot.data() == null) return;
+        if (_currentUser?.id != uid || (_restricted && snapshot.metadata.isFromCache)) return;
+        if (!snapshot.exists || snapshot.data() == null) {
+          if (_restricted) unawaited(signOut());
+          return;
+        }
         final data = snapshot.data()!;
         data['id'] = uid;
         final updatedUser = UserModel.fromJson(data);
 
         // Live deactivation: immediately sign out deactivated user
-        if (!updatedUser.isActive) {
+        if (!updatedUser.isActive || (_restricted &&
+            (!edition.allowsRole(UserRole.fromString(data['role'])) ||
+                data['isBlocked'] == true || data['status'] == 'blocked'))) {
           AppLogger.warn('User ${updatedUser.id} deactivated in real-time. Signing out.', tag: 'AuthProvider');
           signOut();
           _errorMessage = 'Your account has been deactivated by administrator.';
@@ -109,7 +142,10 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         final data = doc.data()!;
         data['id'] = uid;
         final freshUser = UserModel.fromJson(data);
-        if (!freshUser.isActive) {
+        if (_currentUser?.id != uid) return;
+        if (!freshUser.isActive || (_restricted &&
+            (!edition.allowsRole(UserRole.fromString(data['role'])) ||
+                data['isBlocked'] == true || data['status'] == 'blocked'))) {
           await signOut();
           _errorMessage = 'Your account has been deactivated by administrator.';
           notifyListeners();
@@ -133,7 +169,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     _clearError();
 
     try {
-      _currentUser = await _authService.signIn(email: email, password: password);
+      _currentUser = await _admit(await _authService.signIn(
+        email: email, password: password, allowCachedRole: !_restricted,
+      ));
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
         _listenToUserDoc(_currentUser!.id);
@@ -161,6 +199,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     _clearError();
 
     try {
+      if (!edition.allowsCustomerRegistration) {
+        throw AppException(message: 'Contact your administrator for an account.');
+      }
       _currentUser = await _authService.signUp(
         name: name,
         email: email,
@@ -189,7 +230,10 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     _clearError();
 
     try {
-      final user = await _authService.signInWithGoogle();
+      if (!edition.allowsCustomerRegistration) {
+        throw AppException(message: 'Use your staff email and password.');
+      }
+      final user = await _admit(await _authService.signInWithGoogle(allowCachedRole: !_restricted));
       if (user == null) {
         // User cancelled the flow
         return false;
@@ -209,11 +253,55 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     }
   }
 
+  Future<bool> signInWithPhone(
+    Future<UserCredential> Function(String) confirm,
+    String code,
+  ) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      if (!edition.allowsCustomerRegistration) {
+        throw AppException(message: 'Use your staff email and password.');
+      }
+      final user = await _authService.signInWithPhone(confirm, code);
+      _currentUser = user;
+      FcmService.registerUserToken(user.id);
+      _listenToUserDoc(user.id);
+      return true;
+    } on AppException catch (error) {
+      _errorMessage = error.message;
+      return false;
+    } on FirebaseAuthException catch (error) {
+      _errorMessage = switch (error.code) {
+        'invalid-verification-code' => 'The code is incorrect. Try again.',
+        'session-expired' => 'The code expired. Request a new one.',
+        _ => 'Phone sign-in failed. Try again or request a new code.',
+      };
+      return false;
+    } catch (_) {
+      _errorMessage = 'Phone sign-in failed. Please try again.';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Sign Out
   Future<void> signOut() async {
     try {
       _userDocSubscription?.cancel();
       _userDocSubscription = null;
+      if (_restricted) {
+        await FcmService.unregisterUserToken().timeout(
+          const Duration(seconds: 3), onTimeout: () {},
+        );
+      } else {
+        await FcmService.unregisterUserToken();
+      }
+      final prefs = await SharedPreferences.getInstance();
+      for (final key in ['food_fight_cart_v1','food_fight_cart_branch_v1','food_fight_favorites_v1','pending_checkout_v1']) {
+        await prefs.remove(key);
+      }
       await _authService.signOut();
       _currentUser = null;
       notifyListeners();
@@ -250,7 +338,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     _setLoading(true);
     try {
       await _authService.updateProfile(name: name, phone: phone, profileImage: profileImage);
-      _currentUser = await _authService.getCurrentUser();
+      _currentUser = await _admit(_restricted
+          ? await _authService.getVerifiedCurrentUser()
+          : await _authService.getCurrentUser());
       _setLoading(false);
       return true;
     } catch (e) {

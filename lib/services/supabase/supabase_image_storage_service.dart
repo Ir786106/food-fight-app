@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide StorageException;
@@ -156,101 +157,80 @@ class SupabaseImageStorageService implements IImageStorageService {
     }
   }
 
-  /// Upload image to Supabase Storage bucket and return public URL
+  static String? signedPurposeForPath(String path) {
+    final segments = path.split('/').where((part) => part.isNotEmpty).toList();
+    return switch (segments) {
+      ['products'] => 'product',
+      ['categories'] => 'category',
+      ['banners'] => 'banner',
+      ['profiles', _] => 'profile',
+      _ => null,
+    };
+  }
+
   @override
   Future<String> uploadImage({
     required XFile image,
     required String path,
-  }) async {
-    final client = _client;
-    if (client == null) {
-      throw StorageException(message: 'Supabase storage is not initialized');
-    }
+    void Function(double)? onProgress,
+  }) => _uploadSigned(image, path, 80, onProgress);
 
-    final Uint8List rawBytes = await image.readAsBytes();
-    final Uint8List bytes = await ImageCompressor.compressAndResize(
-      rawBytes,
-      maxDimension: 1080,
-      quality: 80,
-    );
-    final String rawExt = image.name.split('.').last.toLowerCase();
-    final String cleanExt = supportedImageExtensions.contains(rawExt) ? rawExt : 'jpg';
-
-    final String cleanPath = path.endsWith('/') ? path : '$path/';
-    final String fileName = generateUniqueFileName(cleanPath, image.name, cleanExt);
-    final String fullStoragePath = '$cleanPath$fileName';
-    final String contentType = getMimeType(cleanExt);
-
-    try {
-      await client.storage.from(_bucket).uploadBinary(
-        fullStoragePath,
-        bytes,
-        fileOptions: FileOptions(
-          contentType: contentType,
-          upsert: false,
-        ),
-      );
-
-      final String publicUrl = client.storage.from(_bucket).getPublicUrl(fullStoragePath);
-      AppLogger.info('Image uploaded successfully: $publicUrl', tag: 'SupabaseStorage');
-      return publicUrl;
-    } catch (e) {
-      String errorMsg = e.toString();
-      String? statusCode;
-      try {
-        final dynamic dynErr = e;
-        if (dynErr.statusCode != null) {
-          statusCode = dynErr.statusCode.toString();
-        }
-        if (dynErr.message != null && dynErr.message.toString().isNotEmpty) {
-          errorMsg = dynErr.message.toString();
-        }
-      } catch (_) {}
-
-      final detailedMsg = 'Upload failed [Bucket: $_bucket, Path: $fullStoragePath, Ext: $cleanExt, MIME: $contentType${statusCode != null ? ", Status: $statusCode" : ""}]: $errorMsg';
-      AppLogger.error(detailedMsg, tag: 'SupabaseStorage');
-      throw StorageException(message: detailedMsg);
-    }
-  }
-
-  /// Upload image with compression (delegates to uploadImage with quality)
   @override
   Future<String> uploadCompressedImage({
     required XFile image,
     required String path,
     int quality = 80,
-  }) async {
+    void Function(double)? onProgress,
+  }) => _uploadSigned(image, path, quality, onProgress);
+
+  Future<String> _uploadSigned(
+    XFile image,
+    String path,
+    int quality,
+    void Function(double)? onProgress,
+  ) async {
     final client = _client;
     if (client == null) {
-      throw StorageException(message: 'Supabase storage is not initialized');
+      throw StorageException(message: 'Supabase storage is not initialized.');
     }
-
-    final Uint8List rawBytes = await image.readAsBytes();
-    final Uint8List bytes = await ImageCompressor.compressAndResize(
-      rawBytes,
+    final purpose = signedPurposeForPath(path);
+    if (purpose == null) {
+      throw StorageException(message: 'This image type cannot use signed uploads.');
+    }
+    onProgress?.call(0);
+    if (await image.length() > 20 * 1024 * 1024) {
+      throw StorageException(message: 'Choose an image smaller than 20 MB.');
+    }
+    final bytes = await ImageCompressor.compressAndResize(
+      await image.readAsBytes(),
       maxDimension: 1080,
       quality: quality,
     );
-    final String rawExt = image.name.split('.').last.toLowerCase();
-    final String cleanExt = supportedImageExtensions.contains(rawExt) ? rawExt : 'jpg';
-
-    final String cleanPath = path.endsWith('/') ? path : '$path/';
-    final String fileName = generateUniqueFileName(cleanPath, image.name, cleanExt);
-    final String fullStoragePath = '$cleanPath$fileName';
-    final String contentType = getMimeType(cleanExt);
+    final jpeg = bytes.length >= 4 &&
+        bytes[0] == 0xff && bytes[1] == 0xd8 &&
+        bytes[bytes.length - 2] == 0xff && bytes.last == 0xd9;
+    if (!jpeg || bytes.length > 2 * 1024 * 1024) {
+      throw StorageException(message: 'Choose an image that can be compressed to under 2 MB.');
+    }
 
     try {
-      await client.storage.from(_bucket).uploadBinary(
-        fullStoragePath,
-        bytes,
-        fileOptions: FileOptions(
-          contentType: contentType,
-          upsert: false,
-        ),
+      final grant = await FirebaseFunctions.instance
+          .httpsCallable('createSignedImageUpload')
+          .call({'purpose': purpose, 'sizeBytes': bytes.length});
+      final data = grant.data as Map;
+      final objectPath = data['path'] as String;
+      final token = data['token'] as String;
+      final storage = client.storage.from(_bucket);
+      await storage.uploadBinaryToSignedUrl(
+        objectPath, token, bytes,
+        const FileOptions(contentType: 'image/jpeg', upsert: false),
       );
-      return client.storage.from(_bucket).getPublicUrl(fullStoragePath);
-    } catch (e) {
-      throw StorageException(message: 'Compressed upload failed: $e');
+      onProgress?.call(1);
+      return storage.getPublicUrl(objectPath);
+    } on FirebaseFunctionsException catch (error) {
+      throw StorageException(message: error.message ?? 'Could not authorize image upload.');
+    } catch (_) {
+      throw StorageException(message: 'Could not upload the image. Please try again.');
     }
   }
 

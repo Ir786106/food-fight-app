@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/deal_model.dart';
@@ -374,7 +375,6 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
   }
 
   void _confirmDelete(BuildContext ctx, DealModel deal) async {
-    final messenger = ScaffoldMessenger.of(ctx);
     final provider = ctx.read<DealProvider>();
     final confirm = await showDialog<bool>(
       context: ctx,
@@ -398,7 +398,7 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
     if (confirm == true) {
       await provider.deleteDeal(deal.id);
       if (mounted) {
-        messenger.showSnackBar(
+        AppSnackbar.showSnackBar(context,
           SnackBar(content: Text('Deal "${deal.title}" deleted')),
         );
       }

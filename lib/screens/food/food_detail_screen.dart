@@ -1,8 +1,12 @@
+import '../../widgets/menu/report_dish_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
+import '../../core/utils/app_snackbar.dart';
+import '../../core/utils/logger.dart';
 import '../../models/food_model.dart';
 import '../../models/menu_item_model.dart';
 import '../../models/review_model.dart';
@@ -141,51 +145,44 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     return label.substring(0, 3);
   }
 
-  void _shareDish(FoodModel food) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Sharing "${food.name}" with friends!'),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius12)),
-      ),
-    );
+  Future<void> _shareDish(FoodModel food) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: 'Try ${food.name} from Food Fight',
+          text:
+              'Try ${food.name} from Food Fight for Rs. ${food.price.toStringAsFixed(0)}. '
+              'Find it in the Food Fight app.',
+        ),
+      );
+    } on PlatformException catch (error) {
+      AppLogger.error('Could not share dish: $error', tag: 'FoodDetail');
+      if (mounted) {
+        AppSnackbar.showError(context, 'Unable to share this dish right now.');
+      }
+    } on MissingPluginException catch (error) {
+      AppLogger.error('Dish sharing is unavailable: $error', tag: 'FoodDetail');
+      if (mounted) {
+        AppSnackbar.showError(context, 'Sharing is unavailable on this device.');
+      }
+    }
   }
 
-  void _reportDish(FoodModel food) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius16)),
-        title: const Text('Report Dish or Menu Issue'),
-        content: Text('Let us know if anything is wrong with "${food.name}" (incorrect price, ingredients, or allergens).'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brandYellow,
-              foregroundColor: AppColors.onYellow,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Thank you! Feedback submitted to restaurant management.'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            child: const Text('Submit Report'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _reportDish(FoodModel food) async {
+    final sent = await showDialog<bool>(context: context,
+      builder: (_) => ReportDishDialog(food: food));
+    if (mounted && sent == true) AppSnackbar.showSuccess(context, 'Report sent to the restaurant.');
   }
 
   void _handleAddToCart(FoodModel food, CartProvider cart, double totalPrice) {
+    if (!food.isAvailable) {
+      AppSnackbar.showError(context, 'This dish is currently unavailable.');
+      return;
+    }
+    if (food.hasVariants && _selectedVariant == null) {
+      AppSnackbar.showError(context, 'Choose a size before adding this dish.');
+      return;
+    }
     HapticFeedback.lightImpact();
 
     final spiceStr = food.isSpicy ? 'Spice: ${_spiceName(_spiceLevel)}' : null;
@@ -314,6 +311,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     }
 
     final FoodModel foodItem = food;
+    final itemReviews = context
+        .watch<ReviewProvider>()
+        .itemReviews
+        .where((review) => review.itemId == foodItem.id && !review.isHidden)
+        .toList();
+    final actualRating = itemReviews.isEmpty
+        ? 0.0
+        : itemReviews.fold(0.0, (sum, review) => sum + review.rating) /
+            itemReviews.length;
     final cart = context.watch<CartProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -565,26 +571,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      Text(
-                        _selectedVariant != null
-                            ? '${_selectedVariant!.label} size • ${_selectedVariant!.description ?? "Freshly made standard portion"}'
-                            : (food.description.isNotEmpty ? food.description : 'Standard Portion'),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                      if ((_selectedVariant?.description?.trim().isNotEmpty ?? false) ||
+                          food.description.trim().isNotEmpty)
+                        Text(
+                          _selectedVariant?.description?.trim().isNotEmpty == true
+                              ? _selectedVariant!.description!.trim()
+                              : food.description.trim(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Live price: Rs. ${unitPrice.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.brandMaroon,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -637,28 +636,29 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.brandYellow.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(AppDimens.radius8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star_rounded, size: 16, color: AppColors.onYellowDark),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${food.rating}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.onYellowDark,
+                      if (itemReviews.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.brandYellow.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(AppDimens.radius8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded, size: 16, color: AppColors.onYellowDark),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${actualRating.toStringAsFixed(1)} (${itemReviews.length})',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.onYellowDark,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
@@ -1085,39 +1085,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       ),
                     ),
                     const SizedBox(height: 18),
-                    // Nutritional Highlights
-                    Row(
-                      children: [
-                        _buildNutritionChip('Calories', '580 kcal', Icons.local_fire_department_rounded, AppColors.primary),
-                        const SizedBox(width: 8),
-                        _buildNutritionChip('Protein', '28g', Icons.fitness_center_rounded, AppColors.success),
-                        const SizedBox(width: 8),
-                        _buildNutritionChip('Carbs', '42g', Icons.grain_rounded, AppColors.warning),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
-                        borderRadius: BorderRadius.circular(AppDimens.radius14),
-                        border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.border,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.timer_outlined, color: AppColors.primary, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Freshly prepared in 15–20 minutes • 100% Halal certified',
-                              style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ] else if (_tabController.index == 1) ...[
                     // Tab 1: Options & Add-ons
                     if (food.hasAddons) ...[
@@ -1310,7 +1277,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     },
                   ),
 
-                  const SizedBox(height: 110), // clearance for bottom action bar
                 ],
               ),
             );
@@ -1357,6 +1323,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
 
       // Sticky Bottom MaroonDeep Pill "Add to cart · Rs X" CTA with yellow bag square (Ref A)
       bottomNavigationBar: SafeArea(
+                top: false,
         child: Center(
           heightFactor: 1.0,
           child: ConstrainedBox(
@@ -1366,7 +1333,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () => _handleAddToCart(foodItem, cart, totalPrice),
+                  onTap: foodItem.isAvailable ? () => _handleAddToCart(foodItem, cart, totalPrice) : null,
                   borderRadius: BorderRadius.circular(28),
                   child: Container(
                     height: 56,
@@ -1432,64 +1399,21 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildNutritionChip(String label, String value, IconData icon, Color color) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(AppDimens.radius12),
-          border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.border,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                maxLines: 1,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13.5,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildDishReviews(FoodModel food, ColorScheme colorScheme, bool isDark) {
     final reviewProv = context.watch<ReviewProvider>();
-    final reviews = reviewProv.itemReviews;
-    final avgRating = reviews.isEmpty ? food.rating : reviewProv.averageRating;
+    final reviews = reviewProv.itemReviews
+        .where((review) => review.itemId == food.id && !review.isHidden)
+        .toList();
+    final avgRating = reviews.isEmpty
+        ? 0.0
+        : reviews.fold(0.0, (sum, review) => sum + review.rating) / reviews.length;
     final totalCount = reviews.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        if (reviews.isNotEmpty)
+          Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
@@ -1539,7 +1463,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        if (reviews.isNotEmpty) const SizedBox(height: 16),
         if (reviews.isEmpty)
           Container(
             width: double.infinity,

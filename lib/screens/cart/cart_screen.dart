@@ -1,3 +1,6 @@
+import '../../core/localization/app_language.dart';
+import 'package:food_fight/core/utils/app_insets.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -66,7 +69,7 @@ class _CartScreenState extends State<CartScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+            child: Text(context.tr('Cancel'), style: TextStyle(color: colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
@@ -74,7 +77,7 @@ class _CartScreenState extends State<CartScreen> {
               cart.clearCart();
               Navigator.pop(ctx);
             },
-            child: const Text('Clear All'),
+            child: Text(context.tr('Clear All')),
           ),
         ],
       ),
@@ -94,9 +97,9 @@ class _CartScreenState extends State<CartScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Flexible(
+            Flexible(
               child: Text(
-                'My Cart',
+                context.tr('My Cart'),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -125,7 +128,7 @@ class _CartScreenState extends State<CartScreen> {
             IconButton(
               onPressed: () => _confirmClearCart(context, cart),
               icon: const Icon(Icons.delete_sweep_outlined, size: 22, color: AppColors.error),
-              tooltip: 'Clear Cart',
+              tooltip: context.tr('Clear Cart'),
             ),
         ],
       ),
@@ -171,12 +174,12 @@ class _CartScreenState extends State<CartScreen> {
                         SizedBox(
                           width: 220,
                           child: CustomButton(
-                            text: 'Browse Menu',
+                            text: context.tr('Browse Menu'),
                             onPressed: () {
                               if (Navigator.of(context).canPop()) {
                                 Navigator.of(context).pop();
                               } else {
-                                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+                                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
                               }
                             },
                           ),
@@ -202,7 +205,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
+                          padding: AppInsets.scrollPadding(context, horizontal: 16, top: 4),
                           child: _buildLoyaltyAndSummaryCard(context, cart, isDark, colorScheme),
                         ),
                       ),
@@ -224,7 +227,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
+                          padding: AppInsets.scrollPadding(context, horizontal: 16, top: 4),
                           child: _buildLoyaltyAndSummaryCard(context, cart, isDark, colorScheme),
                         ),
                       ),
@@ -284,6 +287,7 @@ class _CartScreenState extends State<CartScreen> {
                 ],
               ),
               child: SafeArea(
+                top: false,
                 child: (context.screenWidth < 360 || context.textScale > 1.2)
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
@@ -294,7 +298,7 @@ class _CartScreenState extends State<CartScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  'Total Amount',
+                                  context.tr('Total Amount'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -322,7 +326,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           const SizedBox(height: 8),
                           CustomButton(
-                            text: 'Proceed to Checkout',
+                            text: context.tr('Proceed to Checkout'),
                             icon: Icons.arrow_forward_rounded,
                             onPressed: () => _proceedToCheckout(context),
                           ),
@@ -336,7 +340,7 @@ class _CartScreenState extends State<CartScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Total Amount',
+                                  context.tr('Total Amount'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -363,7 +367,7 @@ class _CartScreenState extends State<CartScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: CustomButton(
-                              text: 'Proceed to Checkout',
+                              text: context.tr('Proceed to Checkout'),
                               icon: Icons.arrow_forward_rounded,
                               onPressed: () => _proceedToCheckout(context),
                             ),
@@ -379,11 +383,11 @@ class _CartScreenState extends State<CartScreen> {
   void _proceedToCheckout(BuildContext context) {
     final auth = context.read<AuthProvider>();
     if (!auth.isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in to proceed to checkout'),
+      AppSnackbar.showSnackBar(context,
+        SnackBar(
+          content: Text(context.tr('Please sign in to proceed to checkout')),
           backgroundColor: AppColors.brandMaroon,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
       Navigator.of(context).pushNamed('/login');
@@ -414,7 +418,7 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Total Payable',
+                  context.tr('Total Payable'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -442,7 +446,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 16),
           CustomButton(
-            text: 'Proceed to Checkout',
+            text: context.tr('Proceed to Checkout'),
             icon: Icons.arrow_forward_rounded,
             onPressed: () => _proceedToCheckout(context),
           ),
@@ -496,7 +500,7 @@ class _CartScreenState extends State<CartScreen> {
               InkWell(
                 onTap: () {
                   cart.removeFromCart(item.food.id, lineKey: item.lineKey);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  AppSnackbar.showSnackBar(context,
                     SnackBar(
                       content: Text('Removed ${item.displayName} from cart'),
                       duration: const Duration(seconds: 1),
@@ -758,7 +762,7 @@ class _CartScreenState extends State<CartScreen> {
                         children: [
                           const Text(
                             'Food Fight Loyalty Rewards',
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -787,8 +791,8 @@ class _CartScreenState extends State<CartScreen> {
                           setState(() => _useTokens = val);
                           if (val) {
                             final bal = context.read<LoyaltyProvider>().balance;
-                            final maxRedeemable = bal.clamp(0, cart.subtotal.toInt());
-                            cart.applyTokens(maxRedeemable);
+                            final maxRedeemable = bal.clamp(0, (cart.subtotal / context.read<LoyaltyProvider>().tokenValueInCurrency).floor());
+                            cart.applyTokens(maxRedeemable, tokenValue: context.read<LoyaltyProvider>().tokenValueInCurrency);
                           } else {
                             cart.clearTokens();
                           }
@@ -824,28 +828,28 @@ class _CartScreenState extends State<CartScreen> {
                             context
                                 .watch<LoyaltyProvider>()
                                 .balance
-                                .clamp(1, cart.subtotal.toInt())
+                                .clamp(1, (cart.subtotal / context.read<LoyaltyProvider>().tokenValueInCurrency).floor())
                                 .toDouble(),
                           ),
                       min: 1.0,
                       max: context
                           .watch<LoyaltyProvider>()
                           .balance
-                          .clamp(1, cart.subtotal.toInt())
+                          .clamp(1, (cart.subtotal / context.read<LoyaltyProvider>().tokenValueInCurrency).floor())
                           .toDouble(),
                       divisions: context
                                   .watch<LoyaltyProvider>()
                                   .balance
-                                  .clamp(1, cart.subtotal.toInt()) >
+                                  .clamp(1, (cart.subtotal / context.read<LoyaltyProvider>().tokenValueInCurrency).floor()) >
                               1
                           ? context
                               .watch<LoyaltyProvider>()
                               .balance
-                              .clamp(1, cart.subtotal.toInt())
+                              .clamp(1, (cart.subtotal / context.read<LoyaltyProvider>().tokenValueInCurrency).floor())
                           : 1,
                       activeColor: AppColors.brandYellow,
                       onChanged: (val) {
-                        cart.applyTokens(val.toInt());
+                        cart.applyTokens(val.toInt(), tokenValue: context.read<LoyaltyProvider>().tokenValueInCurrency);
                       },
                     ),
                 ],
@@ -856,7 +860,7 @@ class _CartScreenState extends State<CartScreen> {
 
           // Separated Price Breakdown: Subtotal / Delivery Fee / Discount / Total
           Text(
-            'Order Summary',
+            context.tr('Order Summary'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -866,16 +870,16 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: 12),
           _summaryRow(
             context,
-            'Subtotal (${cart.itemCount} items)',
+            context.tr('Subtotal ({count} items)').replaceFirst('{count}', cart.itemCount.toString()),
             'Rs. ${cart.subtotal.toStringAsFixed(0)}',
           ),
           const SizedBox(height: 8),
           _summaryRow(
             context,
             cart.selectedArea != null
-                ? 'Delivery Fee (${cart.selectedArea!.name})'
-                : 'Delivery Fee',
-            cart.isFreeDelivery ? 'FREE' : 'Rs. ${cart.deliveryFee.toStringAsFixed(0)}',
+                ? context.tr('Delivery Fee ({area})').replaceFirst('{area}', cart.selectedArea!.name)
+                : context.tr('Delivery Fee'),
+            cart.isFreeDelivery ? context.tr('FREE') : 'Rs. ${cart.deliveryFee.toStringAsFixed(0)}',
             color: cart.isFreeDelivery ? AppColors.success : null,
           ),
           if (cart.loyaltyDiscount > 0) ...[

@@ -46,18 +46,21 @@ class BranchService {
       data['id'] = doc.id;
       return BranchModel.fromJson(data);
     } catch (e) {
-      AppLogger.error('Failed to get branch $branchId: $e', tag: 'BranchService');
+      AppLogger.error('Failed to get branch $branchId: $e',
+          tag: 'BranchService');
       return null;
     }
   }
 
   /// Create new branch doc in Firestore
   static Future<String> createBranch(BranchModel branch) async {
-    final docRef = branch.id.isNotEmpty ? _collection.doc(branch.id) : _collection.doc();
+    final docRef =
+        branch.id.isNotEmpty ? _collection.doc(branch.id) : _collection.doc();
     final data = branch.toJson();
     data['id'] = docRef.id;
     await docRef.set(data);
-    AppLogger.info('Created branch: ${branch.name} (${docRef.id})', tag: 'BranchService');
+    AppLogger.info('Created branch: ${branch.name} (${docRef.id})',
+        tag: 'BranchService');
     return docRef.id;
   }
 
@@ -66,11 +69,13 @@ class BranchService {
     final data = branch.toJson();
     data['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
     await _collection.doc(branch.id).set(data, SetOptions(merge: true));
-    AppLogger.info('Updated branch: ${branch.name} (${branch.id})', tag: 'BranchService');
+    AppLogger.info('Updated branch: ${branch.name} (${branch.id})',
+        tag: 'BranchService');
   }
 
   /// Increment revenue and order count for a branch
-  static Future<void> recordOrderFinancials(String branchId, double orderTotal) async {
+  static Future<void> recordOrderFinancials(
+      String branchId, double orderTotal) async {
     if (branchId.isEmpty) return;
     try {
       await _collection.doc(branchId).update({
@@ -79,7 +84,8 @@ class BranchService {
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       });
     } catch (e) {
-      AppLogger.warn('Could not increment branch financials for $branchId: $e', tag: 'BranchService');
+      AppLogger.warn('Could not increment branch financials for $branchId: $e',
+          tag: 'BranchService');
     }
   }
 
@@ -96,7 +102,7 @@ class BranchService {
         revenue: 1450000.0,
         orderCount: 1240,
         expenses: 850000.0,
-        rating: 4.9,
+        rating: 0.0,
         openingHours: '11:00 AM – 03:00 AM',
         latitude: 31.4697,
         longitude: 74.4101,
@@ -114,7 +120,7 @@ class BranchService {
         revenue: 1980000.0,
         orderCount: 1650,
         expenses: 1100000.0,
-        rating: 4.8,
+        rating: 0.0,
         openingHours: '11:00 AM – 02:00 AM',
         latitude: 31.5115,
         longitude: 74.3537,
@@ -132,7 +138,7 @@ class BranchService {
         revenue: 1220000.0,
         orderCount: 980,
         expenses: 780000.0,
-        rating: 4.9,
+        rating: 0.0,
         openingHours: '11:30 AM – 02:30 AM',
         latitude: 33.7215,
         longitude: 73.0560,
@@ -143,14 +149,15 @@ class BranchService {
       BranchModel(
         id: 'branch-bahria-rwp',
         name: 'Food Fight – Bahria Town (Phase 7)',
-        address: 'Civic Center, Commercial Area Phase 7, Bahria Town, Rawalpindi',
+        address:
+            'Civic Center, Commercial Area Phase 7, Bahria Town, Rawalpindi',
         city: 'Rawalpindi',
         phone: '051-5178900',
         status: 'active',
         revenue: 890000.0,
         orderCount: 710,
         expenses: 620000.0,
-        rating: 4.7,
+        rating: 0.0,
         openingHours: '12:00 PM – 02:00 AM',
         latitude: 33.5350,
         longitude: 73.1200,
@@ -168,7 +175,7 @@ class BranchService {
         revenue: 1620000.0,
         orderCount: 1390,
         expenses: 990000.0,
-        rating: 4.8,
+        rating: 0.0,
         openingHours: '12:00 PM – 04:00 AM',
         latitude: 24.8138,
         longitude: 67.0300,
@@ -190,7 +197,9 @@ class BranchService {
       for (var b in defaultBranches) {
         await _collection.doc(b.id).set(b.toJson());
       }
-      AppLogger.info('Successfully seeded 5 initial branches with GPS coordinates', tag: 'BranchService');
+      AppLogger.info(
+          'Successfully seeded 5 initial branches with GPS coordinates',
+          tag: 'BranchService');
     } catch (e) {
       AppLogger.warn('Error during branch seeding: $e', tag: 'BranchService');
     }
@@ -201,11 +210,31 @@ class BranchService {
     try {
       final snapshot = await _collection.get();
       final Map<String, Map<String, dynamic>> defaultCoords = {
-        'branch-dha-lhr': {'latitude': 31.4697, 'longitude': 74.4101, 'deliveryRadiusKm': 12.0},
-        'branch-gulberg-lhr': {'latitude': 31.5115, 'longitude': 74.3537, 'deliveryRadiusKm': 10.0},
-        'branch-f7-isb': {'latitude': 33.7215, 'longitude': 73.0560, 'deliveryRadiusKm': 15.0},
-        'branch-bahria-rwp': {'latitude': 33.5350, 'longitude': 73.1200, 'deliveryRadiusKm': 12.0},
-        'branch-clifton-khi': {'latitude': 24.8138, 'longitude': 67.0300, 'deliveryRadiusKm': 14.0},
+        'branch-dha-lhr': {
+          'latitude': 31.4697,
+          'longitude': 74.4101,
+          'deliveryRadiusKm': 12.0
+        },
+        'branch-gulberg-lhr': {
+          'latitude': 31.5115,
+          'longitude': 74.3537,
+          'deliveryRadiusKm': 10.0
+        },
+        'branch-f7-isb': {
+          'latitude': 33.7215,
+          'longitude': 73.0560,
+          'deliveryRadiusKm': 15.0
+        },
+        'branch-bahria-rwp': {
+          'latitude': 33.5350,
+          'longitude': 73.1200,
+          'deliveryRadiusKm': 12.0
+        },
+        'branch-clifton-khi': {
+          'latitude': 24.8138,
+          'longitude': 67.0300,
+          'deliveryRadiusKm': 14.0
+        },
       };
 
       for (final doc in snapshot.docs) {
@@ -225,7 +254,8 @@ class BranchService {
         }
       }
     } catch (e) {
-      AppLogger.warn('Could not run branch coordinate migration: $e', tag: 'BranchService');
+      AppLogger.warn('Could not run branch coordinate migration: $e',
+          tag: 'BranchService');
     }
   }
 }

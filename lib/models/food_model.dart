@@ -13,6 +13,7 @@ class FoodModel {
   final String? imageUrl;
   final String category;
   final double rating;
+  final int reviewCount;
   final int prepTimeMinutes;
   final String restaurantId;
   final String? branchId;
@@ -31,7 +32,8 @@ class FoodModel {
     this.imageEmoji = '',
     this.imageUrl,
     required this.category,
-    this.rating = 4.8,
+    this.rating = 0.0,
+    this.reviewCount = 0,
     this.prepTimeMinutes = 25,
     this.restaurantId = 'food_fight_hq',
     this.branchId,
@@ -57,7 +59,9 @@ class FoodModel {
       );
       return match.finalPrice;
     }
-    if (sizePrices != null && selectedSize != null && sizePrices!.containsKey(selectedSize)) {
+    if (sizePrices != null &&
+        selectedSize != null &&
+        sizePrices!.containsKey(selectedSize)) {
       return sizePrices![selectedSize]!;
     }
     return price > 0 ? price : startingPrice;
@@ -66,12 +70,11 @@ class FoodModel {
   /// Starting / lowest available price
   double get startingPrice {
     if (variants != null && variants!.isNotEmpty) {
-      return variants!
-          .map((v) => v.finalPrice)
-          .reduce((a, b) => a < b ? a : b);
+      return variants!.map((v) => v.finalPrice).reduce((a, b) => a < b ? a : b);
     }
     if (sizePrices != null && sizePrices!.isNotEmpty) {
-      return sizePrices!.values.reduce((minValue, current) => current < minValue ? current : minValue);
+      return sizePrices!.values.reduce(
+          (minValue, current) => current < minValue ? current : minValue);
     }
     return price;
   }
@@ -89,6 +92,7 @@ class FoodModel {
       'imageUrl': imageUrl,
       'category': category,
       'rating': rating,
+      'reviewCount': reviewCount,
       'prepTimeMinutes': prepTimeMinutes,
       'restaurantId': restaurantId,
       if (branchId != null) 'branchId': branchId,
@@ -145,17 +149,24 @@ class FoodModel {
           json['photoUrl']?.toString() ??
           json['photo_url']?.toString(),
       category: json['category']?.toString() ?? '',
-      rating: SafeConvert.toDouble(json['rating'], 4.8),
+      rating: SafeConvert.toDouble(json['rating'], 0.0),
+      reviewCount:
+          SafeConvert.toInt(json['reviewCount'] ?? json['ratingCount']),
       prepTimeMinutes: SafeConvert.toInt(json['prepTimeMinutes'], 25),
       restaurantId: json['restaurantId']?.toString() ?? 'food_fight_hq',
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
       isSpicy: json['isSpicy'] == true || json['isSpicy'] == 1,
-      isVeg: json['isVeg'] == null ? true : (json['isVeg'] == true || json['isVeg'] == 1),
-      isAvailable: json['isAvailable'] == null ? true : (json['isAvailable'] == true || json['isAvailable'] == 1),
+      isVeg: json['isVeg'] == null
+          ? true
+          : (json['isVeg'] == true || json['isVeg'] == 1),
+      isAvailable: json['isAvailable'] == null
+          ? true
+          : (json['isAvailable'] == true || json['isAvailable'] == 1),
     );
   }
 
-  factory FoodModel.fromMenuItem(MenuItemModel item, {String categoryName = ''}) {
+  factory FoodModel.fromMenuItem(MenuItemModel item,
+      {String categoryName = ''}) {
     return FoodModel(
       id: item.id,
       name: item.name,
@@ -167,7 +178,8 @@ class FoodModel {
       imageEmoji: '',
       imageUrl: item.imageUrl,
       category: categoryName.isNotEmpty ? categoryName : item.categoryId,
-      rating: item.rating > 0 ? item.rating : 4.8,
+      rating: item.rating > 0 ? item.rating : 0.0,
+      reviewCount: item.reviewCount,
       prepTimeMinutes: item.prepTimeMinutes,
       restaurantId: item.restaurantId ?? 'food_fight_hq',
       branchId: item.branchId,

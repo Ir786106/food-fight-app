@@ -6,6 +6,7 @@ class RestaurantModel {
   final String imageEmoji;
   final String cuisine;
   final double rating;
+  final int reviewCount;
   final int deliveryTimeMinutes;
   final double deliveryFee;
   final String address;
@@ -18,6 +19,7 @@ class RestaurantModel {
     required this.imageEmoji,
     required this.cuisine,
     required this.rating,
+    this.reviewCount = 0,
     required this.deliveryTimeMinutes,
     required this.deliveryFee,
     required this.address,
@@ -32,6 +34,7 @@ class RestaurantModel {
       'imageEmoji': imageEmoji,
       'cuisine': cuisine,
       'rating': rating,
+      'reviewCount': reviewCount,
       'deliveryTimeMinutes': deliveryTimeMinutes,
       'deliveryFee': deliveryFee,
       'address': address,
@@ -46,12 +49,16 @@ class RestaurantModel {
       name: json['name']?.toString() ?? 'Partner Kitchen',
       imageEmoji: json['imageEmoji']?.toString() ?? '🍽️',
       cuisine: json['cuisine']?.toString() ?? 'Multi-Cuisine & Fast Food',
-      rating: SafeConvert.toDouble(json['rating'], 4.8),
+      rating: SafeConvert.toDouble(json['rating'], 0.0),
+      reviewCount:
+          SafeConvert.toInt(json['reviewCount'] ?? json['ratingCount']),
       deliveryTimeMinutes: SafeConvert.toInt(json['deliveryTimeMinutes'], 25),
       deliveryFee: SafeConvert.toDouble(json['deliveryFee'], 0.0),
       address: json['address']?.toString() ?? 'Central Market, Sector B',
       isFeatured: json['isFeatured'] == 1 || json['isFeatured'] == true,
-      isOpen: json['isOpen'] == 1 || json['isOpen'] == true || json['isOpen'] == null,
+      isOpen: json['isOpen'] == 1 ||
+          json['isOpen'] == true ||
+          json['isOpen'] == null,
     );
   }
 
@@ -81,4 +88,3 @@ class RestaurantModel {
     );
   }
 }
-

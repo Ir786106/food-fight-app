@@ -60,19 +60,20 @@ class UserModel {
 
   /// Whether this account is a Sub-Admin under a parent Branch Admin
   bool get isSubAdmin =>
-      (userRole == UserRole.subAdmin || userRole == UserRole.admin) &&
-      parentAdminId != null &&
-      parentAdminId!.isNotEmpty;
+      userRole == UserRole.subAdmin || userRole == UserRole.staff ||
+      (userRole == UserRole.admin && parentAdminId != null && parentAdminId!.isNotEmpty);
 
   /// Check granular permission for Admin/Sub-Admin
   bool can(String permission) {
     if (isSuperAdmin) return true;
     if (!isAdmin) return false;
     // Primary Branch Admin has all permissions under their branch
-    if (parentAdminId == null || parentAdminId!.isEmpty) return true;
+    if (!isSubAdmin) return true;
     // Sub-Admin is checked against granted permission list
     if (permissions == null || permissions!.isEmpty) return false;
-    return permissions!.contains(permission);
+    final requested = permission.replaceFirst(RegExp(r'^(manage_|view_)'), '');
+    return permissions!.any((granted) =>
+        granted.replaceFirst(RegExp(r'^(manage_|view_)'), '') == requested);
   }
 
   UserModel copyWith({
@@ -107,7 +108,7 @@ class UserModel {
     );
   }
 
-  /// Never stores passwords in Firestore (only retained if explicitly set for local mock storage)
+  /// Passwords are transient authentication input and are never persisted.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -119,7 +120,6 @@ class UserModel {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'profileImage': profileImage,
-      if (password != null) 'password': password,
       if (permissions != null) 'permissions': permissions,
       if (branchId != null) 'branchId': branchId,
       if (parentAdminId != null) 'parentAdminId': parentAdminId,
@@ -129,7 +129,11 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     List<String>? parsedPermissions;
     if (json['permissions'] is List) {
-      parsedPermissions = List<String>.from(json['permissions']);
+      parsedPermissions = (json['permissions'] as List).whereType<String>().toList();
+    } else if (json['permissions'] is Map) {
+      parsedPermissions = (json['permissions'] as Map).entries
+          .where((entry) => entry.value == true)
+          .map((entry) => entry.key.toString()).toList();
     }
 
     // If isActive is missing or null, treat it as true (only explicit false/0 deactivates)
@@ -153,7 +157,6 @@ class UserModel {
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       profileImage: json['profileImage'],
-      password: json['password'],
       permissions: parsedPermissions,
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
       parentAdminId: json['parentAdminId']?.toString() ?? json['parent_admin_id']?.toString(),

@@ -1,10 +1,10 @@
+import 'package:food_fight/core/utils/app_insets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/food_card.dart';
 import '../../widgets/common/responsive_layout.dart';
-import '../../core/constants/app_dimens.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -90,7 +90,7 @@ class FavoritesScreen extends StatelessWidget {
                               if (Navigator.of(context).canPop()) {
                                 Navigator.of(context).pop();
                               } else {
-                                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
+                                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
                               }
                             },
                             child: const Text('Discover Food'),
@@ -101,7 +101,7 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, AppDimens.navBarScrollPadding),
+                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 16),
                   itemCount: favorites.length,
                   itemBuilder: (context, index) {
                     final food = favorites[index];

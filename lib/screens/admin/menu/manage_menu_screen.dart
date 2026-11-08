@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +12,6 @@ import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
-import 'package:food_fight/services/menu_seed_service.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'add_edit_menu_item_screen.dart';
 import 'reupload_missing_images_screen.dart';
@@ -57,8 +56,9 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
         backgroundColor: AdminTheme.getCardBg(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Menu Item'),
-        content: Text('Are you sure you want to delete "${item.name}"? This action also removes its image from Supabase Storage.'),
+        content: Text('Are you sure you want to delete "${item.name}"? This action also removes its image from the configured storage provider.'),
         actions: [
+          IconButton(tooltip: 'Menu issue reports', icon: const Icon(Icons.flag_outlined), onPressed: () => Navigator.pushNamed(context, '/admin/menu-reports')),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
@@ -69,7 +69,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
               Navigator.pop(ctx);
               final success = await context.read<MenuProvider>().deleteMenuItem(item.id, imageUrl: item.imageUrl);
               if (mounted && success) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                AppSnackbar.showSnackBar(context,
                   SnackBar(content: Text('"${item.name}" deleted successfully')),
                 );
               }
@@ -79,61 +79,6 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _confirmSeedMenu() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AdminTheme.getCardBg(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Seed Real Food Fight Menu'),
-        content: const Text(
-          'This will populate all official categories and menu items with multi-size '
-          'variants (S/M/L/XL, Quarter/Half/Full, 3/5/10 Pcs, Regular/Large/Family) '
-          'and add-ons into Firestore without overwriting custom items.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AdminTheme.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Seed Menu'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seeding official menu into Firestore...')),
-      );
-      try {
-        final result = await MenuSeedService.seedAll();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Successfully seeded ${result['categoriesCount']} categories and ${result['itemsCount']} menu items!',
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error seeding menu: $e'), backgroundColor: AppColors.error),
-          );
-        }
-      }
-    }
   }
 
   @override
@@ -165,12 +110,6 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
               MaterialPageRoute(builder: (_) => const ReuploadMissingImagesScreen()),
             ),
           ),
-          if (kDebugMode && context.watch<AuthProvider>().isSuperAdmin)
-            IconButton(
-              icon: const Icon(Icons.cloud_upload_rounded),
-              tooltip: 'Seed Real Menu (Dev Only)',
-              onPressed: _confirmSeedMenu,
-            ),
           IconButton(
             icon: const Icon(Icons.add_rounded),
             tooltip: 'Add Menu Item',
@@ -294,18 +233,16 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                               icon: Icons.restaurant_menu_rounded,
                               title: menuProvider.menuItems.isEmpty ? 'Menu is Empty' : 'No Items Found',
                               description: menuProvider.menuItems.isEmpty
-                                  ? 'You can quickly seed the official Food Fight menu or add custom items.'
+                                  ? 'Add menu items to start building this branch menu.'
                                   : 'Try changing category filter or search keywords.',
                               buttonText: menuProvider.menuItems.isEmpty
-                                  ? ((kDebugMode && context.watch<AuthProvider>().isSuperAdmin) ? 'Seed Official Menu' : 'Add Menu Item')
+                                  ? 'Add Menu Item'
                                   : null,
                               onButtonPressed: menuProvider.menuItems.isEmpty
-                                  ? ((kDebugMode && context.watch<AuthProvider>().isSuperAdmin)
-                                      ? _confirmSeedMenu
-                                      : () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (_) => const AddEditMenuItemScreen()),
-                                          ))
+                                  ? () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const AddEditMenuItemScreen()),
+                                      )
                                   : null,
                             )
                           : RefreshIndicator(

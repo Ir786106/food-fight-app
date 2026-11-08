@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/logger.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -70,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(AppConstants.storageOnboardingCompleted, true);
     } catch (e) {
-      debugPrint('Error saving onboarding state: $e');
+      AppLogger.error('Error saving onboarding state: $e', tag: 'Onboarding');
     }
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/login');
@@ -87,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           sound: true,
         );
       } catch (e) {
-        debugPrint('Notification permission error: $e');
+        AppLogger.warn('Notification permission error: $e', tag: 'Onboarding');
       }
 
       // 2. Location permission
@@ -97,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           await Geolocator.requestPermission();
         }
       } catch (e) {
-        debugPrint('Location permission error: $e');
+        AppLogger.warn('Location permission error: $e', tag: 'Onboarding');
       }
     } finally {
       if (mounted) {
@@ -141,15 +142,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return Column(
-              children: [
-                // Top Header: Logo + Skip Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  children: [
+                    // Top Header: Logo + Skip Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Row(
                         children: [
                           Container(
                             width: 38,
@@ -176,253 +177,301 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Text(
-                            AppConstants.appName.toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              color: AppColors.brandMaroon,
+                          Expanded(
+                            child: Text(
+                              AppConstants.appName.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                                color: AppColors.brandMaroon,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (_currentIndex < _pages.length - 1)
+                            Semantics(
+                              button: true,
+                              label: 'Skip onboarding',
+                              child: TextButton(
+                                key: const ValueKey('onboarding_skip_button'),
+                                onPressed: _completeOnboarding,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: secondaryTextColor,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Skip',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 48),
                         ],
                       ),
-                      if (_currentIndex < _pages.length - 1)
-                        Semantics(
-                          button: true,
-                          label: 'Skip onboarding',
-                          child: TextButton(
-                            key: const ValueKey('onboarding_skip_button'),
-                            onPressed: _completeOnboarding,
-                            style: TextButton.styleFrom(
-                              foregroundColor: secondaryTextColor,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: const Text(
-                              'Skip',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13.5,
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
+                    ),
 
-                // PageView with Illustration + Text Content
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _pages.length,
-                    onPageChanged: (idx) => setState(() => _currentIndex = idx),
-                    itemBuilder: (context, index) {
-                      final item = _pages[index];
-                      final isPermissionPage = item.isPermissionPrimer;
+                    // PageView with Illustration + Text Content
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: _pages.length,
+                        onPageChanged: (idx) => setState(() => _currentIndex = idx),
+                        itemBuilder: (context, index) {
+                          final item = _pages[index];
+                          final isPermissionPage = item.isPermissionPrimer;
 
-                      // Image sizing that stays responsive across orientations
-                      final maxImgHeight = isLandscape
-                          ? (constraints.maxHeight * 0.42).clamp(120.0, 220.0)
-                          : (constraints.maxHeight * 0.44).clamp(180.0, 340.0);
+                          // Image sizing that stays responsive across orientations
+                          final maxImgHeight = isLandscape
+                              ? (constraints.maxHeight * 0.42).clamp(120.0, 220.0)
+                              : (constraints.maxHeight * 0.44).clamp(180.0, 340.0);
 
-                      return SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 10),
-                            // Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: AppColors.brandYellow.withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: AppColors.brandYellow.withValues(alpha: 0.5),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Text(
-                                item.badge,
-                                style: const TextStyle(
-                                  color: AppColors.brandMaroon,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-
-                            // Hero Illustration
-                            Container(
-                              height: maxImgHeight,
-                              constraints: const BoxConstraints(maxWidth: 380),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(28),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
-                                    blurRadius: 24,
-                                    offset: const Offset(0, 10),
+                          return SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: 10),
+                                // Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.brandYellow.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.brandYellow.withValues(alpha: 0.5),
+                                      width: 1.2,
+                                    ),
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(28),
-                                child: Image.asset(
-                                  item.imagePath,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: cardBg,
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.fastfood_rounded,
-                                        size: 72,
-                                        color: AppColors.brandYellow,
+                                  child: Text(
+                                    item.badge,
+                                    style: const TextStyle(
+                                      color: AppColors.brandMaroon,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+
+                                // Hero Illustration
+                                Container(
+                                  height: maxImgHeight,
+                                  constraints: const BoxConstraints(maxWidth: 380),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(28),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(28),
+                                    child: Image.asset(
+                                      item.imagePath,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: cardBg,
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.fastfood_rounded,
+                                            size: 72,
+                                            color: AppColors.brandYellow,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
 
-                            const SizedBox(height: 24),
+                                const SizedBox(height: 24),
 
-                            // Title
-                            Text(
-                              item.title,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: isLandscape ? 20 : 25,
-                                fontWeight: FontWeight.w900,
-                                color: primaryTextColor,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Subtitle
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 440),
-                              child: Text(
-                                item.subtitle,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  color: secondaryTextColor,
-                                  height: 1.5,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-
-                            // Permission cards preview if page 4
-                            if (isPermissionPage) ...[
-                              const SizedBox(height: 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildPermissionChip(
-                                    icon: Icons.notifications_active_rounded,
-                                    label: 'Hot Order Alerts',
-                                    isDark: isDark,
+                                // Title
+                                Text(
+                                  item.title,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: isLandscape ? 20 : 25,
+                                    fontWeight: FontWeight.w900,
+                                    color: primaryTextColor,
+                                    height: 1.2,
                                   ),
-                                  const SizedBox(width: 12),
-                                  _buildPermissionChip(
-                                    icon: Icons.location_on_rounded,
-                                    label: 'Nearest Branch',
-                                    isDark: isDark,
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Subtitle
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 440),
+                                  child: Text(
+                                    item.subtitle,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      color: secondaryTextColor,
+                                      height: 1.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+
+                                // Permission cards preview if page 4
+                                if (isPermissionPage) ...[
+                                  const SizedBox(height: 20),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _buildPermissionChip(
+                                        icon: Icons.notifications_active_rounded,
+                                        label: 'Hot Order Alerts',
+                                        isDark: isDark,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildPermissionChip(
+                                        icon: Icons.location_on_rounded,
+                                        label: 'Nearest Branch',
+                                        isDark: isDark,
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Bottom Bar: Dots Indicator + Action Buttons
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    border: Border(
-                      top: BorderSide(
-                        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Smooth Page Dots Indicator
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_pages.length, (index) {
-                          final isSelected = index == _currentIndex;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOutCubic,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            height: 7,
-                            width: isSelected ? 26 : 7,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.brandYellow
-                                  : (isDark ? Colors.white24 : AppColors.brandMaroon.withValues(alpha: 0.2)),
-                              borderRadius: BorderRadius.circular(10),
+                                const SizedBox(height: 16),
+                              ],
                             ),
                           );
-                        }),
+                        },
                       ),
-                      const SizedBox(height: 18),
+                    ),
 
-                      // Navigation Actions
-                      if (_currentIndex == _pages.length - 1) ...[
-                        // Permission Primer Options
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                key: const ValueKey('onboarding_not_now_button'),
-                                onPressed: _isRequestingPermissions ? null : _completeOnboarding,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: secondaryTextColor,
-                                  side: BorderSide(
-                                    color: isDark ? Colors.white24 : AppColors.brandMaroon.withValues(alpha: 0.3),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                    // Bottom Bar: Dots Indicator + Action Buttons
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        border: Border(
+                          top: BorderSide(
+                            color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Smooth Page Dots Indicator
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(_pages.length, (index) {
+                              final isSelected = index == _currentIndex;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                height: 7,
+                                width: isSelected ? 26 : 7,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.brandYellow
+                                      : (isDark ? Colors.white24 : AppColors.brandMaroon.withValues(alpha: 0.2)),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Navigation Actions
+                          if (_currentIndex == _pages.length - 1) ...[
+                            // Permission Primer Options
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    key: const ValueKey('onboarding_not_now_button'),
+                                    onPressed: _isRequestingPermissions ? null : _completeOnboarding,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: secondaryTextColor,
+                                      side: BorderSide(
+                                        color: isDark ? Colors.white24 : AppColors.brandMaroon.withValues(alpha: 0.3),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Not Now',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14.5,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Not Now',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14.5,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 2,
+                                  child: ElevatedButton(
+                                    key: const ValueKey('onboarding_get_started_button'),
+                                    onPressed: _isRequestingPermissions ? null : _handlePermissionRequest,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.brandYellow,
+                                      foregroundColor: AppColors.brandMaroon,
+                                      elevation: 2,
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: _isRequestingPermissions
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandMaroon),
+                                            ),
+                                          )
+                                        : const Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  'Enable & Get Started',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 14.5,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 6),
+                                              Icon(Icons.arrow_forward_rounded, size: 18),
+                                            ],
+                                          ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
+                          ] else ...[
+                            // Next Button
+                            SizedBox(
+                              width: double.infinity,
                               child: ElevatedButton(
-                                key: const ValueKey('onboarding_get_started_button'),
-                                onPressed: _isRequestingPermissions ? null : _handlePermissionRequest,
+                                key: const ValueKey('onboarding_next_button'),
+                                onPressed: _onNextPressed,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.brandYellow,
                                   foregroundColor: AppColors.brandMaroon,
@@ -432,70 +481,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                child: _isRequestingPermissions
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandMaroon),
-                                        ),
-                                      )
-                                    : const Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Enable & Get Started',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w900,
-                                              fontSize: 14.5,
-                                            ),
-                                          ),
-                                          SizedBox(width: 6),
-                                          Icon(Icons.arrow_forward_rounded, size: 18),
-                                        ],
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Next',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 15,
                                       ),
+                                    ),
+                                    SizedBox(width: 6),
+                                    Icon(Icons.arrow_forward_rounded, size: 18),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                      ] else ...[
-                        // Next Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            key: const ValueKey('onboarding_next_button'),
-                            onPressed: _onNextPressed,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.brandYellow,
-                              foregroundColor: AppColors.brandMaroon,
-                              elevation: 2,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Next',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                SizedBox(width: 6),
-                                Icon(Icons.arrow_forward_rounded, size: 18),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         ),
