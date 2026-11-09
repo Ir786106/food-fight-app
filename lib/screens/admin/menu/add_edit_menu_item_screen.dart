@@ -438,9 +438,9 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final templateProv = context.watch<OptionTemplateProvider>();
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(
           widget.item == null ? 'Add Menu Item' : 'Edit Menu Item',
@@ -472,10 +472,10 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                           width: double.infinity,
                           height: 180,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colors.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                                color: Colors.grey.shade300, width: 1.5),
+                                color: colors.outlineVariant, width: 1.5),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
@@ -530,18 +530,18 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                           children: [
                                             Icon(Icons.add_a_photo_rounded,
                                                 size: 44,
-                                                color: Colors.grey.shade400),
+                                                color: colors.onSurfaceVariant),
                                             const SizedBox(height: 8),
                                             Text(
                                               'Upload Item Photo to Supabase',
                                               style: TextStyle(
-                                                  color: Colors.grey.shade600,
+                                                  color: colors.onSurfaceVariant,
                                                   fontWeight: FontWeight.w600),
                                             ),
                                             Text(
                                               'JPG, PNG, or WebP',
                                               style: TextStyle(
-                                                  color: Colors.grey.shade400,
+                                                  color: colors.onSurfaceVariant,
                                                   fontSize: 11),
                                             ),
                                           ],
@@ -561,9 +561,9 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colors.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(color: colors.outlineVariant),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -593,7 +593,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                       decoration: InputDecoration(
                         hintText: 'e.g., Chicken Tikka, Broast Quarter',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLow,
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
@@ -615,7 +615,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                         hintText:
                             'Describe ingredients, flavor profile, or special details...',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLow,
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
@@ -626,13 +626,13 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                     // Multi-Size / Variants Toggle & Templates (Phase 7)
                     // ==========================================
                     Material(
-                      color: Colors.white,
+                      color: colors.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                         side: BorderSide(
                           color: _hasVariants
                               ? AdminTheme.primaryBlue.withValues(alpha: 0.5)
-                              : Colors.grey.shade300,
+                              : colors.outlineVariant,
                         ),
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -654,7 +654,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   ? 'Configuring per-size pricing (e.g. S/M/L, Quarter/Half/Full)'
                                   : 'Single flat price for this item',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade600),
+                                  fontSize: 12, color: colors.onSurfaceVariant),
                             ),
                             value: _hasVariants,
                             activeThumbColor: AdminTheme.primaryBlue,
@@ -757,7 +757,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   decoration: InputDecoration(
                                     hintText: '599',
                                     filled: true,
-                                    fillColor: Colors.white,
+                                    fillColor: colors.surfaceContainerLow,
                                     border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
@@ -790,7 +790,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   decoration: InputDecoration(
                                     hintText: '0',
                                     filled: true,
-                                    fillColor: Colors.white,
+                                    fillColor: colors.surfaceContainerLow,
                                     border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
@@ -850,9 +850,9 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colors.surface,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: colors.outlineVariant),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -902,7 +902,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                         labelText: 'Size Label',
                                         hintText: 'e.g. Small, Quarter',
                                         filled: true,
-                                        fillColor: const Color(0xFFF9FAFB),
+                                        fillColor: colors.surfaceContainerLow,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10)),
@@ -922,7 +922,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                         labelText: 'Price (Rs.)',
                                         hintText: '399',
                                         filled: true,
-                                        fillColor: const Color(0xFFF9FAFB),
+                                        fillColor: colors.surfaceContainerLow,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10)),
@@ -942,7 +942,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                         labelText: 'Disc %',
                                         hintText: '0',
                                         filled: true,
-                                        fillColor: const Color(0xFFF9FAFB),
+                                        fillColor: colors.surfaceContainerLow,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10)),
@@ -963,7 +963,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   hintText:
                                       'e.g. 1 leg, 1 thigh, 1 bun + fries + 1 dip',
                                   filled: true,
-                                  fillColor: const Color(0xFFF9FAFB),
+                                  fillColor: colors.surfaceContainerLow,
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)),
                                   contentPadding: const EdgeInsets.symmetric(
@@ -1052,14 +1052,14 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colors.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: colors.outlineVariant),
                         ),
                         child: Text(
                           'No extras configured. Tap "+ Add Extra" to offer toppings, cheese, or dip sauces.',
                           style: TextStyle(
-                              color: Colors.grey.shade600, fontSize: 12.5),
+                              color: colors.onSurfaceVariant, fontSize: 12.5),
                         ),
                       ),
                     ..._addonEntries.asMap().entries.map((entry) {
@@ -1071,9 +1071,9 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colors.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: colors.outlineVariant),
                         ),
                         child: Row(
                           children: [
@@ -1085,7 +1085,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   labelText: 'Extra Name',
                                   hintText: 'e.g. Extra Cheese',
                                   filled: true,
-                                  fillColor: const Color(0xFFF9FAFB),
+                                  fillColor: colors.surfaceContainerLow,
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)),
                                   contentPadding: const EdgeInsets.symmetric(
@@ -1103,7 +1103,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                                   labelText: 'Price (Rs.)',
                                   hintText: '150',
                                   filled: true,
-                                  fillColor: const Color(0xFFF9FAFB),
+                                  fillColor: colors.surfaceContainerLow,
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)),
                                   contentPadding: const EdgeInsets.symmetric(
@@ -1113,8 +1113,8 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                             ),
                             const SizedBox(width: 6),
                             IconButton(
-                              icon: const Icon(Icons.close,
-                                  color: Colors.grey, size: 20),
+                              icon: Icon(Icons.close,
+                                  color: colors.onSurfaceVariant, size: 20),
                               onPressed: () => _removeAddonEntry(idx),
                               tooltip: 'Remove Extra',
                             ),
@@ -1136,7 +1136,7 @@ class _AddEditMenuItemScreenState extends State<AddEditMenuItemScreen> {
                       decoration: InputDecoration(
                         hintText: '25',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLow,
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),

@@ -91,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await AppUpdateBottomSheet.show(context);
     } else {
       AppSnackbar.showSnackBar(context,
-        SnackBar(content: Text(prov.errorMessage ?? 'Food Fight is up to date.')),
+        SnackBar(content: Text(prov.errorMessage ?? context.tr('Food Fight is up to date.'))),
       );
     }
   }

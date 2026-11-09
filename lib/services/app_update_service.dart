@@ -224,14 +224,15 @@ class AppUpdateService {
         return;
       }
 
+      final cancelToken = CancelToken();
+      _downloadCancelToken = cancelToken;
       final tmpDir = await getTemporaryDirectory();
       _tempApkPath = '${tmpDir.path}/food-fight-update.apk';
-      _downloadCancelToken = CancelToken();
 
       await _dio.download(
         release.apkDownloadUrl,
         _tempApkPath!,
-        cancelToken: _downloadCancelToken,
+        cancelToken: cancelToken,
         onReceiveProgress: (received, total) {
           if (total > 0) onProgress(received / total * 0.95);
         },
@@ -251,6 +252,10 @@ class AppUpdateService {
         return;
       }
 
+      if (cancelToken.isCancelled) {
+        await _cleanupTempFile();
+        return;
+      }
       onProgress(1.0);
       onInstallReady();
     } on DioException catch (e) {
@@ -377,7 +382,6 @@ class AppUpdateService {
         return false;
       }
       final result = await OpenFilex.open(_tempApkPath!, type: 'application/vnd.android.package-archive');
-      Future.delayed(const Duration(seconds: 90), _cleanupTempFile);
       return result.type == ResultType.done;
     } catch (e) {
       AppLogger.error('Install failed: $e', tag: 'AppUpdateService');
@@ -391,8 +395,7 @@ class AppUpdateService {
       if (hashResp.statusCode != 200 || hashResp.data == null) return false;
       final expected = hashResp.data!.trim().split(RegExp(r'\s+')).first.toLowerCase();
       if (expected.length != 64) return false;
-      final bytes = await apkFile.readAsBytes();
-      final actual = sha256.convert(bytes).toString().toLowerCase();
+      final actual = (await sha256.bind(apkFile.openRead()).single).toString();
       return expected == actual;
     } catch (e) {
       AppLogger.error('Hash verify error: $e', tag: 'AppUpdateService');

@@ -131,8 +131,7 @@ class FloatingNavBar extends StatelessWidget {
     required int chatUnread,
     required bool hasActiveOrder,
   }) {
-    final navSurface =
-        isDark ? AppColors.darkSurfaceElevated : AppColors.surface;
+    final navSurface = Theme.of(context).colorScheme.surface;
     final navBorder = isDark ? AppColors.darkBorder : AppColors.border;
 
     return Container(
@@ -143,7 +142,7 @@ class FloatingNavBar extends StatelessWidget {
         color: navSurface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -190,7 +189,7 @@ class FloatingNavBar extends StatelessWidget {
   }) {
     final activeColor = isDark ? AppColors.brandYellow : AppColors.brandMaroon;
     final inactiveColor =
-        isDark ? AppColors.darkTextMuted : AppColors.textSecondary;
+        Theme.of(context).colorScheme.onSurfaceVariant;
     final activePillBg =
         (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
             .withValues(alpha: isDark ? 0.18 : 0.10);
@@ -216,12 +215,12 @@ class FloatingNavBar extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOutCubic,
                   padding: EdgeInsets.symmetric(
-                    horizontal: isSelected ? 16 : 8,
+                    horizontal: 16,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: isSelected ? activePillBg : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -296,7 +295,7 @@ class FloatingNavBar extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
 
                 // Label
                 FittedBox(

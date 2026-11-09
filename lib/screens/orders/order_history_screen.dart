@@ -61,8 +61,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         return 2;
       case OrderStatus.preparing:
       case OrderStatus.ready:
-        return 3;
       case OrderStatus.assigned:
+        return 3;
       case OrderStatus.pickedUp:
       case OrderStatus.outForDelivery:
         return 4;

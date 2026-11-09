@@ -341,13 +341,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   : constraints.crossAxisExtent >= 600
                       ? 3
                       : 2;
+              final tileWidth =
+                  (constraints.crossAxisExtent - AppDimens.space8 * (columns - 1)) /
+                      columns;
+              final imageHeight = (tileWidth - AppDimens.space8) / 1.5;
+              final textHeight = MediaQuery.textScalerOf(context).scale(64);
               return SliverGrid(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
                     mainAxisSpacing: AppDimens.space8,
                     crossAxisSpacing: AppDimens.space8,
-                    mainAxisExtent: AppDimens.space48 * 7 +
-                        (MediaQuery.textScalerOf(context).scale(48) - 48)),
+                    mainAxisExtent: imageHeight + textHeight + 96),
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final item = foods[index];
                   final hero = '$tag-${item.id}';
