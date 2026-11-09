@@ -9,7 +9,7 @@
 
 Food Fight connects customers, branch kitchens, and delivery riders in one Flutter app. Each account opens the workspace for its role. Branch teams manage their own menus and deliveries, while platform administrators oversee the network.
 
-**[Download](#download)** · **[Explore the app](#explore-the-app)** · **[Run the demo](#run-the-demo)** · **[Developer guides](#developer-guides)**
+**[Download](#download)** · **[Explore the app](#explore-the-app)** · **[Watch the architecture](#architecture)** · **[Run the demo](#run-the-demo)** · **[Developer guides](#developer-guides)**
 
 ## Download
 
@@ -35,18 +35,75 @@ On mobile, the storefront uses a featured menu banner, category filters, and bot
 
 ## Architecture
 
+<p align="center">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/images/food-fight-architecture.png">
+    <img src="docs/images/food-fight-architecture.gif" width="1120" alt="Food Fight architecture. Flutter opens four role workspaces and uses Firebase Storage and Maps. Firebase Authentication identifies users. Cloud Functions and Firestore rules enforce access. Functions handle orders, cash collection, and FCM notifications.">
+  </picture>
+</p>
+
+The animation follows four stages. Flutter opens the workspace for the signed-in role, Firebase Authentication establishes the user’s identity, role and branch checks gate access, and backend operations update data and notify users.
+
+| Path | What it handles |
+| :--- | :--- |
+| **Cloud Functions → Firestore** | Server-authorized checkout, order transitions, rider offers, and Cash on Delivery transactions. |
+| **Flutter → Firestore rules → Firestore** | Scoped client reads and permitted direct writes. Rules evaluate ownership, assignment, branch, and role permissions. |
+| **Cloud Functions → FCM** | Push notifications alongside the app’s Firestore inbox. |
+| **Flutter → Storage and Maps** | Media access, delivery location selection, and rider tracking on configured platforms. |
+
+The authorization node represents checks in Cloud Functions and Firestore rules. It is a conceptual boundary. Firebase Authentication establishes identity, and backend checks determine which actions that identity can perform.
+
+<details>
+<summary><strong>View or copy the Mermaid diagram</strong></summary>
+
 ```mermaid
-flowchart LR
-    App["Flutter app · Android and Windows"] --> Auth["Firebase Authentication"]
-    App --> Data["Firestore · live reads"]
-    App --> Functions["Cloud Functions · validated writes"]
-    Functions --> Data
-    Functions --> Delivery["Dispatch, COD and audit records"]
+flowchart TD
+    A["Flutter Application"] --> B["Customer"]
+    A --> C["Branch Admin / Staff"]
+    A --> D["Rider"]
+    A --> E["Super Admin"]
+
+    B --> F["Firebase Authentication"]
+    C --> F
+    D --> F
+    E --> F
+
+    F --> G["Role & Branch Authorization"]
+    G --> H["Cloud Functions"]
+    G --> I["Firestore Security Rules"]
+
+    H --> J[("Cloud Firestore")]
+    I --> J
+
+    H --> K["FCM Notifications"]
+    H --> L["Order & COD Transactions"]
+
+    A --> M["Firebase Storage"]
+    A --> N["Maps & GPS"]
 ```
 
-Cloud Functions validate menu availability, prices, discounts, delivery charges, and order transitions. Firestore rules scope data by account role and branch. Firebase Storage and Cloud Messaging handle media and notifications. Maps, SMS sign-in, Google sign-in, and optional Supabase image uploads require environment configuration.
+</details>
 
-The combined app starts at [`lib/main.dart`](lib/main.dart). Separate entry points exist for [customers](lib/main_customer.dart), [riders](lib/main_rider.dart), and [administrators](lib/main_admin.dart).
+## How an order moves
+
+1. **Choose a branch and build the cart.** The customer selects a delivery area and adds dishes, variants, and add-ons.
+2. **Confirm the server quote.** `quoteOrder` validates catalog prices, availability, delivery charges, and discounts. `placeOrder` revalidates the accepted total before committing the order. Reusing the same request ID for the same checkout can return the existing order.
+3. **Prepare and dispatch.** Kitchen staff accept, prepare, and mark the order ready. Staff can assign a rider manually. Branches with automatic dispatch enabled can offer the delivery to an eligible online rider.
+4. **Deliver and settle cash.** The rider confirms pickup and delivery. The server records COD collection, and branch staff can confirm the cash handover.
+
+Checkout currently supports Cash on Delivery. Maps, SMS sign-in, Google sign-in, push delivery, and optional Supabase image uploads depend on environment and platform configuration.
+
+<details>
+<summary><strong>Find the implementation in the repository</strong></summary>
+
+| Source | Responsibility |
+| :--- | :--- |
+| [Flutter entry](lib/main.dart) · [Customer](lib/main_customer.dart) · [Rider](lib/main_rider.dart) · [Admin](lib/main_admin.dart) | Shared startup and role-specific app editions |
+| [Backend functions](functions/index.js) · [Order lifecycle](functions/order_lifecycle.js) | Checkout, provisioning, order mutations, dispatch, notifications, and settlement |
+| [Firestore rules](firestore.rules) · [Storage rules](storage.rules) · [Indexes](firestore.indexes.json) | Client access controls and query indexes |
+| [Data contracts](docs/DATABASE.md) · [API guide](docs/API.md) | Document shapes, collections, and callable interfaces |
+
+</details>
 
 ## Run the demo
 
