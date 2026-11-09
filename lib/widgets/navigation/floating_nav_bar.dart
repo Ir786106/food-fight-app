@@ -361,7 +361,9 @@ class FloatingNavBar extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
+              child: Material(
+                color: Colors.transparent,
+                child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 itemCount: _destinations.length,
                 itemBuilder: (context, index) {
@@ -396,6 +398,7 @@ class FloatingNavBar extends StatelessWidget {
                     ),
                   );
                 },
+                ),
               ),
             ),
             if (onCartSelected != null)
