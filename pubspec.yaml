@@ -16,13 +16,13 @@ dependencies:
   shared_preferences: ^2.2.3
   google_fonts: ^6.2.1
   # Firebase
-  firebase_core: ^3.10.0
-  firebase_auth: ^5.3.0
-  cloud_firestore: ^5.0.0
-  cloud_functions: ^5.6.2
-  firebase_storage: ^12.3.7
-  firebase_messaging: ^15.1.0
-  firebase_app_check: ^0.3.1+4
+  firebase_core: ^5.1.0
+  firebase_auth: ^7.0.1
+  cloud_firestore: ^7.1.0
+  cloud_functions: ^7.0.1
+  firebase_storage: ^14.0.1
+  firebase_messaging: ^17.0.1
+  firebase_app_check: ^0.5.1
   google_sign_in: ^6.2.2
   # Supabase
   supabase_flutter: ^2.17.2
