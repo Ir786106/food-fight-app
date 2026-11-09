@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/images/branding/food_fight_logo_icon.png" width="96" alt="Food Fight logo">
+  <img src="docs/images/food-fight-banner.svg" width="960" alt="Food Fight — order, prepare, and deliver">
 </p>
 
 # Food Fight
 
 Food Fight is a multi-branch food ordering and delivery platform built with Flutter and Firebase. Customers order from their local branch, kitchen staff prepare and dispatch orders, and riders handle pickup, delivery, and Cash on Delivery collection.
 
-[Latest release](https://github.com/Ir786106/food-fight-app/releases/latest) · [Run the local demo](#run-the-local-demo) · [Deployment guide](docs/DEPLOYMENT.md)
+**[Download Food Fight](#install-food-fight)** · [Try the local demo](#run-the-local-demo) · [Explore the architecture](#architecture) · [Deployment guide](docs/DEPLOYMENT.md)
 
 ## Install Food Fight
 
@@ -21,7 +21,11 @@ On Android, Food Fight checks for new releases when it opens or returns to the f
 
 ## Storefront
 
-The customer storefront adapts to the screen size. Mobile uses bottom navigation, category filters, a featured menu banner, and large dish photos. Desktop uses a branded sidebar and shows the live cart summary beside the menu on wide windows. Light and dark themes are available in Settings.
+| Mobile | Desktop |
+| --- | --- |
+| Browse categories, open featured dishes, and reach orders, chat, or your profile from the bottom bar. | Browse the menu beside a branded sidebar and see the live cart on wide windows. |
+
+Switch between light and dark themes in Settings. English and Urdu are available with right-to-left layout and translation coverage across selected screens.
 
 ## Features
 
@@ -36,7 +40,7 @@ Checkout uses a server-generated quote. Cloud Functions validate prices, availab
 
 **Payments** are Cash on Delivery. Saved wallet numbers are account references. The app currently processes cash collection and handover records.
 
-**Sign-in and language** include email/password, Google sign-in, and Pakistani mobile SMS sign-in on configured platforms. English and Urdu are available, with right-to-left layout and translation coverage across selected customer and rider screens.
+**Sign-in** supports email and password, Google, and Pakistani mobile SMS on configured platforms.
 
 ## Architecture
 

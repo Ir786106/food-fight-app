@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-labelledby="title description">
+  <title id="title">Food Fight</title>
+  <desc id="description">Order, prepare, and deliver with Food Fight. A golden pizza slice sits on a plate with a gently animated orbit.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2="1">
+      <stop stop-color="#161316"/>
+      <stop offset="1" stop-color="#602322"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#e87038" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#e87038" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .orbit { animation: turn 14s linear 2; transform-origin: 755px 150px; }
+      @keyframes turn { to { transform: rotate(360deg); } }
+    }
+  </style>
+  <rect width="960" height="300" rx="26" fill="url(#background)"/>
+  <ellipse cx="760" cy="150" rx="195" ry="148" fill="url(#glow)"/>
+  <path d="M0 258H960" stroke="#f8e9d5" stroke-opacity=".16"/>
+  <circle cx="755" cy="150" r="114" fill="none" stroke="#fff4dc" stroke-opacity=".18" stroke-dasharray="2 8"/>
+  <circle cx="755" cy="150" r="88" fill="#22191b" stroke="#e59260" stroke-opacity=".48" stroke-width="2"/>
+  <circle cx="755" cy="150" r="72" fill="none" stroke="#f8e9d5" stroke-opacity=".16"/>
+  <g class="orbit">
+    <circle cx="755" cy="36" r="5" fill="#ffd504"/>
+    <circle cx="755" cy="264" r="3" fill="#f6a67b"/>
+  </g>
+  <g transform="rotate(15 755 150)">
+    <path d="M710 112Q755 83 800 112L755 203Z" fill="#ffcb52" stroke="#321c19" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M710 112Q755 83 800 112" fill="none" stroke="#e68b43" stroke-width="12" stroke-linecap="round"/>
+    <g fill="#ae352b">
+      <circle cx="734" cy="125" r="7"/>
+      <circle cx="771" cy="132" r="8"/>
+      <circle cx="753" cy="162" r="7"/>
+    </g>
+    <path d="m749 119 5 4m-15 26 5-3m15 34 4-4" fill="none" stroke="#477b41" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <g font-family="Segoe UI, system-ui, sans-serif">
+    <text x="56" y="66" fill="#ffd504" font-size="15" font-weight="700" letter-spacing="4">FOOD ORDERING &amp; DELIVERY</text>
+    <text x="52" y="147" fill="#fff8ec" font-size="76" font-weight="800" letter-spacing="-3">Food Fight</text>
+    <text x="56" y="192" fill="#f0d9cc" font-size="22">One app from the menu to the doorstep.</text>
+    <text x="56" y="280" fill="#ffd504" font-size="13" font-weight="700" letter-spacing="3">ORDER  /  PREPARE  /  DELIVER</text>
+  </g>
+</svg>
