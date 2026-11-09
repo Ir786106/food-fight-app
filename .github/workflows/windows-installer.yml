@@ -1,0 +1,42 @@
+name: Windows installer
+
+on:
+  push:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.x'
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Package Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $versionLine = Get-Content pubspec.yaml | Select-String '^version: (\d+\.\d+\.\d+)\+\d+$'
+          if (!$versionLine) { throw 'Missing app version in pubspec.yaml' }
+          $version = $versionLine.Matches[0].Groups[1].Value
+          $bundle = Resolve-Path build/windows/x64/runner/Release
+          $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
+          if (!(Test-Path $compiler)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          & $compiler "/DAppVersion=$version" "/DBundleDir=$bundle" /Odist windows/installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FoodFight-Windows-Installer
+          path: dist/FoodFight-*-Windows-x64-Setup.exe
+          if-no-files-found: error

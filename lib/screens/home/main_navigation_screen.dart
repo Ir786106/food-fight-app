@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../widgets/home/desktop_cart_panel.dart';
 import '../../widgets/navigation/floating_nav_bar.dart';
 import 'home_screen.dart';
 import '../orders/order_history_screen.dart';
@@ -183,6 +184,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       children: tabViews,
                     ),
                   ),
+                  if (screenWidth >= 1280 && _currentIndex == 0 && shouldShowNav)
+                    DesktopCartPanel(onOpenCart: _openCart),
                 ],
               )
             : IndexedStack(index: _currentIndex, children: tabViews),

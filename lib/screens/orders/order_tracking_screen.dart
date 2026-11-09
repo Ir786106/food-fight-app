@@ -681,7 +681,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                 color: AppColors.brandYellow.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.two_wheeler_rounded, color: AppColors.brandMaroon, size: 22),
+                              child: Icon(Icons.two_wheeler_rounded, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon, size: 22),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -689,7 +689,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Rider Assignment in Progress',
+                                    context.tr(hasRider ? 'Waiting for pickup' : 'Finding a rider'),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
@@ -768,12 +768,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                       color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      'Food Fight Express Champion',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w500,
+                                    Flexible(
+                                      child: Text(
+                                        context.tr('Delivery rider'),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ],

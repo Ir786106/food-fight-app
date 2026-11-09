@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
@@ -6,6 +7,10 @@ import '../../core/utils/logger.dart';
 
 /// Interactive Map Pin Picker Dialog for setting branch coordinates
 class LocationPickerMapDialog extends StatefulWidget {
+  static bool get isSupported => !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
   final double initialLat;
   final double initialLng;
 
@@ -22,6 +27,7 @@ class LocationPickerMapDialog extends StatefulWidget {
     double? initialLatitude,
     double? initialLongitude,
   }) {
+    if (!isSupported) return Future.value(null);
     final lat = initialLatitude ?? initialLat ?? 31.4697;
     final lng = initialLongitude ?? initialLng ?? 74.4101;
     return showDialog<LatLng>(
@@ -57,8 +63,12 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
       }
       if (perm == LocationPermission.whileInUse || perm == LocationPermission.always) {
         final pos = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 15),
+          ),
         );
+        if (!mounted) return;
         final newCenter = LatLng(pos.latitude, pos.longitude);
         setState(() => _currentCenter = newCenter);
         _mapController?.animateCamera(CameraUpdate.newLatLngZoom(newCenter, 15));
@@ -90,6 +100,7 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
                 ),
                 onMapCreated: (ctrl) => _mapController = ctrl,
                 onCameraMove: (pos) => _currentCenter = pos.target,
+                onCameraIdle: () => setState(() {}),
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
               ),

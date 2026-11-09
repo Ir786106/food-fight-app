@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/interfaces/auth_service_interface.dart';
@@ -250,61 +250,21 @@ class FirebaseAuthService implements IAuthService {
   @override
   Future<UserModel?> signInWithGoogle({bool allowCachedRole = true}) async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: kIsWeb
-            ? '585587375994-h4ohhnrmellh0ooboa0gpdp9pq2v0m86.apps.googleusercontent.com'
-            : null,
-        serverClientId: '585587375994-h4ohhnrmellh0ooboa0gpdp9pq2v0m86.apps.googleusercontent.com',
-      );
-
-      GoogleSignInAccount? googleUser;
-      try {
-        googleUser = await googleSignIn.signIn();
-      } catch (e) {
-        final errStr = e.toString().toLowerCase();
-        // Silent handling for user cancellation
-        if (errStr.contains('sign_in_canceled') ||
-            errStr.contains('canceled') ||
-            errStr.contains('cancelled') ||
-            errStr.contains('12501')) {
-          AppLogger.info('User cancelled Google Sign-In', tag: 'FirebaseAuthService');
-          return null;
+      final googleSignIn = kIsWeb ? null : GoogleSignIn();
+      final UserCredential userCredential;
+      if (googleSignIn == null) {
+        userCredential = await _auth.signInWithPopup(GoogleAuthProvider());
+      } else {
+        if (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.linux) {
+          throw AppException(message: 'Use email and password to sign in on this device.');
         }
-
-        AppLogger.error('Google sign-in client error: $e', tag: 'FirebaseAuthService');
-        if (errStr.contains('service_missing') ||
-            errStr.contains('service_version_update_required') ||
-            errStr.contains('service_disabled') ||
-            errStr.contains('api_unavailable') ||
-            errStr.contains('12500')) {
-          throw AppException(
-            message: 'Google Play services is unavailable or outdated on this device. Please sign in with Email & Password or update Google Play services.',
-          );
-        }
-        throw AppException(message: 'Google Sign-In encountered an issue. Please try again or use Email & Password.');
+        final credential = await _googleCredential(googleSignIn);
+        if (credential == null) return null;
+        userCredential = await _auth.signInWithCredential(credential)
+            .timeout(const Duration(seconds: 20));
       }
 
-      if (googleUser == null) {
-        AppLogger.info('Google sign-in was cancelled by user', tag: 'FirebaseAuthService');
-        return null;
-      }
-
-      GoogleSignInAuthentication googleAuth;
-      try {
-        googleAuth = await googleUser.authentication;
-      } catch (e) {
-        AppLogger.error('Google auth token retrieval failed: $e', tag: 'FirebaseAuthService');
-        throw AppException(message: 'Failed to retrieve Google authentication token.');
-      }
-
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential = await _auth
-          .signInWithCredential(credential)
-          .timeout(const Duration(seconds: 20));
       final User? firebaseUser = userCredential.user;
       if (firebaseUser == null) {
         throw AppException(message: 'Google authentication failed: no user returned');
@@ -317,7 +277,7 @@ class FirebaseAuthService implements IAuthService {
       if (!user.isActive) {
         await _auth.signOut();
         try {
-          await googleSignIn.signOut();
+          await googleSignIn?.signOut();
         } catch (_) {}
         throw AppException(
           message: 'Your account has been deactivated by administrator. Please contact support.',
@@ -330,6 +290,9 @@ class FirebaseAuthService implements IAuthService {
       AppLogger.error('Google sign-in timed out: $e', tag: 'FirebaseAuthService');
       throw AppException(message: 'Google sign-in timed out. Please check your internet connection.');
     } on FirebaseAuthException catch (e) {
+      if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+        return null;
+      }
       AppLogger.error('Firebase Google sign-in failed: ${e.code} - ${e.message}', tag: 'FirebaseAuthService');
       throw _getFirebaseException(e);
     } on FirebaseException catch (e) {
@@ -347,6 +310,55 @@ class FirebaseAuthService implements IAuthService {
       AppLogger.error('Google sign-in error: $e', tag: 'FirebaseAuthService');
       throw AppException(message: 'Failed to complete Google sign-in: ${e.toString()}');
     }
+  }
+
+  Future<OAuthCredential?> _googleCredential(GoogleSignIn googleSignIn) async {
+    GoogleSignInAccount? googleUser;
+    try {
+      googleUser = await googleSignIn.signIn();
+    } catch (e) {
+      final errStr = e.toString().toLowerCase();
+      // Silent handling for user cancellation
+      if (errStr.contains('sign_in_canceled') ||
+          errStr.contains('canceled') ||
+          errStr.contains('cancelled') ||
+          errStr.contains('12501')) {
+        AppLogger.info('User cancelled Google Sign-In', tag: 'FirebaseAuthService');
+        return null;
+      }
+
+      AppLogger.error('Google sign-in client error: $e', tag: 'FirebaseAuthService');
+      if (RegExp(r'ApiException:\s*10\b', caseSensitive: false).hasMatch(e.toString())) {
+        throw AppException(message: 'Google sign-in is unavailable for this app build. You can still sign in with email and password.');
+      }
+      if (errStr.contains('service_missing') ||
+          errStr.contains('service_version_update_required') ||
+          errStr.contains('service_disabled') ||
+          errStr.contains('api_unavailable')) {
+        throw AppException(
+          message: 'Google Play services is unavailable or outdated on this device. Please sign in with Email & Password or update Google Play services.',
+        );
+      }
+      throw AppException(message: 'Google Sign-In encountered an issue. Please try again or use Email & Password.');
+    }
+
+    if (googleUser == null) {
+      AppLogger.info('Google sign-in was cancelled by user', tag: 'FirebaseAuthService');
+      return null;
+    }
+
+    GoogleSignInAuthentication googleAuth;
+    try {
+      googleAuth = await googleUser.authentication;
+    } catch (e) {
+      AppLogger.error('Google auth token retrieval failed: $e', tag: 'FirebaseAuthService');
+      throw AppException(message: 'Failed to retrieve Google authentication token.');
+    }
+
+    return GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
   }
 
   Future<UserModel> signInWithPhone(

@@ -29,7 +29,9 @@ class ForceUpdateConfig {
 
 class AppUpdateProvider extends ChangeNotifier {
   static bool get supported =>
-      !kIsWeb && !LocalDemo.enabled && defaultTargetPlatform == TargetPlatform.android;
+      !kIsWeb &&
+      !LocalDemo.enabled &&
+      defaultTargetPlatform == TargetPlatform.android;
 
   final AppUpdateService _service = AppUpdateService();
 
@@ -59,17 +61,19 @@ class AppUpdateProvider extends ChangeNotifier {
     if (!force) {
       final prefs = await SharedPreferences.getInstance();
       final lastCheckedMs = prefs.getInt(_kLastCheckedPref) ?? 0;
-      final hoursSince = DateTime.now().difference(
-        DateTime.fromMillisecondsSinceEpoch(lastCheckedMs),
-      ).inHours;
+      final hoursSince = DateTime.now()
+          .difference(
+            DateTime.fromMillisecondsSinceEpoch(lastCheckedMs),
+          )
+          .inHours;
       if (hoursSince < _kThrottleHours) return;
     }
     await _doCheck();
   }
 
-  Future<void> checkForUpdateNow() => _doCheck();
+  Future<void> checkForUpdateNow() => _doCheck(ignoreSkip: true);
 
-  Future<void> _doCheck() async {
+  Future<void> _doCheck({bool ignoreSkip = false}) async {
     if (!supported || _isChecking || _isDownloading || _installReady) return;
     _isChecking = true;
     _errorMessage = null;
@@ -82,7 +86,8 @@ class AppUpdateProvider extends ChangeNotifier {
       final response = await _service.checkForUpdate();
       if (response.result == UpdateCheckResult.updateAvailable) {
         // Check if user skipped this version recently
-        final skipped = await _isVersionSkipped(response.release!.versionName);
+        final skipped =
+            !ignoreSkip && await _isVersionSkipped(response.release!.tagName);
         if (!skipped || _forceConfig?.forceUpdate == true) {
           _availableRelease = response.release;
         }
@@ -94,7 +99,8 @@ class AppUpdateProvider extends ChangeNotifier {
       if (response.result == UpdateCheckResult.error) return;
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_kLastCheckedPref, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+          _kLastCheckedPref, DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       AppLogger.warn('Update check error: $e', tag: 'AppUpdateProvider');
     } finally {
@@ -115,7 +121,8 @@ class AppUpdateProvider extends ChangeNotifier {
         _forceConfig = ForceUpdateConfig(
           minSupportedVersion: d['minSupportedVersion'] as String? ?? '0.0.0',
           forceUpdate: d['forceUpdate'] as bool? ?? false,
-          message: d['message'] as String? ?? 'Please update the app to continue.',
+          message:
+              d['message'] as String? ?? 'Please update the app to continue.',
         );
       }
     } catch (_) {
@@ -142,9 +149,9 @@ class AppUpdateProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kSkippedVersionPref, version);
-      await prefs.setInt(_kSkippedAtPref, DateTime.now().millisecondsSinceEpoch);
-      _availableRelease = null;
-      notifyListeners();
+      await prefs.setInt(
+          _kSkippedAtPref, DateTime.now().millisecondsSinceEpoch);
+      dismissUpdate();
     } catch (_) {}
   }
 
@@ -156,29 +163,33 @@ class AppUpdateProvider extends ChangeNotifier {
     _installReady = false;
     notifyListeners();
 
-    await _service.downloadAndInstall(
-      release: _availableRelease!,
-      onProgress: (p) {
-        _downloadProgress = p;
-        notifyListeners();
-      },
-      onError: (err) {
-        _errorMessage = err;
-        _isDownloading = false;
-        notifyListeners();
-      },
-      onInstallReady: () {
-        _installReady = true;
-        _isDownloading = false;
-        notifyListeners();
-      },
-    );
+    try {
+      await _service.downloadAndInstall(
+        release: _availableRelease!,
+        onProgress: (p) {
+          _downloadProgress = p;
+          notifyListeners();
+        },
+        onError: (err) {
+          _errorMessage = err;
+          notifyListeners();
+        },
+        onInstallReady: () {
+          _installReady = true;
+          notifyListeners();
+        },
+      );
+    } finally {
+      _isDownloading = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> installApk() async {
     _precheckResult = await _service.verifyApkBeforeInstall();
     if (!_precheckResult!.canInstall) {
-      _errorMessage = '${_precheckResult!.englishMessage}\n\n${_precheckResult!.romanUrduMessage}';
+      _errorMessage =
+          '${_precheckResult!.englishMessage}\n\n${_precheckResult!.romanUrduMessage}';
       notifyListeners();
       return false;
     }
@@ -191,7 +202,6 @@ class AppUpdateProvider extends ChangeNotifier {
 
   void cancelDownload() {
     _service.cancelDownload();
-    _isDownloading = false;
     _downloadProgress = 0;
     notifyListeners();
   }

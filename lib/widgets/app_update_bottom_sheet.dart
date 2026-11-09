@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_language.dart';
 import '../providers/app_update_provider.dart';
 import '../services/app_update_service.dart';
 
@@ -19,6 +20,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
       final closed = showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       isDismissible: false,
       enableDrag: false,
@@ -42,7 +44,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
     return PopScope(
       canPop: !prov.isForceUpdate,
       child: Container(
-        margin: const EdgeInsets.all(12),
+        margin: EdgeInsets.fromLTRB(12, 12, 12, 12 + MediaQuery.paddingOf(context).bottom),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1211) : Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -72,7 +74,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 14),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Update Available', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppColors.brandMaroon)),
+                        Text(context.tr('Update Available'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppColors.brandMaroon)),
                         Text('Version ${release.versionName} is ready', style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey.shade600)),
                       ])),
                     ]),
@@ -115,7 +117,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                         Text('${(prov.downloadProgress * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                       ]),
                       const SizedBox(height: 8),
-                      TextButton(onPressed: prov.cancelDownload, child: const Text('Cancel', style: TextStyle(color: Colors.red))),
+                      TextButton(onPressed: prov.cancelDownload, child: Text(context.tr('Cancel'), style: const TextStyle(color: Colors.red))),
                     ],
                     if (prov.errorMessage != null) ...[
                       const SizedBox(height: 12),
@@ -171,7 +173,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 icon: const Icon(Icons.settings_rounded, size: 16),
-                                label: const Text('Open Settings to Allow Install'),
+                                label: Text(context.tr('Open Settings to Allow Install')),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.brandYellow,
                                   foregroundColor: AppColors.brandMaroon,
@@ -188,7 +190,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                              label: const Text('Open Release Page'),
+                              label: Text(context.tr('Open Release Page')),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.red,
                                 side: BorderSide(color: Colors.red.shade300),
@@ -213,10 +215,10 @@ class AppUpdateBottomSheet extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                        child: const Row(children: [
-                          Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
-                          SizedBox(width: 8),
-                          Text('Download verified. Tap Install to continue.', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 13)),
+                        child: Row(children: [
+                          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(context.tr('Download verified. Tap Install to continue.'), style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 13))),
                         ]),
                       ),
                     ],
@@ -225,7 +227,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                       if (prov.installReady)
                         SizedBox(width: double.infinity, child: ElevatedButton.icon(
                           icon: const Icon(Icons.install_mobile_rounded),
-                          label: const Text('Install Now'),
+                          label: Text(context.tr('Install Now')),
                           onPressed: () async {
                             final success = await prov.installApk();
                             if (!success && context.mounted) {
@@ -251,7 +253,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(ctx),
-                                        child: const Text('Cancel'),
+                                        child: Text(context.tr('Cancel')),
                                       ),
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(
@@ -265,7 +267,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                                             launchUrl(url, mode: LaunchMode.externalApplication);
                                           }
                                         },
-                                        child: const Text('Open Release Page'),
+                                        child: Text(context.tr('Open Release Page')),
                                       ),
                                     ],
                                   ),
@@ -282,15 +284,15 @@ class AppUpdateBottomSheet extends StatelessWidget {
                       else
                         SizedBox(width: double.infinity, child: ElevatedButton.icon(
                           icon: const Icon(Icons.download_rounded),
-                          label: const Text('Update Now', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                          label: Text(context.tr('Update Now'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                           onPressed: prov.startDownload,
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.brandYellow, foregroundColor: AppColors.brandMaroon, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                         )),
                       if (!prov.isForceUpdate) ...[
                         const SizedBox(height: 10),
                         SizedBox(width: double.infinity, child: TextButton(
-                          onPressed: () { prov.skipVersion(release.versionName); Navigator.pop(context); },
-                          child: const Text('Later', style: TextStyle(color: Colors.grey)),
+                          onPressed: () { prov.skipVersion(release.tagName); Navigator.pop(context); },
+                          child: Text(context.tr('Later'), style: const TextStyle(color: Colors.grey)),
                         )),
                       ],
                     ],

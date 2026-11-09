@@ -39,6 +39,22 @@ extension AppTranslation on BuildContext {
 }
 
 const _urdu = <String, String>{
+  'What are you craving?': 'آج آپ کیا کھانا پسند کریں گے؟',
+  'Explore the menu': 'مینو دیکھیں',
+  'Your bag': 'آپ کا بیگ',
+  'Your bag is empty': 'آپ کا بیگ خالی ہے',
+  'View cart': 'کارٹ دیکھیں',
+  'Waiting for pickup': 'آرڈر وصول کرنے کا انتظار ہے',
+  'Finding a rider': 'رائیڈر تلاش کیا جا رہا ہے',
+  'Delivery rider': 'ڈیلیوری رائیڈر',
+  'Update Available': 'اپ ڈیٹ دستیاب ہے',
+  'Install Now': 'ابھی انسٹال کریں',
+  'Update Now': 'ابھی اپ ڈیٹ کریں',
+  'Later': 'بعد میں',
+  'Open Release Page': 'ریلیز کا صفحہ کھولیں',
+  'Open Settings to Allow Install': 'انسٹال کی اجازت کے لیے ترتیبات کھولیں',
+  'Download verified. Tap Install to continue.': 'ڈاؤن لوڈ کی تصدیق ہو گئی۔ جاری رکھنے کے لیے انسٹال کریں۔',
+  'Food Fight is up to date.': 'فوڈ فائٹ تازہ ترین ورژن پر ہے۔',
   'Settings': 'ترتیبات',
   'Language': 'زبان',
   'Could not save language preference.': 'زبان کی ترجیح محفوظ نہیں ہو سکی۔',

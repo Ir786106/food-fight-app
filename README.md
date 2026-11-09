@@ -1,18 +1,31 @@
 <p align="center">
-  <img src="assets/images/branding/food_fight_logo_icon.png" width="96" alt="Food Fight logo">
+  <img src="docs/images/food-fight-banner.svg" width="960" alt="Food Fight — order, prepare, and deliver">
 </p>
 
 # Food Fight
 
 Food Fight is a multi-branch food ordering and delivery platform built with Flutter and Firebase. Customers order from their local branch, kitchen staff prepare and dispatch orders, and riders handle pickup, delivery, and Cash on Delivery collection.
 
-[Download Android APK](https://github.com/Ir786106/food-fight-app/releases/latest) · [Run the local demo](#run-the-local-demo) · [Deployment guide](docs/DEPLOYMENT.md) · [Project status](docs/PROGRESS.md)
+**[Download Food Fight](#install-food-fight)** · [Try the local demo](#run-the-local-demo) · [Explore the architecture](#architecture) · [Deployment guide](docs/DEPLOYMENT.md)
 
-## Download for Android
+## Install Food Fight
 
-The [latest GitHub Release](https://github.com/Ir786106/food-fight-app/releases/latest) includes the signed **combined app** for Android 7.0 and later. The combined app opens the dashboard for the signed-in account’s role. Android may ask for permission to install the APK.
+| Platform | Food Fight v1.8.0 |
+| --- | --- |
+| Android 7.0 or later | [Signed APK](https://github.com/Ir786106/food-fight-app/releases/download/v1.8.0/FoodFight_v1.8.0_release.apk) · [SHA-256 checksum](https://github.com/Ir786106/food-fight-app/releases/download/v1.8.0/FoodFight_v1.8.0_release.apk.sha256) |
+| Windows x64 | [Food Fight Setup.exe](https://github.com/Ir786106/food-fight-app/releases/download/v1.8.0/FoodFight-1.8.0-Windows-x64-Setup.exe) |
 
-Food Fight checks for new releases when it opens or returns to the foreground. Users can also select **Settings → Check for Updates** or enable **Automatically download updates**. The app verifies the download against the release checksum, then Android handles installation and any required confirmation.
+Both installers contain the combined app, which opens the dashboard for the signed-in account’s role. On Android, open the APK and follow the system installation prompts. On Windows, run Setup.exe and launch Food Fight from the Start menu. The Windows installer is unsigned.
+
+On Android, Food Fight checks for new releases when it opens or returns to the foreground. Users can also select **Settings → Check for Updates** or enable **Automatically download updates**. The app verifies the download against the release checksum before handing it to the Android installer.
+
+## Storefront
+
+| Mobile | Desktop |
+| --- | --- |
+| Browse categories, open featured dishes, and reach orders, chat, or your profile from the bottom bar. | Browse the menu beside a branded sidebar and see the live cart on wide windows. |
+
+Switch between light and dark themes in Settings. English and Urdu are available with right-to-left layout and translation coverage across selected screens.
 
 ## Features
 
@@ -27,7 +40,7 @@ Checkout uses a server-generated quote. Cloud Functions validate prices, availab
 
 **Payments** are Cash on Delivery. Saved wallet numbers are account references. The app currently processes cash collection and handover records.
 
-**Sign-in and language** include email/password, Google sign-in, and Pakistani mobile SMS sign-in on configured platforms. English and Urdu are available, with right-to-left layout and translation coverage across selected customer and rider screens.
+**Sign-in** supports email and password, Google, and Pakistani mobile SMS on configured platforms.
 
 ## Architecture
 
@@ -108,7 +121,7 @@ node --test functions/checkout.test.js functions/signed_image_upload.test.js
 
 See the [testing guide](docs/TESTING.md) and [deployment guide](docs/DEPLOYMENT.md) for rules tests and staging verification. The signed Android package and its published SHA-256 checksum have been verified. Installation and the full customer-to-kitchen-to-rider workflow on staging devices remain pending.
 
-For a new Android release, increment the version and build number in [pubspec.yaml](pubspec.yaml), build with the existing Food Fight release key, and publish the signed APK and matching `.apk.sha256` together. Use the [Android release procedure](docs/DEPLOYMENT.md#publish-an-android-update) to configure version tags and optional GitHub Actions publishing.
+For a new release, increment the version and build number in [pubspec.yaml](pubspec.yaml). Build Android with the existing Food Fight signing key and publish the APK with its matching `.apk.sha256` file. The [Windows installer workflow](.github/workflows/windows-installer.yml) builds and packages the Windows x64 app from release branches. Attach the generated setup file to the same GitHub release. See the [Android release procedure](docs/DEPLOYMENT.md#publish-an-android-update) for tagging and update verification.
 
 ## Project documentation
 

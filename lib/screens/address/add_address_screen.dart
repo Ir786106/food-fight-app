@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -41,6 +42,15 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
   Future<void> _locate() async {
     setState(() => _locating = true);
+    final point = await _currentLocation(context);
+    if (!mounted) return;
+    setState(() {
+      if (point != null) _point = point;
+      _locating = false;
+    });
+  }
+
+  Future<LatLng?> _currentLocation(BuildContext feedbackContext) async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
         throw StateError('Turn on location services, then retry.');
@@ -48,36 +58,104 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.deniedForever) {
-        if (mounted) { AppSnackbar.showInfo(context, 'Enable location permission in app settings.',
+        if (feedbackContext.mounted) { AppSnackbar.showInfo(feedbackContext, 'Enable location permission in app settings.',
           action: const SnackBarAction(label: 'Settings', onPressed: Geolocator.openAppSettings)); }
-        return;
+        return null;
       }
       if (permission == LocationPermission.denied) throw StateError('Location permission was declined. You can enter an address manually.');
       final position = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(timeLimit: Duration(seconds: 20)));
-      if (mounted) setState(() => _point = LatLng(position.latitude, position.longitude));
+      return LatLng(position.latitude, position.longitude);
     } catch (_) {
-      if (mounted) AppSnackbar.showError(context, 'Could not locate you. Check GPS and permission, or enter your address manually.');
-    } finally {
-      if (mounted) setState(() => _locating = false);
+      if (feedbackContext.mounted) AppSnackbar.showError(feedbackContext, 'Could not locate you. Check GPS and permission, or enter your address manually.');
+      return null;
     }
   }
 
   Future<void> _map() async {
+    if (kIsWeb ||
+        (defaultTargetPlatform != TargetPlatform.android &&
+            defaultTargetPlatform != TargetPlatform.iOS)) {
+      await _locate();
+      return;
+    }
+
     final branch = context.read<BranchProvider>().selectedBranch;
-    final initial = _point ?? (branch?.hasCoordinates == true ? LatLng(branch!.latitude!, branch.longitude!) : null);
-    if (initial == null) { await _locate(); return; }
-    var picked = initial;
-    if (!mounted) return;
-    final result = await Navigator.of(context).push<LatLng>(MaterialPageRoute(builder: (context) => StatefulBuilder(
-      builder: (context, update) => Scaffold(
-        appBar: AppBar(title: const Text('Choose delivery location')),
-        body: GoogleMap(initialCameraPosition: CameraPosition(target: initial, zoom: 15),
-          onTap: (point) => update(() => picked = point),
-          markers: {Marker(markerId: const MarkerId('delivery'), position: picked, draggable: true,
-            onDragEnd: (point) => update(() => picked = point))}),
-        bottomNavigationBar: SafeArea(top: false, child: Padding(padding: const EdgeInsets.all(AppDimens.space16),
-          child: FilledButton(onPressed: () => Navigator.pop(context, picked), child: const Text('Use this location')))),
-      ))));
+    final initial = _point ??
+        (branch?.hasCoordinates == true
+            ? LatLng(branch!.latitude!, branch.longitude!)
+            : null);
+    if (initial == null) {
+      await _locate();
+      return;
+    }
+
+    LatLng? picked = _point;
+    GoogleMapController? controller;
+    var locating = false;
+    final result = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (context) => StatefulBuilder(
+          builder: (context, update) => Scaffold(
+            appBar: AppBar(title: const Text('Choose delivery location')),
+            body: GoogleMap(
+              initialCameraPosition: CameraPosition(target: initial, zoom: 15),
+              onMapCreated: (value) => controller = value,
+              onTap: (point) => update(() => picked = point),
+              markers: {
+                if (picked != null)
+                  Marker(
+                    markerId: const MarkerId('delivery'),
+                    position: picked!,
+                    draggable: true,
+                    onDragEnd: (point) => update(() => picked = point),
+                  ),
+              },
+            ),
+            bottomNavigationBar: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimens.space16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Tap the map to place a pin. If the map is blank, use your current location or go back to enter the address manually.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.my_location),
+                      label: Text(locating ? 'Finding location…' : 'Use my location'),
+                      onPressed: locating ? null : () async {
+                        update(() => locating = true);
+                        final point = await _currentLocation(context);
+                        if (!context.mounted) return;
+                        update(() {
+                          locating = false;
+                          if (point != null) picked = point;
+                        });
+                        if (point != null) {
+                          await controller?.animateCamera(
+                            CameraUpdate.newLatLng(point),
+                          );
+                        }
+                      },
+                    ),
+                    FilledButton(
+                      onPressed: locating || picked == null
+                          ? null
+                          : () => Navigator.pop(context, picked),
+                      child: const Text('Use this location'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
     if (mounted && result != null) setState(() => _point = result);
   }
 

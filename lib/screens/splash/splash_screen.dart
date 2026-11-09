@@ -241,6 +241,14 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = 1;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final logoSize = (size.width * 0.52).clamp(160.0, 220.0);
@@ -254,8 +262,8 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.primaryYellow,
-              AppColors.primaryDark,
+              AppColors.brandMaroon,
+              AppColors.maroonDeep,
             ],
           ),
         ),
@@ -318,9 +326,10 @@ class _SplashScreenState extends State<SplashScreen>
                               height: logoSize,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.45), width: 2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.16),
+                                    color: AppColors.brandYellow.withValues(alpha: 0.18 * _logoFade.value),
                                     blurRadius: 28,
                                     offset: const Offset(0, 10),
                                     spreadRadius: 2,
@@ -353,7 +362,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 AppConstants.appTagline,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: AppColors.brandMaroon,
+                                  color: AppColors.brandYellow,
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
@@ -366,7 +375,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.brandMaroon,
+                                    AppColors.brandYellow,
                                   ),
                                 ),
                               ),

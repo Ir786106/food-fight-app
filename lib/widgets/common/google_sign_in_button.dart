@@ -1,7 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Styled "Continue with Google" button with custom-drawn official 4-color Google icon
 class GoogleSignInButton extends StatelessWidget {
+  static bool get isSupported => kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
+
   final VoidCallback? onPressed;
   final bool isLoading;
   final String text;
