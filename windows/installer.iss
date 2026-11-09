@@ -10,6 +10,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 OutputBaseFilename=FoodFight-{#AppVersion}-Windows-x64-Setup
 Compression=lzma2
 SolidCompression=yes
+SetupIconFile=runner\resources\app_icon.ico
+UninstallDisplayIcon={app}\food_fight.exe
 
 [Files]
 Source: "{#BundleDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

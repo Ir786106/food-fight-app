@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/utils/app_insets.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/order_provider.dart';
@@ -135,11 +136,11 @@ class FloatingNavBar extends StatelessWidget {
     final navBorder = isDark ? AppColors.darkBorder : AppColors.border;
 
     return Container(
-      foregroundDecoration: BoxDecoration(
-          border:
-              Border(top: BorderSide(color: navBorder.withValues(alpha: 0.6)))),
+      margin: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: navSurface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: navBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
@@ -326,159 +327,86 @@ class FloatingNavBar extends StatelessWidget {
     required int chatUnread,
     required bool hasActiveOrder,
   }) {
-    final railSurface =
-        isDark ? AppColors.darkSurfaceElevated : AppColors.surface;
-    final railBorder = isDark ? AppColors.darkBorder : AppColors.border;
-    final activeColor = isDark ? AppColors.brandYellow : AppColors.brandMaroon;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final accent = isDark ? AppColors.brandYellow : AppColors.brandMaroon;
 
     return Container(
-      width: 88,
+      width: 184,
       decoration: BoxDecoration(
-        color: railSurface,
-        border: BorderDirectional(
-          end: BorderSide(
-            color: railBorder.withValues(alpha: 0.6),
-            width: 1.0,
-          ),
-        ),
+        color: colors.surface,
+        border: BorderDirectional(end: BorderSide(color: colors.outlineVariant)),
       ),
       child: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 16),
-            // Brand Logo mark
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.brandYellow,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.brandYellow.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(AppConstants.logoPath, width: 38, height: 38),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Food Fight',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: const Center(
-                child: Text(
-                  'FF',
-                  style: TextStyle(
-                    color: AppColors.brandMaroon,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
             ),
-            const SizedBox(height: 24),
-
-            // Rail Destinations
             Expanded(
-              child: ListView.separated(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 itemCount: _destinations.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final item = _destinations[index];
-                  final isSelected = currentIndex == index;
-
-                  return InkWell(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      onTabSelected(index);
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? (isDark
-                                              ? AppColors.brandYellow
-                                              : AppColors.brandMaroon)
-                                          .withValues(
-                                              alpha: isDark ? 0.2 : 0.12)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Icon(
-                                  isSelected
-                                      ? item.activeIcon
-                                      : item.inactiveIcon,
-                                  size: 24,
-                                  color: isSelected
-                                      ? activeColor
-                                      : (isDark
-                                          ? AppColors.darkTextMuted
-                                          : AppColors.textSecondary),
-                                ),
-                              ),
-                              if (index == 2 && chatUnread > 0)
-                                PositionedDirectional(
-                                  top: -2,
-                                  end: -2,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 1.5),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.brandMaroon,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      chatUnread > 99 ? '99+' : '$chatUnread',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              if (index == 1 && hasActiveOrder)
-                                PositionedDirectional(
-                                  top: 0,
-                                  end: 0,
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.brandYellow,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr(item.label),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? activeColor
-                                  : (isDark
-                                      ? AppColors.darkTextMuted
-                                      : AppColors.textSecondary),
-                            ),
-                          ),
-                        ],
+                  final selected = index == currentIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                      minLeadingWidth: 24,
+                      selected: selected,
+                      selectedColor: accent,
+                      selectedTileColor: accent.withValues(alpha: 0.12),
+                      leading: Badge(
+                        isLabelVisible:
+                            (index == 2 && chatUnread > 0) ||
+                            (index == 1 && hasActiveOrder),
+                        label: index == 2
+                            ? Text(chatUnread > 99 ? '99+' : '$chatUnread')
+                            : null,
+                        child: Icon(selected ? item.activeIcon : item.inactiveIcon),
+                      ),
+                      title: Text(
+                        context.tr(item.label),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () => onTabSelected(index),
                     ),
                   );
                 },
               ),
             ),
+            if (onCartSelected != null)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: OutlinedButton.icon(
+                  onPressed: onCartSelected,
+                  icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+                  label: Text(context.tr('Cart')),
+                ),
+              ),
           ],
         ),
       ),

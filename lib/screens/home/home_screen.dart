@@ -13,6 +13,7 @@ import '../../providers/notification_provider.dart';
 import '../../models/food_model.dart';
 import '../../widgets/common/offline_banner.dart';
 import '../../widgets/home/home_filter_sheet.dart';
+import '../../widgets/home/home_feature_banner.dart';
 import '../../widgets/home/home_promo_carousel.dart';
 import '../../widgets/home/product_card.dart';
 import '../../widgets/skeleton/food_card_skeleton.dart';
@@ -104,6 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final recommended = items.where((item) => item.isFeatured).toList();
     final newest = [...items]
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    final feature = [...recommended, ...popular, ...newest]
+        .where((item) => item.imageUrl?.trim().isNotEmpty ?? false)
+        .firstOrNull;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -206,6 +211,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Delivery is unavailable at your current location. Choose a supported area.',
                     style: theme.textTheme.bodyMedium),
               )),
+            if (_category == 'All' && !_veg && !_spicy)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: DesignSystem.screenPadding,
+                  child: HomeFeatureBanner(
+                    imageUrl: feature?.imageUrl,
+                    onBrowse: () => Navigator.of(context).pushNamed('/menu'),
+                  ),
+                ),
+              ),
             if (deals.activeDeals.isNotEmpty)
               SliverToBoxAdapter(
                   child: Padding(
@@ -237,7 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? 'All'
                       : categories.activeCategories[index - 1].name;
                   return ChoiceChip(
-                      label: Text(name),
+                      avatar: index == 0 ? const Icon(Icons.grid_view_rounded, size: 16) : null,
+                      label: Text(context.tr(name)),
                       selected: _category == name,
                       onSelected: (_) => setState(() => _category = name));
                 },

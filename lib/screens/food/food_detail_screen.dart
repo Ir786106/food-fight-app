@@ -526,15 +526,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   child: Hero(
                     tag: customHeroTag ?? 'food-${food.id}',
                     child: Container(
-                      width: 236,
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxWidth: 520),
                       height: 236,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(26),
                         color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
                         border: Border.all(
                           color: isDark ? AppColors.darkBorder : AppColors.yellowSoft,
-                          width: 3,
+                          width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -545,7 +546,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                           ),
                         ],
                       ),
-                      child: ClipOval(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
                         child: food.imageUrl != null && food.imageUrl!.isNotEmpty
                             ? NetworkImageView(
                                 imageUrl: food.imageUrl,

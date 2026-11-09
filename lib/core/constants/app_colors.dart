@@ -78,11 +78,11 @@ class AppColors {
   // ==========================================
   // 6. DARK THEME TOKENS
   // ==========================================
-  static const Color darkBackground = Color(0xFF140C0B);
-  static const Color darkSurface = Color(0xFF1E1211);
-  static const Color darkSurfaceElevated = Color(0xFF2A1A18);
-  static const Color darkBorder = Color(0xFF3A2725);
-  static const Color darkDivider = Color(0xFF2F1E1C);
+  static const Color darkBackground = Color(0xFF121113);
+  static const Color darkSurface = Color(0xFF1C1A1D);
+  static const Color darkSurfaceElevated = Color(0xFF272428);
+  static const Color darkBorder = Color(0xFF3B363B);
+  static const Color darkDivider = Color(0xFF302D31);
   static const Color darkTextPrimary = Color(0xFFF7EFE6);
   static const Color darkTextSecondary = Color(0xFFBCA9A3);
   static const Color darkTextMuted = Color(0xFF8F7C77);

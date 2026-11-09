@@ -39,6 +39,11 @@ extension AppTranslation on BuildContext {
 }
 
 const _urdu = <String, String>{
+  'What are you craving?': 'آج آپ کیا کھانا پسند کریں گے؟',
+  'Explore the menu': 'مینو دیکھیں',
+  'Your bag': 'آپ کا بیگ',
+  'Your bag is empty': 'آپ کا بیگ خالی ہے',
+  'View cart': 'کارٹ دیکھیں',
   'Waiting for pickup': 'آرڈر وصول کرنے کا انتظار ہے',
   'Finding a rider': 'رائیڈر تلاش کیا جا رہا ہے',
   'Delivery rider': 'ڈیلیوری رائیڈر',

@@ -180,7 +180,7 @@ class _ProductCardState extends State<ProductCard>
                         child: Semantics(
                           label: 'Add ${food.name} to cart',
                           button: true,
-                          child: FilledButton.tonal(
+                          child: FilledButton(
                             onPressed: food.isAvailable
                                 ? () => _handleAddTap(context, cart)
                                 : null,
