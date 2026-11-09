@@ -227,6 +227,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                                       timeLimit: Duration(seconds: 5),
                                     ),
                                   );
+                                  if (!dialogContext.mounted) return;
                                   setDialogState(() {
                                     latCtrl.text = pos.latitude.toStringAsFixed(6);
                                     lngCtrl.text = pos.longitude.toStringAsFixed(6);
@@ -235,8 +236,10 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                               },
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
+                          if (LocationPickerMapDialog.isSupported)
+                            const SizedBox(width: 8),
+                          if (LocationPickerMapDialog.isSupported)
+                            Expanded(
                             child: OutlinedButton.icon(
                               icon: const Icon(Icons.map_rounded, size: 16),
                               label: const Text('Pick on Map', style: TextStyle(fontSize: 12)),
@@ -248,7 +251,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                                   initialLatitude: initialLat,
                                   initialLongitude: initialLng,
                                 );
-                                if (loc != null) {
+                                if (dialogContext.mounted && loc != null) {
                                   setDialogState(() {
                                     latCtrl.text = loc.latitude.toStringAsFixed(6);
                                     lngCtrl.text = loc.longitude.toStringAsFixed(6);

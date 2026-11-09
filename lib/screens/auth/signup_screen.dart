@@ -1,3 +1,4 @@
+import '../../widgets/common/entrance_motion.dart';
 import '../../routes/role_router.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -138,10 +139,11 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: Column(
                     children: [
                       // Responsive Branded Header
-                      if (isCompactLandscape)
-                        _buildCompactHeader()
-                      else
-                        _buildStandardHeader(size),
+                      EntranceMotion(
+                        child: isCompactLandscape
+                            ? _buildCompactHeader()
+                            : _buildStandardHeader(size),
+                      ),
 
                       // Form Card floating over hero
                       Center(
@@ -351,7 +353,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                   const SizedBox(height: 16),
 
                                   // Google Sign-Up Button
-                                  GoogleSignInButton(
+                                  if (GoogleSignInButton.isSupported)
+                                    GoogleSignInButton(
                                     key: const ValueKey('google_signup_button'),
                                     semanticsLabel: 'Sign up with Google Button',
                                     text: 'Sign up with Google',

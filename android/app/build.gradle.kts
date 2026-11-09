@@ -39,7 +39,9 @@ android {
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         manifestPlaceholders["googleMapsApiKey"] =
-            localProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
+            providers.environmentVariable("GOOGLE_MAPS_API_KEY").orNull
+                ?.takeIf { it.isNotBlank() }
+                ?: localProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
         // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
@@ -75,8 +77,11 @@ android {
                 )
             }
             signingConfig = releaseSigning
-            isMinifyEnabled = true
-            isShrinkResources = true
+            val shrinkRelease = !providers.gradleProperty("foodFightSkipReleaseShrinking")
+                .map { it.equals("true", ignoreCase = true) }
+                .getOrElse(false)
+            isMinifyEnabled = shrinkRelease
+            isShrinkResources = shrinkRelease
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -1,3 +1,4 @@
+import '../../widgets/common/entrance_motion.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:geolocator/geolocator.dart';
@@ -254,8 +255,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   ),
                                   child: Text(
                                     item.badge,
-                                    style: const TextStyle(
-                                      color: AppColors.brandMaroon,
+                                    style: TextStyle(
+                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 0.8,
@@ -280,7 +281,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(28),
-                                    child: Image.asset(
+                                    child: EntranceMotion(
+                                      key: ValueKey(index == _currentIndex),
+                                      child: Image.asset(
                                       item.imagePath,
                                       fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => Container(
@@ -292,6 +295,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             color: AppColors.brandYellow,
                                           ),
                                         ),
+                                      ),
                                       ),
                                     ),
                                   ),
@@ -528,14 +532,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: AppColors.brandMaroon),
+          Icon(icon, size: 18, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.brandMaroon,
+              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
             ),
           ),
         ],

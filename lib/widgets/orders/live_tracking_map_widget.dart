@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/rider_location_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -170,10 +171,12 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
         borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
-            // Web uses a coordinate card because the map plugin is not reliable there.
+            // Desktop and web show coordinates and can open an external map.
             // On Mobile (iOS/Android): Render real hardware GoogleMap
-            if (kIsWeb)
-              _buildWebLocationCard(isDark)
+            if (kIsWeb ||
+                (defaultTargetPlatform != TargetPlatform.android &&
+                    defaultTargetPlatform != TargetPlatform.iOS))
+              _buildLocationCard(isDark)
             else
               GoogleMap(
                 onMapCreated: _onMapCreated,
@@ -199,6 +202,30 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
               child: _StatusPill(
                 isActive: hasGps,
                 isOutForDelivery: widget.isOutForDelivery,
+              ),
+            ),
+
+            PositionedDirectional(
+              top: 8,
+              end: 8,
+              child: IconButton.filledTonal(
+                tooltip: 'Open rider location in maps',
+                icon: const Icon(Icons.open_in_new),
+                onPressed: () async {
+                  final rider = _riderLatLng;
+                  if (rider == null) return;
+                  final url = Uri.https('www.google.com', '/maps/search/', {
+                    'api': '1',
+                    'query': '${rider.latitude},${rider.longitude}',
+                  });
+                  if (await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                    return;
+                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open maps.')),
+                  );
+                },
               ),
             ),
 
@@ -244,7 +271,7 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
     );
   }
 
-  Widget _buildWebLocationCard(bool isDark) {
+  Widget _buildLocationCard(bool isDark) {
     final position = _riderLatLng!;
     return Container(
       width: double.infinity,

@@ -1,3 +1,4 @@
+import '../../widgets/common/entrance_motion.dart';
 import '../../core/config/local_demo.dart';
 import '../../core/localization/app_language.dart';
 import 'phone_sign_in_dialog.dart';
@@ -169,10 +170,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       // Responsive Branded Header
-                      if (isCompactLandscape)
-                        _buildCompactHeader()
-                      else
-                        _buildStandardHeader(size),
+                      EntranceMotion(
+                        child: isCompactLandscape
+                            ? _buildCompactHeader()
+                            : _buildStandardHeader(size),
+                      ),
 
                       // Form Container with reliable gesture hit testing
                       Center(
@@ -326,7 +328,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     const SizedBox(height: 16),
 
                                     // Google Sign-In Button
-                                    GoogleSignInButton(
+                                    if (GoogleSignInButton.isSupported)
+                                      GoogleSignInButton(
                                       key: const ValueKey('google_signin_button'),
                                       semanticsLabel: context.tr('Continue with Google Button'),
                                       isLoading: _isGoogleLoading,
