@@ -3,6 +3,10 @@
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Older release history is available in Git tags.
 
+## [1.8.2+19] - 2026-11-11
+
+- Use the supplied transparent Food Fight artwork for the in-app logo, Android launcher and splash, and Windows app and installer icon.
+
 ## [1.8.1+18] - Unreleased
 
 - Added a resumable tenant backfill with export validation and a separate, guarded public financial cleanup.
