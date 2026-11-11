@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../core/utils/safe_convert.dart';
 import 'food_model.dart';
 import 'menu_item_model.dart';
@@ -21,11 +23,11 @@ class CartItemModel {
     this.unitPrice,
   }) : selectedAddons = selectedAddons ?? [];
 
-  /// Unique key distinguishing this line item (differentiating variants & extras)
+  /// Unique key distinguishing this line item (distinguishing variants, extras, and instructions)
   String get lineKey {
     final v = selectedVariant?.label ?? selectedSize ?? '';
     final aList = selectedAddons.map((a) => a.name).toList()..sort();
-    return '${food.id}::$v::${aList.join(',')}';
+    return jsonEncode([food.id, v, aList, note?.trim() ?? '']);
   }
 
   /// Price of a single item including chosen variant and extras

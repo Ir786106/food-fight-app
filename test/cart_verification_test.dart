@@ -79,6 +79,16 @@ void main() {
       expect(cart.total, 600.0);
     });
 
+    test('Different special instructions keep otherwise identical items separate', () {
+      cart.addToCart(foodA, note: 'No sauce');
+      cart.addToCart(foodA, note: 'Extra sauce');
+      cart.addToCart(foodA, note: ' No sauce ');
+
+      expect(cart.items.map((item) => item.quantity), [2, 1]);
+      expect(cart.items.map((item) => item.note), ['No sauce', 'Extra sauce']);
+      cart.removeLine(cart.items.last.lineKey);
+      expect(cart.items.single.note, 'No sauce');
+    });
     test('3. Add Product B x 1 (variant Medium Rs. 850)', () {
       cart.addToCart(foodA);
       final variantM = foodB.variants![1]; // Medium

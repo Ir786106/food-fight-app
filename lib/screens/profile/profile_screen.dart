@@ -1,3 +1,4 @@
+import '../../theme/theme_provider.dart';
 import '../../core/localization/app_language.dart';
 import '../../widgets/common/account_dialogs.dart';
 import 'package:food_fight/core/utils/app_insets.dart';
@@ -335,6 +336,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Group 3: App Settings & Help
               _buildSectionHeader('PREFERENCES & SUPPORT'),
               _buildCardGroup([
+                Consumer<ThemeProvider?>(
+                  builder: (context, preference, _) => preference == null
+                      ? const SizedBox.shrink()
+                      : SwitchListTile(
+                          secondary: const Icon(Icons.dark_mode_outlined),
+                          title: Text(context.tr('Dark mode')),
+                          value: isDark,
+                          onChanged: (enabled) => preference.setThemeMode(
+                            enabled ? ThemeMode.dark : ThemeMode.light,
+                          ),
+                        ),
+                ),
                 _buildMenuItem(
                   icon: Icons.notifications_none_rounded,
                   title: 'Notifications',

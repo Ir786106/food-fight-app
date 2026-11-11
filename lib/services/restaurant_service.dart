@@ -59,24 +59,6 @@ class RestaurantService {
     ),
   ];
 
-  /// Ensure initial restaurants exist in Firestore collection
-  static Future<void> ensureSeeded() async {
-    try {
-      final snap = await _col().limit(1).get();
-      if (snap.docs.isEmpty) {
-        AppLogger.info('Seeding initial restaurants to Firestore...', tag: 'RestaurantService');
-        final batch = _firestore.batch();
-        for (var r in _defaultPartners) {
-          batch.set(_col().doc(r.id), r.toJson());
-        }
-        await batch.commit();
-        AppLogger.info('Restaurants seeded successfully!', tag: 'RestaurantService');
-      }
-    } catch (e) {
-      AppLogger.warn('Could not check/seed restaurants: $e', tag: 'RestaurantService');
-    }
-  }
-
   /// Watch live restaurants from Firestore
   static Stream<List<RestaurantModel>> watchRestaurants() {
     return _col().snapshots().map((snapshot) {

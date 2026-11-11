@@ -124,6 +124,11 @@ class SystemSettingsModel {
   }
 
   factory SystemSettingsModel.fromJson(Map<String, dynamic> json) {
+    bool flag(String key, bool fallback) => switch (json[key]) {
+      true || 1 || '1' || 'true' => true,
+      false || 0 || '0' || 'false' => false,
+      _ => fallback,
+    };
     return SystemSettingsModel(
       id: json['id']?.toString() ?? 'global_settings',
       appName: json['appName']?.toString() ?? 'Food Fight',
@@ -135,13 +140,13 @@ class SystemSettingsModel {
       freeDeliveryThreshold: SafeConvert.toDouble(json['freeDeliveryThreshold'], 2500.0),
       orderCancellationWindowMinutes:
           SafeConvert.toInt(json['orderCancellationWindowMinutes'], 10),
-      isStoreOpen: json['isStoreOpen'] ?? true,
-      maintenanceMode: json['maintenanceMode'] ?? false,
-      allowCashOnDelivery: json['allowCashOnDelivery'] ?? true,
-      allowOnlinePayment: json['allowOnlinePayment'] ?? true,
-      pushNotificationsEnabled: json['pushNotificationsEnabled'] ?? true,
-      emailNotificationsEnabled: json['emailNotificationsEnabled'] ?? true,
-      smsNotificationsEnabled: json['smsNotificationsEnabled'] ?? true,
+      isStoreOpen: flag('isStoreOpen', true),
+      maintenanceMode: flag('maintenanceMode', false),
+      allowCashOnDelivery: flag('allowCashOnDelivery', true),
+      allowOnlinePayment: flag('allowOnlinePayment', true),
+      pushNotificationsEnabled: flag('pushNotificationsEnabled', true),
+      emailNotificationsEnabled: flag('emailNotificationsEnabled', true),
+      smsNotificationsEnabled: flag('smsNotificationsEnabled', true),
       welcomeTokens: SafeConvert.toInt(json['welcomeTokens'], 50),
       loyaltyEarnRate: SafeConvert.toInt(json['loyaltyEarnRate'], 100),
       loyaltyRedeemRate: SafeConvert.toDouble(json['loyaltyRedeemRate'], 1.0),

@@ -3,6 +3,13 @@
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Older release history is available in Git tags.
 
+## [1.8.1+18] - Unreleased
+
+- Added a resumable tenant backfill with export validation and a separate, guarded public financial cleanup.
+- Added English and Urdu ARB catalogs with matching-key checks and a device-language default.
+- Hardened Android update redirects and Android build-number comparison.
+- Added staging and signed upgrade verification instructions.
+
 ## [1.7.5+13] - 2026-10-22
 
 ### Added

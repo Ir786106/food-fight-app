@@ -1,9 +1,8 @@
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../services/menu_service.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/firestore_collections.dart';
 import '../../../core/constants/image_storage.dart';
 import '../../../core/theme/admin_theme.dart';
 import '../../../core/utils/logger.dart';
@@ -48,7 +47,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
 
   Future<void> _uploadForItem(MenuItemModel item) async {
     final img = await AppImageStorageService.pickImage();
-    if (img == null) return;
+    if (img == null || !mounted) return;
 
     setState(() {
       _uploadingItemIds[item.id] = true;
@@ -65,17 +64,9 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
         },
       );
 
-      // Persist directly into Firestore
-      await FirebaseFirestore.instance
-          .collection(FirestoreCollections.menuItems)
-          .doc(item.id)
-          .update({
-        'imageUrl': newUrl,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await MenuService.updateImages({item.id}, newUrl);
 
       if (mounted) {
-        context.read<MenuProvider>().watchMenuItems();
         AppSnackbar.showSnackBar(context,
           SnackBar(
             content: Text('Successfully updated image for "${item.name}"!'),
@@ -111,13 +102,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
   Future<void> _assignDefaultBrandedLogo(MenuItemModel item) async {
     const brandedAsset = 'assets/images/branding/food_fight_logo_icon.png';
     try {
-      await FirebaseFirestore.instance
-          .collection(FirestoreCollections.menuItems)
-          .doc(item.id)
-          .update({
-        'imageUrl': brandedAsset,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await MenuService.updateImages({item.id}, brandedAsset);
       if (mounted) {
         AppSnackbar.showSnackBar(context,
           SnackBar(
@@ -133,6 +118,10 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
 
   Future<void> _batchFixAllMissing(List<MenuItemModel> missingItems) async {
     if (missingItems.isEmpty) return;
+    if (missingItems.length > 500) {
+      AppSnackbar.showInfo(context, 'Batch image repair supports up to 500 items.');
+      return;
+    }
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -155,19 +144,10 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
     if (confirm != true || !mounted) return;
 
     setState(() => _isBatchProcessing = true);
-    int count = 0;
+    final ids = missingItems.map((item) => item.id).toSet();
+    final count = ids.length;
     try {
-      final batch = FirebaseFirestore.instance.batch();
-      for (final item in missingItems) {
-        final docRef = FirebaseFirestore.instance.collection(FirestoreCollections.menuItems).doc(item.id);
-        batch.update(docRef, {
-          'imageUrl': 'assets/images/branding/food_fight_logo_icon.png',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        count++;
-      }
-      await batch.commit();
-
+      await MenuService.updateImages(ids, 'assets/images/branding/food_fight_logo_icon.png');
       if (mounted) {
         AppSnackbar.showSnackBar(context,
           SnackBar(

@@ -1,3 +1,5 @@
+import 'package:food_fight/widgets/common/error_view.dart';
+import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +8,7 @@ import 'package:food_fight/providers/super_admin_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/super_admin_theme.dart';
 import 'package:food_fight/theme/app_theme.dart';
-import 'package:food_fight/widgets/super_admin/super_admin_drawer.dart';
+import 'package:food_fight/widgets/super_admin/super_admin_scaffold.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
 import 'package:food_fight/core/utils/validator_utils.dart';
 
@@ -128,7 +130,8 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
 
     final provider = context.watch<SuperAdminProvider>();
 
-    if (!_initialized) {
+    provider.ensureSettingsWatching();
+    if (!_initialized && provider.settingsReady) {
       _populateForm(provider.settings);
       _initialized = true;
     }
@@ -143,9 +146,9 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
           Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
         }
       },
-      child: Scaffold(
+      child: SuperAdminScaffold(
+        currentRoute: '/super-admin/settings',
         backgroundColor: SuperAdminTheme.getBackground(context),
-        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/settings'),
         appBar: AppBar(
           title: const FittedBox(
             fit: BoxFit.scaleDown,
@@ -161,11 +164,15 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
             IconButton(
               icon: const Icon(Icons.save_rounded),
               tooltip: 'Save Settings',
-              onPressed: _isSaving ? null : _handleSave,
+              onPressed: _isSaving || !provider.settingsReady ? null : _handleSave,
             ),
           ],
         ),
-        body: ResponsiveContainer.content(
+        body: !provider.settingsReady
+            ? (provider.settingsError == null
+                ? const LoadingIndicator(message: 'Loading platform settings...')
+                : ErrorView(message: provider.settingsError!, onRetry: provider.watchSettings))
+            : ResponsiveContainer.content(
           maxWidth: 900,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -409,7 +416,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                         _isSaving ? 'Synchronizing System Configuration...' : 'Save Global Settings',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      onPressed: _isSaving ? null : _handleSave,
+                      onPressed: _isSaving || !provider.settingsReady ? null : _handleSave,
                     ),
                   ),
                   const SizedBox(height: 24),

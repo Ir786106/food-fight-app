@@ -6,7 +6,7 @@ import 'package:food_fight/models/coupon_model.dart';
 import 'package:food_fight/providers/coupon_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
@@ -335,9 +335,9 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: '/admin/coupons',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/coupons'),
       appBar: AppBar(
         title: const Text('Manage Coupons & Deals', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: AdminTheme.primaryBlue,
@@ -443,6 +443,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                             separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final coupon = filteredCoupons[index];
+                              final editable = context.read<AuthProvider>().currentUser?.canEditBranchRecord(coupon.branchId) == true;
                               final isExpired = DateTime.now().isAfter(coupon.validUntil);
 
                               return Material(
@@ -485,11 +486,12 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                               Switch(
                                                 value: coupon.isActive && !isExpired,
                                                 activeThumbColor: AdminTheme.primaryBlue,
-                                                onChanged: isExpired
+                                                onChanged: isExpired || !editable
                                                     ? null
                                                     : (val) => provider.toggleActive(coupon.id, coupon.isActive),
                                               ),
                                               PopupMenuButton<String>(
+                                                enabled: editable,
                                                 icon: Icon(Icons.more_vert_rounded, color: textMuted),
                                                 onSelected: (val) {
                                                   if (val == 'edit') {

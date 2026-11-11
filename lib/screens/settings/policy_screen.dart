@@ -1,24 +1,61 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../core/theme/design_system.dart';
 
-class PolicyScreen extends StatelessWidget {
+import '../../core/design_system/design_system.dart';
+import '../../core/localization/app_language.dart';
+import '../../shared/repositories/settings_repository.dart';
+
+class PolicyScreen extends StatefulWidget {
+  const PolicyScreen({super.key, required this.title, required this.field});
   final String title;
   final String field;
-  const PolicyScreen({super.key, required this.title, required this.field});
+
+  @override
+  State<PolicyScreen> createState() => _PolicyScreenState();
+}
+
+class _PolicyScreenState extends State<PolicyScreen> {
+  late Stream<Map<String, dynamic>> _settings;
+
+  @override
+  void initState() {
+    super.initState();
+    _settings = SettingsRepository.watchPublicSettings();
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
-    body: SafeArea(child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('settings').doc('global_settings').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) return const ErrorView(message: 'Unable to load this document. Please try again.');
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final text = snapshot.data?.data()?[field]?.toString().trim() ?? '';
-        return SingleChildScrollView(padding: DesignSystem.screenPadding,
-          child: SelectableText(text.isEmpty ? 'This document has not been published by the restaurant yet.' : text,
-            style: Theme.of(context).textTheme.bodyLarge));
-      },
-    )),
-  );
+        appBar: AppBar(title: Text(widget.title)),
+        body: SafeArea(
+          child: StreamBuilder<Map<String, dynamic>>(
+            stream: _settings,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return ErrorView(
+                  message: context.tr('Unable to load this document.'),
+                  onRetry: () => setState(() {
+                    _settings = SettingsRepository.watchPublicSettings();
+                  }),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Padding(
+                  padding: DesignSystem.screenPadding,
+                  child: ShimmerLoader(height: 144),
+                );
+              }
+              final text =
+                  snapshot.data?[widget.field]?.toString().trim() ?? '';
+              return SingleChildScrollView(
+                padding: DesignSystem.screenPadding,
+                child: SelectableText(
+                  text.isEmpty
+                      ? context.tr('This document has not been published yet.')
+                      : text,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
+            },
+          ),
+        ),
+      );
 }

@@ -14,6 +14,7 @@ class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
   DateTime? _endDate;
 
   String? _currentBranchId;
+  int _requestId = 0;
 
   ReportModel? get report => _report;
   bool get isLoading => _isLoading;
@@ -38,8 +39,12 @@ class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Change preset date range and fetch report
-  void setPreset(String preset, {String? branchId}) {
+  void setPreset(String preset, {String? branchId, bool replaceBranch = false}) {
     _selectedPreset = preset;
+    if ((replaceBranch || branchId != null) && _currentBranchId != branchId) {
+      _currentBranchId = branchId;
+      _report = null;
+    }
     if (branchId != null) _currentBranchId = branchId;
     final now = DateTime.now();
 
@@ -71,27 +76,31 @@ class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
   void setCustomDateRange(DateTime start, DateTime end, {String? branchId}) {
     _selectedPreset = 'custom';
     _startDate = start;
-    _endDate = end;
+    _endDate = DateTime(end.year, end.month, end.day + 1).subtract(const Duration(milliseconds: 1));
     if (branchId != null) _currentBranchId = branchId;
-    fetchReport(startDate: start, endDate: end, branchId: _currentBranchId);
+    fetchReport(startDate: start, endDate: _endDate, branchId: _currentBranchId);
   }
 
   /// Fetch sales report
   Future<void> fetchReport({DateTime? startDate, DateTime? endDate, String? branchId}) async {
     if (branchId != null) _currentBranchId = branchId;
+    final requestId = ++_requestId;
     _isLoading = true;
     _errorMessage = null;
     notifyListenersPostFrame();
 
     try {
-      _report = await ReportService.fetchSalesReport(
+      final report = await ReportService.fetchSalesReport(
         startDate: startDate,
         endDate: endDate,
         branchId: _currentBranchId,
       );
+      if (requestId != _requestId) return;
+      _report = report;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (requestId != _requestId) return;
       _isLoading = false;
       _errorMessage = 'Failed to load report: $e';
       AppLogger.error('ReportProvider error: $e', tag: 'ReportProvider');

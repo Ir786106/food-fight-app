@@ -1,3 +1,4 @@
+import '../models/report_model.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/system_settings_model.dart';
@@ -7,30 +8,25 @@ import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for Super Admin Dashboard KPIs and global platform configuration
 class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
-  Map<String, dynamic> _metrics = {
-    'totalRestaurants': 1,
-    'totalCustomers': 0,
-    'totalAdmins': 0,
-    'totalStaff': 0,
-    'totalRiders': 0,
-    'totalOrders': 0,
-    'completedOrders': 0,
-    'cancelledOrders': 0,
-    'platformRevenue': 0.0,
-  };
+  Map<String, dynamic> _metrics = const {};
 
   SystemSettingsModel _settings = SystemSettingsModel();
   bool _isLoading = false;
   String? _errorMessage;
+  String? _settingsError;
+  bool _settingsReady = false;
   StreamSubscription<SystemSettingsModel>? _settingsSub;
 
   Map<String, dynamic> get metrics => _metrics;
   SystemSettingsModel get settings => _settings;
+  bool get settingsReady => _settingsReady;
+  String? get settingsError => _settingsError;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  int get totalRestaurants => _metrics['totalRestaurants'] as int? ?? 1;
-  int get totalBranches => totalRestaurants;
+  int get totalRestaurants => _metrics['totalRestaurants'] as int? ?? 0;
+  int get totalBranches => _metrics['totalBranches'] as int? ?? 0;
+  int get activeRiders => _metrics['activeRiders'] as int? ?? 0;
   int get totalCustomers => _metrics['totalCustomers'] as int? ?? 0;
   int get totalAdmins => _metrics['totalAdmins'] as int? ?? 0;
   int get totalStaff => _metrics['totalStaff'] as int? ?? 0;
@@ -38,8 +34,19 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   int get totalOrders => _metrics['totalOrders'] as int? ?? 0;
   int get completedOrders => _metrics['completedOrders'] as int? ?? 0;
   int get cancelledOrders => _metrics['cancelledOrders'] as int? ?? 0;
-  double get platformRevenue => (_metrics['platformRevenue'] as num? ?? 0.0).toDouble();
+  double get deliveredGmv =>
+      (_metrics['deliveredGmv'] as num? ?? 0.0).toDouble();
 
+  List<DailySalesStat> get dailySales => [
+        for (final day
+            in (_metrics['dailySales'] as List? ?? const []).whereType<Map>())
+          DailySalesStat(
+            date: DateTime.fromMillisecondsSinceEpoch(day['date'] as int,
+                isUtc: true),
+            revenue: (day['revenue'] as num).toDouble(),
+            ordersCount: day['ordersCount'] as int,
+          ),
+      ];
   bool _initialized = false;
 
   SuperAdminProvider();
@@ -52,7 +59,7 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
 
   void init() {
     loadMetrics();
-    watchSettings();
+    ensureSettingsWatching();
   }
 
   /// Load platform-wide metrics
@@ -68,29 +75,41 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load platform metrics: $e';
-      AppLogger.error('SuperAdminProvider metrics error: $e', tag: 'SuperAdminProvider');
+      AppLogger.error('SuperAdminProvider metrics error: $e',
+          tag: 'SuperAdminProvider');
       notifyListeners();
     }
   }
 
   /// Watch global settings
+  void ensureSettingsWatching() {
+    if (_settingsSub == null) watchSettings();
+  }
+
   void watchSettings() {
+    _settingsError = null;
+    _settingsReady = false;
+    notifyListenersPostFrame();
     _settingsSub?.cancel();
     _settingsSub = SuperAdminService.watchSystemSettings().listen(
       (s) {
         _settings = s;
+        _settingsReady = true;
+        _settingsError = null;
         notifyListeners();
       },
       onError: (e) {
-        _errorMessage = 'Failed to load system settings: $e';
-        AppLogger.error('SuperAdminProvider settings watch error: $e', tag: 'SuperAdminProvider');
+        _settingsError = 'Unable to load system settings. Please try again.';
+        AppLogger.error('SuperAdminProvider settings watch error: $e',
+            tag: 'SuperAdminProvider');
         notifyListeners();
       },
     );
   }
 
   /// Update and save platform settings
-  Future<bool> saveSettings(SystemSettingsModel newSettings, {String? savedBy}) async {
+  Future<bool> saveSettings(SystemSettingsModel newSettings,
+      {String? savedBy}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -103,7 +122,8 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to save settings: $e';
-      AppLogger.error('SuperAdminProvider saveSettings error: $e', tag: 'SuperAdminProvider');
+      AppLogger.error('SuperAdminProvider saveSettings error: $e',
+          tag: 'SuperAdminProvider');
       notifyListeners();
       return false;
     }

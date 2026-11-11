@@ -1,6 +1,8 @@
 package com.example.food_fight
 
+import android.content.ClipData
 import android.content.Intent
+import androidx.core.content.FileProvider
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -50,6 +52,31 @@ class MainActivity : FlutterActivity() {
                         result.success(verificationResult)
                     } catch (e: Exception) {
                         result.error("VERIFY_ERROR", e.localizedMessage, null)
+                    }
+                }
+                "launchApkInstaller" -> {
+                    val path = call.argument<String>("apkPath")
+                    if (path == null) {
+                        result.error("INVALID_ARGS", "apkPath is required", null)
+                        return@setMethodCallHandler
+                    }
+                    try {
+                        val verification = verifyApk(path)
+                        val code = verification["errorCode"] as String
+                        if (code != "OK") {
+                            result.error(code, "Android could not validate the update.", null)
+                            return@setMethodCallHandler
+                        }
+                        val uri = FileProvider.getUriForFile(this, "$packageName.fileProvider", File(path))
+                        val installer = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, "application/vnd.android.package-archive")
+                            clipData = ClipData.newRawUri("Food Fight update", uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(installer)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("INSTALLER_ERROR", e.localizedMessage, null)
                     }
                 }
                 "canRequestPackageInstalls" -> {
@@ -122,8 +149,9 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun verifyApk(apkPath: String): Map<String, Any?> {
-        val file = File(apkPath)
-        if (!file.exists()) {
+        val file = File(apkPath).canonicalFile
+        val cachePath = cacheDir.canonicalPath + File.separator
+        if (!file.path.startsWith(cachePath) || !file.isFile) {
             return mapOf(
                 "success" to false,
                 "errorCode" to "FILE_NOT_FOUND",
@@ -160,12 +188,12 @@ class MainActivity : FlutterActivity() {
             archiveInfo.versionCode.toLong()
         }
 
-        val isDowngrade = archiveVersionCode < installedVersionCode
+        val isDowngrade = archiveVersionCode <= installedVersionCode
 
-        // Check storage space (minimum 120MB recommended)
+        // Let the system installer make the final space calculation.
         val stat = StatFs(cacheDir.absolutePath)
         val availableBytes = stat.availableBlocksLong * stat.blockSizeLong
-        val hasEnoughStorage = availableBytes > 120 * 1024 * 1024
+        val hasEnoughStorage = availableBytes >= file.length()
 
         val canInstallPackages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             packageManager.canRequestPackageInstalls()
@@ -174,7 +202,8 @@ class MainActivity : FlutterActivity() {
         }
 
         val errorCode = when {
-            !matchesSignature && installedCert.isNotEmpty() -> "SIGNATURE_MISMATCH"
+            archiveInfo.packageName != packageName -> "PACKAGE_MISMATCH"
+            !matchesSignature -> "SIGNATURE_MISMATCH"
             isDowngrade -> "VERSION_DOWNGRADE"
             !hasEnoughStorage -> "INSUFFICIENT_STORAGE"
             !canInstallPackages -> "UNKNOWN_SOURCES_BLOCKED"

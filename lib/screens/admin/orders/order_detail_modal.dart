@@ -185,9 +185,14 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
     );
   }
 
-  void _showAssignRiderSheet() {
+  void _showAssignRiderSheet(OrderModel order) {
     final riderProvider = context.read<RiderProvider>();
-    riderProvider.watchAllRiders();
+    final branchId = order.branchId?.trim();
+    if (branchId == null || branchId.isEmpty) {
+      AppSnackbar.showError(context, 'This order needs a branch before a rider can be assigned.');
+      return;
+    }
+    riderProvider.watchAllRiders(branchId: branchId);
 
     showModalBottomSheet(
       context: context,
@@ -553,7 +558,7 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               ),
                               if (order.status == OrderStatus.ready || order.status == OrderStatus.assigned)
                                 TextButton.icon(
-                                  onPressed: _isUpdating ? null : _showAssignRiderSheet,
+                                  onPressed: _isUpdating ? null : () => _showAssignRiderSheet(order),
                                   icon: Icon(
                                     order.riderId != null ? Icons.swap_horiz_rounded : Icons.person_add_alt_1_rounded,
                                     size: 16,

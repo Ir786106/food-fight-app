@@ -24,6 +24,9 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      - name: Check English and Urdu catalogs
+        run: node tool/localization_catalog.cjs
+
       - name: Flutter format check
         run: dart format --output=none --set-exit-if-changed lib/ test/
 

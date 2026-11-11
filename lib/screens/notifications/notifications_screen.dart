@@ -1,6 +1,8 @@
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_language.dart';
+import '../../models/order_model.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -76,7 +78,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(context.tr('Notifications'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
           if (notifications.isNotEmpty && notifProvider.unreadCount > 0)
             IconButton(
@@ -250,7 +252,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              n.title,
+                                              switch (n.messageKey) {
+                                                'orderPlaced' => context.tr('Order placed'),
+                                                'orderStatus' => context.tr('Order update'),
+                                                _ => n.title,
+                                              },
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 14,
@@ -271,7 +277,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        n.message,
+                                        switch (n.messageKey) {
+                                          'orderPlaced' when n.orderNumber != null =>
+                                            context.tr('Order {order} has been sent to the kitchen.')
+                                                .replaceFirst('{order}', n.orderNumber!),
+                                          'orderStatus' when n.orderNumber != null && n.orderStatus != null =>
+                                            context.tr('Order {order}: {status}')
+                                                .replaceFirst('{order}', n.orderNumber!)
+                                                .replaceFirst('{status}', context.tr(OrderStatus.fromString(n.orderStatus!).displayName)),
+                                          _ => n.message,
+                                        },
                                         style: TextStyle(
                                           fontSize: 12.5,
                                           color: n.isRead

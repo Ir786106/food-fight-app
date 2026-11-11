@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +9,7 @@ import '../core/localization/app_language.dart';
 import '../providers/app_update_provider.dart';
 import '../services/app_update_service.dart';
 
-class AppUpdateBottomSheet extends StatelessWidget {
+class AppUpdateBottomSheet extends StatefulWidget {
   const AppUpdateBottomSheet({super.key});
 
   static bool _showing = false;
@@ -31,6 +33,33 @@ class AppUpdateBottomSheet extends StatelessWidget {
     } finally {
       _showing = false;
     }
+  }
+
+  @override
+  State<AppUpdateBottomSheet> createState() => _AppUpdateBottomSheetState();
+}
+
+class _AppUpdateBottomSheetState extends State<AppUpdateBottomSheet>
+    with WidgetsBindingObserver {
+  bool _waitingForPermission = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !_waitingForPermission) return;
+    _waitingForPermission = false;
+    unawaited(context.read<AppUpdateProvider>().installApk());
   }
 
   @override
@@ -180,6 +209,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 ),
                                 onPressed: () async {
+                                  _waitingForPermission = true;
                                   await prov.openUnknownSourcesSettings();
                                 },
                               ),
@@ -227,8 +257,8 @@ class AppUpdateBottomSheet extends StatelessWidget {
                       if (prov.installReady)
                         SizedBox(width: double.infinity, child: ElevatedButton.icon(
                           icon: const Icon(Icons.install_mobile_rounded),
-                          label: Text(context.tr('Install Now')),
-                          onPressed: () async {
+                          label: Text(context.tr(prov.isInstalling ? 'Opening installer…' : 'Install Now')),
+                          onPressed: prov.isInstalling ? null : () async {
                             final success = await prov.installApk();
                             if (!success && context.mounted) {
                               if (prov.precheckResult?.status == ApkInstallStatus.signatureMismatch) {
@@ -274,7 +304,7 @@ class AppUpdateBottomSheet extends StatelessWidget {
                                 );
                               } else {
                                 AppSnackbar.showSnackBar(context,
-                                  SnackBar(content: Text(prov.errorMessage ?? 'Install failed. Please try manually.')),
+                                  SnackBar(content: Text(prov.errorMessage ?? 'Could not open the Android installer. Try again.')),
                                 );
                               }
                             }

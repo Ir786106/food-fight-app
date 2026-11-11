@@ -201,7 +201,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                 ? currentOrders.first
                                 : (pastOrders.isNotEmpty ? pastOrders.first : null));
 
-                        final ordersView = TabBarView(
+                        final orderTabs = TabBarView(
                           controller: _tabController,
                           children: [
                         // Tab 1: Current Orders with Horizontal Progress Indicator
@@ -255,7 +255,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(20),
                                           onTap: () {
-                                            if (isWide) {
+                                                                if (isWide) {
                                               setState(() => _selectedOrder = order);
                                             } else {
                                               Navigator.of(context).pushNamed(
@@ -521,6 +521,23 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                       ],
                     );
 
+                    final ordersView = Column(
+                      children: [
+                        Expanded(child: orderTabs),
+                        if (orderProvider.customerPageError case final error?)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(error),
+                          ),
+                        if (orderProvider.isPagingCustomerOrders)
+                          const LinearProgressIndicator(),
+                        if (orderProvider.canLoadMoreCustomerOrders)
+                          TextButton(
+                            onPressed: orderProvider.loadMoreCustomerOrders,
+                            child: Text(context.tr('Load older orders')),
+                          ),
+                      ],
+                    );
                     if (isWide) {
                       return ResponsiveBox(
                         maxWidth: 1240,

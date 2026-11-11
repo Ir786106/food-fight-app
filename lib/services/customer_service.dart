@@ -1,57 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
 
 /// Customer Management Service for Admin Panel
 class CustomerService {
-  static final CollectionReference _usersCollection =
-      FirebaseFirestore.instance.collection(FirestoreCollections.users);
   static final CollectionReference _ordersCollection =
       FirebaseFirestore.instance.collection(FirestoreCollections.orders);
 
-  /// Watch all registered customers (optionally scoped to a branch) with pagination limit
-  static Stream<List<UserModel>> watchCustomers({String? search, bool? isActive, String? branchId, int limit = 100}) {
-    Query query = _usersCollection.where('role', isEqualTo: 'customer').limit(limit);
+  static HttpsCallable get _directory =>
+      FirebaseFunctions.instance.httpsCallable('manageBranchCustomers');
 
-    return query.snapshots().asyncMap((snapshot) async {
-      Set<String>? branchCustomerIds;
-      if (branchId != null && branchId.isNotEmpty) {
-        final ordersSnap = await _ordersCollection.where('branchId', isEqualTo: branchId).get();
-        branchCustomerIds = ordersSnap.docs.map((d) => (d.data() as Map<String, dynamic>)['customerId']?.toString() ?? '').toSet();
-      }
-
-      var list = snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return UserModel.fromJson(data);
-      }).toList();
-
-      if (branchCustomerIds != null) {
-        list = list.where((u) => u.branchId == branchId || branchCustomerIds!.contains(u.id)).toList();
-      }
-
-      if (isActive != null) {
-        list = list.where((u) => u.isActive == isActive).toList();
-      }
-
-      if (search != null && search.trim().isNotEmpty) {
-        final q = search.trim().toLowerCase();
-        list = list.where((u) =>
-            u.name.toLowerCase().contains(q) ||
-            u.email.toLowerCase().contains(q) ||
-            u.phone.toLowerCase().contains(q)).toList();
-      }
-
-      return list;
-    });
+  static Future<List<UserModel>> getCustomers() async {
+    final result = await _directory.call<Map<String, dynamic>>({'action': 'list'});
+    final customers = result.data['customers'] as List;
+    return customers
+        .map((data) => UserModel.fromJson(Map<String, dynamic>.from(data as Map)))
+        .toList();
   }
 
   /// Toggle customer active / blocked status
   static Future<void> toggleCustomerStatus(String userId, bool currentStatus) async {
-    await _usersCollection.doc(userId).update({
-      'isActive': currentStatus ? 0 : 1,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    await _directory.call({
+      'action': 'setStatus',
+      'customerId': userId,
+      'active': !currentStatus,
     });
     AppLogger.info('Toggled customer status for $userId to ${!currentStatus}', tag: 'CustomerService');
   }

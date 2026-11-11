@@ -6,17 +6,25 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function activeProfile(user) {
+      return user.get('isActive', null) in [null, true, 1, 'true', '1'] &&
+        user.get('isBlocked', false) != true &&
+        !(user.get('status', '') in ['blocked', 'suspended', 'deactivated']);
+    }
+
+    function currentUser() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isSuperAdmin() {
-      return isAuthenticated() &&
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+      return isAuthenticated() && activeProfile(currentUser()) &&
+        currentUser().role == 'super_admin';
     }
 
     function isAdmin() {
-      return isAuthenticated() && (
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin', 'sub_admin', 'staff']
-      );
+      return isAuthenticated() && activeProfile(currentUser()) &&
+        currentUser().role in ['admin', 'super_admin', 'sub_admin', 'staff'];
     }
-
     function isImage() {
       return request.resource.contentType.matches('image/.*');
     }
@@ -29,8 +37,9 @@ service firebase.storage {
         let canChat = user.role == 'admin' || user.role == 'super_admin' ||
           (permissions is list && permissions.hasAny(['chats','manage_chats'])) ||
           (permissions is map && (permissions.get('chats',false) || permissions.get('manage_chats',false)));
-        return chat.customerId == request.auth.uid || user.role == 'super_admin' ||
-          (canChat && user.get('branchId','') == chat.get('branchId',''));
+        return chat.customerId == request.auth.uid || (activeProfile(user) &&
+          (user.role == 'super_admin' ||
+            (canChat && user.get('branchId','') == chat.get('branchId',''))));
       }
       allow read: if isAuthenticated() && participant();
       allow create: if isAuthenticated() && participant() && isImage() && request.resource.size < 5 * 1024 * 1024;

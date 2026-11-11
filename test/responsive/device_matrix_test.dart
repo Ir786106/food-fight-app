@@ -150,6 +150,13 @@ class StubCouponProvider extends ChangeNotifier implements CouponProvider {
 
 class StubRiderProvider extends ChangeNotifier implements RiderProvider {
   @override
+  List<OrderModel> get earningsOrders => [];
+  @override
+  bool get earningsLoading => false;
+  @override
+  bool get earningsUnavailable => false;
+
+  @override
   bool get isOnline => false;
   @override
   RiderModel? get currentRider => null;

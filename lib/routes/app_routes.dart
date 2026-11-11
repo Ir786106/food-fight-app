@@ -1,3 +1,6 @@
+import '../screens/super_admin/users/super_admin_users_screen.dart';
+import '../screens/super_admin/branches/super_admin_branches_screen.dart';
+import '../screens/admin/settings/admin_restaurant_settings_screen.dart';
 import '../core/config/app_edition.dart';
 import '../screens/admin/menu/menu_reports_screen.dart';
 import 'package:flutter/material.dart';
@@ -133,6 +136,7 @@ class AppRoutes {
     '/admin/deals': (context) => const AdminRouteGuard(child: ManageDealsScreen()),
     '/admin/reviews': (context) => const AdminRouteGuard(requiredPermission: 'reviews', child: AdminReviewsScreen()),
     '/admin/reports': (context) => const AdminRouteGuard(requiredPermission: 'reports', child: SalesReportsScreen()),
+    '/admin/settings': (context) => const AdminRouteGuard(blockSubAdmin: true, child: AdminRestaurantSettingsScreen()),
     '/admin/sub-admins': (context) => const AdminRouteGuard(blockSubAdmin: true, child: ManageSubAdminsScreen()),
 
     // -------------------------------------------------------------------------
@@ -140,6 +144,8 @@ class AppRoutes {
     // -------------------------------------------------------------------------
     // Requires authenticated user with 'super_admin' clearance exclusively
     '/super-admin/dashboard': (context) => const SuperAdminRouteGuard(child: SuperAdminDashboardScreen()),
+    '/super-admin/users': (context) => const SuperAdminRouteGuard(child: SuperAdminUsersScreen()),
+    '/super-admin/branches': (context) => const SuperAdminRouteGuard(child: SuperAdminBranchesScreen()),
     '/super-admin/admins': (context) => const SuperAdminRouteGuard(child: SuperAdminManageAdminsScreen()),
     '/super-admin/settings': (context) => const SuperAdminRouteGuard(child: SuperAdminSystemSettingsScreen()),
     '/super-admin/audit': (context) => const SuperAdminRouteGuard(child: SuperAdminAuditLogsScreen()),

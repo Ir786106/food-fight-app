@@ -1,15 +1,13 @@
+import 'package:food_fight/core/utils/admin_csv_export.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:csv/csv.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:food_fight/models/report_model.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/providers/report_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/admin/stat_card.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
@@ -28,19 +26,22 @@ class SalesReportsScreen extends StatefulWidget {
 
 class _SalesReportsScreenState extends State<SalesReportsScreen> {
   String? _lastBranchId;
+  bool _initialized = false;
   bool _isExporting = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = context.watch<AuthProvider>();
-    final branchId = auth.currentUser?.branchId;
-    if (_lastBranchId != branchId) {
+    final branchId = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    if (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty || branchId.toLowerCase() == 'all')) return;
+    if (!_initialized || _lastBranchId != branchId) {
+      _initialized = true;
       _lastBranchId = branchId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && _lastBranchId == branchId) {
           final rp = context.read<ReportProvider>();
-          rp.setPreset(rp.selectedPreset, branchId: branchId);
+          rp.setPreset(rp.selectedPreset, branchId: branchId, replaceBranch: true);
         }
       });
     }
@@ -56,11 +57,18 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
     final user = auth.currentUser;
 
     final reportProvider = context.watch<ReportProvider>();
-    final report = reportProvider.report;
+    final branch = auth.isSuperAdmin ? null : user?.branchId?.trim();
+    if (!auth.isSuperAdmin && (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
+      return const AdminScaffold(
+        currentRoute: '/admin/reports',
+        body: ErrorView(message: 'This account needs a branch assignment before viewing reports.'),
+      );
+    }
+    final report = reportProvider.currentBranchId == branch ? reportProvider.report : null;
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: '/admin/reports',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/reports'),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,22 +445,11 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
             ]),
       ];
 
-      final csvString = const ListToCsvConverter().convert(rows);
-      final dir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${dir.path}/food_fight_sales_report_$timestamp.csv');
-      await file.writeAsString(csvString);
-
-      if (mounted) {
-        AppSnackbar.showSnackBar(context,
-          SnackBar(
-            content: Text('Report exported: ${file.path.split(Platform.pathSeparator).last}'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+      await shareAdminCsv(
+        context,
+        filename: 'food-fight-sales-report.csv',
+        rows: rows,
+      );
     } catch (e) {
       if (mounted) {
         AppSnackbar.showSnackBar(context,

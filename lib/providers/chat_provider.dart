@@ -4,10 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import '../core/utils/logger.dart';
 import '../models/chat_model.dart';
 import '../models/chat_message_model.dart';
-import '../models/admin/audit_log_model.dart';
 import '../services/chat_service.dart';
 import '../services/notification_service.dart';
-import '../services/super_admin_service.dart';
 import '../core/utils/safe_change_notifier.dart';
 
 /// State management provider for Customer and Admin real-time chats.
@@ -366,23 +364,6 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
     try {
       await _chatService.updateStatus(chat.id, newStatus);
       _activeChat = chat.copyWith(status: newStatus);
-
-      // Audit Log
-      await SuperAdminService.recordAuditLog(AuditLogModel(
-        id: '',
-        action: newStatus == 'resolved' ? 'RESOLVE_CHAT' : 'REOPEN_CHAT',
-        actorName: actorName,
-        actorEmail: actorEmail,
-        actorRole: actorRole,
-        targetEntity: 'chat',
-        targetId: chat.id,
-        description: '$actorName ($actorRole) changed chat status to $newStatus',
-        metadata: {
-          'customerId': chat.customerId,
-          'branchId': chat.branchId,
-          'orderId': chat.orderId,
-        },
-      ));
 
       notifyListeners();
     } catch (e) {

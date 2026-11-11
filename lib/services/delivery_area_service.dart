@@ -8,6 +8,19 @@ class DeliveryAreaService {
   static final CollectionReference _collection =
       FirebaseFirestore.instance.collection(FirestoreCollections.deliveryAreas);
 
+  static Future<void> requestAvailabilityNotification({
+    required String contact,
+    String? nearestBranchName,
+    double? distanceKm,
+  }) async {
+    await FirebaseFirestore.instance.collection('branch_waitlist').add({
+      'contact': contact,
+      'createdAt': FieldValue.serverTimestamp(),
+      'nearestBranch': nearestBranchName ?? '',
+      'distanceKm': distanceKm ?? 0.0,
+    });
+  }
+
   /// Watch delivery areas
   static Stream<List<DeliveryAreaModel>> watchDeliveryAreas({
     bool activeOnly = false,

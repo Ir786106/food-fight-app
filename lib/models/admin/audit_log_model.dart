@@ -76,7 +76,7 @@ class AuditLogModel {
       actorRole: json['actorRole'] ?? 'system',
       targetEntity: json['targetEntity'] ?? 'general',
       targetId: json['targetId'] ?? '',
-      description: json['description'] ?? '',
+      description: (json['description'] ?? json['details'] ?? '').toString(),
       timestamp: SafeConvert.toDateTime(json['timestamp']),
       metadata: json['metadata'] != null && json['metadata'] is Map
           ? Map<String, dynamic>.from(json['metadata'] as Map)

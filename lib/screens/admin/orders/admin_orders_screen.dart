@@ -1,9 +1,13 @@
+import 'package:food_fight/core/design_system/components.dart' show AppDataTable;
+import 'package:food_fight/core/utils/admin_csv_export.dart';
+import 'package:food_fight/core/utils/app_snackbar.dart';
+import 'package:food_fight/models/order_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:food_fight/providers/order_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/admin/status_badge.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
@@ -23,6 +27,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   late TabController _tabController;
   final TextEditingController _searchCtrl = TextEditingController();
   String? _lastBranchId;
+  bool _initialized = false;
   String _dateFilter = 'all'; // 'all', 'today', 'yesterday', 'week'
 
   static const List<Map<String, String>> _tabs = [
@@ -31,6 +36,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
     {'title': 'Accepted', 'status': 'accepted'},
     {'title': 'Preparing', 'status': 'preparing'},
     {'title': 'Ready', 'status': 'ready'},
+    {'title': 'Assigned', 'status': 'assigned'},
+    {'title': 'Picked Up', 'status': 'pickedUp'},
     {'title': 'Out for Delivery', 'status': 'outForDelivery'},
     {'title': 'Delivered', 'status': 'delivered'},
     {'title': 'Cancelled', 'status': 'cancelled'},
@@ -45,12 +52,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final auth = context.read<AuthProvider>();
-    final branchId = auth.currentUser?.branchId;
-    if (_lastBranchId != branchId) {
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    if (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty || branchId.toLowerCase() == 'all')) return;
+    if (!_initialized || _lastBranchId != branchId) {
+      _initialized = true;
       _lastBranchId = branchId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && _lastBranchId == branchId) {
           context.read<OrderProvider>().watchAdminOrders(branchId: branchId);
         }
       });
@@ -68,6 +77,17 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   Widget build(BuildContext context) {
     final orderProvider = context.watch<OrderProvider>();
 
+    final auth = context.watch<AuthProvider>();
+    final branch = auth.currentUser?.branchId?.trim();
+    final hasScope = auth.isSuperAdmin ||
+        (branch != null && branch.isNotEmpty && branch.toLowerCase() != 'all');
+    if (!hasScope) {
+      return const AdminScaffold(
+        currentRoute: '/admin/orders',
+        body: ErrorView(message: 'This account needs a branch assignment before viewing orders.'),
+      );
+    }
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -78,9 +98,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
           Navigator.of(context).pushReplacementNamed('/admin/dashboard');
         }
       },
-      child: Scaffold(
+      child: AdminScaffold(
+        currentRoute: '/admin/orders',
         backgroundColor: AdminTheme.getBackground(context),
-        drawer: const AdminDrawer(currentRoute: '/admin/orders'),
         appBar: AppBar(
           title: const Text(
             'Order Management',
@@ -92,7 +112,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
               tooltip: 'Refresh Orders',
-              onPressed: () => context.read<OrderProvider>().watchAdminOrders(),
+              onPressed: orderProvider.refreshAdminOrders,
             ),
           ],
           bottom: PreferredSize(
@@ -230,7 +250,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
             ),
           ),
         ),
-        body: TabBarView(
+        body: !orderProvider.isWatchingAdminScope(auth.isSuperAdmin ? null : branch)
+            ? const LoadingIndicator(message: 'Loading orders...')
+            : TabBarView(
           controller: _tabController,
           children: _tabs.map((t) => _OrdersTabList(
             status: t['status']!,
@@ -262,11 +284,6 @@ class _OrdersTabList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = AdminTheme.getCardBg(context);
-    final textDark = AdminTheme.getTextDark(context);
-    final textMuted = AdminTheme.getTextMuted(context);
-
     final orderProvider = context.watch<OrderProvider>();
 
     if (orderProvider.isLoading && orderProvider.adminOrders.isEmpty) {
@@ -276,7 +293,7 @@ class _OrdersTabList extends StatelessWidget {
     if (orderProvider.errorMessage != null && orderProvider.adminOrders.isEmpty) {
       return ErrorView(
         message: orderProvider.errorMessage!,
-        onRetry: () => context.read<OrderProvider>().watchAdminOrders(),
+        onRetry: () => context.read<OrderProvider>().refreshAdminOrders(),
       );
     }
 
@@ -309,7 +326,7 @@ class _OrdersTabList extends StatelessWidget {
       if (dateFilter == 'today') {
         if (o.createdAt.isBefore(startOfToday)) return false;
       } else if (dateFilter == 'yesterday') {
-        if (o.createdAt.isBefore(startOfYesterday) || o.createdAt.isAfter(startOfToday)) return false;
+        if (o.createdAt.isBefore(startOfYesterday) || !o.createdAt.isBefore(startOfToday)) return false;
       } else if (dateFilter == 'week') {
         if (o.createdAt.isBefore(sevenDaysAgo)) return false;
       }
@@ -317,6 +334,39 @@ class _OrdersTabList extends StatelessWidget {
       return true;
     }).toList();
 
+    final content = _buildResults(context, orders);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Wrap(
+            spacing: 16,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text('${orders.length} matches · ${allOrders.length} orders loaded'),
+              TextButton.icon(
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Export shown orders'),
+                onPressed: orders.isEmpty ? null : () => _export(context, orders),
+              ),
+              if (orderProvider.canLoadMoreAdminOrders)
+                TextButton(
+                  onPressed: orderProvider.loadMoreAdminOrders,
+                  child: const Text('Load older orders'),
+                ),
+            ],
+          ),
+        ),
+        if (orderProvider.isLoading || orderProvider.isPagingAdminOrders)
+          const LinearProgressIndicator(),
+        if (orderProvider.adminPageError case final error?)
+          Text(error, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        Expanded(child: content),
+      ],
+    );
+  }
+
+  Widget _buildResults(BuildContext context, List<OrderModel> orders) {
     if (orders.isEmpty) {
       final isFiltered = searchQuery.isNotEmpty || dateFilter != 'all';
       return EmptyStateView(
@@ -330,14 +380,21 @@ class _OrdersTabList extends StatelessWidget {
         buttonText: isFiltered ? 'Clear Filters' : 'Refresh Orders',
         onButtonPressed: isFiltered
             ? onClearFilter
-            : () => context.read<OrderProvider>().watchAdminOrders(),
+            : () => context.read<OrderProvider>().refreshAdminOrders(),
       );
     }
+
+    if (MediaQuery.sizeOf(context).width > 1024) return _desktopTable(context, orders);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = AdminTheme.getCardBg(context);
+    final textDark = AdminTheme.getTextDark(context);
+    final textMuted = AdminTheme.getTextMuted(context);
 
     return ResponsiveContainer.content(
       maxWidth: 1200,
       child: RefreshIndicator(
-        onRefresh: () async => context.read<OrderProvider>().watchAdminOrders(),
+        onRefresh: () async => context.read<OrderProvider>().refreshAdminOrders(),
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: orders.length,
@@ -355,16 +412,7 @@ class _OrdersTabList extends StatelessWidget {
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                    ),
-                    builder: (_) => OrderDetailModal(order: order),
-                  );
-                },
+                onTap: () => _openOrder(context, order),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -463,6 +511,83 @@ class _OrdersTabList extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+
+  void _openOrder(BuildContext context, OrderModel order) {
+    if (MediaQuery.sizeOf(context).width <= 1024) {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => OrderDetailModal(order: order),
+      );
+      return;
+    }
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      pageBuilder: (context, _, __) => SafeArea(
+        child: Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: SizedBox(
+            width: 560,
+            child: Material(
+              color: Colors.transparent,
+              child: OrderDetailModal(order: order),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _export(BuildContext context, List<OrderModel> orders) async {
+    try {
+      await shareAdminCsv(
+        context,
+        filename: 'food-fight-orders.csv',
+        rows: [
+          ['Order', 'Branch', 'Status', 'Placed at (UTC)', 'Payment', 'Total (PKR)'],
+          for (final order in orders)
+            [order.orderNumber, order.branchId ?? '', order.status.name,
+              order.createdAt.toUtc().toIso8601String(), order.paymentMethod, order.total],
+        ],
+      );
+    } catch (_) {
+      if (context.mounted) AppSnackbar.showError(context, 'Could not export orders.');
+    }
+  }
+
+  Widget _desktopTable(BuildContext context, List<OrderModel> orders) {
+    final localizations = MaterialLocalizations.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: AppDataTable(
+        columns: const [
+          DataColumn(label: Text('Order')),
+          DataColumn(label: Text('Customer')),
+          DataColumn(label: Text('Status')),
+          DataColumn(label: Text('Date')),
+          DataColumn(label: Text('Total'), numeric: true),
+          DataColumn(label: Text('Details')),
+        ],
+        rows: [
+          for (final order in orders)
+            DataRow(cells: [
+              DataCell(Text(order.orderNumber)),
+              DataCell(Text(order.customerName)),
+              DataCell(StatusBadge(status: order.status.name)),
+              DataCell(Text(localizations.formatCompactDate(order.createdAt.toLocal()))),
+              DataCell(Text('Rs. ${order.total.toStringAsFixed(0)}')),
+              DataCell(IconButton(
+                tooltip: 'Open ${order.orderNumber}',
+                icon: const Icon(Icons.chevron_right),
+                onPressed: () => _openOrder(context, order),
+              )),
+            ]),
+        ],
       ),
     );
   }

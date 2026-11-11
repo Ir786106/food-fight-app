@@ -1,6 +1,6 @@
 import '../../providers/auth_provider.dart';
 import '../../core/localization/app_language.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../shared/repositories/settings_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:geolocator/geolocator.dart';
 import '../../services/fcm_service.dart';
@@ -63,8 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       }
       if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid)
-        .set({'preferences': {key: value}}, SetOptions(merge: true));
+        await SettingsRepository.savePreference(user.uid, key, value);
       }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(key, value);

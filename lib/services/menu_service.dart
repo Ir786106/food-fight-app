@@ -126,6 +126,32 @@ class MenuService {
     AppLogger.info('Deleted menu item: $id', tag: 'MenuService');
   }
 
+  /// Apply one availability update atomically to the selected menu items.
+  static Future<void> setItemsActive(Set<String> ids, {required bool active}) async {
+    if (ids.isEmpty) return;
+    if (ids.length > 500) throw ArgumentError.value(ids.length, 'ids', 'Too many items');
+    final batch = FirebaseFirestore.instance.batch();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    for (final id in ids) {
+      batch.update(_collection.doc(id), {'isActive': active ? 1 : 0, 'updatedAt': timestamp});
+    }
+    await batch.commit();
+  }
+
+  /// Update only image metadata, keeping current catalog fields intact.
+  static Future<void> updateImages(Set<String> itemIds, String imageUrl) async {
+    if (itemIds.isEmpty) return;
+    if (itemIds.length > 500) {
+      throw ArgumentError.value(itemIds.length, 'itemIds', 'Too many items');
+    }
+    final batch = FirebaseFirestore.instance.batch();
+    final updatedAt = FieldValue.serverTimestamp();
+    for (final id in itemIds) {
+      batch.update(_collection.doc(id), {'imageUrl': imageUrl, 'updatedAt': updatedAt});
+    }
+    await batch.commit();
+  }
+
   /// Toggle menu item active status
   static Future<void> toggleActive(String id, bool currentStatus) async {
     await _collection.doc(id).update({

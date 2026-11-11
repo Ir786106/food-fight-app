@@ -76,6 +76,11 @@ class UserModel {
         granted.replaceFirst(RegExp(r'^(manage_|view_)'), '') == requested);
   }
 
+  bool canEditBranchRecord(String? recordBranchId) => isActive && isAdmin &&
+      (isSuperAdmin ||
+       (branchId != null && branchId!.isNotEmpty && branchId != 'all' &&
+        branchId == recordBranchId));
+
   UserModel copyWith({
     String? id,
     String? name,

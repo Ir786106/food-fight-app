@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../shared/repositories/menu_report_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_system.dart';
@@ -28,11 +28,11 @@ class _ReportDishDialogState extends State<ReportDishDialog> {
     }
     setState(() { _saving = true; _error = null; });
     try {
-      await FirebaseFirestore.instance.collection('menuReports').add({
-        'userId': user.uid, 'menuItemId': widget.food.id, 'menuItemName': widget.food.name,
-        'branchId': widget.food.branchId, 'message': _message.text.trim(),
-        'status': 'open', 'createdAt': FieldValue.serverTimestamp(),
-      });
+      await MenuReportRepository.submit(
+        userId: user.uid,
+        food: widget.food,
+        message: _message.text,
+      );
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not send your report. Please retry.');

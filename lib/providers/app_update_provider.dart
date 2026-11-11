@@ -42,6 +42,7 @@ class AppUpdateProvider extends ChangeNotifier {
   double _downloadProgress = 0.0;
   String? _errorMessage;
   bool _installReady = false;
+  bool _isInstalling = false;
   ApkPreInstallResult? _precheckResult;
 
   ReleaseInfo? get availableRelease => _availableRelease;
@@ -51,6 +52,7 @@ class AppUpdateProvider extends ChangeNotifier {
   double get downloadProgress => _downloadProgress;
   String? get errorMessage => _errorMessage;
   bool get installReady => _installReady;
+  bool get isInstalling => _isInstalling;
   ApkPreInstallResult? get precheckResult => _precheckResult;
   bool get hasUpdate => _availableRelease != null;
   bool get isForceUpdate => _forceConfig?.forceUpdate == true && hasUpdate;
@@ -186,16 +188,25 @@ class AppUpdateProvider extends ChangeNotifier {
   }
 
   Future<bool> installApk() async {
-    _precheckResult = await _service.verifyApkBeforeInstall();
-    if (!_precheckResult!.canInstall) {
-      _errorMessage =
-          '${_precheckResult!.englishMessage}\n\n${_precheckResult!.romanUrduMessage}';
+    if (_isInstalling || !_installReady) return false;
+    _isInstalling = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _precheckResult = await _service.verifyApkBeforeInstall();
+      if (!_precheckResult!.canInstall) {
+        _errorMessage =
+            '${_precheckResult!.englishMessage}\n\n${_precheckResult!.romanUrduMessage}';
+        return false;
+      }
+      final opened = await _service.installApk();
+      if (!opened) _errorMessage = 'Could not open the Android installer. Try Install Now again.';
+      return opened;
+    } finally {
+      _isInstalling = false;
       notifyListeners();
-      return false;
     }
-    return await _service.installApk();
   }
-
   Future<void> openUnknownSourcesSettings() async {
     await _service.openUnknownSourcesSettings();
   }

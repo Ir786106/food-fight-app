@@ -1,3 +1,6 @@
+import '../../widgets/common/empty_state_view.dart';
+import '../../widgets/common/error_view.dart';
+import '../../widgets/skeleton/order_card_skeleton.dart';
 import '../../core/localization/app_language.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +28,7 @@ class OrderTrackingScreen extends StatefulWidget {
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   OrderModel? _initialOrder;
+  String? _orderId;
   bool _initialized = false;
   bool _isCancelling = false;
 
@@ -106,8 +110,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is OrderModel) {
         _initialOrder = args;
+        _orderId = args.id;
         context.read<OrderProvider>().watchOrder(args.id);
-      } else if (args is String) {
+      } else if (args is String && args.isNotEmpty) {
+        _orderId = args;
         context.read<OrderProvider>().watchOrder(args);
       }
       _initialized = true;
@@ -457,44 +463,31 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final orderProvider = context.watch<OrderProvider>();
-    final order = (orderProvider.currentOrder != null &&
-            (_initialOrder == null || orderProvider.currentOrder!.id == _initialOrder?.id))
-        ? orderProvider.currentOrder!
-        : _initialOrder;
+    final liveOrder = orderProvider.currentOrder;
+    final order = liveOrder?.id == _orderId ? liveOrder : _initialOrder;
 
     if (order == null) {
-      final theme = Theme.of(context);
+      final orderId = _orderId;
+      final body = orderProvider.isTrackingLoading && orderId != null
+          ? const SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: OrderCardSkeleton(),
+            )
+          : orderProvider.trackingError != null && orderId != null
+              ? ErrorView(
+                  message: context.tr(orderProvider.trackingError!),
+                  onRetry: () => orderProvider.watchOrder(orderId),
+                )
+              : EmptyStateView(
+                  icon: Icons.receipt_long_outlined,
+                  title: context.tr('Order Not Found'),
+                  description: context.tr('This order is no longer available.'),
+                  buttonText: context.tr('Go Back'),
+                  onButtonPressed: () => Navigator.of(context).maybePop(),
+                );
       return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: Text(context.tr('Order Live Tracking')),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.receipt_long_rounded, size: 64, color: AppColors.textMuted),
-                const SizedBox(height: 16),
-                Text(context.tr('Order Not Found'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('Unable to load live tracking information for this order.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.brandYellow, foregroundColor: AppColors.brandMaroon),
-                  icon: const Icon(Icons.arrow_back),
-                  label: Text(context.tr('Go Back')),
-                ),
-              ],
-            ),
-          ),
-        ),
+        appBar: AppBar(title: Text(context.tr('Order Live Tracking'))),
+        body: SafeArea(child: body),
       );
     }
 
@@ -548,6 +541,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (orderProvider.trackingError != null && _orderId != null)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.sync_problem_outlined),
+                      title: Text(context.tr(orderProvider.trackingError!)),
+                      trailing: TextButton(
+                        onPressed: () => orderProvider.watchOrder(_orderId!),
+                        child: Text(context.tr('Retry')),
+                      ),
+                    ),
                   // 1. Top Hero Card (Reference G)
                   Container(
                     width: double.infinity,

@@ -1,6 +1,7 @@
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/localization/app_language.dart';
+import '../../services/delivery_area_service.dart';
 import '../../theme/app_theme.dart';
 import '../../core/utils/logger.dart';
 
@@ -18,7 +19,7 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
   });
 
   void _showNotifyMeDialog(BuildContext context) {
-    final phoneCtrl = TextEditingController();
+    String contact = '';
     bool isSubmitting = false;
 
     showDialog(
@@ -50,7 +51,7 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: phoneCtrl,
+                  onChanged: (value) => contact = value.trim(),
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     labelText: 'Mobile Number or Email',
@@ -74,18 +75,22 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                        final val = phoneCtrl.text.trim();
-                        if (val.isEmpty) return;
+                        if (contact.isEmpty) return;
                         setDialogState(() => isSubmitting = true);
                         try {
-                          await FirebaseFirestore.instance.collection('branch_waitlist').add({
-                            'contact': val,
-                            'createdAt': FieldValue.serverTimestamp(),
-                            'nearestBranch': nearestBranchName ?? '',
-                            'distanceKm': distanceKm ?? 0.0,
-                          });
-                        } catch (e) {
-                          AppLogger.warn('Waitlist submission notice: $e', tag: 'Waitlist');
+                          await DeliveryAreaService.requestAvailabilityNotification(
+                            contact: contact,
+                            nearestBranchName: nearestBranchName,
+                            distanceKm: distanceKm,
+                          );
+                        } catch (_) {
+                          AppLogger.warn('Waitlist submission failed', tag: 'Waitlist');
+                          if (dialogCtx.mounted) {
+                            setDialogState(() => isSubmitting = false);
+                            AppSnackbar.showError(dialogCtx,
+                                dialogCtx.tr('Unable to join the waitlist. Please try again.'));
+                          }
+                          return;
                         }
                         if (ctx.mounted) Navigator.of(ctx).pop();
                         if (context.mounted) {

@@ -24,16 +24,17 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $versionLine = Get-Content pubspec.yaml | Select-String '^version: (\d+\.\d+\.\d+)\+\d+$'
+          $versionLine = Get-Content pubspec.yaml | Select-String '^version: (\d+\.\d+\.\d+)\+([1-9]\d*)$'
           if (!$versionLine) { throw 'Missing app version in pubspec.yaml' }
           $version = $versionLine.Matches[0].Groups[1].Value
+          $build = $versionLine.Matches[0].Groups[2].Value
           $bundle = Resolve-Path build/windows/x64/runner/Release
           $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
           if (!(Test-Path $compiler)) {
             choco install innosetup --yes --no-progress
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          & $compiler "/DAppVersion=$version" "/DBundleDir=$bundle" /Odist windows/installer.iss
+          & $compiler "/DAppVersion=$version" "/DAppBuild=$build" "/DBundleDir=$bundle" /Odist windows/installer.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         with:

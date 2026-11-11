@@ -1,3 +1,4 @@
+import '../../core/localization/app_language.dart';
 import '../../widgets/menu/report_dish_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1190,7 +1191,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     ],
 
                     Text(
-                      'Special Instructions',
+                      context.tr('Special Instructions'),
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
@@ -1203,7 +1204,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       maxLines: 2,
                       maxLength: 200,
                       decoration: InputDecoration(
-                        hintText: 'e.g. Extra sauce, no spicy seasoning...',
+                        labelText: context.tr('Special Instructions'),
+                        hintText: context.tr('e.g. Extra sauce, no spicy seasoning...'),
                         filled: true,
                         fillColor: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
                         hintStyle: TextStyle(

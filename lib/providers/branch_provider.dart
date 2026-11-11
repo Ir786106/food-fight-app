@@ -1,3 +1,4 @@
+import '../core/config/local_demo.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -70,7 +71,10 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   String? get closedBranchFallbackNotice => _closedBranchFallbackNotice;
   String? get savedCity => _savedCity;
 
-  BranchProvider();
+  BranchProvider({bool platformMetrics = false})
+      : _platformMetrics = platformMetrics;
+
+  final bool _platformMetrics;
 
   Future<void> ensureInitialized() async {
     if (_initialized) return;
@@ -84,20 +88,25 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
     notifyListenersPostFrame();
 
     try {
-      await BranchService.seedInitialBranchesIfEmpty();
-      await BranchService.ensureBranchCoordinatesMigrated();
+      if (!_platformMetrics && LocalDemo.enabled) {
+        await BranchService.seedInitialBranchesIfEmpty();
+        await BranchService.ensureBranchCoordinatesMigrated();
+      }
     } catch (e) {
       AppLogger.warn('Branch seeding check: $e', tag: 'BranchProvider');
     }
 
     _branchesSub?.cancel();
-    _branchesSub = BranchService.watchBranches().listen(
+    final source = _platformMetrics
+        ? BranchService.watchPlatformBranches()
+        : BranchService.watchBranches();
+    _branchesSub = source.listen(
       (list) {
         _branches = list;
         _isLoading = false;
         _errorMessage = null;
 
-        if (_selectedBranch == null && _branches.isNotEmpty) {
+        if (!_platformMetrics && _selectedBranch == null && _branches.isNotEmpty) {
           // If we have saved branch ID in prefs, try restoring it
           _restoreSavedBranchOrNearest();
         } else if (_selectedBranch != null) {

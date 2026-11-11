@@ -6,10 +6,9 @@ import 'package:food_fight/providers/admin_account_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/providers/branch_provider.dart';
 import 'package:food_fight/models/branch_model.dart';
-import 'package:food_fight/services/branch_service.dart';
 import 'package:food_fight/core/theme/super_admin_theme.dart';
 import 'package:food_fight/theme/app_theme.dart';
-import 'package:food_fight/widgets/super_admin/super_admin_drawer.dart';
+import 'package:food_fight/widgets/super_admin/super_admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
@@ -26,15 +25,17 @@ class SuperAdminManageAdminsScreen extends StatefulWidget {
 }
 
 class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScreen> {
+  bool _branchDialogScheduled = false;
   final TextEditingController _searchCtrl = TextEditingController();
 
   static const List<Map<String, String>> _availablePermissions = [
-    {'id': 'manage_menu', 'label': 'Menu & Categories'},
-    {'id': 'manage_orders', 'label': 'Live Order Management'},
-    {'id': 'manage_coupons', 'label': 'Coupons & Deals'},
-    {'id': 'manage_customers', 'label': 'Customer Accounts'},
-    {'id': 'manage_delivery', 'label': 'Delivery Zones & Fees'},
-    {'id': 'view_reports', 'label': 'Sales Analytics & Reports'},
+    {'id': 'menu', 'label': 'Menu Items'},
+    {'id': 'categories', 'label': 'Categories'},
+    {'id': 'orders', 'label': 'Live Order Management'},
+    {'id': 'coupons', 'label': 'Coupons & Deals'},
+    {'id': 'customers', 'label': 'Customer Accounts'},
+    {'id': 'delivery_areas', 'label': 'Delivery Zones & Fees'},
+    {'id': 'reports', 'label': 'Sales Analytics & Reports'},
   ];
 
   @override
@@ -47,6 +48,16 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_branchDialogScheduled && ModalRoute.of(context)?.settings.arguments == 'create-branch') {
+      _branchDialogScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openNewBranchDialog();
+      });
+    }
+  }
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -351,10 +362,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     final adminAccProv = context.read<AdminAccountProvider>();
                     final currentUserName = authProv.currentUser?.name;
 
-                    await BranchService.createBranch(branch);
-
-                    // 2. Create Branch Admin account
-                    await adminAccProv.createAdminAccount(
+                    final created = await adminAccProv.createAdminAccount(
                       AdminAccountModel(
                         id: '',
                         name: adminNameCtrl.text.trim(),
@@ -368,13 +376,15 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                         updatedAt: DateTime.now(),
                       ),
                       createdBy: currentUserName,
+                      newBranch: branch,
                     );
+                    if (!created) throw StateError(adminAccProv.errorMessage ?? 'Could not create the branch account.');
 
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
                       AppSnackbar.showSnackBar(context,
                         SnackBar(
-                          content: Text('Branch "$branchName" & Admin Account created successfully!'),
+                          content: Text('Branch "$branchName" created. The admin can set a password using Forgot Password.'),
                           backgroundColor: AppColors.success,
                         ),
                       );
@@ -408,7 +418,9 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
     String? selectedBranchId = admin?.branchId;
     final branches = context.read<BranchProvider>().branches;
     final selectedPermissions = Set<String>.from(
-      admin?.permissions ?? ['manage_menu', 'manage_orders', 'view_reports'],
+      (admin?.permissions ?? ['menu', 'orders', 'reports'])
+          .map((value) => value.replaceFirst(RegExp(r'^(manage_|view_)'), ''))
+          .map((value) => value == 'delivery' ? 'delivery_areas' : value),
     );
     bool isSaving = false;
 
@@ -502,6 +514,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                           items: const [
                             DropdownMenuItem(value: 'admin', child: Text('Branch Admin')),
                             DropdownMenuItem(value: 'staff', child: Text('Kitchen / Store Staff')),
+                            DropdownMenuItem(value: 'sub_admin', child: Text('Sub-Administrator')),
                             DropdownMenuItem(value: 'super_admin', child: Text('Super Administrator')),
                           ],
                           onChanged: (val) => setDialogState(() => selectedRole = val!),
@@ -532,7 +545,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                           child: DropdownButton<String>(
                             isExpanded: true,
                             hint: const Text('Select Branch'),
-                            value: selectedBranchId,
+                            value: branches.any((branch) => branch.id == selectedBranchId) ? selectedBranchId : null,
                             items: branches.map((b) {
                               return DropdownMenuItem<String>(
                                 value: b.id,
@@ -594,7 +607,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     ? null
                     : () async {
                         if (!formKey.currentState!.validate()) return;
-                        if (selectedRole != 'super_admin' && (selectedBranchId == null || selectedBranchId!.isEmpty)) {
+                        if (selectedRole != 'super_admin' && !branches.any((branch) => branch.id == selectedBranchId)) {
                           AppSnackbar.showSnackBar(ctx,
                             const SnackBar(content: Text('Please select an assigned branch for this admin/staff')),
                           );
@@ -611,7 +624,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                           final provider = context.read<AdminAccountProvider>();
 
                           if (admin == null) {
-                            await provider.createAdminAccount(
+                            final created = await provider.createAdminAccount(
                               AdminAccountModel(
                                 id: '',
                                 name: name,
@@ -626,8 +639,10 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                               ),
                               createdBy: currentUserName,
                             );
+                            if (!created) throw StateError(provider.errorMessage ?? 'Could not create the account.');
+                            if (ctx.mounted) AppSnackbar.showSuccess(ctx, 'Account created. Use Forgot Password to set its password.');
                           } else {
-                            await provider.updateAdminAccount(
+                            final updated = await provider.updateAdminAccount(
                               admin.copyWith(
                                 name: name,
                                 phone: phone,
@@ -638,6 +653,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                               ),
                               updatedBy: currentUserName,
                             );
+                            if (!updated) throw StateError(provider.errorMessage ?? 'Could not update the account.');
                           }
 
                           if (ctx.mounted) Navigator.pop(ctx);
@@ -691,11 +707,13 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                 subtitle: const Text('Grant immediate access to admin features'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await context.read<AdminAccountProvider>().setAdminStatus(
-                    admin.id,
-                    'active',
-                    changedBy: currentUserName,
+                  final provider = context.read<AdminAccountProvider>();
+                  final changed = await provider.setAdminStatus(
+                    admin.id, 'active', changedBy: currentUserName,
                   );
+                  if (mounted && !changed) {
+                    AppSnackbar.showError(context, provider.errorMessage ?? 'Could not change account status.');
+                  }
                 },
               ),
               ListTile(
@@ -704,24 +722,28 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                 subtitle: const Text('Temporarily prevent admin login and access'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await context.read<AdminAccountProvider>().setAdminStatus(
-                    admin.id,
-                    'suspended',
-                    changedBy: currentUserName,
+                  final provider = context.read<AdminAccountProvider>();
+                  final changed = await provider.setAdminStatus(
+                    admin.id, 'suspended', changedBy: currentUserName,
                   );
+                  if (mounted && !changed) {
+                    AppSnackbar.showError(context, provider.errorMessage ?? 'Could not change account status.');
+                  }
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.cancel_rounded, color: AppColors.error),
                 title: const Text('Deactivate Account'),
-                subtitle: const Text('Permanently revoke access credentials'),
+                subtitle: const Text('Disable login until an administrator reactivates it'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await context.read<AdminAccountProvider>().setAdminStatus(
-                    admin.id,
-                    'deactivated',
-                    changedBy: currentUserName,
+                  final provider = context.read<AdminAccountProvider>();
+                  final changed = await provider.setAdminStatus(
+                    admin.id, 'deactivated', changedBy: currentUserName,
                   );
+                  if (mounted && !changed) {
+                    AppSnackbar.showError(context, provider.errorMessage ?? 'Could not change account status.');
+                  }
                 },
               ),
             ],
@@ -751,9 +773,9 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
           Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
         }
       },
-      child: Scaffold(
+      child: SuperAdminScaffold(
+        currentRoute: '/super-admin/admins',
         backgroundColor: SuperAdminTheme.getBackground(context),
-        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/admins'),
       appBar: AppBar(
         title: const Text(
           'Admin & Staff Management',

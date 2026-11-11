@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -116,6 +115,9 @@ class AppUpdateService {
   }
 
   bool _isNewerVersion(String remote, String local, int remoteBuild, int localBuild) {
+    if (remoteBuild > 0 && localBuild > 0) {
+      return remoteBuild > localBuild;
+    }
     final rv = _parseParts(remote);
     final lv = _parseParts(local);
     for (int i = 0; i < 3; i++) {
@@ -137,11 +139,70 @@ class AppUpdateService {
   bool _isAllowedUrl(String url) {
     try {
       final uri = Uri.parse(url);
-      if (uri.scheme != 'https') return false;
+      if (uri.scheme != 'https' || uri.userInfo.isNotEmpty || uri.port != 443) {
+        return false;
+      }
       return _kAllowedHosts.contains(uri.host);
     } catch (_) {
       return false;
     }
+  }
+
+  Future<Response<T>> _trustedAsset<T>(
+    String url,
+    Future<Response<T>> Function(String url, Options options) request, {
+    ResponseType? responseType,
+  }) async {
+    const redirects = {301, 302, 303, 307, 308};
+    for (var hop = 0; hop <= 5; hop++) {
+      if (!_isAllowedUrl(url)) {
+        throw StateError('Update asset points to an untrusted URL.');
+      }
+      final response = await request(
+        url,
+        Options(
+          responseType: responseType,
+          followRedirects: false,
+          validateStatus: (code) => code == 200 || redirects.contains(code),
+        ),
+      );
+      if (response.statusCode == 200) return response;
+      final target = response.headers.value(HttpHeaders.locationHeader);
+      if (target == null || target.isEmpty) {
+        throw StateError('Update redirect is missing a destination.');
+      }
+      url = Uri.parse(url).resolve(target).toString();
+    }
+    throw StateError('Too many update redirects.');
+  }
+
+  ({String apkUrl, String checksumUrl, int? size})? testSelectApkAssets(
+    List<dynamic> assets,
+    String version,
+  ) => _selectApkAssets(assets, version);
+
+  ({String apkUrl, String checksumUrl, int? size})? _selectApkAssets(
+    List<dynamic> assets,
+    String version,
+  ) {
+    final byName = <String, Map<dynamic, dynamic>>{
+      for (final asset in assets.whereType<Map>())
+        if (asset['name'] is String) asset['name'] as String: asset,
+    };
+    final apkNames = byName.keys.where((name) => name.toLowerCase().endsWith('.apk'));
+    final official = 'FoodFight_v${version}_release.apk';
+    final name = byName.containsKey(official) ? official : apkNames.length == 1 ? apkNames.single : null;
+    if (name == null) return null;
+
+    final apk = byName[name]!;
+    final apkUrl = apk['browser_download_url'];
+    final checksumUrl = byName['$name.sha256']?['browser_download_url'];
+    if (apkUrl is! String || checksumUrl is! String ||
+        !_isAllowedUrl(apkUrl) || !_isAllowedUrl(checksumUrl)) {
+      return null;
+    }
+    final size = apk['size'];
+    return (apkUrl: apkUrl, checksumUrl: checksumUrl, size: size is int ? size : null);
   }
 
   Future<UpdateCheckResponse> checkForUpdate() async {
@@ -150,7 +211,10 @@ class AppUpdateService {
       final currentVersion = pkgInfo.version;
       final currentBuild = int.tryParse(pkgInfo.buildNumber) ?? 0;
 
-      final response = await _dio.get<Map<String, dynamic>>(_kGitHubApiUrl);
+      final response = await _dio.get<Map<String, dynamic>>(
+        _kGitHubApiUrl,
+        options: Options(followRedirects: false),
+      );
       if (response.statusCode != 200 || response.data == null) {
         return const UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: 'Bad response from GitHub');
       }
@@ -159,42 +223,32 @@ class AppUpdateService {
       final tag = (data['tag_name'] as String?) ?? '';
       final body = data['body'] as String?;
       final (remoteVersion, remoteBuild) = _parseTag(tag, body);
-
-      final assets = (data['assets'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      final apkAsset = assets.firstWhere(
-        (a) => (a['name'] as String).endsWith('.apk'),
-        orElse: () => <String, dynamic>{},
-      );
-      if (apkAsset.isEmpty) {
-        return const UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: 'No APK asset in release');
-      }
-
-      final apkUrl = apkAsset['browser_download_url'] as String? ?? '';
-      if (!_isAllowedUrl(apkUrl)) {
-        return const UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: 'Untrusted download host');
-      }
-
-      final sha256Asset = assets.firstWhere(
-        (a) => a['name'] == '${apkAsset['name']}.sha256',
-        orElse: () => <String, dynamic>{},
-      );
-      final sha256Url = sha256Asset.isNotEmpty ? sha256Asset['browser_download_url'] as String? : null;
-
-      if (sha256Url == null || !_isAllowedUrl(sha256Url)) {
+      if (remoteBuild <= 0) {
         return const UpdateCheckResponse(
           result: UpdateCheckResult.error,
-          errorMessage: 'Release is missing the APK checksum',
+          errorMessage: 'The release does not declare an Android build number.',
         );
       }
 
+      final assets = data['assets'];
+      final selected = _selectApkAssets(
+        assets is List ? assets : const [],
+        remoteVersion,
+      );
+      if (selected == null) {
+        return const UpdateCheckResponse(
+          result: UpdateCheckResult.error,
+          errorMessage: 'Release is missing a unique trusted APK and its matching checksum.',
+        );
+      }
       final release = ReleaseInfo(
         tagName: tag,
         versionName: remoteVersion,
         buildNumber: remoteBuild,
         releaseNotes: body,
-        apkDownloadUrl: apkUrl,
-        sha256Url: sha256Url,
-        apkSizeBytes: apkAsset['size'] as int?,
+        apkDownloadUrl: selected.apkUrl,
+        sha256Url: selected.checksumUrl,
+        apkSizeBytes: selected.size,
       );
 
       if (_isNewerVersion(remoteVersion, currentVersion, remoteBuild, currentBuild)) {
@@ -219,7 +273,9 @@ class AppUpdateService {
     required void Function() onInstallReady,
   }) async {
     try {
-      if (!_isAllowedUrl(release.apkDownloadUrl)) {
+      final checksumUrl = release.sha256Url;
+      if (!_isAllowedUrl(release.apkDownloadUrl) ||
+          checksumUrl == null || !_isAllowedUrl(checksumUrl)) {
         onError('Security: rejected download from untrusted host.');
         return;
       }
@@ -229,26 +285,26 @@ class AppUpdateService {
       final tmpDir = await getTemporaryDirectory();
       _tempApkPath = '${tmpDir.path}/food-fight-update.apk';
 
-      await _dio.download(
+      await _trustedAsset<dynamic>(
         release.apkDownloadUrl,
-        _tempApkPath!,
-        cancelToken: cancelToken,
-        onReceiveProgress: (received, total) {
-          if (total > 0) onProgress(received / total * 0.95);
-        },
+        (url, options) => _dio.download(
+          url,
+          _tempApkPath!,
+          options: options,
+          cancelToken: cancelToken,
+          onReceiveProgress: (received, total) {
+            if (total > 0) onProgress(received / total * 0.95);
+          },
+        ),
       );
 
-      if (release.sha256Url != null && _isAllowedUrl(release.sha256Url!)) {
-        onProgress(0.97);
-        final verified = await _verifySha256(File(_tempApkPath!), release.sha256Url!);
-        if (!verified) {
-          await _cleanupTempFile();
-          onError('Security: SHA-256 checksum mismatch. APK deleted for safety.');
-          return;
-        }
-      } else {
+      onProgress(0.97);
+      final verified = await _verifySha256(File(_tempApkPath!), checksumUrl, cancelToken);
+      if (!verified) {
         await _cleanupTempFile();
-        onError('Security: No SHA-256 checksum available. Install aborted.');
+        if (!cancelToken.isCancelled) {
+          onError('Could not verify the APK checksum. Download the update again.');
+        }
         return;
       }
 
@@ -296,7 +352,7 @@ class AppUpdateService {
         {'apkPath': _tempApkPath},
       );
 
-      final errorCode = res?['errorCode'] as String? ?? 'OK';
+      final errorCode = res?['errorCode'] as String? ?? 'VERIFY_ERROR';
 
       switch (errorCode) {
         case 'SIGNATURE_MISMATCH':
@@ -344,25 +400,35 @@ class AppUpdateService {
             romanUrduMessage:
                 'Downloaded APK kharab ya na-mukammal hai. Dobara download karein.',
           );
-        default:
+        case 'OK':
           return const ApkPreInstallResult(
             status: ApkInstallStatus.ready,
             errorCode: 'OK',
             englishMessage: 'APK verified successfully.',
             romanUrduMessage: 'APK ki tasdeeq ho gayi hai.',
           );
+        default:
+          return ApkPreInstallResult(
+            status: ApkInstallStatus.error,
+            errorCode: errorCode,
+            englishMessage: switch (errorCode) {
+              'PACKAGE_MISMATCH' => 'This download belongs to a different app.',
+              'FILE_NOT_FOUND' => 'The update file is missing. Download it again.',
+              _ => 'Android could not verify this update.',
+            },
+            romanUrduMessage: 'Android update ki tasdeeq nahi kar saka.',
+          );
       }
     } catch (e) {
-      AppLogger.warn('Pre-install verification notice ($e), allowing system installer to proceed', tag: 'AppUpdateService');
+      AppLogger.warn('Pre-install verification failed: $e', tag: 'AppUpdateService');
       return const ApkPreInstallResult(
-        status: ApkInstallStatus.ready,
-        errorCode: 'OK',
-        englishMessage: 'Ready to install.',
-        romanUrduMessage: 'Install ke liye tayyar.',
+        status: ApkInstallStatus.error,
+        errorCode: 'VERIFY_ERROR',
+        englishMessage: 'Android could not verify this update.',
+        romanUrduMessage: 'Android update ki tasdeeq nahi kar saka.',
       );
     }
   }
-
   Future<void> openUnknownSourcesSettings() async {
     try {
       if (Platform.isAndroid) {
@@ -374,27 +440,29 @@ class AppUpdateService {
   }
 
   Future<bool> installApk() async {
-    if (_tempApkPath == null) return false;
+    final apkPath = _tempApkPath;
+    if (apkPath == null || !Platform.isAndroid) return false;
     try {
-      final precheck = await verifyApkBeforeInstall();
-      if (!precheck.canInstall) {
-        AppLogger.warn('Install aborted due to pre-check: ${precheck.errorCode}', tag: 'AppUpdateService');
-        return false;
-      }
-      final result = await OpenFilex.open(_tempApkPath!, type: 'application/vnd.android.package-archive');
-      return result.type == ResultType.done;
+      return await _verifierChannel.invokeMethod<bool>(
+        'launchApkInstaller',
+        {'apkPath': apkPath},
+      ) ?? false;
     } catch (e) {
       AppLogger.error('Install failed: $e', tag: 'AppUpdateService');
       return false;
     }
   }
 
-  Future<bool> _verifySha256(File apkFile, String sha256Url) async {
+  Future<bool> _verifySha256(File apkFile, String sha256Url, CancelToken cancelToken) async {
     try {
-      final hashResp = await _dio.get<String>(sha256Url, options: Options(responseType: ResponseType.plain));
+      final hashResp = await _trustedAsset<String>(
+        sha256Url,
+        (url, options) => _dio.get<String>(url, options: options, cancelToken: cancelToken),
+        responseType: ResponseType.plain,
+      );
       if (hashResp.statusCode != 200 || hashResp.data == null) return false;
       final expected = hashResp.data!.trim().split(RegExp(r'\s+')).first.toLowerCase();
-      if (expected.length != 64) return false;
+      if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(expected)) return false;
       final actual = (await sha256.bind(apkFile.openRead()).single).toString();
       return expected == actual;
     } catch (e) {
@@ -416,6 +484,11 @@ class AppUpdateService {
   }
 
   // Test-accessible wrappers (no-op in production, used by unit tests)
+  Future<Response<T>> testTrustedAsset<T>(
+    String url,
+    Future<Response<T>> Function(String url, Options options) request,
+  ) => _trustedAsset(url, request);
+
   /// @visibleForTesting
   bool testIsAllowedUrl(String url) => _isAllowedUrl(url);
   /// @visibleForTesting

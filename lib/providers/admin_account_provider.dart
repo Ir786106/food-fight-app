@@ -1,3 +1,4 @@
+import '../models/branch_model.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/admin_account_model.dart';
@@ -89,12 +90,12 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Create new Admin/Staff account
-  Future<bool> createAdminAccount(AdminAccountModel admin, {String? createdBy}) async {
+  Future<bool> createAdminAccount(AdminAccountModel admin, {String? createdBy, BranchModel? newBranch}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      await SuperAdminService.createAdminAccount(admin, createdBy: createdBy);
+      await SuperAdminService.createAdminAccount(admin, createdBy: createdBy, newBranch: newBranch);
       _isLoading = false;
       notifyListeners();
       return true;

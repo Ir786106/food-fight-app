@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../shared/repositories/settings_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -71,9 +71,22 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   );
 }
 
-class HelpCenterSheet extends StatelessWidget {
+class HelpCenterSheet extends StatefulWidget {
   final String? branchPhone;
   const HelpCenterSheet({super.key, this.branchPhone});
+
+  @override
+  State<HelpCenterSheet> createState() => _HelpCenterSheetState();
+}
+
+class _HelpCenterSheetState extends State<HelpCenterSheet> {
+  late final Stream<Map<String, dynamic>> _settings;
+
+  @override
+  void initState() {
+    super.initState();
+    _settings = SettingsRepository.watchPublicSettings();
+  }
 
   Future<void> _open(BuildContext context, Uri uri) async {
     try {
@@ -88,11 +101,11 @@ class HelpCenterSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(child: SingleChildScrollView(
     padding: DesignSystem.screenPadding,
-    child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('settings').doc('global_settings').snapshots(),
+    child: StreamBuilder<Map<String, dynamic>>(
+      stream: _settings,
       builder: (context, snapshot) {
-        final settings = snapshot.data?.data() ?? {};
-        final phone = (settings['contactPhone'] ?? branchPhone ?? '').toString().trim();
+        final settings = snapshot.data ?? {};
+        final phone = (settings['contactPhone'] ?? widget.branchPhone ?? '').toString().trim();
         final email = (settings['contactEmail'] ?? '').toString().trim();
         final whatsapp = (settings['supportWhatsApp'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
         return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -154,6 +154,7 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
   ) {
     final dealProvider = context.read<DealProvider>();
     final isValid = deal.isValidNow;
+    final editable = context.read<AuthProvider>().currentUser?.canEditBranchRecord(deal.branchId) == true;
 
     return Container(
       decoration: BoxDecoration(
@@ -231,9 +232,10 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                 Switch(
                   value: deal.isActive,
                   activeThumbColor: AppColors.brandYellow,
-                  onChanged: (val) => dealProvider.toggleStatus(deal.id, val),
+                  onChanged: editable ? (val) => dealProvider.toggleStatus(deal.id, val) : null,
                 ),
                 PopupMenuButton<String>(
+                  enabled: editable,
                   icon: const Icon(Icons.more_vert_rounded, size: 20),
                   onSelected: (val) {
                     if (val == 'edit') {

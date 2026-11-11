@@ -6,7 +6,7 @@ import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/providers/delivery_area_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
@@ -227,9 +227,9 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: '/admin/delivery-areas',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/delivery-areas'),
       appBar: AppBar(
         title: const Text('Delivery Zones & Charges', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: AdminTheme.primaryBlue,
@@ -335,6 +335,7 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                             separatorBuilder: (_, __) => const SizedBox(height: 10),
                             itemBuilder: (context, index) {
                               final area = filteredAreas[index];
+                              final editable = context.read<AuthProvider>().currentUser?.canEditBranchRecord(area.branchId) == true;
 
                               return Material(
                                 color: cardBg,
@@ -374,9 +375,10 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                       Switch(
                                         value: area.isActive,
                                         activeThumbColor: AdminTheme.primaryBlue,
-                                        onChanged: (val) => provider.toggleActive(area.id, area.isActive),
+                                        onChanged: editable ? (val) => provider.toggleActive(area.id, area.isActive) : null,
                                       ),
                                       PopupMenuButton<String>(
+                                        enabled: editable,
                                         icon: Icon(Icons.more_vert_rounded, color: textMuted),
                                         onSelected: (val) {
                                           if (val == 'edit') {

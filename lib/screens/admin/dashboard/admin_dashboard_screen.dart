@@ -1,3 +1,5 @@
+import 'package:food_fight/widgets/charts/sales_trend_chart.dart';
+import 'package:food_fight/theme/theme_provider.dart';
 import '../../../core/config/app_edition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,13 +37,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final auth = context.read<AuthProvider>();
-    final branchId = _selectedBranchId ?? auth.currentUser?.branchId;
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.isSuperAdmin ? _selectedBranchId : auth.currentUser?.branchId?.trim();
     if (!_initialized || _lastBranchId != branchId) {
       _initialized = true;
       _lastBranchId = branchId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && _lastBranchId == branchId && (auth.isSuperAdmin || (branchId?.isNotEmpty == true && branchId?.toLowerCase() != 'all'))) {
           context.read<AdminDashboardProvider>().watchDashboardData(branchId: branchId);
         }
       });
@@ -113,10 +115,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          if (MediaQuery.sizeOf(context).width < 600)
+            PopupMenuButton<String>(
+              tooltip: 'Dashboard actions',
+              onSelected: (action) {
+                if (action == 'refresh') {
+                  context.read<AdminDashboardProvider>().refresh();
+                } else if (action == 'theme') {
+                  context.read<ThemeProvider?>()?.setThemeMode(
+                    isDark ? ThemeMode.light : ThemeMode.dark,
+                  );
+                } else {
+                  Navigator.of(context).pushNamed(action);
+                }
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'refresh', child: Text('Refresh dashboard')),
+                if (user?.can('orders') == true)
+                  const PopupMenuItem(value: '/admin/orders', child: Text('Search orders')),
+                const PopupMenuItem(value: '/notifications', child: Text('Notifications')),
+                PopupMenuItem(value: 'theme', child: Text(isDark ? 'Use light theme' : 'Use dark theme')),
+                const PopupMenuItem(value: '/edit-profile', child: Text('Profile')),
+                if (auth.edition == AppEdition.combined)
+                  const PopupMenuItem(value: '/home', child: Text('Customer view')),
+              ],
+            )
+          else ...[
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Dashboard',
             onPressed: () => context.read<AdminDashboardProvider>().refresh(),
+          ),
+          if (user?.can('orders') == true)
+            IconButton(
+              tooltip: 'Search orders',
+              icon: const Icon(Icons.search),
+              onPressed: () => Navigator.of(context).pushNamed('/admin/orders'),
+            ),
+          IconButton(
+            tooltip: 'Notifications',
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => Navigator.of(context).pushNamed('/notifications'),
+          ),
+          IconButton(
+            tooltip: isDark ? 'Use light theme' : 'Use dark theme',
+            icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+            onPressed: () => context.read<ThemeProvider?>()?.setThemeMode(isDark ? ThemeMode.light : ThemeMode.dark),
+          ),
+          IconButton(
+            tooltip: 'Profile',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => Navigator.of(context).pushNamed('/edit-profile'),
           ),
           if (auth.edition == AppEdition.combined)
             IconButton(
@@ -124,11 +173,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             tooltip: 'Customer View',
             onPressed: () => Navigator.of(context).pushNamed('/home'),
           ),
+          ],
         ],
       ),
       body: Consumer<AdminDashboardProvider>(
         builder: (context, dashboard, _) {
-          if (dashboard.isLoading && dashboard.recentOrders.isEmpty) {
+          if (!auth.isSuperAdmin && (user?.branchId?.trim().isNotEmpty != true || user?.branchId?.trim().toLowerCase() == 'all')) {
+            return const ErrorView(message: 'This account needs a branch assignment before viewing restaurant metrics.');
+          }
+          final currentScope = auth.isSuperAdmin ? _selectedBranchId : user?.branchId?.trim();
+          if (dashboard.currentBranchId != currentScope ||
+              (dashboard.isLoading && dashboard.recentOrders.isEmpty)) {
             return const LoadingIndicator(message: 'Loading live restaurant metrics...');
           }
 
@@ -278,6 +333,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 14),
 
+                    Text(
+                      'Order metrics use up to the latest ${AdminDashboardProvider.orderSampleLimit} orders.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
                     // Primary Sales & Order Summary (Responsive Grid)
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -292,10 +352,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         final revenueVal = _timePeriod == 'today'
                             ? dashboard.todaySales
                             : (_timePeriod == 'week' ? dashboard.weeklySales : dashboard.monthlySales);
-                        final revenueSubtitle = _timePeriod == 'today'
-                            ? '${dashboard.todayOrdersCount} Orders'
-                            : (_timePeriod == 'week' ? 'Last 7 Days' : 'Last 30 Days');
-
+                        const revenueSubtitle = 'Delivered orders';
                         return GridView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -328,15 +385,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               icon: Icons.two_wheeler_rounded,
                               color: AppColors.primaryYellow,
                               subtitle: 'Online Fleet',
-                              onTap: () => Navigator.of(context).pushNamed('/admin/delivery-areas'),
+                              onTap: () => Navigator.of(context).pushNamed('/admin/riders'),
                             ),
                             StatCard(
-                              title: 'New Customers',
+                              title: 'Recent Customers',
                               value: '${dashboard.newCustomersCount}',
                               icon: Icons.people_alt_rounded,
                               color: AppColors.accent,
-                              subtitle: 'Active Registered',
+                              subtitle: 'From sampled orders in last 30 days',
                               onTap: () => Navigator.of(context).pushNamed('/admin/customers'),
+                            ),
+                            StatCard(
+                              title: 'Avg. Delivery Time',
+                              value: dashboard.averageDeliveryMinutes == null
+                                  ? '—'
+                                  : '${dashboard.averageDeliveryMinutes!.round()} min',
+                              icon: Icons.timer_outlined,
+                              color: AppColors.success,
+                              subtitle: 'Delivered orders with timestamps',
                             ),
                             StatCard(
                               title: 'Unread Chats',
@@ -526,6 +592,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ],
                     ),
+
+                    if (dashboard.dailySales.any((day) => day.ordersCount > 0)) ...[
+                      const SizedBox(height: 24),
+                      SalesTrendChart(dailySales: dashboard.dailySales, isDark: isDark),
+                    ],
+                    if (dashboard.topSellers.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Text('Top-selling items', style: Theme.of(context).textTheme.titleMedium),
+                      for (final item in dashboard.topSellers)
+                        ListTile(
+                          title: Text(item.key),
+                          trailing: Text('${item.value} sold'),
+                        ),
+                    ],
 
                     // Popular Items Section
                     if (dashboard.popularItems.isNotEmpty) ...[

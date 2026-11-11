@@ -11,7 +11,7 @@ import 'package:food_fight/services/app_image_storage_service.dart';
 import 'package:food_fight/core/constants/image_storage.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
@@ -309,9 +309,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: '/admin/categories',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/categories'),
       appBar: AppBar(
         title: const Text('Manage Categories', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: AdminTheme.primaryBlue,

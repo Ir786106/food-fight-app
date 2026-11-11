@@ -1,3 +1,4 @@
+import 'package:food_fight/core/utils/safe_convert.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_fight/models/branch_model.dart';
@@ -5,6 +6,7 @@ import 'package:food_fight/models/cart_item_model.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/models/food_model.dart';
 import 'package:food_fight/models/menu_item_model.dart';
+import 'package:food_fight/models/notification_model.dart';
 import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/models/payment_method_model.dart';
 import 'package:food_fight/models/restaurant_model.dart';
@@ -13,6 +15,33 @@ import 'package:food_fight/models/rider_model.dart';
 import 'package:food_fight/models/user_model.dart';
 
 void main() {
+  test('keyed order notifications preserve fallback copy and timestamps', () {
+    final created = DateTime.fromMillisecondsSinceEpoch(123456);
+    final notification = NotificationModel.fromJson({
+      'id': 'notice',
+      'title': 'Order update',
+      'message': 'Order FF-12: delivered',
+      'messageKey': 'orderStatus',
+      'orderNumber': 'FF-12',
+      'orderStatus': 'delivered',
+      'createdAt': Timestamp.fromDate(created),
+    });
+    final read = notification.copyWith(isRead: true);
+    expect(read.createdAt, created);
+    expect(read.message, 'Order FF-12: delivered');
+    expect(read.toJson()['messageKey'], 'orderStatus');
+    expect(read.toJson()['orderNumber'], 'FF-12');
+    expect(read.toJson()['orderStatus'], 'delivered');
+    expect(NotificationModel.fromJson({'createdAt': 123456}).messageKey, isNull);
+  });
+  test('SafeConvert falls back for non-finite numbers and out-of-range dates', () {
+    final fallback = DateTime.utc(2026);
+    expect(SafeConvert.toDouble('Infinity', 7), 7);
+    expect(SafeConvert.toDouble(double.nan, 7), 7);
+    expect(SafeConvert.toInt(double.infinity, 5), 5);
+    expect(SafeConvert.toDateTime(9000000000000000, fallback), fallback);
+    expect(SafeConvert.toDateTime(double.nan, fallback), fallback);
+  });
   group('SafeConvert & Model Parsing Tests', () {
     test(
         'MenuItemModel safely parses ints, strings, timestamps without crashing',

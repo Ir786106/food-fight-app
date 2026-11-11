@@ -14,7 +14,10 @@ class DefaultSelectionService {
   }) async {
     final db = FirebaseFirestore.instance;
     final owner = db.collection('users').doc(userId);
-    final legacy = await collection.where('userId', isEqualTo: userId).get();
+    final legacy = await collection
+        .where('userId', isEqualTo: userId)
+        .where('isDefault', whereIn: [1, true])
+        .get();
     await db.runTransaction((tx) async {
       final user = await tx.get(owner);
       final target = collection.doc(id);

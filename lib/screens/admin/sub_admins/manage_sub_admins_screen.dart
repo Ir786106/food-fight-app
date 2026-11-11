@@ -3,12 +3,11 @@ import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:food_fight/shared/repositories/staff_repository.dart';
 import 'package:food_fight/models/admin/admin_account_model.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/core/constants/firestore_collections.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/responsive_layout.dart';
@@ -22,6 +21,8 @@ class ManageSubAdminsScreen extends StatefulWidget {
 }
 
 class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
+  (String, String?)? _staffScope;
+  Stream<List<AdminAccountModel>>? _staffStream;
   final TextEditingController _searchCtrl = TextEditingController();
 
   static const List<Map<String, String>> _availablePermissions = [
@@ -250,11 +251,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
   Future<void> _toggleSubAdminStatus(AdminAccountModel admin) async {
     final newStatus = admin.isActive ? 'suspended' : 'active';
     try {
-      await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(admin.id).update({
-        'status': newStatus,
-        'isActive': newStatus == 'active' ? 1 : 0,
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      });
+      await StaffRepository.setStatus(admin.id, newStatus);
       if (mounted) {
         AppSnackbar.showSnackBar(context,
           SnackBar(
@@ -281,11 +278,22 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
 
     final auth = context.watch<AuthProvider>();
     final currentAdmin = auth.currentUser;
-    final branchId = currentAdmin?.branchId;
-
-    return Scaffold(
+    final branchId = currentAdmin?.branchId?.trim();
+    if (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty || branchId.toLowerCase() == 'all')) {
+      return const AdminScaffold(
+        currentRoute: '/admin/sub-admins',
+        body: Center(child: Text('This account needs a branch assignment before managing staff.')),
+      );
+    }
+    final scopedBranch = auth.isSuperAdmin ? null : branchId;
+    final scope = (currentAdmin?.id ?? '', scopedBranch);
+    if (_staffScope != scope) {
+      _staffScope = scope;
+      _staffStream = StaffRepository.watch(branchId: scopedBranch);
+    }
+    return AdminScaffold(
+      currentRoute: '/admin/sub-admins',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/sub-admins'),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,11 +368,9 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
 
             // Live Stream of Sub-Admins belonging to this branch
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection(FirestoreCollections.users)
-                    .where('role', whereIn: ['admin', 'staff'])
-                    .snapshots(),
+              child: StreamBuilder<List<AdminAccountModel>>(
+                key: ValueKey(scope),
+                stream: _staffStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const LoadingIndicator(message: 'Loading sub-admins...');
@@ -374,12 +380,7 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                     return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.error)));
                   }
 
-                  final docs = snapshot.data?.docs ?? [];
-                  var subAdmins = docs.map((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    data['id'] = d.id;
-                    return AdminAccountModel.fromJson(data);
-                  }).where((a) {
+                  var subAdmins = (snapshot.data ?? const <AdminAccountModel>[]).where((a) {
                     // Filter: must be sub-admin created under this branch or by this admin
                     final isCreatedByMe = a.parentAdminId != null && a.parentAdminId == currentAdmin?.id;
                     final isBranchStaff = a.isSubAdmin && a.branchId == branchId;

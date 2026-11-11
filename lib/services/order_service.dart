@@ -5,6 +5,24 @@ import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+/// Keeps Firestore's original cursor, including the document ID tie-breaker.
+class OrderPage {
+  const OrderPage._(this.orders, this._lastDocument);
+
+  factory OrderPage._fromSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) =>
+      OrderPage._(
+        [
+          for (final doc in snapshot.docs)
+            OrderModel.fromJson({...doc.data(), 'id': doc.id}),
+        ],
+        snapshot.docs.lastOrNull,
+      );
+
+  final List<OrderModel> orders;
+  final DocumentSnapshot<Map<String, dynamic>>? _lastDocument;
+  bool get mayHaveMore => orders.length == OrderService.pageSize;
+}
+
 /// Order Service for Customer ordering and Admin order management
 class OrderService {
   static final CollectionReference _collection =
@@ -35,6 +53,70 @@ class OrderService {
     });
   }
 
+  static Query<Map<String, dynamic>> _customerQuery(String customerId) =>
+      FirebaseFirestore.instance.collection(FirestoreCollections.orders)
+          .where('customerId', isEqualTo: customerId);
+
+  static Query<Map<String, dynamic>> _riderQuery(String riderId) =>
+      FirebaseFirestore.instance.collection(FirestoreCollections.orders)
+          .where('riderId', isEqualTo: riderId);
+
+  static Stream<OrderPage> watchRiderOrderPage(String riderId) =>
+      _riderQuery(riderId).orderBy('createdAt', descending: true)
+          .limit(pageSize).snapshots().map(OrderPage._fromSnapshot);
+
+  static Stream<List<OrderModel>> watchActiveRiderOrders(String riderId) =>
+      _riderQuery(riderId)
+          .where('status', whereNotIn: ['delivered', 'cancelled', 'canceled', 'failed'])
+          .snapshots()
+          .map((snapshot) => OrderPage._fromSnapshot(snapshot).orders
+              .where((order) => !order.status.isTerminal).toList());
+
+  static Stream<List<OrderModel>> watchRecentRiderEarnings(
+    String riderId, DateTime since,
+  ) =>
+      _riderQuery(riderId)
+          .where('status', isEqualTo: 'delivered')
+          .where('updatedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(since))
+          .snapshots()
+          .map((snapshot) => OrderPage._fromSnapshot(snapshot).orders);
+
+  static Future<OrderPage> fetchNextRiderOrderPage(
+    String riderId, OrderPage after,
+  ) async {
+    final cursor = after._lastDocument;
+    if (cursor == null) return const OrderPage._([], null);
+    final snapshot = await _riderQuery(riderId)
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(cursor)
+        .limit(pageSize)
+        .get(const GetOptions(source: Source.server));
+    return OrderPage._fromSnapshot(snapshot);
+  }
+
+  static Stream<OrderPage> watchCustomerOrderPage(String customerId) =>
+      _customerQuery(customerId).orderBy('createdAt', descending: true)
+          .limit(pageSize).snapshots().map(OrderPage._fromSnapshot);
+
+  static Stream<List<OrderModel>> watchActiveCustomerOrders(String customerId) =>
+      _customerQuery(customerId)
+          .where('status', whereNotIn: ['delivered', 'cancelled', 'canceled', 'failed'])
+          .snapshots()
+          .map((snapshot) => OrderPage._fromSnapshot(snapshot).orders
+              .where((order) => !order.status.isTerminal).toList());
+
+  static Future<OrderPage> fetchNextCustomerOrderPage(
+    String customerId, OrderPage after,
+  ) async {
+    final cursor = after._lastDocument;
+    if (cursor == null) return const OrderPage._([], null);
+    final snapshot = await _customerQuery(customerId)
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(cursor)
+        .limit(pageSize)
+        .get(const GetOptions(source: Source.server));
+    return OrderPage._fromSnapshot(snapshot);
+  }
   /// Watch a single order in real-time (for order tracking)
   static Stream<OrderModel?> watchOrder(String orderId) {
     return _collection.doc(orderId).snapshots().map((doc) {
@@ -76,6 +158,45 @@ class OrderService {
       }).toList();
     });
   }
+
+  static Query<Map<String, dynamic>> _adminQuery({
+    String? status,
+    String? branchId,
+  }) {
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection(FirestoreCollections.orders);
+    if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+      query = query.where('branchId', isEqualTo: branchId);
+    }
+    if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
+      query = query.where('status', isEqualTo: OrderStatus.fromString(status).name);
+    }
+    return query.orderBy('createdAt', descending: true);
+  }
+
+  static Stream<OrderPage> watchAdminOrderPage({
+    String? status,
+    String? branchId,
+  }) => _adminQuery(status: status, branchId: branchId)
+      .limit(pageSize)
+      .snapshots()
+      .map(OrderPage._fromSnapshot);
+
+  static Future<OrderPage> fetchNextAdminOrderPage({
+    required OrderPage after,
+    String? status,
+    String? branchId,
+  }) async {
+    final cursor = after._lastDocument;
+    if (cursor == null) return const OrderPage._([], null);
+    final snapshot = await _adminQuery(status: status, branchId: branchId)
+        .startAfterDocument(cursor)
+        .limit(pageSize)
+        .get(const GetOptions(source: Source.server));
+    return OrderPage._fromSnapshot(snapshot);
+  }
+
+  static const pageSize = 50;
 
   /// The backend validates the actor and records the transition atomically.
   static Future<void> updateOrderStatus(

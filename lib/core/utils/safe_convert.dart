@@ -7,10 +7,13 @@ class SafeConvert {
   /// Safely converts any dynamic value to a double.
   static double toDouble(dynamic val, [double fallback = 0.0]) {
     if (val == null) return fallback;
-    if (val is double) return val;
+    if (val is double) return val.isFinite ? val : fallback;
     if (val is int) return val.toDouble();
-    if (val is num) return val.toDouble();
-    if (val is String) return double.tryParse(val) ?? fallback;
+    if (val is num) return val.isFinite ? val.toDouble() : fallback;
+    if (val is String) {
+      final parsed = double.tryParse(val);
+      return parsed != null && parsed.isFinite ? parsed : fallback;
+    }
     return fallback;
   }
 
@@ -18,7 +21,7 @@ class SafeConvert {
   static int toInt(dynamic val, [int fallback = 0]) {
     if (val == null) return fallback;
     if (val is int) return val;
-    if (val is num) return val.toInt();
+    if (val is num) return val.isFinite ? val.toInt() : fallback;
     if (val is String) return int.tryParse(val) ?? fallback;
     return fallback;
   }
@@ -29,8 +32,12 @@ class SafeConvert {
     if (val == null) return defaultDate;
     if (val is DateTime) return val;
     if (val is Timestamp) return val.toDate();
-    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
-    if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
+
+    if (val is num) {
+      return val.isFinite && val.abs() <= 8640000000000000
+          ? DateTime.fromMillisecondsSinceEpoch(val.toInt())
+          : defaultDate;
+    }
     if (val is String) return DateTime.tryParse(val) ?? defaultDate;
     try {
       return (val as dynamic).toDate();

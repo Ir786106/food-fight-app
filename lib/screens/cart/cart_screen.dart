@@ -1,3 +1,4 @@
+import '../../widgets/checkout/price_summary_row.dart';
 import '../../core/localization/app_language.dart';
 import 'package:food_fight/core/utils/app_insets.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
@@ -679,6 +680,17 @@ class _CartScreenState extends State<CartScreen> {
           Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
           const SizedBox(height: 10),
 
+          if (item.note?.trim().isNotEmpty == true)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                item.note!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+
           // Bottom Line: Line Total
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -905,47 +917,11 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _summaryRow(BuildContext context, String label, String value, {bool isBold = false, Color? color}) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: isBold ? 16 : 13.5,
-              fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
-              color: isBold ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Flexible(
-          flex: 1,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: isBold ? 18 : 13.5,
-                fontWeight: FontWeight.w900,
-                color: color ??
-                    (isBold
-                        ? (Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.brandYellow
-                            : AppColors.brandMaroon)
-                        : colorScheme.onSurface),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _summaryRow(BuildContext context, String label, String value,
+      {bool isBold = false, Color? color}) => PriceSummaryRow(
+        label: label,
+        amount: value,
+        emphasized: isBold,
+        amountColor: color,
+      );
 }

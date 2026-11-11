@@ -1,3 +1,4 @@
+import 'package:food_fight/services/menu_service.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/theme/app_theme.dart';
@@ -6,7 +7,7 @@ import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/providers/menu_provider.dart';
 import 'package:food_fight/providers/category_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
@@ -26,6 +27,7 @@ class ManageMenuScreen extends StatefulWidget {
 class _ManageMenuScreenState extends State<ManageMenuScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String? _lastBranchId;
+  bool _updatingMenu = false;
 
   @override
   void didChangeDependencies() {
@@ -81,6 +83,50 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
     );
   }
 
+  Future<void> _updateVisibleItems(List<MenuItemModel> items, bool active) async {
+    final auth = context.read<AuthProvider>();
+    final branchId = auth.currentUser?.branchId?.trim();
+    if (_updatingMenu || (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty))) return;
+    final ids = items
+        .where((item) => item.isActive != active &&
+            (auth.isSuperAdmin || item.branchId == branchId))
+        .map((item) => item.id)
+        .toSet();
+    if (ids.isEmpty || ids.length > 500) {
+      AppSnackbar.showInfo(context, ids.isEmpty
+          ? 'No visible items need this change.'
+          : 'Narrow the filters to 500 items or fewer.');
+      return;
+    }
+    setState(() => _updatingMenu = true);
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(active ? 'Activate menu items?' : 'Hide menu items?'),
+          content: Text('This updates ${ids.length} items in the filtered view.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || confirmed != true) return;
+      await MenuService.setItemsActive(ids, active: active);
+      if (mounted) AppSnackbar.showSuccess(context, 'Menu items updated.');
+    } catch (_) {
+      if (mounted) AppSnackbar.showError(context, 'Could not update menu items.');
+    } finally {
+      if (mounted) setState(() => _updatingMenu = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -94,14 +140,23 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
     final categories = categoryProvider.categories;
     final menuItems = menuProvider.filteredItems;
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: '/admin/menu',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/menu'),
       appBar: AppBar(
         title: const Text('Manage Menu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
+          PopupMenuButton<bool>(
+            enabled: !_updatingMenu && menuItems.isNotEmpty,
+            tooltip: 'Bulk menu actions',
+            onSelected: (active) => _updateVisibleItems(menuItems, active),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: true, child: Text('Activate visible items')),
+              PopupMenuItem(value: false, child: Text('Hide visible items')),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.broken_image_rounded),
             tooltip: 'Re-upload Missing Images',

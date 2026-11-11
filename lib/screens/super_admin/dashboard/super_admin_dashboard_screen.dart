@@ -1,3 +1,4 @@
+import 'package:food_fight/widgets/charts/sales_trend_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -151,7 +152,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Platform Revenue: Rs. ${provider.platformRevenue.toStringAsFixed(0)} • Store Open',
+                                  'Delivered GMV: Rs. ${provider.deliveredGmv.toStringAsFixed(0)} • Store Open',
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 12.5,
@@ -276,16 +277,23 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                               value: '${provider.cancelledOrders}',
                               icon: Icons.cancel_rounded,
                               color: AppColors.error,
-                              subtitle: 'Refunded / Aborted',
+                              subtitle: 'Cancelled',
                               onTap: () => Navigator.of(context).pushNamed('/admin/orders'),
+                            ),
+                            StatCard(
+                              title: 'Online Riders',
+                              value: '${provider.activeRiders}',
+                              icon: Icons.delivery_dining_outlined,
+                              color: AppColors.success,
+                              subtitle: 'Currently online',
                             ),
                             StatCard(
                               title: 'Restaurants',
                               value: '${provider.totalRestaurants}',
                               icon: Icons.store_rounded,
                               color: SuperAdminTheme.accentGold,
-                              subtitle: 'Food Fight HQ Branch',
-                              onTap: () => Navigator.of(context).pushNamed('/super-admin/settings'),
+                              subtitle: '${provider.totalBranches} branch locations',
+                              onTap: () => Navigator.of(context).pushNamed('/super-admin/branches'),
                             ),
                           ],
                         );
@@ -297,19 +305,40 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                     // =========================================================
                     // Multi-Branch Performance & Financial Comparison (P&L)
                     // =========================================================
-                    Consumer<BranchProvider>(
-                      builder: (context, branchProvider, _) {
-                        return _buildBranchPerformanceSection(
-                          context: context,
-                          branchProvider: branchProvider,
-                          isDark: Theme.of(context).brightness == Brightness.dark,
-                          textDark: textDark,
-                        );
-                      },
+                    ChangeNotifierProvider(
+                      create: (_) => BranchProvider(platformMetrics: true)
+                        ..ensureInitialized(),
+                      child: Consumer<BranchProvider>(
+                        builder: (context, branchProvider, _) {
+                          if (branchProvider.isLoading) {
+                            return const LoadingIndicator();
+                          }
+                          if (branchProvider.errorMessage != null) {
+                            return ErrorView(
+                              message: 'Unable to load branch financials.',
+                              onRetry: branchProvider.init,
+                            );
+                          }
+                          return _buildBranchPerformanceSection(
+                            context: context,
+                            branchProvider: branchProvider,
+                            isDark: Theme.of(context).brightness == Brightness.dark,
+                            textDark: textDark,
+                          );
+                        },
+                      ),
                     ),
 
                     const SizedBox(height: 24),
 
+                    if (provider.dailySales.any((day) => day.ordersCount > 0)) ...[
+                      Text('Delivered GMV by order date · UTC', style: Theme.of(context).textTheme.titleMedium),
+                      SalesTrendChart(
+                        dailySales: provider.dailySales,
+                        isDark: Theme.of(context).brightness == Brightness.dark,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                     // Quick Management Actions
                     Text(
                       'Super Admin Quick Controls',
@@ -339,7 +368,7 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                             title: 'System Settings',
                             icon: Icons.tune_rounded,
                             color: AppColors.darkBrown,
-                            onTap: () => Navigator.of(context).pushNamed('/super-admin/settings'),
+                            onTap: () => Navigator.of(context).pushNamed('/super-admin/branches'),
                           ),
                         ),
                       ],

@@ -28,13 +28,9 @@ class RestaurantProvider extends ChangeNotifier with SafeChangeNotifier {
     _init();
   }
 
-  Future<void> _init() async {
+  void _init() {
     _isLoading = true;
     notifyListenersPostFrame();
-
-    try {
-      await RestaurantService.ensureSeeded();
-    } catch (_) {}
 
     _sub = RestaurantService.watchRestaurants().listen(
       (list) {

@@ -1,9 +1,113 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { FieldValue } = require("firebase-admin/firestore");
+const { FieldValue, AggregateField } = require("firebase-admin/firestore");
 
 admin.initializeApp();
 const db = admin.firestore();
+const { platformAdministration, isActiveProfile } = require("./platform_administration");
+const platform = platformAdministration({
+  db, auth: admin.auth(), timestamp: () => FieldValue.serverTimestamp(),
+  fail: (code, message) => { throw new functions.https.HttpsError(code, message); },
+  aggregateField: AggregateField,
+});
+exports.mutatePlatform = functions.https.onCall(platform.mutate);
+exports.getPlatformMetrics = functions.https.onCall(platform.metrics);
+
+function customerRestriction(branchId, customerId) {
+  return db.doc(`branches/${branchId}/customerRestrictions/${customerId}`);
+}
+
+exports.manageBranchCustomers = functions.https.onCall(async (input, context) => {
+  const actorId = context.auth?.uid;
+  if (!actorId) fail("unauthenticated", "Sign in first.");
+  const users = db.collection("users");
+  const actorRef = users.doc(actorId);
+  const scopedOrders = (branchId) => db.collection("orders").where("branchId", "==", branchId);
+  function scope(actor) {
+    const permissions = actor?.permissions;
+    const permitted = ["customers", "manage_customers"].some((key) =>
+      Array.isArray(permissions) ? permissions.includes(key) : permissions?.[key] === true);
+    if (!isActiveProfile(actor)) fail("permission-denied", "Customer access is unavailable.");
+    if (actor.role === "super_admin") return null;
+    if (!(actor.role === "admin" && !actor.parentAdminId) &&
+        !(["admin", "staff", "sub_admin"].includes(actor.role) && permitted)) {
+      fail("permission-denied", "Customer management permission is required.");
+    }
+    if (typeof actor.branchId !== "string" || !actor.branchId.trim() || actor.branchId === "all") {
+      fail("permission-denied", "Your account has no assigned branch.");
+    }
+    return actor.branchId;
+  }
+
+  if (input?.action === "list") {
+    const branchId = scope((await actorRef.get()).data());
+    let query = users.where("role", "==", "customer");
+    if (branchId) query = query.where("branchId", "==", branchId);
+    const profiles = new Map();
+    const [registered, orders] = await Promise.all([
+      query.limit(100).get(),
+      branchId
+        ? scopedOrders(branchId).orderBy("createdAt", "desc").limit(300).select("customerId").get()
+        : null,
+    ]);
+    for (const doc of registered.docs) profiles.set(doc.id, doc.data());
+    const linked = new Set();
+    for (const order of orders?.docs ?? []) {
+      const id = order.get("customerId");
+      if (typeof id === "string" && id && !id.includes("/") && !profiles.has(id)) linked.add(id);
+    }
+    if (linked.size) {
+      for (const doc of await db.getAll(...[...linked].map((id) => users.doc(id)))) {
+        if (doc.get("role") === "customer") profiles.set(doc.id, doc.data());
+      }
+    }
+    const entries = [...profiles.entries()];
+    const blocked = new Set();
+    if (branchId && entries.length) {
+      for (const doc of await db.getAll(...entries.map(([id]) => customerRestriction(branchId, id)))) {
+        if (doc.exists) blocked.add(doc.id);
+      }
+    }
+    return {
+      branchId,
+      customers: entries.map(([id, profile]) => ({
+        id, role: "customer", name: profile.name || "", phone: profile.phone || "",
+        email: profile.email || "", isActive: branchId ? !blocked.has(id) : isActiveProfile(profile),
+      })),
+    };
+  }
+
+  if (input?.action !== "setStatus" || typeof input.active !== "boolean") {
+    fail("invalid-argument", "Choose a valid customer action.");
+  }
+  const id = validId(input.customerId, "customer");
+  const customerRef = users.doc(id);
+  return db.runTransaction(async (tx) => {
+    const branchId = scope((await tx.get(actorRef)).data());
+    const profile = (await tx.get(customerRef)).data();
+    if (profile?.role !== "customer") fail("permission-denied", "Customer is unavailable.");
+    if (branchId) {
+      if (profile.branchId !== branchId &&
+          (await tx.get(scopedOrders(branchId).where("customerId", "==", id).limit(1))).empty) {
+        fail("permission-denied", "Customer has no relationship with your branch.");
+      }
+      const restriction = customerRestriction(branchId, id);
+      if (input.active) tx.delete(restriction);
+      else tx.set(restriction, { actorId, updatedAt: FieldValue.serverTimestamp() });
+    } else {
+      tx.update(customerRef, {
+        isActive: input.active, isBlocked: !input.active,
+        status: input.active ? "active" : "blocked", updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    tx.create(db.collection("auditLogs").doc(), {
+      actorId, action: input.active ? "unblockCustomer" : "blockCustomer",
+      targetEntity: "customer", targetId: id, branchId: branchId || "",
+      timestamp: FieldValue.serverTimestamp(),
+    });
+    return { success: true };
+  });
+});
 
 // Provider credentials must be injected into the server-side runtime environment.
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || null;
@@ -262,6 +366,9 @@ async function checkout(input, context, quoteOnly) {
     if (!branchSnap.exists || (branchSnap.data().status || "active") !== "active") {
       fail("failed-precondition", "Choose an active kitchen.");
     }
+    if ((await transaction.get(customerRestriction(branchId, customerId))).exists) {
+      fail("permission-denied", "This branch cannot accept orders from your account.");
+    }
     const branch = branchSnap.data();
     let area = null;
     if (data.deliveryAreaId) {
@@ -468,6 +575,8 @@ async function checkout(input, context, quoteOnly) {
       fail("failed-precondition", "Prices or delivery fees changed. Review the updated total and place your order again.",
         { reason: "price-changed", order, tokenValue: tokenValue / 100 });
     }
+    const metricsRef = db.collection("branchMetrics").doc(branchId);
+    const metrics = (await transaction.get(metricsRef)).data() || {};
     // All reads are complete. The following writes commit or fail together.
     if (tokens > 0) {
       const balanceAfter = Number(account.balance) - tokens;
@@ -484,14 +593,15 @@ async function checkout(input, context, quoteOnly) {
     }
     if (couponRef) transaction.update(couponRef, { usageCount: Number(coupon.usageCount || 0) + 1, updatedAt: now });
     transaction.set(orderRef, order);
-    transaction.update(branchRef, {
-      totalOrders: Number(branch.totalOrders || 0) + 1,
-      totalRevenue: (cents(branch.totalRevenue || 0) + total) / 100,
+    transaction.set(metricsRef, {
+      totalOrders: Number(metrics.totalOrders ?? branch.totalOrders ?? branch.orderCount ?? 0) + 1,
+      totalRevenue: (cents(metrics.totalRevenue ?? branch.totalRevenue ?? branch.revenue ?? 0) + total) / 100,
       updatedAt: now,
-    });
+    }, { merge: true });
     transaction.set(db.collection("notifications").doc(`order_${orderId}_placed`), {
       userId: customerId, type: "order", referenceId: orderId, isRead: false,
       title: "Order placed", message: `Order #${orderNumber} has been sent to the kitchen.`, createdAt: now,
+      messageKey: "orderPlaced", orderNumber,
     });
     transaction.set(db.collection("notifications").doc(`admin_${orderId}_placed`), {
       userId: `branch_${branchId}`, branchId, type: "order", referenceId: orderId, isRead: false,
@@ -877,22 +987,7 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // Verify caller is super_admin (token claim or Firestore record)
-  const callerClaims = context.auth.token || {};
-  let isSuperAdmin = callerClaims.role === "super_admin";
-  if (!isSuperAdmin) {
-    const callerDoc = await db.collection("users").doc(context.auth.uid).get();
-    if (callerDoc.exists && callerDoc.data().role === "super_admin") {
-      isSuperAdmin = true;
-    }
-  }
-
-  if (!isSuperAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only Super Administrators can assign user roles and permissions."
-    );
-  }
+  await platform.requireSuperAdmin(context);
 
   const { targetUid, role, branchId = null, permissions = [] } = data || {};
   if (!targetUid || typeof targetUid !== "string" || !targetUid.trim()) {
@@ -946,29 +1041,22 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
 /**
  * Callable Function: Sensitive Action Audit Logger
  */
-exports.recordServerAuditLog = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Authentication required.");
+exports.auditChatStatus = functions.firestore.document("chats/{chatId}").onUpdate(async (change, context) => {
+  const before = change.before.data();
+  const after = change.after.data();
+  if (before.status === after.status) return;
+  const id = 'chat_status_' + context.eventId;
+  try {
+    await db.collection("auditLogs").doc(id).create({
+      action: "chat_status_changed", targetEntity: "chat", targetId: context.params.chatId,
+      branchId: after.branchId || "", actorRole: "system",
+      description: `Chat status changed from ${before.status || "unknown"} to ${after.status || "unknown"}.`,
+      timestamp: FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    if (error.code !== 6 && error.code !== "already-exists") throw error;
   }
-
-  const { action, targetEntity, targetId, details, branchId = "" } = data || {};
-  if (!action || !targetEntity) {
-    throw new functions.https.HttpsError("invalid-argument", "action and targetEntity are required.");
-  }
-
-  const logRef = await db.collection("auditLogs").add({
-    action: action,
-    targetEntity: targetEntity,
-    targetId: targetId || "",
-    branchId: branchId,
-    actorId: context.auth.uid,
-    details: details || "",
-    timestamp: FieldValue.serverTimestamp(),
-  });
-
-  return { success: true, logId: logRef.id };
 });
-
 /** Provision staff through Admin Auth; never create an unloginable random user ID. */
 exports.provisionTeamMember = functions.https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in first.');
@@ -976,7 +1064,7 @@ exports.provisionTeamMember = functions.https.onCall(async (data, context) => {
   const actor = actorSnap.data() || {};
   const superAdmin = actor.role === 'super_admin';
   const manager = actor.role === 'admin' && !actor.parentAdminId;
-  if (!superAdmin && !manager) throw new functions.https.HttpsError('permission-denied', 'Only branch managers can manage team logins.');
+  if (!isActiveProfile(actor) || (!superAdmin && !manager)) throw new functions.https.HttpsError('permission-denied', 'Only branch managers can manage team logins.');
   const role = data.role === 'rider' ? 'rider' : data.role === 'staff' ? 'staff' : null;
   if (!role) throw new functions.https.HttpsError('invalid-argument', 'Invalid team role.');
   const branchId = superAdmin ? (data.branchId || actor.branchId) : actor.branchId;
@@ -1019,9 +1107,14 @@ exports.provisionTeamMember = functions.https.onCall(async (data, context) => {
           (previous.role && !['customer',role,...(role === 'rider' ? ['delivery_rider'] : ['sub_admin'])].includes(previous.role))) {
         throw new functions.https.HttpsError('permission-denied', 'Account role changed. Reload and retry.');
       }
+      if (previous.role === 'customer' && !isActiveProfile(previous)) {
+        throw new functions.https.HttpsError('failed-precondition', 'The existing account is inactive.');
+      }
+      const existingStaff = role === 'staff' && ['staff', 'sub_admin'].includes(previous.role);
       t.set(userRef, {id: account.uid, uid: account.uid, name, email: account.email, phone,
         role, branchId, parentAdminId: context.auth.uid, permissions: role === 'staff' ? permissions : {},
-        status: 'active', isActive: 1, ...(old.exists ? {} : {createdAt: Date.now()}), updatedAt: Date.now()}, {merge:true});
+        ...(existingStaff ? {} : {status: 'active', isActive: 1}),
+        ...(old.exists ? {} : {createdAt: Date.now()}), updatedAt: Date.now()}, {merge:true});
       if (role === 'rider') t.set(db.collection('riders').doc(account.uid), {
         id: account.uid, userId: account.uid, name, email: account.email, phone, branchId,
         vehicleType: String(data.vehicleType || 'Motorcycle'), vehicleNumber: String(data.vehicleNumber || ''),
@@ -1037,10 +1130,10 @@ exports.provisionTeamMember = functions.https.onCall(async (data, context) => {
 });
 
 // Deterministic inbox IDs make Firestore trigger retries safe.
-async function inbox(id, userId, title, message, type, referenceId) {
+async function inbox(id, userId, title, message, type, referenceId, localization = {}) {
   try {
     await db.collection('notifications').doc(id).create({id, userId, title, message, type, referenceId,
-      isRead: 0, createdAt: FieldValue.serverTimestamp()});
+      ...localization, isRead: 0, createdAt: FieldValue.serverTimestamp()});
   } catch (error) { if (error.code !== 6 && error.code !== 'already-exists') throw error; }
 }
 exports.notifyRiderAssignment = functions.runWith({failurePolicy:true}).firestore.document('orders/{orderId}').onUpdate(async (change, context) => {
@@ -1054,7 +1147,8 @@ exports.notifyRiderAssignment = functions.runWith({failurePolicy:true}).firestor
   }
   if (before.status !== after.status) {
     await inbox(`status_${context.eventId}`, after.customerId, 'Order update',
-      `Order #${after.orderNumber || id}: ${after.status}`, 'order', id);
+      `Order #${after.orderNumber || id}: ${after.status}`, 'order', id,
+      {messageKey: 'orderStatus', orderNumber: after.orderNumber || id, orderStatus: after.status});
     if (after.status === 'cancelled' && after.riderId) await inbox(`cancel_${context.eventId}`, after.riderId,
       'Delivery cancelled', `Order #${after.orderNumber || id} was cancelled. Stop delivery.`, 'order', id);
   }
@@ -1113,13 +1207,19 @@ exports.reconcileTerminalOrder = functions.runWith({failurePolicy:true}).firesto
     }
     const branchRef=order.branchId ? db.collection('branches').doc(order.branchId) : null;
     const branch=branchRef && order.status === 'cancelled' ? await t.get(branchRef) : null;
+    const metricsRef = branch?.exists && order.verifiedByServer
+      ? db.collection('branchMetrics').doc(order.branchId) : null;
+    const metrics = metricsRef ? (await t.get(metricsRef)).data() || {} : null;
     const couponRef=order.couponId ? db.collection('coupons').doc(order.couponId) : null;
     const coupon=couponRef && order.status === 'cancelled' ? await t.get(couponRef) : null;
     const riderRef=order.riderId ? db.collection('riders').doc(order.riderId) : null;
     const rider=riderRef && order.status === 'delivered' ? await t.get(riderRef) : null;
     for(const stock of stocks) t.update(stock.ref,{[stock.field]:Number(stock.data[stock.field] || 0)+stock.quantity});
-    if(branch?.exists && order.verifiedByServer) t.update(branchRef,{
-      totalRevenue:Math.max(0,Number(branch.data().totalRevenue || 0)-Number(order.total || 0))});
+    if (metricsRef) t.set(metricsRef, {
+      totalRevenue: Math.max(0, Number(metrics.totalRevenue ?? branch.data().totalRevenue ??
+        branch.data().revenue ?? 0) - Number(order.total || 0)),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
     if(coupon?.exists && order.verifiedByServer) t.update(couponRef,{usageCount:Math.max(0,Number(coupon.data().usageCount || 0)-1)});
     if(rider?.exists) t.update(riderRef,{totalDeliveries:Number(rider.data().totalDeliveries || 0)+1});
     t.set(marker,{orderId:context.params.orderId,status:order.status,createdAt:FieldValue.serverTimestamp()});

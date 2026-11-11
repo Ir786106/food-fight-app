@@ -1,3 +1,4 @@
+import '../../widgets/checkout/price_summary_row.dart';
 import '../../core/localization/app_language.dart';
 import 'package:food_fight/core/utils/app_insets.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
@@ -27,6 +28,8 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressCtrl = TextEditingController();
+  final _couponCtrl = TextEditingController();
+  bool _isApplyingCoupon = false;
   String _selectedAddressLabel = 'Home';
   String? _selectedAddressId;
   static const _selectedPayment = 'Cash on Delivery';
@@ -61,11 +64,66 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     _addressCtrl.dispose();
+    _couponCtrl.dispose();
     super.dispose();
   }
 
+  Future<void> _applyCoupon(CartProvider cart) async {
+    final code = _couponCtrl.text.trim();
+    if (code.isEmpty || _isApplyingCoupon || _isPlacingOrder) return;
+    setState(() => _isApplyingCoupon = true);
+    try {
+      if (await cart.applyCoupon(code) && mounted) {
+        _couponCtrl.clear();
+        FocusScope.of(context).unfocus();
+      }
+    } catch (_) {
+      if (mounted) AppSnackbar.showError(context, context.tr('Unable to apply coupon. Try again.'));
+    } finally {
+      if (mounted) setState(() => _isApplyingCoupon = false);
+    }
+  }
+
+  Widget _buildCouponField(CartProvider cart) {
+    final coupon = cart.appliedCoupon;
+    final enabled = !_isPlacingOrder && !_isApplyingCoupon;
+    if (cart.tokensToRedeem > 0) {
+      return Text(context.tr('Coupons cannot be combined with loyalty tokens.'));
+    }
+    if (coupon != null) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.local_offer_outlined),
+        title: Text(coupon.code),
+        trailing: TextButton(
+          onPressed: enabled ? cart.removeCoupon : null,
+          child: Text(context.tr('Remove')),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        TextField(
+          controller: _couponCtrl,
+          enabled: enabled,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            labelText: context.tr('Coupon code'),
+            errorText: cart.couponError,
+          ),
+          onSubmitted: (_) => _applyCoupon(cart),
+        ),
+        TextButton(
+          onPressed: enabled ? () => _applyCoupon(cart) : null,
+          child: Text(context.tr(_isApplyingCoupon ? 'Applying…' : 'Apply')),
+        ),
+      ],
+    );
+  }
+
   Future<void> _submitOrder(CartProvider cart, AuthProvider auth) async {
-    if (_isPlacingOrder) return;
+    if (_isPlacingOrder || _isApplyingCoupon) return;
     final user = auth.currentUser;
     if (user == null) {
       Navigator.of(context).pushNamed('/login');
@@ -801,6 +859,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 24),
 
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildCouponField(cart),
+                      ),
                       // 5. Order Summary Breakdown
                       Text(
                         context.tr('Fee Breakdown'),
@@ -846,6 +908,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ? AppColors.success
                                   : null,
                             ),
+                            if (cart.couponDiscount > 0 && cart.tokensToRedeem == 0) ...[
+                              const SizedBox(height: 8),
+                              _summaryRow(
+                                context,
+                                context.tr('Coupon discount'),
+                                '- Rs. ${cart.couponDiscount.toStringAsFixed(0)}',
+                                color: AppColors.success,
+                              ),
+                            ],
                             if (cart.loyaltyDiscount > 0) ...[
                               const SizedBox(height: 8),
                               _summaryRow(
@@ -984,7 +1055,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 : context.tr('Review order'),
                             isLoading: _isPlacingOrder,
                             icon: Icons.check_circle_outline_rounded,
-                            onPressed: _isPlacingOrder
+                            onPressed: _isPlacingOrder || _isApplyingCoupon
                                 ? null
                                 : () => _submitOrder(cart, auth),
                           ),
@@ -1025,7 +1096,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   : context.tr('Review order'),
                               isLoading: _isPlacingOrder,
                               icon: Icons.check_circle_outline_rounded,
-                              onPressed: _isPlacingOrder
+                              onPressed: _isPlacingOrder || _isApplyingCoupon
                                   ? null
                                   : () => _submitOrder(cart, auth),
                             ),
@@ -1094,7 +1165,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             text: _isPlacingOrder ? context.tr('Checking order...') : context.tr('Review order'),
             isLoading: _isPlacingOrder,
             icon: Icons.check_circle_outline_rounded,
-            onPressed: _isPlacingOrder ? null : () => _submitOrder(cart, auth),
+            onPressed: _isPlacingOrder || _isApplyingCoupon ? null : () => _submitOrder(cart, auth),
           ),
         ],
       ),
@@ -1102,47 +1173,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _summaryRow(BuildContext context, String label, String value,
-      {bool isBold = false, Color? color}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: isBold ? 16 : 13.5,
-              fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
-              color:
-                  isBold ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: isBold ? 18 : 13.5,
-                fontWeight: FontWeight.w900,
-                color: color ??
-                    (isBold
-                        ? (isDark
-                            ? AppColors.brandYellow
-                            : AppColors.brandMaroon)
-                        : colorScheme.onSurface),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+      {bool isBold = false, Color? color}) => PriceSummaryRow(
+        label: label,
+        amount: value,
+        emphasized: isBold,
+        amountColor: color,
+      );
 }

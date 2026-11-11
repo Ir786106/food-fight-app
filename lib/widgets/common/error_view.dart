@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_fight/core/constants/app_colors.dart';
+import 'package:food_fight/core/localization/app_language.dart';
 
 /// Reusable friendly error display with retry action
 class ErrorView extends StatelessWidget {
@@ -31,9 +32,10 @@ class ErrorView extends StatelessWidget {
               child: Icon(icon, color: AppColors.error, size: 48),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Oops! Something went wrong',
-              style: TextStyle(
+            Text(
+              context.tr('Oops! Something went wrong'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -53,7 +55,7 @@ class ErrorView extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Try Again'),
+                label: Text(context.tr('Try Again')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

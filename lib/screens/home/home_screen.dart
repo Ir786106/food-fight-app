@@ -10,8 +10,11 @@ import '../../providers/deal_provider.dart';
 import '../../providers/loyalty_provider.dart';
 import '../../providers/menu_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/order_provider.dart';
+import '../../models/menu_item_model.dart';
 import '../../models/food_model.dart';
 import '../../widgets/common/offline_banner.dart';
+import '../../core/design_system/components.dart' show AppCard;
 import '../../widgets/home/home_filter_sheet.dart';
 import '../../widgets/home/home_feature_banner.dart';
 import '../../widgets/home/home_promo_carousel.dart';
@@ -72,7 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final deals = context.watch<DealProvider>();
     final user = context.watch<AuthProvider>().currentUser;
     final theme = Theme.of(context);
-    final branchId = branch.selectedBranch?.id;
+    final kitchen = branch.selectedBranch;
+    final branchId = kitchen?.id;
     if (branchId != null && branchId != _requestedBranch) {
       _requestedBranch = branchId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -98,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (_sort == 'rating') {
       items.sort((a, b) => b.rating.compareTo(a.rating));
     }
-    FoodModel food(dynamic item) => FoodModel.fromMenuItem(item,
+    FoodModel food(MenuItemModel item) => FoodModel.fromMenuItem(item,
         categoryName: categoryNames[item.categoryId] ?? '');
     final popular = items.where((item) => item.reviewCount > 0).toList()
       ..sort((a, b) => b.rating.compareTo(a.rating));
@@ -106,6 +110,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final newest = [...items]
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
+    final orderHistory =
+        user == null ? null : context.watch<OrderProvider?>()?.customerOrders;
+    final availableById = {for (final item in items) item.id: item};
+    final recentIds = <String>{
+      for (final order in orderHistory ?? const [])
+        if (order.customerId == user?.id)
+          for (final line in order.items) line.food.id,
+    };
+    final recentlyOrdered = recentIds
+        .map((id) => availableById[id])
+        .whereType<MenuItemModel>()
+        .take(8)
+        .map(food)
+        .toList();
+    final nearby = branchId == null
+        ? <FoodModel>[]
+        : newest
+            .where((item) => item.branchId == branchId)
+            .take(8)
+            .map(food)
+            .toList();
     final feature = [...recommended, ...popular, ...newest]
         .where((item) => item.imageUrl?.trim().isNotEmpty ?? false)
         .firstOrNull;
@@ -113,8 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          await Future.wait(
-              [menu.fetchMenuItems(), categories.fetchCategories()]);
+          await Future.wait([
+            menu.fetchMenuItems(branchId: branchId),
+            categories.fetchCategories()
+          ]);
         },
         child: CustomScrollView(
           controller: widget.parentScrollController,
@@ -252,7 +279,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? 'All'
                       : categories.activeCategories[index - 1].name;
                   return ChoiceChip(
-                      avatar: index == 0 ? const Icon(Icons.grid_view_rounded, size: 16) : null,
+                      avatar: index == 0
+                          ? const Icon(Icons.grid_view_rounded, size: 16)
+                          : null,
                       label: Text(context.tr(name)),
                       selected: _category == name,
                       onSelected: (_) => setState(() => _category = name));
@@ -271,6 +300,35 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _sort = 'popular';
                               }),
                           child: Text(context.tr('Clear all filters'))))),
+            if (kitchen != null && !branch.isOutOfDeliveryArea)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: DesignSystem.screenPadding,
+                  child: AppCard(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: NetworkImageView(
+                        imageUrl: kitchen.imageUrl,
+                        width: DesignSystem.space48,
+                        height: DesignSystem.space48,
+                      ),
+                      title: Text(kitchen.name),
+                      subtitle: Text(
+                        [
+                          kitchen.city,
+                          if (kitchen.rating > 0)
+                            '★ ${kitchen.rating.toStringAsFixed(1)}'
+                        ].where((part) => part.isNotEmpty).join(' · '),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).pushNamed(
+                        '/restaurant-detail',
+                        arguments: kitchen,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (menu.isLoading && items.isEmpty)
               SliverToBoxAdapter(
                   child: SizedBox(
@@ -289,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   hasScrollBody: false,
                   child: ErrorView(
                       message: menu.errorMessage!,
-                      onRetry: menu.fetchMenuItems))
+                      onRetry: () => menu.fetchMenuItems(branchId: branchId)))
             else if (items.isEmpty)
               SliverFillRemaining(
                   hasScrollBody: false,
@@ -315,6 +373,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       }))
             else ...[
+              if (recentlyOrdered.isNotEmpty)
+                ..._section('Recently ordered', recentlyOrdered, 'recent'),
+              if (nearby.isNotEmpty && !branch.isOutOfDeliveryArea)
+                ..._section('Near you', nearby, 'nearby'),
               if (popular.isNotEmpty)
                 ..._section('Popular Dishes',
                     popular.take(8).map(food).toList(), 'popular'),
@@ -341,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: DesignSystem.screenPadding,
                 child: Row(children: [
                   Expanded(
-                      child: Text(title,
+                      child: Text(context.tr(title),
                           style: Theme.of(context).textTheme.titleLarge,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis)),
@@ -357,9 +419,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   : constraints.crossAxisExtent >= 600
                       ? 3
                       : 2;
-              final tileWidth =
-                  (constraints.crossAxisExtent - AppDimens.space8 * (columns - 1)) /
-                      columns;
+              final tileWidth = (constraints.crossAxisExtent -
+                      AppDimens.space8 * (columns - 1)) /
+                  columns;
               final imageHeight = (tileWidth - AppDimens.space8) / 1.5;
               final textHeight = MediaQuery.textScalerOf(context).scale(80);
               return SliverGrid(

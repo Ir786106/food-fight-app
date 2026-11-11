@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/branch_model.dart';
 import '../core/constants/firestore_collections.dart';
 import '../core/utils/logger.dart';
+import '../core/utils/safe_convert.dart';
 
 class BranchService {
   static CollectionReference get _collection =>
@@ -13,12 +14,53 @@ class BranchService {
       final list = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
-        return BranchModel.fromJson(data);
+        return BranchModel.fromJson({
+          ...data,
+          'revenue': data['totalRevenue'] ?? data['revenue'],
+          'orderCount': data['totalOrders'] ?? data['orderCount'] ?? data['ordersCount'],
+        });
       }).toList();
       list.sort((a, b) => b.revenue.compareTo(a.revenue));
       return list;
     });
   }
+
+  static Stream<List<BranchModel>> watchPlatformBranches() =>
+      Stream.multi((controller) {
+        List<BranchModel>? branches;
+        Map<String, Map<String, dynamic>>? metrics;
+        void emit() {
+          final currentBranches = branches;
+          final currentMetrics = metrics;
+          if (currentBranches == null || currentMetrics == null) return;
+          controller.add([
+            for (final branch in currentBranches)
+              branch.copyWith(
+                revenue: SafeConvert.toDouble(
+                    currentMetrics[branch.id]?['totalRevenue'], branch.revenue),
+                expenses: SafeConvert.toDouble(
+                    currentMetrics[branch.id]?['expenses'], branch.expenses),
+                orderCount: SafeConvert.toInt(
+                    currentMetrics[branch.id]?['totalOrders'], branch.orderCount),
+              ),
+          ]);
+        }
+
+        final branchSub = watchBranches().listen((data) {
+          branches = data;
+          emit();
+        }, onError: controller.addError);
+        final metricsSub = FirebaseFirestore.instance
+            .collection('branchMetrics')
+            .snapshots()
+            .listen((snapshot) {
+          metrics = {for (final doc in snapshot.docs) doc.id: doc.data()};
+          emit();
+        }, onError: controller.addError);
+        controller.onCancel = () async {
+          await Future.wait([branchSub.cancel(), metricsSub.cancel()]);
+        };
+      });
 
   /// Get list of branches once
   static Future<List<BranchModel>> getBranches() async {
@@ -56,7 +98,7 @@ class BranchService {
   static Future<String> createBranch(BranchModel branch) async {
     final docRef =
         branch.id.isNotEmpty ? _collection.doc(branch.id) : _collection.doc();
-    final data = branch.toJson();
+    final data = _publicData(branch);
     data['id'] = docRef.id;
     await docRef.set(data);
     AppLogger.info('Created branch: ${branch.name} (${docRef.id})',
@@ -65,29 +107,32 @@ class BranchService {
   }
 
   /// Update existing branch
+  static Future<void> updateBranchContactSettings(
+    String branchId, {
+    required String name,
+    required String address,
+    required String phone,
+    required String openingHours,
+  }) => _collection.doc(branchId).update({
+    'name': name,
+    'address': address,
+    'phone': phone,
+    'openingHours': openingHours,
+    'updatedAt': DateTime.now().millisecondsSinceEpoch,
+  });
+
   static Future<void> updateBranch(BranchModel branch) async {
-    final data = branch.toJson();
+    final data = _publicData(branch);
     data['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
     await _collection.doc(branch.id).set(data, SetOptions(merge: true));
     AppLogger.info('Updated branch: ${branch.name} (${branch.id})',
         tag: 'BranchService');
   }
 
-  /// Increment revenue and order count for a branch
-  static Future<void> recordOrderFinancials(
-      String branchId, double orderTotal) async {
-    if (branchId.isEmpty) return;
-    try {
-      await _collection.doc(branchId).update({
-        'revenue': FieldValue.increment(orderTotal),
-        'orderCount': FieldValue.increment(1),
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      });
-    } catch (e) {
-      AppLogger.warn('Could not increment branch financials for $branchId: $e',
-          tag: 'BranchService');
-    }
-  }
+  static Map<String, dynamic> _publicData(BranchModel branch) => branch.toJson()
+    ..remove('revenue')
+    ..remove('orderCount')
+    ..remove('expenses');
 
   /// Returns the default 5 branches with GPS coordinates and coverage radii
   static List<BranchModel> getDefaultBranches() {
@@ -195,7 +240,7 @@ class BranchService {
       final defaultBranches = getDefaultBranches();
 
       for (var b in defaultBranches) {
-        await _collection.doc(b.id).set(b.toJson());
+        await _collection.doc(b.id).set(_publicData(b));
       }
       AppLogger.info(
           'Successfully seeded 5 initial branches with GPS coordinates',

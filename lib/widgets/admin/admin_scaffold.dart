@@ -1,6 +1,9 @@
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:food_fight/core/responsive/breakpoints.dart' as resp;
 import 'package:food_fight/core/constants/app_colors.dart';
+import 'package:food_fight/core/localization/app_language.dart';
 import 'admin_collapsible_sidebar.dart';
 
 /// Responsive Scaffold for Admin and Sub-Admin screens.
@@ -66,13 +69,19 @@ class AdminScaffold extends StatelessWidget {
   }
 
   Widget? _buildBottomBar(BuildContext context) {
-    const destinations = [
+    const allDestinations = [
       ('/admin/dashboard', 'Dashboard', Icons.dashboard_outlined, Icons.dashboard_rounded),
       ('/admin/orders', 'Orders', Icons.receipt_long_outlined, Icons.receipt_long_rounded),
       ('/admin/menu', 'Menu', Icons.restaurant_menu_outlined, Icons.restaurant_menu_rounded),
       ('/admin/chats', 'Chats', Icons.chat_bubble_outline_rounded, Icons.chat_rounded),
     ];
 
+    final user = context.watch<AuthProvider?>()?.currentUser;
+    final destinations = allDestinations.where((destination) {
+      final section = destination.$1.split('/').last;
+      return section == 'dashboard' || user == null || user.can(section);
+    }).toList();
+    if (destinations.length < 2) return null;
     int currentIndex = destinations.indexWhere((d) => d.$1 == currentRoute);
     if (currentIndex == -1) currentIndex = 0;
 
@@ -95,7 +104,7 @@ class AdminScaffold extends StatelessWidget {
         return NavigationDestination(
           icon: Icon(d.$3, size: 22, color: isDark ? Colors.white70 : Colors.black87),
           selectedIcon: Icon(d.$4, size: 22, color: isDark ? Colors.white : AppColors.onYellow),
-          label: d.$2,
+          label: context.tr(d.$2),
         );
       }).toList(),
     );

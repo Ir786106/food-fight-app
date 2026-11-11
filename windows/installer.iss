@@ -2,6 +2,7 @@
 AppId=FoodFight
 AppName=Food Fight
 AppVersion={#AppVersion}
+VersionInfoVersion={#AppVersion}.{#AppBuild}
 DefaultDirName={localappdata}\Programs\Food Fight
 DefaultGroupName=Food Fight
 PrivilegesRequired=lowest

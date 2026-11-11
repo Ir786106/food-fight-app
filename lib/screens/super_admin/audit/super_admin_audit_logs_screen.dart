@@ -7,7 +7,7 @@ import 'package:food_fight/providers/audit_log_provider.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
-import 'package:food_fight/widgets/super_admin/super_admin_drawer.dart';
+import 'package:food_fight/widgets/super_admin/super_admin_scaffold.dart';
 
 /// Super Admin Audit & Activity Logs Screen
 class SuperAdminAuditLogsScreen extends StatefulWidget {
@@ -66,9 +66,9 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
           Navigator.of(context).pushReplacementNamed('/super-admin/dashboard');
         }
       },
-      child: Scaffold(
+      child: SuperAdminScaffold(
+        currentRoute: '/super-admin/audit',
         backgroundColor: SuperAdminTheme.getBackground(context),
-        drawer: const SuperAdminDrawer(currentRoute: '/super-admin/audit'),
         appBar: AppBar(
           backgroundColor: SuperAdminTheme.primary,
           foregroundColor: Colors.white,

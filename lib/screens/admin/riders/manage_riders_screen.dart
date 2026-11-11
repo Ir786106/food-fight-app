@@ -8,7 +8,7 @@ import '../../../core/theme/admin_theme.dart';
 import '../../../core/utils/validator_utils.dart';
 import '../../../models/rider_model.dart';
 import '../../../providers/rider_provider.dart';
-import '../../../widgets/admin/admin_drawer.dart';
+import '../../../widgets/admin/admin_scaffold.dart';
 import '../../../widgets/common/empty_state_view.dart';
 import '../../../widgets/common/error_view.dart';
 import '../../../widgets/common/loading_indicator.dart';
@@ -24,13 +24,18 @@ class ManageRidersScreen extends StatefulWidget {
 class _ManageRidersScreenState extends State<ManageRidersScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   bool _initialized = false;
+  String? _fleetBranch;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      context.read<RiderProvider>().watchAllRiders();
+    final auth = context.watch<AuthProvider>();
+    final branch = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    if (!auth.isSuperAdmin && (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) return;
+    if (!_initialized || branch != _fleetBranch) {
       _initialized = true;
+      _fleetBranch = branch;
+      context.read<RiderProvider>().watchAllRiders(branchId: branch);
     }
   }
 
@@ -257,6 +262,14 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final access = context.watch<AuthProvider>();
+    final branch = access.currentUser?.branchId?.trim();
+    if (!access.isSuperAdmin && (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
+      return const AdminScaffold(
+        currentRoute: '/admin/riders',
+        body: ErrorView(message: 'This account needs a branch assignment before viewing riders.'),
+      );
+    }
     final riderProvider = context.watch<RiderProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = AdminTheme.getCardBg(context);
@@ -279,9 +292,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
           Navigator.of(context).pushReplacementNamed('/admin/dashboard');
         }
       },
-      child: Scaffold(
+      child: AdminScaffold(
+        currentRoute: '/admin/riders',
         backgroundColor: AdminTheme.getBackground(context),
-        drawer: const AdminDrawer(currentRoute: '/admin/riders'),
         appBar: AppBar(
           title: const Text(
             'Delivery Riders Fleet',
@@ -358,7 +371,7 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                       return Center(
                         child: ErrorView(
                           message: riderProvider.errorMessage!,
-                          onRetry: () => riderProvider.watchAllRiders(),
+                          onRetry: () => riderProvider.watchAllRiders(branchId: _fleetBranch),
                         ),
                       );
                     }
