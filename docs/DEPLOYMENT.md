@@ -27,6 +27,8 @@ The root `render.yaml` defines a free Node web service with manual deploys. In R
 
 For the authorized production target, select `render.production.yaml` as the Blueprint path in Render. It pins `food-fight-bd72e`, uses the Free instance plan and keeps deploys manual. Mount the dedicated production service account as the secret file `firebase-service-account.json`. Startup requires the credential's project to match. Keep the endpoint out of distributed clients until the deployed Firestore rules and client compatibility are reviewed together. Keep production rules publication on hold until the coordinated cutover is approved.
 
+After the production smoke test, set the GitHub Actions repository variable `FOODFIGHT_BACKEND_URL` to the verified HTTPS origin. The tag release includes it in both platforms and checks the backend health endpoint before building the APK. Review-branch installer builds can still run without the variable for local UI QA.
+
 Deploy the order index and configure the staging order backend before distributing clients that use the new order workflow. Verify that old clients are retired before applying server-only write rules in production. Older clients used direct writes to advance orders and will need the new build.
 
 ## Staging verification

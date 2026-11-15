@@ -6,6 +6,10 @@ on:
       - 'release/**'
   workflow_dispatch:
   workflow_call:
+    inputs:
+      require-backend:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,7 +24,21 @@ jobs:
           channel: stable
           flutter-version: '3.x'
       - run: flutter pub get
-      - run: flutter build windows --release
+      - name: Build Windows release
+        shell: pwsh
+        env:
+          FOODFIGHT_BACKEND_URL: ${{ vars.FOODFIGHT_BACKEND_URL }}
+          REQUIRE_BACKEND: ${{ inputs.require-backend }}
+        run: |
+          $backendArgs = @()
+          if ($env:REQUIRE_BACKEND -eq 'true' -or $env:FOODFIGHT_BACKEND_URL) {
+            if ($env:FOODFIGHT_BACKEND_URL -notmatch '^https://[A-Za-z0-9.-]+(:[0-9]+)?/?$') {
+              throw 'Set FOODFIGHT_BACKEND_URL to the verified production HTTPS origin.'
+            }
+            $backendArgs += "--dart-define=FOODFIGHT_BACKEND_URL=$env:FOODFIGHT_BACKEND_URL"
+          }
+          flutter build windows --release @backendArgs
+          exit $LASTEXITCODE
       - name: Package Windows installer
         shell: pwsh
         run: |
