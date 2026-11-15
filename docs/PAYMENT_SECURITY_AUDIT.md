@@ -33,7 +33,9 @@ Firebase Auth supplies identity. Firestore serves role-scoped reads and selected
 ## Verification evidence
 
 - Local Firestore emulator passed 38 rules tests, including the wallet reference allowlist, owner isolation and attempts to add card fields.
-- Node backend unit suite passed 26 tests. Local Auth and Firestore lifecycle suite passed 3 integration tests, including the HTTPS-style gateway request flow over loopback.
+- Node backend unit suite passed 26 tests with the updated lockfile. The original local Auth and Firestore lifecycle run passed 3 integration tests. A later run with the updated lockfile hit a local Firestore deadline in one test. The same updated lockfile passed lifecycle, callable and rules integration checks in GitHub CI.
+- [GitHub CI](https://github.com/Ir786106/food-fight-app/actions/runs/43755940875) passed formatting, Flutter analyzer, responsive widget tests and the Web release build on application commit `42b72e9`. The Web build uses JavaScript. The optional WebAssembly dry run identified incompatibilities in the existing secure-storage web plugin.
+- The current Android debug build passed locally. [Windows installer build and packaging](https://github.com/Ir786106/food-fight-app/actions/runs/43755935158) passed on application commit `42b72e9`. These builds have no live payment or production device verification.
 - The previous Android review build passed signature and package checks. It is version `1.8.5+22`, API 24 minimum, and the signer SHA-256 matches Firebase registration. It predates the payment UI and wallet rules patch.
 - The previous Windows installer passed GitHub Actions build and SHA-256 verification at the baseline commit. A production endpoint and installed-client verification remain open.
 - Full-tree Dart format found two tracked tool files requiring format and one ignored scratch file under `build/`. The tracked tools were formatted without changing their behavior.
