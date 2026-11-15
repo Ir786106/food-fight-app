@@ -34,8 +34,8 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
   /// Filtered items for Admin/Customer screens
   List<MenuItemModel> get filteredItems {
     return _menuItems.where((item) {
-      final matchesCategory = _selectedCategory == 'All' ||
-          item.categoryId == _selectedCategory;
+      final matchesCategory =
+          _selectedCategory == 'All' || item.categoryId == _selectedCategory;
       final matchesSearch = _searchQuery.isEmpty ||
           item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.description.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -50,7 +50,8 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Popular items (for home screen & dashboard)
   List<MenuItemModel> get popularItems {
-    final list = _menuItems.where((item) => item.isActive && item.isPopular).toList();
+    final list =
+        _menuItems.where((item) => item.isActive && item.isPopular).toList();
     if (list.isNotEmpty) return list;
     return _menuItems.where((item) => item.isActive).take(6).toList();
   }

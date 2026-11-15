@@ -27,14 +27,19 @@ class CouponService {
 
   /// Watch all coupons (Admin/Customer)
   static Stream<List<CouponModel>> watchCoupons({String? branchId}) {
-    return _collection.orderBy('createdAt', descending: true).snapshots().map((snapshot) {
+    return _collection
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
       var items = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return CouponModel.fromJson(data);
       }).toList();
       if (branchId != null && branchId.isNotEmpty) {
-        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+        items = items
+            .where((c) => c.branchId == null || c.branchId == branchId)
+            .toList();
       }
       return items;
     });
@@ -50,7 +55,9 @@ class CouponService {
         return CouponModel.fromJson(data);
       }).toList();
       if (branchId != null && branchId.isNotEmpty) {
-        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+        items = items
+            .where((c) => c.branchId == null || c.branchId == branchId)
+            .toList();
       }
       return items;
     } catch (e) {
@@ -100,10 +107,12 @@ class CouponService {
   }) async {
     try {
       final cleanCode = code.toUpperCase().trim();
-      final snapshot = await _collection.where('code', isEqualTo: cleanCode).limit(1).get();
+      final snapshot =
+          await _collection.where('code', isEqualTo: cleanCode).limit(1).get();
 
       if (snapshot.docs.isEmpty) {
-        return CouponValidationResult(isValid: false, errorMessage: 'Invalid coupon code');
+        return CouponValidationResult(
+            isValid: false, errorMessage: 'Invalid coupon code');
       }
 
       final doc = snapshot.docs.first;
@@ -122,25 +131,31 @@ class CouponService {
       }
 
       if (!coupon.isActive) {
-        return CouponValidationResult(isValid: false, errorMessage: 'This coupon is no longer active');
+        return CouponValidationResult(
+            isValid: false, errorMessage: 'This coupon is no longer active');
       }
 
       final now = DateTime.now();
       if (now.isBefore(coupon.validFrom)) {
-        return CouponValidationResult(isValid: false, errorMessage: 'This coupon is not valid yet');
+        return CouponValidationResult(
+            isValid: false, errorMessage: 'This coupon is not valid yet');
       }
       if (now.isAfter(coupon.validUntil)) {
-        return CouponValidationResult(isValid: false, errorMessage: 'This coupon has expired');
+        return CouponValidationResult(
+            isValid: false, errorMessage: 'This coupon has expired');
       }
 
       if (coupon.usageLimit > 0 && coupon.usageCount >= coupon.usageLimit) {
-        return CouponValidationResult(isValid: false, errorMessage: 'Coupon usage limit has been reached');
+        return CouponValidationResult(
+            isValid: false,
+            errorMessage: 'Coupon usage limit has been reached');
       }
 
       if (subtotal < coupon.minimumOrder) {
         return CouponValidationResult(
           isValid: false,
-          errorMessage: 'Minimum order amount is Rs. ${coupon.minimumOrder.toStringAsFixed(0)}',
+          errorMessage:
+              'Minimum order amount is Rs. ${coupon.minimumOrder.toStringAsFixed(0)}',
         );
       }
 
@@ -172,7 +187,8 @@ class CouponService {
       );
     } catch (e) {
       AppLogger.error('Error validating coupon: $e', tag: 'CouponService');
-      return CouponValidationResult(isValid: false, errorMessage: 'Failed to apply coupon');
+      return CouponValidationResult(
+          isValid: false, errorMessage: 'Failed to apply coupon');
     }
   }
 }

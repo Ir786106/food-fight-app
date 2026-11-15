@@ -4,7 +4,8 @@ import 'package:food_fight/widgets/navigation/floating_nav_bar.dart';
 
 void main() {
   group('FloatingNavBar Widget Tests', () {
-    testWidgets('Renders all 4 tab destinations (Home, Orders, Chat, Profile)', (WidgetTester tester) async {
+    testWidgets('Renders all 4 tab destinations (Home, Orders, Chat, Profile)',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -22,7 +23,8 @@ void main() {
       expect(find.text('Profile'), findsOneWidget);
     });
 
-    testWidgets('Tab switching fires callback with correct index', (WidgetTester tester) async {
+    testWidgets('Tab switching fires callback with correct index',
+        (WidgetTester tester) async {
       int selectedIndex = 0;
 
       await tester.pumpWidget(
@@ -52,7 +54,8 @@ void main() {
       expect(selectedIndex, equals(3));
     });
 
-    testWidgets('Shows chat unread badge count when > 0', (WidgetTester tester) async {
+    testWidgets('Shows chat unread badge count when > 0',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

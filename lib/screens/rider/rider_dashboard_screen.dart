@@ -79,8 +79,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     final generation = ++_locationGeneration;
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        _showLocationError(
-            generation, 'Turn on device location to share your delivery position.');
+        _showLocationError(generation,
+            'Turn on device location to share your delivery position.');
         return;
       }
       if (!mounted || generation != _locationGeneration) return;
@@ -91,8 +91,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        _showLocationError(
-            generation, 'Allow location access to share your delivery position.');
+        _showLocationError(generation,
+            'Allow location access to share your delivery position.');
         return;
       }
       if (!mounted ||
@@ -100,19 +100,19 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
           _broadcastOrders.isEmpty) {
         return;
       }
-      final LocationSettings settings = !kIsWeb &&
-              defaultTargetPlatform == TargetPlatform.android
-          ? AndroidSettings(
-              accuracy: LocationAccuracy.high,
-              distanceFilter: 20,
-              intervalDuration: const Duration(seconds: 10),
-              foregroundNotificationConfig: ForegroundNotificationConfig(
-                  notificationTitle: context.tr('Food Fight delivery'),
-                  notificationText: context.tr(
-                      'Sharing your position during active deliveries'),
-                  enableWakeLock: true))
-          : const LocationSettings(
-              accuracy: LocationAccuracy.high, distanceFilter: 20);
+      final LocationSettings settings =
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+              ? AndroidSettings(
+                  accuracy: LocationAccuracy.high,
+                  distanceFilter: 20,
+                  intervalDuration: const Duration(seconds: 10),
+                  foregroundNotificationConfig: ForegroundNotificationConfig(
+                      notificationTitle: context.tr('Food Fight delivery'),
+                      notificationText: context
+                          .tr('Sharing your position during active deliveries'),
+                      enableWakeLock: true))
+              : const LocationSettings(
+                  accuracy: LocationAccuracy.high, distanceFilter: 20);
       _positions = Geolocator.getPositionStream(locationSettings: settings)
           .listen((position) {
         if (!mounted || generation != _locationGeneration) return;
@@ -178,7 +178,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                     title: Text(context.tr('Confirm delivery')),
                     content: Text(order.paymentStatus == 'paid'
                         ? ctx.tr('Have you handed over the order?')
-                        : ctx.tr('Confirm handover and collection of {amount}.')
+                        : ctx
+                            .tr('Confirm handover and collection of {amount}.')
                             .replaceFirst('{amount}',
                                 '${ctx.tr('Rs.')} ${order.total.toStringAsFixed(0)}')),
                     actions: [
@@ -276,11 +277,17 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
   void _showDeliveryError(Object error) {
     final code = error is FirebaseFunctionsException ? error.code : null;
     final message = switch (code) {
-      'not-found' => 'This delivery or its update service is unavailable. Refresh and try again.',
+      'not-found' =>
+        'This delivery or its update service is unavailable. Refresh and try again.',
       'unauthenticated' => 'Sign in again to update this delivery.',
-      'permission-denied' => 'You do not have permission to update this delivery.',
-      'failed-precondition' || 'aborted' => 'This delivery could not be updated. Refresh and check its current status.',
-      'unavailable' || 'deadline-exceeded' => 'Unable to reach the delivery service. Check your connection and retry.',
+      'permission-denied' =>
+        'You do not have permission to update this delivery.',
+      'failed-precondition' ||
+      'aborted' =>
+        'This delivery could not be updated. Refresh and check its current status.',
+      'unavailable' ||
+      'deadline-exceeded' =>
+        'Unable to reach the delivery service. Check your connection and retry.',
       _ => 'Unable to update this delivery. Please try again.',
     };
     AppSnackbar.showError(context, context.tr(message));
@@ -422,19 +429,23 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
         SwitchListTile(
           title: Text(context.tr(riders.isOnline ? 'Online' : 'Offline')),
           value: riders.isOnline,
-          onChanged:
-              _changingOnline || riders.currentRider == null || _riderId == null
-                  ? null
-                  : (value) async {
-                      setState(() => _changingOnline = true);
-                      final updated = await riders.toggleOnline(_riderId!, value);
-                      if (mounted) {
-                        setState(() => _changingOnline = false);
-                        if (!updated) {
-                          AppSnackbar.showError(context, context.tr('Unable to change availability. Please try again.'));
-                        }
-                      }
-                    },
+          onChanged: _changingOnline ||
+                  riders.currentRider == null ||
+                  _riderId == null
+              ? null
+              : (value) async {
+                  setState(() => _changingOnline = true);
+                  final updated = await riders.toggleOnline(_riderId!, value);
+                  if (mounted) {
+                    setState(() => _changingOnline = false);
+                    if (!updated) {
+                      AppSnackbar.showError(
+                          context,
+                          context.tr(
+                              'Unable to change availability. Please try again.'));
+                    }
+                  }
+                },
         ),
         if (active.isNotEmpty) ...[
           SectionHeader(title: context.tr('Active delivery')),
@@ -446,8 +457,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
           trailing: riders.earningsLoading || riders.earningsUnavailable
               ? const Text('—')
               : AppAnimatedCounter(
-              value: deliveredToday,
-              format: (value) => value.round().toString()),
+                  value: deliveredToday,
+                  format: (value) => value.round().toString()),
         )),
         SectionHeader(title: context.tr('Incoming offers')),
         if (offers.isEmpty)
@@ -564,15 +575,15 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
             );
           }
           return filtered.isEmpty
-            ? EmptyStateView(
-                icon: Icons.delivery_dining,
-                title: context.tr(_search.isEmpty && dates == null
-                    ? emptyLabel
-                    : 'No matching orders'),
-                description:
-                    context.tr('Orders will appear here when available.'),
-              )
-            : _orderSummary(filtered[index]);
+              ? EmptyStateView(
+                  icon: Icons.delivery_dining,
+                  title: context.tr(_search.isEmpty && dates == null
+                      ? emptyLabel
+                      : 'No matching orders'),
+                  description:
+                      context.tr('Orders will appear here when available.'),
+                )
+              : _orderSummary(filtered[index]);
         },
       ),
     );
@@ -652,10 +663,12 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
             child: Column(children: [
           ListTile(
               title: Text(context.tr('Cash collected')),
-              trailing: Text('${context.tr('Rs.')} ${collected.toStringAsFixed(2)}')),
+              trailing:
+                  Text('${context.tr('Rs.')} ${collected.toStringAsFixed(2)}')),
           ListTile(
               title: Text(context.tr('To deposit')),
-              trailing: Text('${context.tr('Rs.')} ${pending.toStringAsFixed(2)}')),
+              trailing:
+                  Text('${context.tr('Rs.')} ${pending.toStringAsFixed(2)}')),
         ])),
         for (final order in cashOrders)
           ListTile(
@@ -663,7 +676,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
             subtitle: Text(context.tr(order.codSettlementStatus == 'settled'
                 ? 'Settled'
                 : 'To deposit')),
-            trailing: Text('${context.tr('Rs.')} ${order.total.toStringAsFixed(2)}'),
+            trailing:
+                Text('${context.tr('Rs.')} ${order.total.toStringAsFixed(2)}'),
           ),
         ListTile(
             title: Text(context.tr('Rider payouts are not available yet.'))),
@@ -677,7 +691,8 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
       padding: AppInsets.scrollPadding(context),
       children: [
         if (rider != null) ...[
-          ListTile(title: Text(rider.name),
+          ListTile(
+              title: Text(rider.name),
               subtitle: Text(rider.phone, textDirection: TextDirection.ltr)),
           ListTile(
               title: Text(context.tr('Vehicle')),

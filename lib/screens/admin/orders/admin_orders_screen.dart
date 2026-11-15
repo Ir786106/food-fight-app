@@ -1,4 +1,5 @@
-import 'package:food_fight/core/design_system/components.dart' show AppDataTable;
+import 'package:food_fight/core/design_system/components.dart'
+    show AppDataTable;
 import 'package:food_fight/core/utils/admin_csv_export.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:food_fight/models/order_model.dart';
@@ -53,8 +54,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = context.watch<AuthProvider>();
-    final branchId = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
-    if (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty || branchId.toLowerCase() == 'all')) return;
+    final branchId =
+        auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    if (!auth.isSuperAdmin &&
+        (branchId == null ||
+            branchId.isEmpty ||
+            branchId.toLowerCase() == 'all')) {
+      return;
+    }
     if (!_initialized || _lastBranchId != branchId) {
       _initialized = true;
       _lastBranchId = branchId;
@@ -84,7 +91,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
     if (!hasScope) {
       return const AdminScaffold(
         currentRoute: '/admin/orders',
-        body: ErrorView(message: 'This account needs a branch assignment before viewing orders.'),
+        body: ErrorView(
+            message:
+                'This account needs a branch assignment before viewing orders.'),
       );
     }
 
@@ -121,7 +130,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
               children: [
                 // Search and Date Filter Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Row(
                     children: [
                       Expanded(
@@ -134,21 +144,26 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                           child: TextField(
                             controller: _searchCtrl,
                             onChanged: (_) => setState(() {}),
-                            style: const TextStyle(fontSize: 13, color: Colors.black87),
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.black87),
                             decoration: InputDecoration(
                               hintText: 'Search order #, customer, address...',
-                              hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
-                              prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
+                              hintStyle: TextStyle(
+                                  fontSize: 12.5, color: Colors.grey.shade500),
+                              prefixIcon: const Icon(Icons.search,
+                                  size: 18, color: Colors.grey),
                               suffixIcon: _searchCtrl.text.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.clear, size: 16, color: Colors.grey),
+                                      icon: const Icon(Icons.clear,
+                                          size: 16, color: Colors.grey),
                                       onPressed: () {
                                         _searchCtrl.clear();
                                         setState(() {});
                                       },
                                     )
                                   : null,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8),
                               border: InputBorder.none,
                             ),
                           ),
@@ -165,16 +180,26 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _dateFilter,
-                            icon: const Icon(Icons.calendar_today_rounded, size: 15, color: AdminTheme.primaryBlue),
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AdminTheme.primaryBlue),
+                            icon: const Icon(Icons.calendar_today_rounded,
+                                size: 15, color: AdminTheme.primaryBlue),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AdminTheme.primaryBlue),
                             items: const [
-                              DropdownMenuItem(value: 'all', child: Text('All Dates')),
-                              DropdownMenuItem(value: 'today', child: Text('Today')),
-                              DropdownMenuItem(value: 'yesterday', child: Text('Yesterday')),
-                              DropdownMenuItem(value: 'week', child: Text('This Week')),
+                              DropdownMenuItem(
+                                  value: 'all', child: Text('All Dates')),
+                              DropdownMenuItem(
+                                  value: 'today', child: Text('Today')),
+                              DropdownMenuItem(
+                                  value: 'yesterday', child: Text('Yesterday')),
+                              DropdownMenuItem(
+                                  value: 'week', child: Text('This Week')),
                             ],
                             onChanged: (val) {
-                              if (val != null) setState(() => _dateFilter = val);
+                              if (val != null) {
+                                setState(() => _dateFilter = val);
+                              }
                             },
                           ),
                         ),
@@ -190,7 +215,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
                   labelPadding: const EdgeInsets.symmetric(horizontal: 14),
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
                   tabs: _tabs.map((t) {
                     final statusKey = t['status']!;
                     int count = 0;
@@ -218,7 +244,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                         break;
                       default:
                         count = orderProvider.adminOrders
-                            .where((o) => o.status.name.toLowerCase() == statusKey.toLowerCase())
+                            .where((o) =>
+                                o.status.name.toLowerCase() ==
+                                statusKey.toLowerCase())
                             .length;
                         break;
                     }
@@ -230,14 +258,17 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                           if (count > 0) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1.5),
                               decoration: BoxDecoration(
                                 color: Colors.white24,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 '$count',
-                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -250,20 +281,23 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
             ),
           ),
         ),
-        body: !orderProvider.isWatchingAdminScope(auth.isSuperAdmin ? null : branch)
+        body: !orderProvider
+                .isWatchingAdminScope(auth.isSuperAdmin ? null : branch)
             ? const LoadingIndicator(message: 'Loading orders...')
             : TabBarView(
-          controller: _tabController,
-          children: _tabs.map((t) => _OrdersTabList(
-            status: t['status']!,
-            searchQuery: _searchCtrl.text.trim().toLowerCase(),
-            dateFilter: _dateFilter,
-            onClearFilter: () {
-              _searchCtrl.clear();
-              setState(() => _dateFilter = 'all');
-            },
-          )).toList(),
-        ),
+                controller: _tabController,
+                children: _tabs
+                    .map((t) => _OrdersTabList(
+                          status: t['status']!,
+                          searchQuery: _searchCtrl.text.trim().toLowerCase(),
+                          dateFilter: _dateFilter,
+                          onClearFilter: () {
+                            _searchCtrl.clear();
+                            setState(() => _dateFilter = 'all');
+                          },
+                        ))
+                    .toList(),
+              ),
       ),
     );
   }
@@ -290,7 +324,8 @@ class _OrdersTabList extends StatelessWidget {
       return const LoadingIndicator(message: 'Loading orders...');
     }
 
-    if (orderProvider.errorMessage != null && orderProvider.adminOrders.isEmpty) {
+    if (orderProvider.errorMessage != null &&
+        orderProvider.adminOrders.isEmpty) {
       return ErrorView(
         message: orderProvider.errorMessage!,
         onRetry: () => context.read<OrderProvider>().refreshAdminOrders(),
@@ -313,11 +348,18 @@ class _OrdersTabList extends StatelessWidget {
 
       // 2. Search query filter
       if (searchQuery.isNotEmpty) {
-        final matchesOrderNum = o.orderNumber.toLowerCase().contains(searchQuery);
-        final matchesCustomer = o.customerName.toLowerCase().contains(searchQuery);
-        final matchesAddress = o.deliveryAddress.toLowerCase().contains(searchQuery);
-        final matchesPhone = o.customerPhone.toLowerCase().contains(searchQuery);
-        if (!matchesOrderNum && !matchesCustomer && !matchesAddress && !matchesPhone) {
+        final matchesOrderNum =
+            o.orderNumber.toLowerCase().contains(searchQuery);
+        final matchesCustomer =
+            o.customerName.toLowerCase().contains(searchQuery);
+        final matchesAddress =
+            o.deliveryAddress.toLowerCase().contains(searchQuery);
+        final matchesPhone =
+            o.customerPhone.toLowerCase().contains(searchQuery);
+        if (!matchesOrderNum &&
+            !matchesCustomer &&
+            !matchesAddress &&
+            !matchesPhone) {
           return false;
         }
       }
@@ -326,7 +368,10 @@ class _OrdersTabList extends StatelessWidget {
       if (dateFilter == 'today') {
         if (o.createdAt.isBefore(startOfToday)) return false;
       } else if (dateFilter == 'yesterday') {
-        if (o.createdAt.isBefore(startOfYesterday) || !o.createdAt.isBefore(startOfToday)) return false;
+        if (o.createdAt.isBefore(startOfYesterday) ||
+            !o.createdAt.isBefore(startOfToday)) {
+          return false;
+        }
       } else if (dateFilter == 'week') {
         if (o.createdAt.isBefore(sevenDaysAgo)) return false;
       }
@@ -343,11 +388,13 @@ class _OrdersTabList extends StatelessWidget {
             spacing: 16,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('${orders.length} matches · ${allOrders.length} orders loaded'),
+              Text(
+                  '${orders.length} matches · ${allOrders.length} orders loaded'),
               TextButton.icon(
                 icon: const Icon(Icons.download_outlined),
                 label: const Text('Export shown orders'),
-                onPressed: orders.isEmpty ? null : () => _export(context, orders),
+                onPressed:
+                    orders.isEmpty ? null : () => _export(context, orders),
               ),
               if (orderProvider.canLoadMoreAdminOrders)
                 TextButton(
@@ -360,7 +407,8 @@ class _OrdersTabList extends StatelessWidget {
         if (orderProvider.isLoading || orderProvider.isPagingAdminOrders)
           const LinearProgressIndicator(),
         if (orderProvider.adminPageError case final error?)
-          Text(error, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          Text(error,
+              style: TextStyle(color: Theme.of(context).colorScheme.error)),
         Expanded(child: content),
       ],
     );
@@ -384,7 +432,9 @@ class _OrdersTabList extends StatelessWidget {
       );
     }
 
-    if (MediaQuery.sizeOf(context).width > 1024) return _desktopTable(context, orders);
+    if (MediaQuery.sizeOf(context).width > 1024) {
+      return _desktopTable(context, orders);
+    }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = AdminTheme.getCardBg(context);
@@ -394,7 +444,8 @@ class _OrdersTabList extends StatelessWidget {
     return ResponsiveContainer.content(
       maxWidth: 1200,
       child: RefreshIndicator(
-        onRefresh: () async => context.read<OrderProvider>().refreshAdminOrders(),
+        onRefresh: () async =>
+            context.read<OrderProvider>().refreshAdminOrders(),
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: orders.length,
@@ -407,7 +458,9 @@ class _OrdersTabList extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
                 side: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.grey.shade200,
                 ),
               ),
               child: InkWell(
@@ -427,10 +480,12 @@ class _OrdersTabList extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AdminTheme.primaryBlue.withValues(alpha: 0.1),
+                                  color: AdminTheme.primaryBlue
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(Icons.receipt_rounded, color: AdminTheme.primaryBlue, size: 18),
+                                child: const Icon(Icons.receipt_rounded,
+                                    color: AdminTheme.primaryBlue, size: 18),
                               ),
                               const SizedBox(width: 10),
                               Text(
@@ -451,12 +506,18 @@ class _OrdersTabList extends StatelessWidget {
                       // Customer Info & Address
                       Row(
                         children: [
-                          const Icon(Icons.person_outline_rounded, size: 16, color: Colors.grey),
+                          const Icon(Icons.person_outline_rounded,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              order.customerName.isNotEmpty ? order.customerName : 'Customer',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: textDark),
+                              order.customerName.isNotEmpty
+                                  ? order.customerName
+                                  : 'Customer',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13.5,
+                                  color: textDark),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -471,12 +532,14 @@ class _OrdersTabList extends StatelessWidget {
 
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                          const Icon(Icons.location_on_outlined,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               order.deliveryAddress,
-                              style: TextStyle(color: textMuted, fontSize: 12.5),
+                              style:
+                                  TextStyle(color: textMuted, fontSize: 12.5),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -492,7 +555,10 @@ class _OrdersTabList extends StatelessWidget {
                         children: [
                           Text(
                             '${order.items.length} ${order.items.length == 1 ? "item" : "items"} • ${order.paymentMethod.toUpperCase()}',
-                            style: TextStyle(color: textMuted, fontSize: 12.5, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                color: textMuted,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500),
                           ),
                           Text(
                             'Rs. ${order.total.toStringAsFixed(0)}',
@@ -549,14 +615,29 @@ class _OrdersTabList extends StatelessWidget {
         context,
         filename: 'food-fight-orders.csv',
         rows: [
-          ['Order', 'Branch', 'Status', 'Placed at (UTC)', 'Payment', 'Total (PKR)'],
+          [
+            'Order',
+            'Branch',
+            'Status',
+            'Placed at (UTC)',
+            'Payment',
+            'Total (PKR)'
+          ],
           for (final order in orders)
-            [order.orderNumber, order.branchId ?? '', order.status.name,
-              order.createdAt.toUtc().toIso8601String(), order.paymentMethod, order.total],
+            [
+              order.orderNumber,
+              order.branchId ?? '',
+              order.status.name,
+              order.createdAt.toUtc().toIso8601String(),
+              order.paymentMethod,
+              order.total
+            ],
         ],
       );
     } catch (_) {
-      if (context.mounted) AppSnackbar.showError(context, 'Could not export orders.');
+      if (context.mounted) {
+        AppSnackbar.showError(context, 'Could not export orders.');
+      }
     }
   }
 
@@ -579,7 +660,8 @@ class _OrdersTabList extends StatelessWidget {
               DataCell(Text(order.orderNumber)),
               DataCell(Text(order.customerName)),
               DataCell(StatusBadge(status: order.status.name)),
-              DataCell(Text(localizations.formatCompactDate(order.createdAt.toLocal()))),
+              DataCell(Text(
+                  localizations.formatCompactDate(order.createdAt.toLocal()))),
               DataCell(Text('Rs. ${order.total.toStringAsFixed(0)}')),
               DataCell(IconButton(
                 tooltip: 'Open ${order.orderNumber}',

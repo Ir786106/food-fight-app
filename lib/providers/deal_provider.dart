@@ -30,7 +30,9 @@ class DealProvider extends ChangeNotifier with SafeChangeNotifier {
     notifyListenersPostFrame();
 
     _subscription?.cancel();
-    _subscription = _dealService.streamDeals(branchId: branchId, activeOnly: activeOnly).listen(
+    _subscription = _dealService
+        .streamDeals(branchId: branchId, activeOnly: activeOnly)
+        .listen(
       (data) {
         _deals = data;
         _isLoading = false;

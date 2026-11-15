@@ -10,7 +10,8 @@ class ValidatorUtils {
   }
 
   /// Form field validator for required fields
-  static String? validateRequired(String? value, {String? fieldName, String? message}) {
+  static String? validateRequired(String? value,
+      {String? fieldName, String? message}) {
     if (value == null || value.trim().isEmpty) {
       if (fieldName != null) return '$fieldName is required';
       if (message != null) return message;
@@ -36,7 +37,9 @@ class ValidatorUtils {
 
   /// Form field validator for Pakistani mobile numbers
   static String? validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Phone number is required';
+    if (value == null || value.trim().isEmpty) {
+      return 'Phone number is required';
+    }
     if (!isValidPhone(value.trim())) {
       return 'Enter a valid Pakistan phone number (e.g. 0300 1234567)';
     }
@@ -85,7 +88,8 @@ class ValidatorUtils {
   }
 
   // String length validation
-  static bool isValidLength(String? value, {int minLength = 1, int? maxLength}) {
+  static bool isValidLength(String? value,
+      {int minLength = 1, int? maxLength}) {
     if (value == null || value.isEmpty) return false;
     if (value.length < minLength) return false;
     if (maxLength != null && value.length > maxLength) return false;
@@ -104,7 +108,8 @@ class ValidatorUtils {
   }
 
   // Number range validation
-  static bool inRange(double? value, {required double min, required double max}) {
+  static bool inRange(double? value,
+      {required double min, required double max}) {
     return value != null && value >= min && value <= max;
   }
 }

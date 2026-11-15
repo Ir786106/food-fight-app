@@ -79,15 +79,20 @@ class CartItemModel {
   }
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
-    final foodMap = json['food'] is Map ? Map<String, dynamic>.from(json['food'] as Map) : <String, dynamic>{};
+    final foodMap = json['food'] is Map
+        ? Map<String, dynamic>.from(json['food'] as Map)
+        : <String, dynamic>{};
     final food = FoodModel.fromJson(foodMap);
     final rawSize = json['selectedSize']?.toString();
 
     // Parse selected variant if saved or resolve from size
     MenuVariant? parsedVariant;
     if (json['selectedVariant'] != null && json['selectedVariant'] is Map) {
-      parsedVariant = MenuVariant.fromJson(Map<String, dynamic>.from(json['selectedVariant'] as Map));
-    } else if (rawSize != null && food.variants != null && food.variants!.isNotEmpty) {
+      parsedVariant = MenuVariant.fromJson(
+          Map<String, dynamic>.from(json['selectedVariant'] as Map));
+    } else if (rawSize != null &&
+        food.variants != null &&
+        food.variants!.isNotEmpty) {
       parsedVariant = food.variants!.firstWhere(
         (v) => v.label.toLowerCase() == rawSize.toLowerCase(),
         orElse: () => food.variants!.first,
@@ -110,7 +115,9 @@ class CartItemModel {
       selectedSize: rawSize,
       selectedVariant: parsedVariant,
       selectedAddons: parsedAddons,
-      unitPrice: json['unitPrice'] != null ? SafeConvert.toDouble(json['unitPrice']) : null,
+      unitPrice: json['unitPrice'] != null
+          ? SafeConvert.toDouble(json['unitPrice'])
+          : null,
     );
   }
 

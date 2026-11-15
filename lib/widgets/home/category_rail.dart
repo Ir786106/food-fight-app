@@ -45,7 +45,8 @@ class _CategoryRailState extends State<CategoryRail> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedCategory != widget.selectedCategory ||
         oldWidget.categories != widget.categories) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _updateNotchPosition());
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _updateNotchPosition());
     }
   }
 
@@ -80,10 +81,18 @@ class _CategoryRailState extends State<CategoryRail> {
     if (lower.contains('shawarma')) return Icons.kebab_dining_rounded;
     if (lower.contains('fries')) return Icons.fastfood_rounded;
     if (lower.contains('sandwich')) return Icons.bakery_dining_rounded;
-    if (lower.contains('drink') || lower.contains('beverage')) return Icons.local_drink_rounded;
-    if (lower.contains('deal') || lower.contains('offer')) return Icons.local_offer_rounded;
-    if (lower.contains('bbq') || lower.contains('barbecue')) return Icons.outdoor_grill_rounded;
-    if (lower.contains('family') || lower.contains('package')) return Icons.dinner_dining_rounded;
+    if (lower.contains('drink') || lower.contains('beverage')) {
+      return Icons.local_drink_rounded;
+    }
+    if (lower.contains('deal') || lower.contains('offer')) {
+      return Icons.local_offer_rounded;
+    }
+    if (lower.contains('bbq') || lower.contains('barbecue')) {
+      return Icons.outdoor_grill_rounded;
+    }
+    if (lower.contains('family') || lower.contains('package')) {
+      return Icons.dinner_dining_rounded;
+    }
     if (lower == 'all') return Icons.grid_view_rounded;
     return Icons.restaurant_menu_rounded;
   }
@@ -95,8 +104,10 @@ class _CategoryRailState extends State<CategoryRail> {
     final buttonSize = screenWidth < 360 ? 48.0 : 54.0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final railColor = isDark ? AppColors.darkSurfaceElevated : AppColors.brandYellow;
-    final contentBgColor = isDark ? AppColors.darkBackground : AppColors.background;
+    final railColor =
+        isDark ? AppColors.darkSurfaceElevated : AppColors.brandYellow;
+    final contentBgColor =
+        isDark ? AppColors.darkBackground : AppColors.background;
 
     // List of items including "All"
     final allCategoryNames = ['All', ...widget.categories.map((c) => c.name)];
@@ -180,8 +191,11 @@ class _CategoryRailState extends State<CategoryRail> {
                     separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final catName = allCategoryNames[index];
-                      final isSelected = widget.selectedCategory.toLowerCase() == catName.toLowerCase();
-                      final key = _itemKeys.putIfAbsent(catName, () => GlobalKey());
+                      final isSelected =
+                          widget.selectedCategory.toLowerCase() ==
+                              catName.toLowerCase();
+                      final key =
+                          _itemKeys.putIfAbsent(catName, () => GlobalKey());
 
                       return Center(
                         child: _buildCategoryButton(
@@ -309,7 +323,8 @@ class _CategoryRailState extends State<CategoryRail> {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.10),
+                        color: Colors.black
+                            .withValues(alpha: isDark ? 0.35 : 0.10),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -328,7 +343,8 @@ class _CategoryRailState extends State<CategoryRail> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 8.5,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight:
+                          isSelected ? FontWeight.w800 : FontWeight.w600,
                       color: iconColor,
                       height: 1.05,
                     ),

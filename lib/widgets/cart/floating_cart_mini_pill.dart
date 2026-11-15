@@ -36,7 +36,8 @@ class FloatingCartMiniPill extends StatelessWidget {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceElevated : AppColors.cardDark,
+              color:
+                  isDark ? AppColors.darkSurfaceElevated : AppColors.cardDark,
               borderRadius: BorderRadius.circular(AppDimens.radiusFull),
               boxShadow: [
                 BoxShadow(
@@ -99,7 +100,8 @@ class FloatingCartMiniPill extends StatelessWidget {
 
                 // Total Price Pill Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppDimens.radiusFull),

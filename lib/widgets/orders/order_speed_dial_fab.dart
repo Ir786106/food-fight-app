@@ -63,19 +63,25 @@ class _OrderSpeedDialFabState extends State<OrderSpeedDialFab>
   void _trackActiveOrder() {
     _close();
     final orderProvider = context.read<OrderProvider>();
-    final activeOrders = orderProvider.customerOrders.where((o) =>
-        o.status != OrderStatus.delivered && o.status != OrderStatus.cancelled).toList();
+    final activeOrders = orderProvider.customerOrders
+        .where((o) =>
+            o.status != OrderStatus.delivered &&
+            o.status != OrderStatus.cancelled)
+        .toList();
 
     if (activeOrders.isNotEmpty) {
       final activeOrder = activeOrders.first;
-      Navigator.of(context).pushNamed('/order-tracking', arguments: activeOrder);
+      Navigator.of(context)
+          .pushNamed('/order-tracking', arguments: activeOrder);
     } else {
-      AppSnackbar.showSnackBar(context,
+      AppSnackbar.showSnackBar(
+        context,
         SnackBar(
           content: const Text('No active delivery to track right now'),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius12)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radius12)),
         ),
       );
     }

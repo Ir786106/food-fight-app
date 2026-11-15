@@ -200,13 +200,17 @@ class AppUpdateProvider extends ChangeNotifier {
         return false;
       }
       final opened = await _service.installApk();
-      if (!opened) _errorMessage = 'Could not open the Android installer. Try Install Now again.';
+      if (!opened) {
+        _errorMessage =
+            'Could not open the Android installer. Try Install Now again.';
+      }
       return opened;
     } finally {
       _isInstalling = false;
       notifyListeners();
     }
   }
+
   Future<void> openUnknownSourcesSettings() async {
     await _service.openUnknownSourcesSettings();
   }

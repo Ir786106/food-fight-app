@@ -75,8 +75,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final m = months[dt.month - 1];
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
@@ -109,10 +119,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   isLabelVisible: unread > 0,
                   label: Text(
                     '$unread',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   backgroundColor: AppColors.brandMaroon,
-                  child: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.brandMaroon),
+                  child: const Icon(Icons.chat_bubble_outline_rounded,
+                      color: AppColors.brandMaroon),
                 ),
                 onPressed: () => Navigator.pushNamed(context, '/chat'),
               );
@@ -146,8 +160,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               ),
               labelColor: AppColors.onYellow,
               unselectedLabelColor: colorScheme.onSurfaceVariant,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+              unselectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
               tabs: const [
                 Tab(text: 'Current Orders'),
                 Tab(text: 'Past Orders'),
@@ -163,417 +179,607 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 child: EmptyStateView(
                   icon: Icons.receipt_long_outlined,
                   title: 'Please Sign In',
-                  description: 'Log in to your account to view your active deliveries and order history.',
+                  description:
+                      'Log in to your account to view your active deliveries and order history.',
                   buttonText: 'Log In Now',
-                  onButtonPressed: () => Navigator.of(context).pushNamed('/login'),
+                  onButtonPressed: () =>
+                      Navigator.of(context).pushNamed('/login'),
                 ),
               )
             : Builder(
-                  builder: (context) {
-                    if (orderProvider.isLoading && orderProvider.customerOrders.isEmpty) {
-                      return ListView.builder(
-                        padding: AppInsets.scrollPadding(context, horizontal: 20, top: 20),
-                        itemCount: 4,
-                        itemBuilder: (_, __) => const OrderCardSkeleton(),
-                      );
-                    }
+                builder: (context) {
+                  if (orderProvider.isLoading &&
+                      orderProvider.customerOrders.isEmpty) {
+                    return ListView.builder(
+                      padding: AppInsets.scrollPadding(context,
+                          horizontal: 20, top: 20),
+                      itemCount: 4,
+                      itemBuilder: (_, __) => const OrderCardSkeleton(),
+                    );
+                  }
 
-                    if (orderProvider.errorMessage != null && orderProvider.customerOrders.isEmpty) {
-                      return ErrorView(
-                        message: orderProvider.errorMessage!,
-                        onRetry: () => orderProvider.watchCustomerOrders(customerId),
-                      );
-                    }
+                  if (orderProvider.errorMessage != null &&
+                      orderProvider.customerOrders.isEmpty) {
+                    return ErrorView(
+                      message: orderProvider.errorMessage!,
+                      onRetry: () =>
+                          orderProvider.watchCustomerOrders(customerId),
+                    );
+                  }
 
-                    final allOrders = orderProvider.customerOrders;
+                  final allOrders = orderProvider.customerOrders;
 
-                    final currentOrders = allOrders.where((o) =>
-                        o.status != OrderStatus.delivered && o.status != OrderStatus.cancelled).toList();
+                  final currentOrders = allOrders
+                      .where((o) =>
+                          o.status != OrderStatus.delivered &&
+                          o.status != OrderStatus.cancelled)
+                      .toList();
 
-                    final pastOrders = allOrders.where((o) =>
-                        o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled).toList();
+                  final pastOrders = allOrders
+                      .where((o) =>
+                          o.status == OrderStatus.delivered ||
+                          o.status == OrderStatus.cancelled)
+                      .toList();
 
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 840;
-                        final activeOrder = _selectedOrder ??
-                            (currentOrders.isNotEmpty
-                                ? currentOrders.first
-                                : (pastOrders.isNotEmpty ? pastOrders.first : null));
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 840;
+                      final activeOrder = _selectedOrder ??
+                          (currentOrders.isNotEmpty
+                              ? currentOrders.first
+                              : (pastOrders.isNotEmpty
+                                  ? pastOrders.first
+                                  : null));
 
-                        final orderTabs = TabBarView(
-                          controller: _tabController,
-                          children: [
-                        // Tab 1: Current Orders with Horizontal Progress Indicator
-                        RefreshIndicator(
-                          color: AppColors.primary,
-                          onRefresh: () async => orderProvider.watchCustomerOrders(customerId),
-                          child: currentOrders.isEmpty
-                              ? ListView(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 80),
-                                      child: EmptyStateView(
-                                        icon: Icons.delivery_dining_outlined,
-                                        title: 'No Active Orders',
-                                        description: 'You have no orders currently in preparation or delivery.',
-                                        buttonText: 'Order Food Now',
-                                        onButtonPressed: () =>
-                                            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : ListView.separated(
-                                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 20),
-                                  itemCount: currentOrders.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                                  itemBuilder: (context, index) {
-                                    final order = currentOrders[index];
-                                    final step = _getProgressStep(order.status);
-
-                                    final isSelected = isWide && activeOrder?.id == order.id;
-
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.surface,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: isSelected ? AppColors.brandYellow : Colors.transparent,
-                                          width: 2,
+                      final orderTabs = TabBarView(
+                        controller: _tabController,
+                        children: [
+                          // Tab 1: Current Orders with Horizontal Progress Indicator
+                          RefreshIndicator(
+                            color: AppColors.primary,
+                            onRefresh: () async =>
+                                orderProvider.watchCustomerOrders(customerId),
+                            child: currentOrders.isEmpty
+                                ? ListView(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 80),
+                                        child: EmptyStateView(
+                                          icon: Icons.delivery_dining_outlined,
+                                          title: 'No Active Orders',
+                                          description:
+                                              'You have no orders currently in preparation or delivery.',
+                                          buttonText: 'Order Food Now',
+                                          onButtonPressed: () => Navigator.of(
+                                                  context,
+                                                  rootNavigator: true)
+                                              .pushNamedAndRemoveUntil(
+                                                  '/home', (r) => false),
                                         ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
                                       ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(20),
-                                          onTap: () {
-                                                                if (isWide) {
-                                              setState(() => _selectedOrder = order);
-                                            } else {
-                                              Navigator.of(context).pushNamed(
-                                                '/order-tracking',
-                                                arguments: order,
-                                              );
-                                            }
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(18),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                // Header row: Order number & Status badge
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      order.orderNumber,
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        fontSize: 16,
-                                                        color: colorScheme.onSurface,
-                                                      ),
-                                                    ),
-                                                    StatusBadge(status: order.status.name),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'} • ${order.restaurantName}',
-                                                  style: TextStyle(
-                                                    color: colorScheme.onSurfaceVariant,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 16),
+                                    ],
+                                  )
+                                : ListView.separated(
+                                    padding: AppInsets.scrollPadding(context,
+                                        horizontal: 20, top: 20),
+                                    itemCount: currentOrders.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 16),
+                                    itemBuilder: (context, index) {
+                                      final order = currentOrders[index];
+                                      final step =
+                                          _getProgressStep(order.status);
 
-                                                // Horizontal Progress Indicator matching status timeline (Spec benchmark)
-                                                _buildHorizontalProgress(step, colorScheme),
-                                                const SizedBox(height: 16),
+                                      final isSelected =
+                                          isWide && activeOrder?.id == order.id;
 
-                                                Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                                                const SizedBox(height: 12),
-
-                                                // Bottom row: Total & Track Button
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          'Total',
-                                                          style: TextStyle(
-                                                            fontSize: 11,
-                                                            color: colorScheme.onSurfaceVariant,
-                                                          ),
-                                                        ),
-                                                        Text(
-                                                          'Rs. ${order.total.toStringAsFixed(0)}',
-                                                          style: TextStyle(
-                                                            fontWeight: FontWeight.w900,
-                                                            fontSize: 16,
-                                                            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ElevatedButton.icon(
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: AppColors.brandYellow,
-                                                        foregroundColor: AppColors.onYellow,
-                                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                                        minimumSize: const Size(0, 36),
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(10),
-                                                        ),
-                                                      ),
-                                                      onPressed: () => Navigator.of(context).pushNamed(
-                                                        '/order-tracking',
-                                                        arguments: order,
-                                                      ),
-                                                      icon: const Icon(Icons.location_searching_rounded, size: 14),
-                                                      label: Text(context.tr('Track Live'), style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.surface,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.brandYellow
+                                                : Colors.transparent,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                  alpha: isDark ? 0.35 : 0.05),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 4),
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-
-                        // Tab 2: Past Orders (items, total, date, and delivered/cancelled status)
-                        RefreshIndicator(
-                          color: AppColors.primary,
-                          onRefresh: () async => orderProvider.watchCustomerOrders(customerId),
-                          child: pastOrders.isEmpty
-                              ? ListView(
-                                  children: const [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 80),
-                                      child: EmptyStateView(
-                                        icon: Icons.history_rounded,
-                                        title: 'No Past Orders',
-                                        description: 'Your completed and past meal battles will show up here.',
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : ListView.separated(
-                                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 20),
-                                  itemCount: pastOrders.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                                  itemBuilder: (context, index) {
-                                    final order = pastOrders[index];
-
-                                    final isSelected = isWide && activeOrder?.id == order.id;
-
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.surface,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: isSelected ? AppColors.brandYellow : Colors.transparent,
-                                          width: 2,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(20),
-                                          onTap: () {
-                                            if (isWide) {
-                                              setState(() => _selectedOrder = order);
-                                            } else {
-                                              Navigator.of(context).pushNamed(
-                                                '/order-tracking',
-                                                arguments: order,
-                                              );
-                                            }
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(18),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                // Header row: ID, Date & Status
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      order.orderNumber,
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        fontSize: 15.5,
-                                                        color: colorScheme.onSurface,
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            onTap: () {
+                                              if (isWide) {
+                                                setState(() =>
+                                                    _selectedOrder = order);
+                                              } else {
+                                                Navigator.of(context).pushNamed(
+                                                  '/order-tracking',
+                                                  arguments: order,
+                                                );
+                                              }
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(18),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  // Header row: Order number & Status badge
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        order.orderNumber,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          fontSize: 16,
+                                                          color: colorScheme
+                                                              .onSurface,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    StatusBadge(status: order.status.name),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  _formatDate(order.createdAt),
-                                                  style: TextStyle(
-                                                    color: colorScheme.onSurfaceVariant,
-                                                    fontSize: 12,
+                                                      StatusBadge(
+                                                          status: order
+                                                              .status.name),
+                                                    ],
                                                   ),
-                                                ),
-                                                const SizedBox(height: 12),
-
-                                                // Items summary
-                                                Text(
-                                                  order.items.map((i) => '${i.quantity}x ${i.food.name}').join(', '),
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: colorScheme.onSurface.withValues(alpha: 0.9),
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 12),
-                                                Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
-                                                const SizedBox(height: 12),
-
-                                                Wrap(children: [
-                                                  TextButton.icon(onPressed: () => Navigator.pushNamed(context, '/chat', arguments: order.id), icon: const Icon(Icons.chat_outlined), label: Text(context.tr('Support'))),
-                                                  if (order.status == OrderStatus.delivered) TextButton.icon(onPressed: () => showDialog(context: context, builder: (_) => OrderReviewDialog(order: order)), icon: const Icon(Icons.star_border), label: Text(context.tr('Rate'))),
-                                                ]),
-                                                // Bottom row: Total & Reorder Action
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      'Total: Rs. ${order.total.toStringAsFixed(0)}',
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        fontSize: 15.5,
-                                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                                                      ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'} • ${order.restaurantName}',
+                                                    style: TextStyle(
+                                                      color: colorScheme
+                                                          .onSurfaceVariant,
+                                                      fontSize: 13,
                                                     ),
-                                                    Row(
-                                                      children: [
-                                                        FilledButton.icon(
-                                                          style: FilledButton.styleFrom(
-                                                            backgroundColor: AppColors.primaryYellow,
-                                                            foregroundColor: AppColors.brandMaroon,
-                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                            minimumSize: Size.zero,
-                                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.circular(8),
-                                                            ),
-                                                          ),
-                                                          onPressed: () => _reorder(context, order),
-                                                          icon: const Icon(Icons.replay_rounded, size: 13),
-                                                          label: Text(
-                                                            context.tr('Reorder'),
-                                                            style: const TextStyle(
+                                                  ),
+                                                  const SizedBox(height: 16),
+
+                                                  // Horizontal Progress Indicator matching status timeline (Spec benchmark)
+                                                  _buildHorizontalProgress(
+                                                      step, colorScheme),
+                                                  const SizedBox(height: 16),
+
+                                                  Divider(
+                                                      height: 1,
+                                                      color: colorScheme
+                                                          .outlineVariant
+                                                          .withValues(
+                                                              alpha: 0.5)),
+                                                  const SizedBox(height: 12),
+
+                                                  // Bottom row: Total & Track Button
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            'Total',
+                                                            style: TextStyle(
                                                               fontSize: 11,
-                                                              fontWeight: FontWeight.bold,
+                                                              color: colorScheme
+                                                                  .onSurfaceVariant,
                                                             ),
                                                           ),
-                                                        ),
-                                                        const SizedBox(width: 8),
-                                                        Text(
-                                                          'Details',
-                                                          style: TextStyle(
-                                                            color: colorScheme.onSurfaceVariant,
-                                                            fontWeight: FontWeight.w600,
-                                                            fontSize: 12,
+                                                          Text(
+                                                            'Rs. ${order.total.toStringAsFixed(0)}',
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900,
+                                                              fontSize: 16,
+                                                              color: isDark
+                                                                  ? AppColors
+                                                                      .brandYellow
+                                                                  : AppColors
+                                                                      .brandMaroon,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      ElevatedButton.icon(
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              AppColors
+                                                                  .brandYellow,
+                                                          foregroundColor:
+                                                              AppColors
+                                                                  .onYellow,
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      16,
+                                                                  vertical: 8),
+                                                          minimumSize:
+                                                              const Size(0, 36),
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 2),
-                                                        Icon(Icons.arrow_forward_ios_rounded, size: 10, color: colorScheme.onSurfaceVariant),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pushNamed(
+                                                          '/order-tracking',
+                                                          arguments: order,
+                                                        ),
+                                                        icon: const Icon(
+                                                            Icons
+                                                                .location_searching_rounded,
+                                                            size: 14),
+                                                        label: Text(
+                                                            context.tr(
+                                                                'Track Live'),
+                                                            style: const TextStyle(
+                                                                fontSize: 12.5,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),
+                                      );
+                                    },
+                                  ),
+                          ),
+
+                          // Tab 2: Past Orders (items, total, date, and delivered/cancelled status)
+                          RefreshIndicator(
+                            color: AppColors.primary,
+                            onRefresh: () async =>
+                                orderProvider.watchCustomerOrders(customerId),
+                            child: pastOrders.isEmpty
+                                ? ListView(
+                                    children: const [
+                                      Padding(
+                                        padding: EdgeInsets.only(top: 80),
+                                        child: EmptyStateView(
+                                          icon: Icons.history_rounded,
+                                          title: 'No Past Orders',
+                                          description:
+                                              'Your completed and past meal battles will show up here.',
+                                        ),
                                       ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
-                    );
+                                    ],
+                                  )
+                                : ListView.separated(
+                                    padding: AppInsets.scrollPadding(context,
+                                        horizontal: 20, top: 20),
+                                    itemCount: pastOrders.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 14),
+                                    itemBuilder: (context, index) {
+                                      final order = pastOrders[index];
 
-                    final ordersView = Column(
-                      children: [
-                        Expanded(child: orderTabs),
-                        if (orderProvider.customerPageError case final error?)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(error),
+                                      final isSelected =
+                                          isWide && activeOrder?.id == order.id;
+
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.surface,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.brandYellow
+                                                : Colors.transparent,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                  alpha: isDark ? 0.35 : 0.05),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            onTap: () {
+                                              if (isWide) {
+                                                setState(() =>
+                                                    _selectedOrder = order);
+                                              } else {
+                                                Navigator.of(context).pushNamed(
+                                                  '/order-tracking',
+                                                  arguments: order,
+                                                );
+                                              }
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(18),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  // Header row: ID, Date & Status
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        order.orderNumber,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          fontSize: 15.5,
+                                                          color: colorScheme
+                                                              .onSurface,
+                                                        ),
+                                                      ),
+                                                      StatusBadge(
+                                                          status: order
+                                                              .status.name),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    _formatDate(
+                                                        order.createdAt),
+                                                    style: TextStyle(
+                                                      color: colorScheme
+                                                          .onSurfaceVariant,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 12),
+
+                                                  // Items summary
+                                                  Text(
+                                                    order.items
+                                                        .map((i) =>
+                                                            '${i.quantity}x ${i.food.name}')
+                                                        .join(', '),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: colorScheme
+                                                          .onSurface
+                                                          .withValues(
+                                                              alpha: 0.9),
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Divider(
+                                                      height: 1,
+                                                      color: colorScheme
+                                                          .outlineVariant
+                                                          .withValues(
+                                                              alpha: 0.4)),
+                                                  const SizedBox(height: 12),
+
+                                                  Wrap(children: [
+                                                    TextButton.icon(
+                                                        onPressed: () =>
+                                                            Navigator.pushNamed(
+                                                                context,
+                                                                '/chat',
+                                                                arguments:
+                                                                    order.id),
+                                                        icon: const Icon(Icons
+                                                            .chat_outlined),
+                                                        label: Text(context
+                                                            .tr('Support'))),
+                                                    if (order.status ==
+                                                        OrderStatus.delivered)
+                                                      TextButton.icon(
+                                                          onPressed: () => showDialog(
+                                                              context: context,
+                                                              builder: (_) =>
+                                                                  OrderReviewDialog(
+                                                                      order:
+                                                                          order)),
+                                                          icon: const Icon(Icons
+                                                              .star_border),
+                                                          label: Text(context
+                                                              .tr('Rate'))),
+                                                  ]),
+                                                  // Bottom row: Total & Reorder Action
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        'Total: Rs. ${order.total.toStringAsFixed(0)}',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          fontSize: 15.5,
+                                                          color: isDark
+                                                              ? AppColors
+                                                                  .brandYellow
+                                                              : AppColors
+                                                                  .brandMaroon,
+                                                        ),
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          FilledButton.icon(
+                                                            style: FilledButton
+                                                                .styleFrom(
+                                                              backgroundColor:
+                                                                  AppColors
+                                                                      .primaryYellow,
+                                                              foregroundColor:
+                                                                  AppColors
+                                                                      .brandMaroon,
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          10,
+                                                                      vertical:
+                                                                          4),
+                                                              minimumSize:
+                                                                  Size.zero,
+                                                              tapTargetSize:
+                                                                  MaterialTapTargetSize
+                                                                      .shrinkWrap,
+                                                              shape:
+                                                                  RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                            ),
+                                                            onPressed: () =>
+                                                                _reorder(
+                                                                    context,
+                                                                    order),
+                                                            icon: const Icon(
+                                                                Icons
+                                                                    .replay_rounded,
+                                                                size: 13),
+                                                            label: Text(
+                                                              context.tr(
+                                                                  'Reorder'),
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          Text(
+                                                            'Details',
+                                                            style: TextStyle(
+                                                              color: colorScheme
+                                                                  .onSurfaceVariant,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 12,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 2),
+                                                          Icon(
+                                                              Icons
+                                                                  .arrow_forward_ios_rounded,
+                                                              size: 10,
+                                                              color: colorScheme
+                                                                  .onSurfaceVariant),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                           ),
-                        if (orderProvider.isPagingCustomerOrders)
-                          const LinearProgressIndicator(),
-                        if (orderProvider.canLoadMoreCustomerOrders)
-                          TextButton(
-                            onPressed: orderProvider.loadMoreCustomerOrders,
-                            child: Text(context.tr('Load older orders')),
-                          ),
-                      ],
-                    );
-                    if (isWide) {
-                      return ResponsiveBox(
-                        maxWidth: 1240,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 5,
-                                child: ordersView,
-                              ),
-                              const SizedBox(width: 24),
-                              Expanded(
-                                flex: 7,
-                                child: _buildOrderDetailPane(activeOrder, colorScheme, isDark),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       );
-                    }
 
-                    return ResponsiveBox.form(
-                      child: ordersView,
-                    );
-                  },
-                );
-              },
-            ),
+                      final ordersView = Column(
+                        children: [
+                          Expanded(child: orderTabs),
+                          if (orderProvider.customerPageError case final error?)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(error),
+                            ),
+                          if (orderProvider.isPagingCustomerOrders)
+                            const LinearProgressIndicator(),
+                          if (orderProvider.canLoadMoreCustomerOrders)
+                            TextButton(
+                              onPressed: orderProvider.loadMoreCustomerOrders,
+                              child: Text(context.tr('Load older orders')),
+                            ),
+                        ],
+                      );
+                      if (isWide) {
+                        return ResponsiveBox(
+                          maxWidth: 1240,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: ordersView,
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  flex: 7,
+                                  child: _buildOrderDetailPane(
+                                      activeOrder, colorScheme, isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ResponsiveBox.form(
+                        child: ordersView,
+                      );
+                    },
+                  );
+                },
+              ),
       ),
     );
   }
 
   Widget _buildHorizontalProgress(int currentStep, ColorScheme colorScheme) {
-    const steps = ['Pending', 'Confirmed', 'Preparing', 'On the Way', 'Delivered'];
+    const steps = [
+      'Pending',
+      'Confirmed',
+      'Preparing',
+      'On the Way',
+      'Delivered'
+    ];
 
     return Column(
       children: [
@@ -586,7 +792,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               return Expanded(
                 child: Container(
                   height: 3,
-                  color: isPassed ? AppColors.primary : colorScheme.surfaceContainerHighest,
+                  color: isPassed
+                      ? AppColors.primary
+                      : colorScheme.surfaceContainerHighest,
                 ),
               );
             } else {
@@ -602,11 +810,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   shape: BoxShape.circle,
                   color: isPassed
                       ? AppColors.brandYellow
-                      : (isCurrent ? AppColors.brandYellow : colorScheme.surfaceContainerHighest),
-                  border: isCurrent ? Border.all(color: AppColors.brandMaroon, width: 2) : null,
+                      : (isCurrent
+                          ? AppColors.brandYellow
+                          : colorScheme.surfaceContainerHighest),
+                  border: isCurrent
+                      ? Border.all(color: AppColors.brandMaroon, width: 2)
+                      : null,
                 ),
                 child: isPassed && !isCurrent
-                    ? const Icon(Icons.check, size: 12, color: AppColors.onYellow)
+                    ? const Icon(Icons.check,
+                        size: 12, color: AppColors.onYellow)
                     : null,
               );
             }
@@ -651,9 +864,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       );
     }
     final itemCount = order.items.length;
-    AppSnackbar.showSnackBar(context,
+    AppSnackbar.showSnackBar(
+      context,
       SnackBar(
-        content: Text('Added $itemCount ${itemCount == 1 ? "item" : "items"} from ${order.orderNumber} to cart!'),
+        content: Text(
+            'Added $itemCount ${itemCount == 1 ? "item" : "items"} from ${order.orderNumber} to cart!'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -666,7 +881,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     );
   }
 
-  Widget _buildOrderDetailPane(OrderModel? order, ColorScheme colorScheme, bool isDark) {
+  Widget _buildOrderDetailPane(
+      OrderModel? order, ColorScheme colorScheme, bool isDark) {
     if (order == null) {
       return Container(
         height: 380,
@@ -674,12 +890,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+          border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.touch_app_rounded, size: 48, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+            Icon(Icons.touch_app_rounded,
+                size: 48,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
             Text(
               'Select an order to view live details',
@@ -744,17 +963,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on_rounded, size: 16, color: AppColors.primary),
+                  const Icon(Icons.location_on_rounded,
+                      size: 16, color: AppColors.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       order.deliveryAddress,
-                      style: TextStyle(fontSize: 12.5, color: colorScheme.onSurface),
+                      style: TextStyle(
+                          fontSize: 12.5, color: colorScheme.onSurface),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -774,7 +996,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             const SizedBox(height: 12),
             _buildHorizontalProgress(step, colorScheme),
             const SizedBox(height: 20),
-            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            Divider(
+                height: 1,
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               'Ordered Items (${order.items.length})',
@@ -800,37 +1024,53 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                       ),
                       child: Text(
                         '${item.quantity}',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: AppColors.brandMaroon),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            color: AppColors.brandMaroon),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         item.food.name,
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: colorScheme.onSurface),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                            color: colorScheme.onSurface),
                       ),
                     ),
                     Text(
                       'Rs. ${item.totalPrice.toStringAsFixed(0)}',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: colorScheme.onSurface),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                          color: colorScheme.onSurface),
                     ),
                   ],
                 ),
               );
             }),
             const SizedBox(height: 16),
-            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            Divider(
+                height: 1,
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
             const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(context.tr('Total Paid'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
+                Text(context.tr('Total Paid'),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: colorScheme.onSurface)),
                 Text(
                   'Rs. ${order.total.toStringAsFixed(0)}',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 20,
-                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    color:
+                        isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                   ),
                 ),
               ],
@@ -851,12 +1091,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 const SizedBox(width: 12),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () => _reorder(context, order),
                   icon: const Icon(Icons.replay_rounded, size: 16),
-                  label: Text(context.tr('Reorder'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(context.tr('Reorder'),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

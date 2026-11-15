@@ -6,7 +6,8 @@ import '../models/loyalty_model.dart';
 class LoyaltyService {
   final FirebaseFirestore? _customFirestore;
   LoyaltyService({FirebaseFirestore? firestore}) : _customFirestore = firestore;
-  FirebaseFirestore get _firestore => _customFirestore ?? FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore =>
+      _customFirestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _accountsRef =>
       _firestore.collection('loyaltyAccounts');
@@ -32,7 +33,8 @@ class LoyaltyService {
         return LoyaltyAccount.fromJson(doc.data()!);
       });
     } catch (e) {
-      AppLogger.error('Error streaming loyalty account: $e', tag: 'LoyaltyService');
+      AppLogger.error('Error streaming loyalty account: $e',
+          tag: 'LoyaltyService');
       return Stream.value(null);
     }
   }
@@ -54,7 +56,8 @@ class LoyaltyService {
         }).toList();
       });
     } catch (e) {
-      AppLogger.error('Error streaming loyalty transactions: $e', tag: 'LoyaltyService');
+      AppLogger.error('Error streaming loyalty transactions: $e',
+          tag: 'LoyaltyService');
       return Stream.value(<LoyaltyTransaction>[]);
     }
   }

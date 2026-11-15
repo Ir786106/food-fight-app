@@ -64,7 +64,9 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: widget.isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: widget.isDark
+                          ? Colors.white
+                          : const Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -72,13 +74,15 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                     'Daily revenue trends across the selected period',
                     style: TextStyle(
                       fontSize: 12,
-                      color: widget.isDark ? Colors.white60 : Colors.grey.shade600,
+                      color:
+                          widget.isDark ? Colors.white60 : Colors.grey.shade600,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primaryYellow.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -86,7 +90,8 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.trending_up_rounded, size: 14, color: AppColors.primaryYellow),
+                    Icon(Icons.trending_up_rounded,
+                        size: 14, color: AppColors.primaryYellow),
                     SizedBox(width: 4),
                     Text(
                       'Live',
@@ -157,8 +162,10 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -174,7 +181,9 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                         return Text(
                           formatted,
                           style: TextStyle(
-                            color: widget.isDark ? Colors.white38 : Colors.grey.shade500,
+                            color: widget.isDark
+                                ? Colors.white38
+                                : Colors.grey.shade500,
                             fontSize: 10,
                           ),
                         );
@@ -200,7 +209,9 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                           child: Text(
                             '${date.day}/${date.month}',
                             style: TextStyle(
-                              color: widget.isDark ? Colors.white54 : Colors.grey.shade600,
+                              color: widget.isDark
+                                  ? Colors.white54
+                                  : Colors.grey.shade600,
                               fontSize: 10,
                               fontWeight: _touchedIndex == idx
                                   ? FontWeight.bold
@@ -233,7 +244,10 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                         toY: stat.revenue,
                         gradient: LinearGradient(
                           colors: isTouched
-                              ? [const Color(0xFFFFB703), const Color(0xFFFB8500)]
+                              ? [
+                                  const Color(0xFFFFB703),
+                                  const Color(0xFFFB8500)
+                                ]
                               : [
                                   const Color(0xFF0284C7),
                                   const Color(0xFF38BDF8),
@@ -242,7 +256,8 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                           end: Alignment.topCenter,
                         ),
                         width: widget.dailySales.length > 14 ? 10 : 16,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
                           toY: maxY,

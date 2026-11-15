@@ -34,16 +34,19 @@ class SuperAdminDashboardScreen extends StatelessWidget {
         final shouldExit = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('Exit App?'),
-            content: const Text('Are you sure you want to exit the application?'),
+            content:
+                const Text('Are you sure you want to exit the application?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: SuperAdminTheme.primary),
+                style: FilledButton.styleFrom(
+                    backgroundColor: SuperAdminTheme.primary),
                 onPressed: () => Navigator.of(ctx).pop(true),
                 child: const Text('Exit'),
               ),
@@ -57,364 +60,394 @@ class SuperAdminDashboardScreen extends StatelessWidget {
       child: SuperAdminScaffold(
         currentRoute: '/super-admin/dashboard',
         backgroundColor: SuperAdminTheme.getBackground(context),
-      appBar: AppBar(
-        title: const Row(
-          children: [
-            Icon(Icons.shield_rounded, color: SuperAdminTheme.accentGold, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Super Admin HQ',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+        appBar: AppBar(
+          title: const Row(
+            children: [
+              Icon(Icons.shield_rounded,
+                  color: SuperAdminTheme.accentGold, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Super Admin HQ',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                    color: Colors.white),
+              ),
+            ],
+          ),
+          backgroundColor: SuperAdminTheme.primary,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh Metrics',
+              onPressed: () => context.read<SuperAdminProvider>().loadMetrics(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.storefront_rounded),
+              tooltip: 'Restaurant Admin Panel',
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/admin/dashboard'),
             ),
           ],
         ),
-        backgroundColor: SuperAdminTheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Metrics',
-            onPressed: () => context.read<SuperAdminProvider>().loadMetrics(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.storefront_rounded),
-            tooltip: 'Restaurant Admin Panel',
-            onPressed: () => Navigator.of(context).pushNamed('/admin/dashboard'),
-          ),
-        ],
-      ),
-      body: Builder(
-        builder: (context) {
-          if (provider.isLoading && provider.metrics.isEmpty) {
-            return const LoadingIndicator(message: 'Loading platform metrics…');
-          }
+        body: Builder(
+          builder: (context) {
+            if (provider.isLoading && provider.metrics.isEmpty) {
+              return const LoadingIndicator(
+                  message: 'Loading platform metrics…');
+            }
 
-          if (provider.errorMessage != null && provider.metrics.isEmpty) {
-            return ErrorView(
-              message: provider.errorMessage!,
-              onRetry: () => provider.loadMetrics(),
-            );
-          }
+            if (provider.errorMessage != null && provider.metrics.isEmpty) {
+              return ErrorView(
+                message: provider.errorMessage!,
+                onRetry: () => provider.loadMetrics(),
+              );
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.loadMetrics(),
-            child: ResponsiveContainer.content(
-              maxWidth: 1200,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (provider.errorMessage case final message?)
-                      ListTile(
-                        leading: const Icon(Icons.info_outline),
-                        title: Text(message),
-                        subtitle: const Text('Showing the last loaded metrics.'),
-                        trailing: IconButton(
-                          tooltip: 'Retry metrics',
-                          onPressed: provider.loadMetrics,
-                          icon: const Icon(Icons.refresh),
+            return RefreshIndicator(
+              onRefresh: () => provider.loadMetrics(),
+              child: ResponsiveContainer.content(
+                maxWidth: 1200,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (provider.errorMessage case final message?)
+                        ListTile(
+                          leading: const Icon(Icons.info_outline),
+                          title: Text(message),
+                          subtitle:
+                              const Text('Showing the last loaded metrics.'),
+                          trailing: IconButton(
+                            tooltip: 'Retry metrics',
+                            onPressed: provider.loadMetrics,
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ),
+                      // System Status Banner
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              SuperAdminTheme.primary,
+                              Color(0xFF230833),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: SuperAdminTheme.primary
+                                  .withValues(alpha: 0.25),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: SuperAdminTheme.accentGold
+                                    .withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.verified_user_rounded,
+                                  color: SuperAdminTheme.accentGold, size: 28),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Global System Operational ⚡',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Delivered GMV: Rs. ${provider.deliveredGmv.toStringAsFixed(0)} • Store Open',
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.8),
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    // System Status Banner
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            SuperAdminTheme.primary,
-                            Color(0xFF230833),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+
+                      const SizedBox(height: 20),
+
+                      // User Accounts & Fleet Grid
+                      Text(
+                        'Platform Accounts & Fleet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: textDark,
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: SuperAdminTheme.primary.withValues(alpha: 0.25),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: SuperAdminTheme.accentGold.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.verified_user_rounded, color: SuperAdminTheme.accentGold, size: 28),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Global System Operational ⚡',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Delivered GMV: Rs. ${provider.deliveredGmv.toStringAsFixed(0)} • Store Open',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                      const SizedBox(height: 10),
 
-                    const SizedBox(height: 20),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth >= 720;
 
-                    // User Accounts & Fleet Grid
-                    Text(
-                      'Platform Accounts & Fleet',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 720;
-
-                        return GridView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 260,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: isWide ? 1.75 : 1.5,
-                          ),
-                          children: [
-                            StatCard(
-                              title: 'Admin Accounts',
-                              value: '${provider.totalAdmins}',
-                              icon: Icons.admin_panel_settings_rounded,
-                              color: SuperAdminTheme.primary,
-                              subtitle: 'Active Managers',
-                              onTap: () => Navigator.of(context).pushNamed('/super-admin/admins'),
+                          return GridView(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 260,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: isWide ? 1.75 : 1.5,
                             ),
-                            StatCard(
-                              title: 'Kitchen Staff',
-                              value: '${provider.totalStaff}',
-                              icon: Icons.soup_kitchen_rounded,
-                              color: AppColors.darkBrown,
-                              subtitle: 'Operational Crew',
-                              onTap: () => Navigator.of(context).pushNamed('/super-admin/admins'),
-                            ),
-                            StatCard(
-                              title: 'Delivery Riders',
-                              value: '${provider.totalRiders}',
-                              icon: Icons.two_wheeler_rounded,
-                              color: AppColors.primaryYellow,
-                              subtitle: 'Courier Fleet',
-                              onTap: () => Navigator.of(context).pushNamed('/admin/delivery-areas'),
-                            ),
-                            StatCard(
-                              title: 'Customers',
-                              value: '${provider.totalCustomers}',
-                              icon: Icons.people_alt_rounded,
-                              color: AppColors.accent,
-                              subtitle: 'Registered Foodies',
-                              onTap: () => Navigator.of(context).pushNamed('/admin/customers'),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Platform Order Volume Grid
-                    Text(
-                      'Platform Order Lifecycle',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 720;
-
-                        return GridView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 260,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: isWide ? 1.75 : 1.5,
-                          ),
-                          children: [
-                            StatCard(
-                              title: 'Total Orders',
-                              value: '${provider.totalOrders}',
-                              icon: Icons.receipt_long_rounded,
-                              color: SuperAdminTheme.primary,
-                              subtitle: 'Lifetime Volume',
-                              onTap: () => Navigator.of(context).pushNamed('/admin/orders'),
-                            ),
-                            StatCard(
-                              title: 'Delivered Orders',
-                              value: '${provider.completedOrders}',
-                              icon: Icons.check_circle_rounded,
-                              color: AppColors.success,
-                              subtitle: 'Successful Dispatches',
-                              onTap: () => Navigator.of(context).pushNamed('/admin/orders'),
-                            ),
-                            StatCard(
-                              title: 'Cancelled Orders',
-                              value: '${provider.cancelledOrders}',
-                              icon: Icons.cancel_rounded,
-                              color: AppColors.error,
-                              subtitle: 'Cancelled',
-                              onTap: () => Navigator.of(context).pushNamed('/admin/orders'),
-                            ),
-                            StatCard(
-                              title: 'Online Riders',
-                              value: '${provider.activeRiders}',
-                              icon: Icons.delivery_dining_outlined,
-                              color: AppColors.success,
-                              subtitle: 'Currently online',
-                            ),
-                            StatCard(
-                              title: 'Restaurants',
-                              value: '${provider.totalRestaurants}',
-                              icon: Icons.store_rounded,
-                              color: SuperAdminTheme.accentGold,
-                              subtitle: '${provider.totalBranches} branch locations',
-                              onTap: () => Navigator.of(context).pushNamed('/super-admin/branches'),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // =========================================================
-                    // Multi-Branch Performance & Financial Comparison (P&L)
-                    // =========================================================
-                    ChangeNotifierProvider(
-                      create: (_) => BranchProvider(platformMetrics: true)
-                        ..ensureInitialized(),
-                      child: Consumer<BranchProvider>(
-                        builder: (context, branchProvider, _) {
-                          if (branchProvider.isLoading) {
-                            return const LoadingIndicator();
-                          }
-                          if (branchProvider.errorMessage != null) {
-                            return ErrorView(
-                              message: 'Unable to load branch financials.',
-                              onRetry: branchProvider.init,
-                            );
-                          }
-                          return _buildBranchPerformanceSection(
-                            context: context,
-                            branchProvider: branchProvider,
-                            isDark: Theme.of(context).brightness == Brightness.dark,
-                            textDark: textDark,
+                            children: [
+                              StatCard(
+                                title: 'Admin Accounts',
+                                value: '${provider.totalAdmins}',
+                                icon: Icons.admin_panel_settings_rounded,
+                                color: SuperAdminTheme.primary,
+                                subtitle: 'Active Managers',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/super-admin/admins'),
+                              ),
+                              StatCard(
+                                title: 'Kitchen Staff',
+                                value: '${provider.totalStaff}',
+                                icon: Icons.soup_kitchen_rounded,
+                                color: AppColors.darkBrown,
+                                subtitle: 'Operational Crew',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/super-admin/admins'),
+                              ),
+                              StatCard(
+                                title: 'Delivery Riders',
+                                value: '${provider.totalRiders}',
+                                icon: Icons.two_wheeler_rounded,
+                                color: AppColors.primaryYellow,
+                                subtitle: 'Courier Fleet',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/admin/delivery-areas'),
+                              ),
+                              StatCard(
+                                title: 'Customers',
+                                value: '${provider.totalCustomers}',
+                                icon: Icons.people_alt_rounded,
+                                color: AppColors.accent,
+                                subtitle: 'Registered Foodies',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/admin/customers'),
+                              ),
+                            ],
                           );
                         },
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
-
-                    if (provider.dailySales.any((day) => day.ordersCount > 0)) ...[
-                      Text('Delivered GMV by order date · UTC', style: Theme.of(context).textTheme.titleMedium),
-                      SalesTrendChart(
-                        dailySales: provider.dailySales,
-                        isDark: Theme.of(context).brightness == Brightness.dark,
-                      ),
                       const SizedBox(height: 24),
-                    ],
-                    // Quick Management Actions
-                    Text(
-                      'Super Admin Quick Controls',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionBtn(
-                            context: context,
-                            title: 'Manage Admins',
-                            icon: Icons.manage_accounts_rounded,
-                            color: SuperAdminTheme.primary,
-                            onTap: () => Navigator.of(context).pushNamed('/super-admin/admins'),
-                          ),
+                      // Platform Order Volume Grid
+                      Text(
+                        'Platform Order Lifecycle',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: textDark,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildActionBtn(
-                            context: context,
-                            title: 'System Settings',
-                            icon: Icons.tune_rounded,
-                            color: AppColors.darkBrown,
-                            onTap: () => Navigator.of(context).pushNamed('/super-admin/branches'),
-                          ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth >= 720;
+
+                          return GridView(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 260,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: isWide ? 1.75 : 1.5,
+                            ),
+                            children: [
+                              StatCard(
+                                title: 'Total Orders',
+                                value: '${provider.totalOrders}',
+                                icon: Icons.receipt_long_rounded,
+                                color: SuperAdminTheme.primary,
+                                subtitle: 'Lifetime Volume',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/admin/orders'),
+                              ),
+                              StatCard(
+                                title: 'Delivered Orders',
+                                value: '${provider.completedOrders}',
+                                icon: Icons.check_circle_rounded,
+                                color: AppColors.success,
+                                subtitle: 'Successful Dispatches',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/admin/orders'),
+                              ),
+                              StatCard(
+                                title: 'Cancelled Orders',
+                                value: '${provider.cancelledOrders}',
+                                icon: Icons.cancel_rounded,
+                                color: AppColors.error,
+                                subtitle: 'Cancelled',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/admin/orders'),
+                              ),
+                              StatCard(
+                                title: 'Online Riders',
+                                value: '${provider.activeRiders}',
+                                icon: Icons.delivery_dining_outlined,
+                                color: AppColors.success,
+                                subtitle: 'Currently online',
+                              ),
+                              StatCard(
+                                title: 'Restaurants',
+                                value: '${provider.totalRestaurants}',
+                                icon: Icons.store_rounded,
+                                color: SuperAdminTheme.accentGold,
+                                subtitle:
+                                    '${provider.totalBranches} branch locations',
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed('/super-admin/branches'),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // =========================================================
+                      // Multi-Branch Performance & Financial Comparison (P&L)
+                      // =========================================================
+                      ChangeNotifierProvider(
+                        create: (_) => BranchProvider(platformMetrics: true)
+                          ..ensureInitialized(),
+                        child: Consumer<BranchProvider>(
+                          builder: (context, branchProvider, _) {
+                            if (branchProvider.isLoading) {
+                              return const LoadingIndicator();
+                            }
+                            if (branchProvider.errorMessage != null) {
+                              return ErrorView(
+                                message: 'Unable to load branch financials.',
+                                onRetry: branchProvider.init,
+                              );
+                            }
+                            return _buildBranchPerformanceSection(
+                              context: context,
+                              branchProvider: branchProvider,
+                              isDark: Theme.of(context).brightness ==
+                                  Brightness.dark,
+                              textDark: textDark,
+                            );
+                          },
                         ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      if (provider.dailySales
+                          .any((day) => day.ordersCount > 0)) ...[
+                        Text('Delivered GMV by order date · UTC',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        SalesTrendChart(
+                          dailySales: provider.dailySales,
+                          isDark:
+                              Theme.of(context).brightness == Brightness.dark,
+                        ),
+                        const SizedBox(height: 24),
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionBtn(
-                            context: context,
-                            title: 'Audit Logs',
-                            icon: Icons.policy_rounded,
-                            color: AppColors.primaryYellow,
-                            onTap: () => Navigator.of(context).pushNamed('/super-admin/audit'),
-                          ),
+                      // Quick Management Actions
+                      Text(
+                        'Super Admin Quick Controls',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: textDark,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildActionBtn(
-                            context: context,
-                            title: 'Branch Portal',
-                            icon: Icons.dashboard_customize_rounded,
-                            color: AppColors.accent,
-                            onTap: () => Navigator.of(context).pushNamed('/admin/dashboard'),
+                      ),
+                      const SizedBox(height: 10),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionBtn(
+                              context: context,
+                              title: 'Manage Admins',
+                              icon: Icons.manage_accounts_rounded,
+                              color: SuperAdminTheme.primary,
+                              onTap: () => Navigator.of(context)
+                                  .pushNamed('/super-admin/admins'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildActionBtn(
+                              context: context,
+                              title: 'System Settings',
+                              icon: Icons.tune_rounded,
+                              color: AppColors.darkBrown,
+                              onTap: () => Navigator.of(context)
+                                  .pushNamed('/super-admin/branches'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionBtn(
+                              context: context,
+                              title: 'Audit Logs',
+                              icon: Icons.policy_rounded,
+                              color: AppColors.primaryYellow,
+                              onTap: () => Navigator.of(context)
+                                  .pushNamed('/super-admin/audit'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildActionBtn(
+                              context: context,
+                              title: 'Branch Portal',
+                              icon: Icons.dashboard_customize_rounded,
+                              color: AppColors.accent,
+                              onTap: () => Navigator.of(context)
+                                  .pushNamed('/admin/dashboard'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -427,7 +460,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
   }) {
     final branches = branchProvider.sortedBranches;
     final cardBg = SuperAdminTheme.getCardBg(context);
-    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200;
+    final borderColor =
+        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200;
     final textMuted = SuperAdminTheme.getTextMuted(context);
 
     return Column(
@@ -458,11 +492,14 @@ class SuperAdminDashboardScreen extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: SuperAdminTheme.primary,
                 visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               icon: const Icon(Icons.add_location_alt_rounded, size: 16),
-              label: const Text('Add Branch', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              onPressed: () => Navigator.of(context).pushNamed('/super-admin/admins'),
+              label: const Text('Add Branch',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/super-admin/admins'),
             ),
           ],
         ),
@@ -473,37 +510,49 @@ class SuperAdminDashboardScreen extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              Text('Sort by: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textMuted)),
+              Text('Sort by: ',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: textMuted)),
               const SizedBox(width: 8),
               _buildSortChip(
                 label: 'Revenue',
                 icon: Icons.monetization_on_rounded,
-                isSelected: branchProvider.selectedSort == BranchSortOption.revenue,
-                onTap: () => branchProvider.setSortOption(BranchSortOption.revenue),
+                isSelected:
+                    branchProvider.selectedSort == BranchSortOption.revenue,
+                onTap: () =>
+                    branchProvider.setSortOption(BranchSortOption.revenue),
                 context: context,
               ),
               const SizedBox(width: 8),
               _buildSortChip(
                 label: 'Profit / Loss',
                 icon: Icons.trending_up_rounded,
-                isSelected: branchProvider.selectedSort == BranchSortOption.profit,
-                onTap: () => branchProvider.setSortOption(BranchSortOption.profit),
+                isSelected:
+                    branchProvider.selectedSort == BranchSortOption.profit,
+                onTap: () =>
+                    branchProvider.setSortOption(BranchSortOption.profit),
                 context: context,
               ),
               const SizedBox(width: 8),
               _buildSortChip(
                 label: 'Order Volume',
                 icon: Icons.receipt_long_rounded,
-                isSelected: branchProvider.selectedSort == BranchSortOption.orderCount,
-                onTap: () => branchProvider.setSortOption(BranchSortOption.orderCount),
+                isSelected:
+                    branchProvider.selectedSort == BranchSortOption.orderCount,
+                onTap: () =>
+                    branchProvider.setSortOption(BranchSortOption.orderCount),
                 context: context,
               ),
               const SizedBox(width: 8),
               _buildSortChip(
                 label: 'Branch Name',
                 icon: Icons.sort_by_alpha_rounded,
-                isSelected: branchProvider.selectedSort == BranchSortOption.name,
-                onTap: () => branchProvider.setSortOption(BranchSortOption.name),
+                isSelected:
+                    branchProvider.selectedSort == BranchSortOption.name,
+                onTap: () =>
+                    branchProvider.setSortOption(BranchSortOption.name),
                 context: context,
               ),
             ],
@@ -515,20 +564,33 @@ class SuperAdminDashboardScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: SuperAdminTheme.primary.withValues(alpha: isDark ? 0.25 : 0.08),
+            color:
+                SuperAdminTheme.primary.withValues(alpha: isDark ? 0.25 : 0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: SuperAdminTheme.primary.withValues(alpha: 0.2)),
+            border: Border.all(
+                color: SuperAdminTheme.primary.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMetricCol('Active Branches', '${branchProvider.branches.length}', textDark, textMuted),
-              _buildMetricCol('Total Revenue', 'Rs. ${branchProvider.totalPlatformRevenue.toStringAsFixed(0)}', AppColors.success, textMuted),
-              _buildMetricCol('Total Expenses', 'Rs. ${branchProvider.totalPlatformExpenses.toStringAsFixed(0)}', AppColors.warning, textMuted),
+              _buildMetricCol('Active Branches',
+                  '${branchProvider.branches.length}', textDark, textMuted),
+              _buildMetricCol(
+                  'Total Revenue',
+                  'Rs. ${branchProvider.totalPlatformRevenue.toStringAsFixed(0)}',
+                  AppColors.success,
+                  textMuted),
+              _buildMetricCol(
+                  'Total Expenses',
+                  'Rs. ${branchProvider.totalPlatformExpenses.toStringAsFixed(0)}',
+                  AppColors.warning,
+                  textMuted),
               _buildMetricCol(
                 'Net Profit',
                 'Rs. ${branchProvider.totalPlatformProfit.toStringAsFixed(0)}',
-                branchProvider.totalPlatformProfit >= 0 ? AppColors.success : AppColors.error,
+                branchProvider.totalPlatformProfit >= 0
+                    ? AppColors.success
+                    : AppColors.error,
                 textMuted,
               ),
             ],
@@ -555,7 +617,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
               border: Border.all(color: borderColor),
             ),
             child: Center(
-              child: Text('No branches available.', style: TextStyle(color: textMuted)),
+              child: Text('No branches available.',
+                  style: TextStyle(color: textMuted)),
             ),
           )
         else
@@ -582,7 +645,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -598,8 +662,11 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                           height: 28,
                           decoration: BoxDecoration(
                             color: isTopPerformer
-                                ? SuperAdminTheme.accentGold.withValues(alpha: 0.2)
-                                : (isDark ? Colors.white10 : Colors.grey.shade200),
+                                ? SuperAdminTheme.accentGold
+                                    .withValues(alpha: 0.2)
+                                : (isDark
+                                    ? Colors.white10
+                                    : Colors.grey.shade200),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -608,7 +675,9 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 12,
-                                color: isTopPerformer ? SuperAdminTheme.accentGold : textMuted,
+                                color: isTopPerformer
+                                    ? SuperAdminTheme.accentGold
+                                    : textMuted,
                               ),
                             ),
                           ),
@@ -635,19 +704,27 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                                   if (isTopPerformer) ...[
                                     const SizedBox(width: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: SuperAdminTheme.accentGold.withValues(alpha: 0.15),
+                                        color: SuperAdminTheme.accentGold
+                                            .withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.emoji_events_rounded, color: SuperAdminTheme.accentGold, size: 12),
+                                          Icon(Icons.emoji_events_rounded,
+                                              color: SuperAdminTheme.accentGold,
+                                              size: 12),
                                           SizedBox(width: 3),
                                           Text(
                                             'Top',
-                                            style: TextStyle(color: SuperAdminTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 10),
+                                            style: TextStyle(
+                                                color:
+                                                    SuperAdminTheme.accentGold,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 10),
                                           ),
                                         ],
                                       ),
@@ -657,7 +734,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                               ),
                               Text(
                                 '${branch.address}, ${branch.city}',
-                                style: TextStyle(color: textMuted, fontSize: 12),
+                                style:
+                                    TextStyle(color: textMuted, fontSize: 12),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -665,15 +743,20 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: branch.isActive ? AppColors.success.withValues(alpha: 0.12) : AppColors.error.withValues(alpha: 0.12),
+                            color: branch.isActive
+                                ? AppColors.success.withValues(alpha: 0.12)
+                                : AppColors.error.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             branch.status.toUpperCase(),
                             style: TextStyle(
-                              color: branch.isActive ? AppColors.success : AppColors.error,
+                              color: branch.isActive
+                                  ? AppColors.success
+                                  : AppColors.error,
                               fontWeight: FontWeight.bold,
                               fontSize: 10.5,
                             ),
@@ -692,43 +775,61 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Revenue', style: TextStyle(fontSize: 11, color: textMuted)),
+                            Text('Revenue',
+                                style:
+                                    TextStyle(fontSize: 11, color: textMuted)),
                             const SizedBox(height: 2),
                             Text(
                               'Rs. ${branch.revenue.toStringAsFixed(0)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.success),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.5,
+                                  color: AppColors.success),
                             ),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Orders', style: TextStyle(fontSize: 11, color: textMuted)),
+                            Text('Orders',
+                                style:
+                                    TextStyle(fontSize: 11, color: textMuted)),
                             const SizedBox(height: 2),
                             Text(
                               '${branch.orderCount}',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: textDark),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.5,
+                                  color: textDark),
                             ),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Expenses', style: TextStyle(fontSize: 11, color: textMuted)),
+                            Text('Expenses',
+                                style:
+                                    TextStyle(fontSize: 11, color: textMuted)),
                             const SizedBox(height: 2),
                             Text(
                               'Rs. ${branch.expenses.toStringAsFixed(0)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.warning),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.5,
+                                  color: AppColors.warning),
                             ),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('Net Profit / Loss', style: TextStyle(fontSize: 11, color: textMuted)),
+                            Text('Net Profit / Loss',
+                                style:
+                                    TextStyle(fontSize: 11, color: textMuted)),
                             const SizedBox(height: 2),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: isProfitable
                                     ? AppColors.success.withValues(alpha: 0.12)
@@ -740,7 +841,9 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 12.5,
-                                  color: isProfitable ? AppColors.success : AppColors.error,
+                                  color: isProfitable
+                                      ? AppColors.success
+                                      : AppColors.error,
                                 ),
                               ),
                             ),
@@ -757,10 +860,13 @@ class SuperAdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCol(String label, String value, Color valColor, Color textMuted) {
+  Widget _buildMetricCol(
+      String label, String value, Color valColor, Color textMuted) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: valColor)),
+        Text(value,
+            style: TextStyle(
+                fontWeight: FontWeight.w800, fontSize: 14.5, color: valColor)),
         const SizedBox(height: 2),
         Text(label, style: TextStyle(fontSize: 10.5, color: textMuted)),
       ],
@@ -782,7 +888,10 @@ class SuperAdminDashboardScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? SuperAdminTheme.primary
-              : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              : Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? SuperAdminTheme.primary : Colors.transparent,
@@ -791,14 +900,20 @@ class SuperAdminDashboardScreen extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: isSelected ? Colors.white : SuperAdminTheme.getTextDark(context)),
+            Icon(icon,
+                size: 14,
+                color: isSelected
+                    ? Colors.white
+                    : SuperAdminTheme.getTextDark(context)),
             const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : SuperAdminTheme.getTextDark(context),
+                color: isSelected
+                    ? Colors.white
+                    : SuperAdminTheme.getTextDark(context),
               ),
             ),
           ],
@@ -817,9 +932,8 @@ class SuperAdminDashboardScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = SuperAdminTheme.getCardBg(context);
     final textDark = SuperAdminTheme.getTextDark(context);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.grey.shade200;
+    final borderColor =
+        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200;
 
     return Material(
       color: Colors.transparent,

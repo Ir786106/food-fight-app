@@ -48,7 +48,12 @@ class RiderLocationService {
     double speed = 0.0,
   }) async {
     try {
-      await _firestore.collection('orders').doc(orderId).collection('tracking').doc('rider_live').set({
+      await _firestore
+          .collection('orders')
+          .doc(orderId)
+          .collection('tracking')
+          .doc('rider_live')
+          .set({
         'latitude': latitude,
         'longitude': longitude,
         'heading': heading,
@@ -68,7 +73,8 @@ class RiderLocationService {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
-      AppLogger.error('Failed to update rider location: $e', tag: 'RiderLocationService');
+      AppLogger.error('Failed to update rider location: $e',
+          tag: 'RiderLocationService');
     }
   }
 
@@ -103,9 +109,11 @@ class RiderLocationService {
         'activeOrderId': null,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      AppLogger.info('Stopped location broadcasting for order $orderId', tag: 'RiderLocationService');
+      AppLogger.info('Stopped location broadcasting for order $orderId',
+          tag: 'RiderLocationService');
     } catch (e) {
-      AppLogger.error('Failed to stop broadcasting: $e', tag: 'RiderLocationService');
+      AppLogger.error('Failed to stop broadcasting: $e',
+          tag: 'RiderLocationService');
     }
   }
 }

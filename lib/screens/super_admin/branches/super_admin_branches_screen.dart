@@ -37,8 +37,8 @@ class _SuperAdminBranchesScreenState extends State<SuperAdminBranchesScreen> {
         context,
         (dialogContext) => AlertDialog(
               scrollable: true,
-              title: Text(dialogContext.tr(
-                  activate ? 'Reactivate branch?' : 'Suspend branch?')),
+              title: Text(dialogContext
+                  .tr(activate ? 'Reactivate branch?' : 'Suspend branch?')),
               content: Text(dialogContext
                   .tr(activate
                       ? '{branch} will accept new orders again.'
@@ -51,7 +51,8 @@ class _SuperAdminBranchesScreenState extends State<SuperAdminBranchesScreen> {
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(dialogContext, true),
-                  child: Text(dialogContext.tr(activate ? 'Reactivate' : 'Suspend')),
+                  child: Text(
+                      dialogContext.tr(activate ? 'Reactivate' : 'Suspend')),
                 ),
               ],
             ));
@@ -64,7 +65,8 @@ class _SuperAdminBranchesScreenState extends State<SuperAdminBranchesScreen> {
       }
     } catch (_) {
       if (mounted) {
-        AppSnackbar.showError(context, context.tr('Unable to update this branch.'));
+        AppSnackbar.showError(
+            context, context.tr('Unable to update this branch.'));
       }
     } finally {
       if (mounted) setState(() => _updating.remove(branch.id));
@@ -87,11 +89,16 @@ class _SuperAdminBranchesScreenState extends State<SuperAdminBranchesScreen> {
                   if (branch.phone.isNotEmpty)
                     Text(branch.phone, textDirection: TextDirection.ltr),
                   Text(branch.openingHours),
-                  Text(dialogContext.tr('Delivery radius: {radius} km')
-                      .replaceFirst('{radius}', branch.deliveryRadiusKm.toString())),
-                  Text(dialogContext.tr('Recorded orders: {count}').replaceFirst(
-                      '{count}',
-                      MaterialLocalizations.of(dialogContext).formatDecimal(branch.orderCount))),
+                  Text(dialogContext
+                      .tr('Delivery radius: {radius} km')
+                      .replaceFirst(
+                          '{radius}', branch.deliveryRadiusKm.toString())),
+                  Text(dialogContext
+                      .tr('Recorded orders: {count}')
+                      .replaceFirst(
+                          '{count}',
+                          MaterialLocalizations.of(dialogContext)
+                              .formatDecimal(branch.orderCount))),
                 ],
               ),
               actions: [
@@ -153,7 +160,8 @@ class _SuperAdminBranchesScreenState extends State<SuperAdminBranchesScreen> {
                       SectionHeader(
                         title: branch.name,
                         action: StatusChip(
-                          label: context.tr(branch.isActive ? 'Active' : 'Suspended'),
+                          label: context
+                              .tr(branch.isActive ? 'Active' : 'Suspended'),
                           tone: branch.isActive
                               ? StatusTone.success
                               : StatusTone.warning,

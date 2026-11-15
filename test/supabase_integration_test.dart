@@ -18,8 +18,11 @@ void main() {
       expect(SupabaseConfig.bucketName, 'food-images');
       expect(StoragePaths.bucketName, 'food-images');
       // Verify no secret or service_role key is exposed
-      expect(SupabaseConfig.publishableKey.toLowerCase().contains('service_role'), isFalse);
-      expect(SupabaseConfig.publishableKey.toLowerCase().contains('secret'), isFalse);
+      expect(
+          SupabaseConfig.publishableKey.toLowerCase().contains('service_role'),
+          isFalse);
+      expect(SupabaseConfig.publishableKey.toLowerCase().contains('secret'),
+          isFalse);
     });
 
     test('Supabase can initialize when credentials are provided', () async {
@@ -42,7 +45,9 @@ void main() {
       expect(url, contains('food-images/test.jpg'));
     });
 
-    test('SupabaseImageStorageService generates consistent paths for food-images bucket', () {
+    test(
+        'SupabaseImageStorageService generates consistent paths for food-images bucket',
+        () {
       final storageService = SupabaseImageStorageService();
       if (!SupabaseConfig.isConfigured) {
         expect(storageService.getImageUrl('foods/sample_burger.jpg'), isEmpty);
@@ -52,7 +57,8 @@ void main() {
       }
     });
 
-    test('signed image uploads are limited to supported public image paths', () {
+    test('signed image uploads are limited to supported public image paths',
+        () {
       const purpose = SupabaseImageStorageService.signedPurposeForPath;
       expect(purpose('products/'), 'product');
       expect(purpose('categories/'), 'category');

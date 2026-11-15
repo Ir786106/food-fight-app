@@ -16,7 +16,8 @@ const _kAllowedHosts = {
   'releases.githubusercontent.com',
 };
 
-const _kGitHubApiUrl = 'https://api.github.com/repos/Ir786106/food-fight-app/releases/latest';
+const _kGitHubApiUrl =
+    'https://api.github.com/repos/Ir786106/food-fight-app/releases/latest';
 
 class ReleaseInfo {
   final String tagName;
@@ -74,7 +75,8 @@ class ApkPreInstallResult {
     required this.errorCode,
     required this.englishMessage,
     required this.romanUrduMessage,
-    this.releasePageUrl = 'https://github.com/Ir786106/food-fight-app/releases/latest',
+    this.releasePageUrl =
+        'https://github.com/Ir786106/food-fight-app/releases/latest',
   });
 
   bool get canInstall => status == ApkInstallStatus.ready;
@@ -105,7 +107,10 @@ class AppUpdateService {
     final raw = tag.startsWith('v') ? tag.substring(1) : tag;
     final plusIdx = raw.indexOf('+');
     if (plusIdx != -1) {
-      return (raw.substring(0, plusIdx), int.tryParse(raw.substring(plusIdx + 1)) ?? 0);
+      return (
+        raw.substring(0, plusIdx),
+        int.tryParse(raw.substring(plusIdx + 1)) ?? 0
+      );
     }
     if (body != null) {
       final match = RegExp(r'[Bb]uild[:\s]+(\d+)').firstMatch(body);
@@ -114,7 +119,8 @@ class AppUpdateService {
     return (raw, 0);
   }
 
-  bool _isNewerVersion(String remote, String local, int remoteBuild, int localBuild) {
+  bool _isNewerVersion(
+      String remote, String local, int remoteBuild, int localBuild) {
     if (remoteBuild > 0 && localBuild > 0) {
       return remoteBuild > localBuild;
     }
@@ -179,7 +185,8 @@ class AppUpdateService {
   ({String apkUrl, String checksumUrl, int? size})? testSelectApkAssets(
     List<dynamic> assets,
     String version,
-  ) => _selectApkAssets(assets, version);
+  ) =>
+      _selectApkAssets(assets, version);
 
   ({String apkUrl, String checksumUrl, int? size})? _selectApkAssets(
     List<dynamic> assets,
@@ -189,20 +196,31 @@ class AppUpdateService {
       for (final asset in assets.whereType<Map>())
         if (asset['name'] is String) asset['name'] as String: asset,
     };
-    final apkNames = byName.keys.where((name) => name.toLowerCase().endsWith('.apk'));
+    final apkNames =
+        byName.keys.where((name) => name.toLowerCase().endsWith('.apk'));
     final official = 'FoodFight_v${version}_release.apk';
-    final name = byName.containsKey(official) ? official : apkNames.length == 1 ? apkNames.single : null;
+    final name = byName.containsKey(official)
+        ? official
+        : apkNames.length == 1
+            ? apkNames.single
+            : null;
     if (name == null) return null;
 
     final apk = byName[name]!;
     final apkUrl = apk['browser_download_url'];
     final checksumUrl = byName['$name.sha256']?['browser_download_url'];
-    if (apkUrl is! String || checksumUrl is! String ||
-        !_isAllowedUrl(apkUrl) || !_isAllowedUrl(checksumUrl)) {
+    if (apkUrl is! String ||
+        checksumUrl is! String ||
+        !_isAllowedUrl(apkUrl) ||
+        !_isAllowedUrl(checksumUrl)) {
       return null;
     }
     final size = apk['size'];
-    return (apkUrl: apkUrl, checksumUrl: checksumUrl, size: size is int ? size : null);
+    return (
+      apkUrl: apkUrl,
+      checksumUrl: checksumUrl,
+      size: size is int ? size : null
+    );
   }
 
   Future<UpdateCheckResponse> checkForUpdate() async {
@@ -216,7 +234,9 @@ class AppUpdateService {
         options: Options(followRedirects: false),
       );
       if (response.statusCode != 200 || response.data == null) {
-        return const UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: 'Bad response from GitHub');
+        return const UpdateCheckResponse(
+            result: UpdateCheckResult.error,
+            errorMessage: 'Bad response from GitHub');
       }
 
       final data = response.data!;
@@ -238,7 +258,8 @@ class AppUpdateService {
       if (selected == null) {
         return const UpdateCheckResponse(
           result: UpdateCheckResult.error,
-          errorMessage: 'Release is missing a unique trusted APK and its matching checksum.',
+          errorMessage:
+              'Release is missing a unique trusted APK and its matching checksum.',
         );
       }
       final release = ReleaseInfo(
@@ -251,18 +272,23 @@ class AppUpdateService {
         apkSizeBytes: selected.size,
       );
 
-      if (_isNewerVersion(remoteVersion, currentVersion, remoteBuild, currentBuild)) {
-        return UpdateCheckResponse(result: UpdateCheckResult.updateAvailable, release: release);
+      if (_isNewerVersion(
+          remoteVersion, currentVersion, remoteBuild, currentBuild)) {
+        return UpdateCheckResponse(
+            result: UpdateCheckResult.updateAvailable, release: release);
       }
       return const UpdateCheckResponse(result: UpdateCheckResult.upToDate);
     } on DioException catch (e) {
       if (e.response?.statusCode == 403 || e.response?.statusCode == 429) {
-        return const UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: 'GitHub rate limit');
+        return const UpdateCheckResponse(
+            result: UpdateCheckResult.error, errorMessage: 'GitHub rate limit');
       }
-      return const UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: 'Network unavailable');
+      return const UpdateCheckResponse(
+          result: UpdateCheckResult.error, errorMessage: 'Network unavailable');
     } catch (e) {
       AppLogger.error('Update check failed: $e', tag: 'AppUpdateService');
-      return UpdateCheckResponse(result: UpdateCheckResult.error, errorMessage: e.toString());
+      return UpdateCheckResponse(
+          result: UpdateCheckResult.error, errorMessage: e.toString());
     }
   }
 
@@ -275,7 +301,8 @@ class AppUpdateService {
     try {
       final checksumUrl = release.sha256Url;
       if (!_isAllowedUrl(release.apkDownloadUrl) ||
-          checksumUrl == null || !_isAllowedUrl(checksumUrl)) {
+          checksumUrl == null ||
+          !_isAllowedUrl(checksumUrl)) {
         onError('Security: rejected download from untrusted host.');
         return;
       }
@@ -299,11 +326,13 @@ class AppUpdateService {
       );
 
       onProgress(0.97);
-      final verified = await _verifySha256(File(_tempApkPath!), checksumUrl, cancelToken);
+      final verified =
+          await _verifySha256(File(_tempApkPath!), checksumUrl, cancelToken);
       if (!verified) {
         await _cleanupTempFile();
         if (!cancelToken.isCancelled) {
-          onError('Could not verify the APK checksum. Download the update again.');
+          onError(
+              'Could not verify the APK checksum. Download the update again.');
         }
         return;
       }
@@ -333,7 +362,8 @@ class AppUpdateService {
         status: ApkInstallStatus.error,
         errorCode: 'FILE_NOT_FOUND',
         englishMessage: 'No downloaded APK file found to install.',
-        romanUrduMessage: 'Install karne ke liye koi downloaded file nahi mili.',
+        romanUrduMessage:
+            'Install karne ke liye koi downloaded file nahi mili.',
       );
     }
 
@@ -413,14 +443,16 @@ class AppUpdateService {
             errorCode: errorCode,
             englishMessage: switch (errorCode) {
               'PACKAGE_MISMATCH' => 'This download belongs to a different app.',
-              'FILE_NOT_FOUND' => 'The update file is missing. Download it again.',
+              'FILE_NOT_FOUND' =>
+                'The update file is missing. Download it again.',
               _ => 'Android could not verify this update.',
             },
             romanUrduMessage: 'Android update ki tasdeeq nahi kar saka.',
           );
       }
     } catch (e) {
-      AppLogger.warn('Pre-install verification failed: $e', tag: 'AppUpdateService');
+      AppLogger.warn('Pre-install verification failed: $e',
+          tag: 'AppUpdateService');
       return const ApkPreInstallResult(
         status: ApkInstallStatus.error,
         errorCode: 'VERIFY_ERROR',
@@ -429,13 +461,15 @@ class AppUpdateService {
       );
     }
   }
+
   Future<void> openUnknownSourcesSettings() async {
     try {
       if (Platform.isAndroid) {
         await _verifierChannel.invokeMethod('openInstallUnknownAppsSettings');
       }
     } catch (e) {
-      AppLogger.warn('Failed to open unknown sources settings: $e', tag: 'AppUpdateService');
+      AppLogger.warn('Failed to open unknown sources settings: $e',
+          tag: 'AppUpdateService');
     }
   }
 
@@ -444,24 +478,28 @@ class AppUpdateService {
     if (apkPath == null || !Platform.isAndroid) return false;
     try {
       return await _verifierChannel.invokeMethod<bool>(
-        'launchApkInstaller',
-        {'apkPath': apkPath},
-      ) ?? false;
+            'launchApkInstaller',
+            {'apkPath': apkPath},
+          ) ??
+          false;
     } catch (e) {
       AppLogger.error('Install failed: $e', tag: 'AppUpdateService');
       return false;
     }
   }
 
-  Future<bool> _verifySha256(File apkFile, String sha256Url, CancelToken cancelToken) async {
+  Future<bool> _verifySha256(
+      File apkFile, String sha256Url, CancelToken cancelToken) async {
     try {
       final hashResp = await _trustedAsset<String>(
         sha256Url,
-        (url, options) => _dio.get<String>(url, options: options, cancelToken: cancelToken),
+        (url, options) =>
+            _dio.get<String>(url, options: options, cancelToken: cancelToken),
         responseType: ResponseType.plain,
       );
       if (hashResp.statusCode != 200 || hashResp.data == null) return false;
-      final expected = hashResp.data!.trim().split(RegExp(r'\s+')).first.toLowerCase();
+      final expected =
+          hashResp.data!.trim().split(RegExp(r'\s+')).first.toLowerCase();
       if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(expected)) return false;
       final actual = (await sha256.bind(apkFile.openRead()).single).toString();
       return expected == actual;
@@ -487,14 +525,19 @@ class AppUpdateService {
   Future<Response<T>> testTrustedAsset<T>(
     String url,
     Future<Response<T>> Function(String url, Options options) request,
-  ) => _trustedAsset(url, request);
+  ) =>
+      _trustedAsset(url, request);
 
   /// @visibleForTesting
   bool testIsAllowedUrl(String url) => _isAllowedUrl(url);
+
   /// @visibleForTesting
-  bool testIsNewer(String remote, String local, int remoteBuild, int localBuild) =>
+  bool testIsNewer(
+          String remote, String local, int remoteBuild, int localBuild) =>
       _isNewerVersion(remote, local, remoteBuild, localBuild);
+
   /// @visibleForTesting
-  (String versionName, int buildNumber) testParseTag(String tag, String? body) =>
+  (String versionName, int buildNumber) testParseTag(
+          String tag, String? body) =>
       _parseTag(tag, body);
 }

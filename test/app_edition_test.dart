@@ -64,18 +64,22 @@ void main() {
     expect(admin.keys, isNot(contains(RoleRouter.customerHome)));
     expect(admin.keys, isNot(contains(RoleRouter.riderHome)));
 
-    for (final role in UserRole.values.where((role) => role != UserRole.unknown)) {
+    for (final role
+        in UserRole.values.where((role) => role != UserRole.unknown)) {
       final allowed = AppEdition.values.where((edition) =>
           edition != AppEdition.combined && edition.allowsRole(role));
       expect(allowed, hasLength(1));
-      expect(AppRoutes.routesFor(allowed.single).keys, contains(RoleRouter.homeRouteForRole(role)));
+      expect(AppRoutes.routesFor(allowed.single).keys,
+          contains(RoleRouter.homeRouteForRole(role)));
     }
   });
 
-  test('wrong app password sign-in is rejected and signs out of Firebase', () async {
+  test('wrong app password sign-in is rejected and signs out of Firebase',
+      () async {
     final service = _WrongEditionAuth(UserRole.rider);
     final auth = AuthProvider(edition: AppEdition.admin, authService: service);
-    expect(await auth.signIn(email: 'rider@example.test', password: 'example'), isFalse);
+    expect(await auth.signIn(email: 'rider@example.test', password: 'example'),
+        isFalse);
     expect(service.usedCache, isFalse);
     expect(service.signedOut, isTrue);
     expect(auth.currentUser, isNull);
@@ -83,7 +87,8 @@ void main() {
     auth.dispose();
   });
 
-  test('restoring a session verifies the profile and rejects a mismatched role', () async {
+  test('restoring a session verifies the profile and rejects a mismatched role',
+      () async {
     final service = _WrongEditionAuth(UserRole.admin);
     final auth = AuthProvider(edition: AppEdition.rider, authService: service);
     await auth.init();

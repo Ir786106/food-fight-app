@@ -45,7 +45,9 @@ class HomeSectionHeader extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.brandMaroon,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

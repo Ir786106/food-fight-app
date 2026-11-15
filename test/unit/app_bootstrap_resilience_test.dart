@@ -27,7 +27,8 @@ void main() {
   });
 
   group('AppBootstrap Resilience & Isolation', () {
-    test('startBackgroundBootstrap runs without throwing even if services fail', () async {
+    test('startBackgroundBootstrap runs without throwing even if services fail',
+        () async {
       expect(AppBootstrap.hasCompleted, isFalse);
 
       // Trigger background bootstrap
@@ -36,7 +37,8 @@ void main() {
       expect(AppBootstrap.hasCompleted, isTrue);
     });
 
-    test('Multiple concurrent bootstrap calls are safely deduplicated', () async {
+    test('Multiple concurrent bootstrap calls are safely deduplicated',
+        () async {
       await Future.wait([
         AppBootstrap.startBackgroundBootstrap(),
         AppBootstrap.startBackgroundBootstrap(),

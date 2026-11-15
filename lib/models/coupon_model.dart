@@ -63,7 +63,9 @@ class CouponModel {
       type: json['type']?.toString() ?? 'percentage',
       value: SafeConvert.toDouble(json['value']),
       minimumOrder: SafeConvert.toDouble(json['minimumOrder']),
-      maximumDiscount: json['maximumDiscount'] != null ? SafeConvert.toDouble(json['maximumDiscount']) : null,
+      maximumDiscount: json['maximumDiscount'] != null
+          ? SafeConvert.toDouble(json['maximumDiscount'])
+          : null,
       validFrom: SafeConvert.toDateTime(json['validFrom']),
       validUntil: SafeConvert.toDateTime(json['validUntil']),
       usageLimit: SafeConvert.toInt(json['usageLimit']),

@@ -36,8 +36,8 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
   bool _pagingCustomer = false;
   String? _customerPageError;
 
-  bool get canLoadMoreCustomerOrders => !_pagingCustomer &&
-      (_customerTail ?? _customerHead)?.mayHaveMore == true;
+  bool get canLoadMoreCustomerOrders =>
+      !_pagingCustomer && (_customerTail ?? _customerHead)?.mayHaveMore == true;
   bool get isPagingCustomerOrders => _pagingCustomer;
   String? get customerPageError => _customerPageError;
   StreamSubscription<OrderPage>? _adminOrdersSub;
@@ -51,32 +51,45 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get adminFilter => _adminFilter;
-  bool isWatchingAdminScope(String? branchId) => _watchingAdminOrders && branchId == _adminBranchId;
+  bool isWatchingAdminScope(String? branchId) =>
+      _watchingAdminOrders && branchId == _adminBranchId;
   bool get isPagingAdminOrders => _pagingAdmin;
   String? get adminPageError => _adminPageError;
-  bool get canLoadMoreAdminOrders => !_isLoading && !_pagingAdmin &&
+  bool get canLoadMoreAdminOrders =>
+      !_isLoading &&
+      !_pagingAdmin &&
       (_olderPage ?? _liveAdminPage)?.mayHaveMore == true;
 
   /// Filtered orders for Admin Orders screen
   List<OrderModel> get filteredAdminOrders {
     if (_adminFilter == 'all') return _adminOrders;
-    return _adminOrders.where((order) => order.status == OrderStatus.fromString(_adminFilter)).toList();
+    return _adminOrders
+        .where((order) => order.status == OrderStatus.fromString(_adminFilter))
+        .toList();
   }
 
   // Status counts for admin tab badges
   int get allCount => _adminOrders.length;
-  int get pendingCount => _adminOrders.where((o) => o.status == OrderStatus.pending).length;
-  int get preparingCount => _adminOrders.where((o) => o.status == OrderStatus.preparing).length;
-  int get readyCount => _adminOrders.where((o) => o.status == OrderStatus.ready).length;
-  int get outForDeliveryCount => _adminOrders.where((o) => o.status == OrderStatus.outForDelivery).length;
-  int get deliveredCount => _adminOrders.where((o) => o.status == OrderStatus.delivered).length;
-  int get cancelledCount => _adminOrders.where((o) => o.status == OrderStatus.cancelled).length;
-  int get activeOrdersCount => _adminOrders.where((order) => !order.status.isTerminal).length;
+  int get pendingCount =>
+      _adminOrders.where((o) => o.status == OrderStatus.pending).length;
+  int get preparingCount =>
+      _adminOrders.where((o) => o.status == OrderStatus.preparing).length;
+  int get readyCount =>
+      _adminOrders.where((o) => o.status == OrderStatus.ready).length;
+  int get outForDeliveryCount =>
+      _adminOrders.where((o) => o.status == OrderStatus.outForDelivery).length;
+  int get deliveredCount =>
+      _adminOrders.where((o) => o.status == OrderStatus.delivered).length;
+  int get cancelledCount =>
+      _adminOrders.where((o) => o.status == OrderStatus.cancelled).length;
+  int get activeOrdersCount =>
+      _adminOrders.where((order) => !order.status.isTerminal).length;
 
   void _mergeCustomerOrders() {
     _customerOrders = {
       ..._customerArchive,
-      for (final order in _customerHead?.orders ?? const <OrderModel>[]) order.id: order,
+      for (final order in _customerHead?.orders ?? const <OrderModel>[])
+        order.id: order,
       for (final order in _activeCustomerOrders) order.id: order,
     }.values.toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -102,12 +115,14 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
       _isLoading = false;
       _errorMessage = 'Unable to load your orders. Please try again.';
       _customerPageError = _errorMessage;
-      AppLogger.error('Customer orders watch error: $error', tag: 'OrderProvider');
+      AppLogger.error('Customer orders watch error: $error',
+          tag: 'OrderProvider');
       notifyListeners();
     }
 
     _activeCustomerSub?.cancel();
-    _activeCustomerSub = OrderService.watchActiveCustomerOrders(customerId).listen(
+    _activeCustomerSub =
+        OrderService.watchActiveCustomerOrders(customerId).listen(
       (orders) {
         if (generation != _customerGeneration) return;
         final activeIds = orders.map((order) => order.id).toSet();
@@ -140,10 +155,12 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
     );
   }
 
-  Future<void> _retainCompletedCustomerOrder(String orderId, int generation) async {
+  Future<void> _retainCompletedCustomerOrder(
+      String orderId, int generation) async {
     final order = await OrderService.getOrder(orderId);
     if (generation != _customerGeneration ||
-        order == null || order.customerId != _customerScope ||
+        order == null ||
+        order.customerId != _customerScope ||
         !order.status.isTerminal) {
       return;
     }
@@ -151,6 +168,7 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
     _mergeCustomerOrders();
     notifyListeners();
   }
+
   Future<void> loadMoreCustomerOrders() async {
     final customerId = _customerScope;
     if (customerId == null || !canLoadMoreCustomerOrders) return;
@@ -160,7 +178,8 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
     _customerPageError = null;
     notifyListeners();
     try {
-      final page = await OrderService.fetchNextCustomerOrderPage(customerId, cursor);
+      final page =
+          await OrderService.fetchNextCustomerOrderPage(customerId, cursor);
       if (generation != _customerGeneration) return;
       _customerTail = page;
       for (final order in page.orders) {
@@ -170,7 +189,8 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
     } catch (error) {
       if (generation != _customerGeneration) return;
       _customerPageError = 'Unable to load older orders. Try again.';
-      AppLogger.error('Customer page request failed: $error', tag: 'OrderProvider');
+      AppLogger.error('Customer page request failed: $error',
+          tag: 'OrderProvider');
     } finally {
       if (generation == _customerGeneration) {
         _pagingCustomer = false;
@@ -178,9 +198,12 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
       }
     }
   }
+
   /// Watch all orders for Admin panel (scoped by branchId if provided)
   void watchAdminOrders({String? status, String? branchId}) {
-    if (!_watchingAdminOrders || branchId != _adminBranchId || status != _adminStatus) {
+    if (!_watchingAdminOrders ||
+        branchId != _adminBranchId ||
+        status != _adminStatus) {
       _adminOrders = [];
     }
     _watchingAdminOrders = true;
@@ -204,12 +227,14 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
       );
       if (generation != _adminGeneration) return;
       _olderPage = next;
-      _historicalOrders.addEntries(next.orders.map((order) => MapEntry(order.id, order)));
+      _historicalOrders
+          .addEntries(next.orders.map((order) => MapEntry(order.id, order)));
       _mergeAdminOrders();
     } catch (error) {
       if (generation != _adminGeneration) return;
       _adminPageError = 'Unable to load older orders. Try again.';
-      AppLogger.error('Order page request failed: $error', tag: 'OrderProvider');
+      AppLogger.error('Order page request failed: $error',
+          tag: 'OrderProvider');
     } finally {
       if (generation == _adminGeneration) {
         _pagingAdmin = false;
@@ -221,7 +246,8 @@ class OrderProvider extends ChangeNotifier with SafeChangeNotifier {
   void _mergeAdminOrders() {
     _adminOrders = {
       ..._historicalOrders,
-      for (final order in _liveAdminPage?.orders ?? const <OrderModel>[]) order.id: order,
+      for (final order in _liveAdminPage?.orders ?? const <OrderModel>[])
+        order.id: order,
     }.values.toList()
       ..sort((a, b) {
         final comparison = b.createdAt.compareTo(a.createdAt);

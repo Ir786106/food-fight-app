@@ -32,9 +32,11 @@ void main() {
     expect(read.toJson()['messageKey'], 'orderStatus');
     expect(read.toJson()['orderNumber'], 'FF-12');
     expect(read.toJson()['orderStatus'], 'delivered');
-    expect(NotificationModel.fromJson({'createdAt': 123456}).messageKey, isNull);
+    expect(
+        NotificationModel.fromJson({'createdAt': 123456}).messageKey, isNull);
   });
-  test('SafeConvert falls back for non-finite numbers and out-of-range dates', () {
+  test('SafeConvert falls back for non-finite numbers and out-of-range dates',
+      () {
     final fallback = DateTime.utc(2026);
     expect(SafeConvert.toDouble('Infinity', 7), 7);
     expect(SafeConvert.toDouble(double.nan, 7), 7);

@@ -74,12 +74,16 @@ class SuperAdminDrawer extends StatelessWidget {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               margin: const EdgeInsets.only(top: 2),
                               decoration: BoxDecoration(
-                                color: SuperAdminTheme.accentGold.withValues(alpha: 0.2),
+                                color: SuperAdminTheme.accentGold
+                                    .withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: SuperAdminTheme.accentGold.withValues(alpha: 0.6)),
+                                border: Border.all(
+                                    color: SuperAdminTheme.accentGold
+                                        .withValues(alpha: 0.6)),
                               ),
                               child: const Text(
                                 'SUPER ADMIN 👑',
@@ -150,7 +154,6 @@ class SuperAdminDrawer extends StatelessWidget {
                     title: 'Audit & Activity Log',
                     route: '/super-admin/audit',
                   ),
-
                   const Divider(height: 24),
                   _buildNavHeader(context, 'QUICK SWITCH'),
                   _buildNavItem(
@@ -182,16 +185,22 @@ class SuperAdminDrawer extends StatelessWidget {
                 ),
               ),
               child: ListTile(
-                leading: const Icon(Icons.logout_rounded, color: AppColors.error),
+                leading:
+                    const Icon(Icons.logout_rounded, color: AppColors.error),
                 title: const Text(
                   'Sign Out',
-                  style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14),
                 ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 onTap: () async {
                   await auth.signOut();
                   if (context.mounted) {
-                    Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false);
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/login', (r) => false);
                   }
                 },
               ),
@@ -236,7 +245,8 @@ class SuperAdminDrawer extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: ListTile(
           dense: true,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           leading: Icon(
             icon,
             color: isSelected
@@ -258,7 +268,8 @@ class SuperAdminDrawer extends StatelessWidget {
             Navigator.pop(context); // close drawer
             if (currentRoute != route) {
               if (route == '/super-admin/dashboard') {
-                Navigator.of(context).pushNamedAndRemoveUntil('/super-admin/dashboard', (r) => false);
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/super-admin/dashboard', (r) => false);
               } else if (route == '/home') {
                 Navigator.of(context).pushNamed('/home');
               } else if (route == '/admin/dashboard') {

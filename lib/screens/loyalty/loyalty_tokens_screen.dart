@@ -57,7 +57,8 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Loyalty Tokens', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Loyalty Tokens',
+            style: TextStyle(fontWeight: FontWeight.w800)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -67,7 +68,8 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
         ),
       ),
       body: loyalty.isLoading && account == null
-          ? const Center(child: LoadingIndicator(message: 'Loading token balance...'))
+          ? const Center(
+              child: LoadingIndicator(message: 'Loading token balance...'))
           : RefreshIndicator(
               color: AppColors.brandYellow,
               backgroundColor: AppColors.brandMaroon,
@@ -78,7 +80,8 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                 }
               },
               child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
                 children: [
                   // Balance & Tier Hero Card
@@ -94,7 +97,8 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF800020).withValues(alpha: 0.35),
+                          color:
+                              const Color(0xFF800020).withValues(alpha: 0.35),
                           blurRadius: 18,
                           offset: const Offset(0, 8),
                         ),
@@ -107,16 +111,19 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: tierColor.withValues(alpha: 0.6)),
+                                border: Border.all(
+                                    color: tierColor.withValues(alpha: 0.6)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.workspace_premium_rounded, color: tierColor, size: 16),
+                                  Icon(Icons.workspace_premium_rounded,
+                                      color: tierColor, size: 16),
                                   const SizedBox(width: 6),
                                   Text(
                                     tier,
@@ -133,10 +140,12 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.brandYellow.withValues(alpha: 0.2),
+                                color: AppColors.brandYellow
+                                    .withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Text('🎁', style: TextStyle(fontSize: 20)),
+                              child: const Text('🎁',
+                                  style: TextStyle(fontSize: 20)),
                             ),
                           ],
                         ),
@@ -174,7 +183,8 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                             ),
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(12),
@@ -191,13 +201,16 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Divider(color: Colors.white.withValues(alpha: 0.15), height: 1),
+                        Divider(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            height: 1),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             _buildStatItem('Lifetime Earned', '$totalEarned'),
-                            _buildStatItem('Lifetime Redeemed', '${account?.totalRedeemed ?? 0}'),
+                            _buildStatItem('Lifetime Redeemed',
+                                '${account?.totalRedeemed ?? 0}'),
                             _buildStatItem(
                               'Value Rate',
                               '1 Token = Rs ${loyalty.tokenValueInCurrency.toStringAsFixed(0)}',
@@ -214,23 +227,29 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceElevated : Colors.white,
+                      color:
+                          isDark ? AppColors.darkSurfaceElevated : Colors.white,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                      border: Border.all(
+                          color:
+                              isDark ? AppColors.darkBorder : AppColors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded, color: AppColors.brandMaroon, size: 20),
+                            const Icon(Icons.info_outline_rounded,
+                                color: AppColors.brandMaroon, size: 20),
                             const SizedBox(width: 8),
                             Text(
                               'How Loyalty Tokens Work',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -271,14 +290,18 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       Text(
                         '${transactions.length} events',
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -288,31 +311,49 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
 
                   if (transactions.isEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 36, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurfaceElevated : Colors.white,
+                        color: isDark
+                            ? AppColors.darkSurfaceElevated
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                        border: Border.all(
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.border),
                       ),
                       child: const EmptyStateView(
                         icon: Icons.savings_outlined,
                         title: 'No Token Transactions Yet',
-                        description: 'Place an order or sign up to earn Food Fight tokens!',
+                        description:
+                            'Place an order or sign up to earn Food Fight tokens!',
                       ),
                     )
                   else
                     ...transactions.map((tx) {
-                      final isCredit = tx.type == 'credit' || tx.type == 'bonus' || tx.type == 'earn' || tx.type == 'refund';
-                      final amountStr = isCredit ? '+${tx.amount}' : '-${tx.amount}';
-                      final dateStr = DateFormat('MMM d, y • h:mm a').format(tx.createdAt);
+                      final isCredit = tx.type == 'credit' ||
+                          tx.type == 'bonus' ||
+                          tx.type == 'earn' ||
+                          tx.type == 'refund';
+                      final amountStr =
+                          isCredit ? '+${tx.amount}' : '-${tx.amount}';
+                      final dateStr =
+                          DateFormat('MMM d, y • h:mm a').format(tx.createdAt);
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurfaceElevated : Colors.white,
+                          color: isDark
+                              ? AppColors.darkSurfaceElevated
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                          border: Border.all(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.border),
                         ),
                         child: Row(
                           children: [
@@ -322,13 +363,18 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                               decoration: BoxDecoration(
                                 color: isCredit
                                     ? Colors.green.withValues(alpha: 0.15)
-                                    : AppColors.brandMaroon.withValues(alpha: 0.15),
+                                    : AppColors.brandMaroon
+                                        .withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
                                 child: Icon(
-                                  isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                  color: isCredit ? Colors.green : AppColors.brandMaroon,
+                                  isCredit
+                                      ? Icons.arrow_downward_rounded
+                                      : Icons.arrow_upward_rounded,
+                                  color: isCredit
+                                      ? Colors.green
+                                      : AppColors.brandMaroon,
                                   size: 20,
                                 ),
                               ),
@@ -343,7 +389,9 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
-                                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                      color: isDark
+                                          ? AppColors.darkTextPrimary
+                                          : AppColors.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 3),
@@ -351,7 +399,9 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                                     dateStr,
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                                      color: isDark
+                                          ? AppColors.darkTextMuted
+                                          : AppColors.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -362,7 +412,9 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
-                                color: isCredit ? Colors.green : AppColors.brandMaroon,
+                                color: isCredit
+                                    ? Colors.green
+                                    : AppColors.brandMaroon,
                               ),
                             ),
                           ],
@@ -399,7 +451,8 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
     );
   }
 
-  Widget _buildRuleRow(String emoji, String title, String subtitle, bool isDark) {
+  Widget _buildRuleRow(
+      String emoji, String title, String subtitle, bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -414,7 +467,9 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13.5,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
@@ -422,7 +477,9 @@ class _LoyaltyTokensScreenState extends State<LoyaltyTokensScreen> {
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textSecondary,
                 ),
               ),
             ],

@@ -25,7 +25,8 @@ class _OfflineBannerState extends State<OfflineBanner> {
     if (!Platform.environment.containsKey('FLUTTER_TEST')) {
       _checkConnectivity();
       // Periodically check connection every 10 seconds
-      _checkTimer = Timer.periodic(const Duration(seconds: 10), (_) => _checkConnectivity());
+      _checkTimer = Timer.periodic(
+          const Duration(seconds: 10), (_) => _checkConnectivity());
     }
   }
 
@@ -39,7 +40,8 @@ class _OfflineBannerState extends State<OfflineBanner> {
     try {
       final result = await InternetAddress.lookup('google.com')
           .timeout(const Duration(seconds: 3));
-      final hasConnection = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      final hasConnection =
+          result.isNotEmpty && result[0].rawAddress.isNotEmpty;
       if (mounted && _isOffline != !hasConnection) {
         setState(() {
           _isOffline = !hasConnection;
@@ -89,13 +91,16 @@ class _OfflineBannerState extends State<OfflineBanner> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.brandMaroon,
                   ),
                 ),
               ],
             ),
           ),
-          crossFadeState: _isOffline ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState:
+              _isOffline ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 300),
         ),
         if (widget.child != null) widget.child!,

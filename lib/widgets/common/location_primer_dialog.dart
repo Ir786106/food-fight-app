@@ -49,7 +49,8 @@ class LocationPrimerDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                color:
+                    isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
                 letterSpacing: -0.3,
               ),
             ),
@@ -60,7 +61,8 @@ class LocationPrimerDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13.5,
                 height: 1.45,
-                color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                color:
+                    isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
@@ -95,7 +97,9 @@ class LocationPrimerDialog extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),

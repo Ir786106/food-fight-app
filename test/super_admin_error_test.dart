@@ -14,12 +14,14 @@ void main() {
     expect(unavailable, isNot(contains('internal stack')));
     expect(
       platformOperationError(
-        FirebaseFunctionsException(code: 'permission-denied', message: 'denied'),
+        FirebaseFunctionsException(
+            code: 'permission-denied', message: 'denied'),
         fallback: 'Try again.',
       ),
       contains('permission'),
     );
-    expect(platformOperationError(StateError('internal'), fallback: 'Try again.'),
+    expect(
+        platformOperationError(StateError('internal'), fallback: 'Try again.'),
         'Try again.');
   });
 
@@ -42,7 +44,8 @@ void main() {
         ),
       ),
     ));
-    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -250));
+    await tester.drag(
+        find.byType(SingleChildScrollView), const Offset(0, -250));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Try Again'));
     expect(retried, isTrue);

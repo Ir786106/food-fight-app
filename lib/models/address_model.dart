@@ -46,9 +46,15 @@ class AddressModel {
       userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
       label: json['label']?.toString() ?? '',
       details: json['details']?.toString() ?? '',
-      iconType: json['iconType']?.toString() ?? json['icon_type']?.toString() ?? 'home',
-      latitude: json['latitude'] != null ? SafeConvert.toDouble(json['latitude']) : null,
-      longitude: json['longitude'] != null ? SafeConvert.toDouble(json['longitude']) : null,
+      iconType: json['iconType']?.toString() ??
+          json['icon_type']?.toString() ??
+          'home',
+      latitude: json['latitude'] != null
+          ? SafeConvert.toDouble(json['latitude'])
+          : null,
+      longitude: json['longitude'] != null
+          ? SafeConvert.toDouble(json['longitude'])
+          : null,
       isDefault: json['isDefault'] == 1 || json['isDefault'] == true,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
@@ -81,4 +87,3 @@ class AddressModel {
     );
   }
 }
-

@@ -12,7 +12,9 @@ void main() {
       fetchMenu: ({categoryId, branchId, required includeLegacy}) async {
         expect(branchId, 'branch-a');
         expect(includeLegacy, isFalse);
-        return [MenuItemModel.fromJson({'id': 'first'})];
+        return [
+          MenuItemModel.fromJson({'id': 'first'})
+        ];
       },
     );
     addTearDown(provider.dispose);
@@ -21,7 +23,8 @@ void main() {
     expect(provider.menuItems.single.id, 'first');
   });
 
-  test('late refresh cannot replace newer results or hide a read error', () async {
+  test('late refresh cannot replace newer results or hide a read error',
+      () async {
     final older = Completer<List<MenuItemModel>>();
     var calls = 0;
     final provider = MenuProvider(
@@ -33,10 +36,13 @@ void main() {
     addTearDown(provider.dispose);
     final pending = provider.fetchMenuItems(branchId: 'branch-a');
     await provider.fetchMenuItems(branchId: 'branch-a');
-    older.complete([MenuItemModel.fromJson({'id': 'stale'})]);
+    older.complete([
+      MenuItemModel.fromJson({'id': 'stale'})
+    ]);
     await pending;
     expect(provider.menuItems, isEmpty);
     expect(provider.isLoading, isFalse);
-    expect(provider.errorMessage, 'Unable to load menu items. Please try again.');
+    expect(
+        provider.errorMessage, 'Unable to load menu items. Please try again.');
   });
 }

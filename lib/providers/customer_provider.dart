@@ -17,12 +17,15 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
   List<UserModel> get customers {
     final query = _searchQuery.trim().toLowerCase();
     return _customers.where((customer) {
-      if (_activeFilter != null && customer.isActive != _activeFilter) return false;
+      if (_activeFilter != null && customer.isActive != _activeFilter) {
+        return false;
+      }
       return customer.name.toLowerCase().contains(query) ||
           customer.email.toLowerCase().contains(query) ||
           customer.phone.toLowerCase().contains(query);
     }).toList(growable: false);
   }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
@@ -37,7 +40,8 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _currentBranchId;
   String? get currentBranchId => _currentBranchId;
 
-  Future<void> loadCustomers({String? branchId, bool scopeChanged = false}) async {
+  Future<void> loadCustomers(
+      {String? branchId, bool scopeChanged = false}) async {
     if (scopeChanged) {
       _currentBranchId = branchId;
       _customers = [];
@@ -55,7 +59,8 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
       if (generation != _loadGeneration) return;
       _customers = [];
       _errorMessage = 'Unable to load customers. Please try again.';
-      AppLogger.error('Customer directory load failed: $error', tag: 'CustomerProvider');
+      AppLogger.error('Customer directory load failed: $error',
+          tag: 'CustomerProvider');
     } finally {
       if (generation == _loadGeneration) {
         _isLoading = false;
@@ -84,7 +89,8 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to update customer status: $e';
-      AppLogger.error('Toggle customer status error: $e', tag: 'CustomerProvider');
+      AppLogger.error('Toggle customer status error: $e',
+          tag: 'CustomerProvider');
       notifyListeners();
       return false;
     }
@@ -95,13 +101,15 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
     if (_customerStats.containsKey(customerId)) {
       return _customerStats[customerId]!;
     }
-    final stats = await CustomerService.getCustomerStats(customerId, branchId: _currentBranchId);
+    final stats = await CustomerService.getCustomerStats(customerId,
+        branchId: _currentBranchId);
     _customerStats[customerId] = stats;
     notifyListeners();
     return stats;
   }
 
-  Map<String, dynamic>? statsFor(String customerId) => _customerStats[customerId];
+  Map<String, dynamic>? statsFor(String customerId) =>
+      _customerStats[customerId];
 
   @override
   void dispose() {

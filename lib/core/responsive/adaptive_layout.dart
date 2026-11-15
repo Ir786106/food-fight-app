@@ -45,12 +45,16 @@ class AdaptiveLayout extends StatelessWidget {
         switch (sizeClass) {
           case WindowSizeClass.large:
             if (large != null) return large!(context, constraints, sizeClass);
-            if (expanded != null) return expanded!(context, constraints, sizeClass);
+            if (expanded != null) {
+              return expanded!(context, constraints, sizeClass);
+            }
             if (medium != null) return medium!(context, constraints, sizeClass);
             return compact(context, constraints, sizeClass);
 
           case WindowSizeClass.expanded:
-            if (expanded != null) return expanded!(context, constraints, sizeClass);
+            if (expanded != null) {
+              return expanded!(context, constraints, sizeClass);
+            }
             if (medium != null) return medium!(context, constraints, sizeClass);
             return compact(context, constraints, sizeClass);
 
@@ -114,9 +118,8 @@ class ResponsiveBox extends StatelessWidget {
       alignment: alignment,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: padding != null
-            ? Padding(padding: padding!, child: child)
-            : child,
+        child:
+            padding != null ? Padding(padding: padding!, child: child) : child,
       ),
     );
   }

@@ -68,10 +68,30 @@ class SuperAdminScaffold extends StatelessWidget {
 
   Widget? _buildBottomBar(BuildContext context) {
     const destinations = [
-      ('/super-admin/dashboard', 'HQ', Icons.dashboard_outlined, Icons.dashboard_rounded),
-      ('/super-admin/admins', 'Admins', Icons.admin_panel_settings_outlined, Icons.admin_panel_settings_rounded),
-      ('/super-admin/audit', 'Audit', Icons.history_outlined, Icons.history_rounded),
-      ('/super-admin/settings', 'Settings', Icons.settings_outlined, Icons.settings_rounded),
+      (
+        '/super-admin/dashboard',
+        'HQ',
+        Icons.dashboard_outlined,
+        Icons.dashboard_rounded
+      ),
+      (
+        '/super-admin/admins',
+        'Admins',
+        Icons.admin_panel_settings_outlined,
+        Icons.admin_panel_settings_rounded
+      ),
+      (
+        '/super-admin/audit',
+        'Audit',
+        Icons.history_outlined,
+        Icons.history_rounded
+      ),
+      (
+        '/super-admin/settings',
+        'Settings',
+        Icons.settings_outlined,
+        Icons.settings_rounded
+      ),
     ];
 
     int currentIndex = destinations.indexWhere((d) => d.$1 == currentRoute);
@@ -94,8 +114,10 @@ class SuperAdminScaffold extends StatelessWidget {
       },
       destinations: destinations.map((d) {
         return NavigationDestination(
-          icon: Icon(d.$3, size: 22, color: isDark ? Colors.white70 : Colors.black87),
-          selectedIcon: Icon(d.$4, size: 22, color: isDark ? Colors.white : AppColors.onYellow),
+          icon: Icon(d.$3,
+              size: 22, color: isDark ? Colors.white70 : Colors.black87),
+          selectedIcon: Icon(d.$4,
+              size: 22, color: isDark ? Colors.white : AppColors.onYellow),
           label: context.tr(d.$2),
         );
       }).toList(),

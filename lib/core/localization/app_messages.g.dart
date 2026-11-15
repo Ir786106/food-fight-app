@@ -10,22 +10,27 @@ const urduMessages = <String, String>{
   "Admins": "منتظمین",
   "Admins & Staff Access": "منتظمین اور عملے کی رسائی",
   "Allow app to access your location": "ایپ کو اپنا مقام استعمال کرنے دیں",
-  "Allow location access to share your delivery position.": "ڈیلیوری کے دوران اپنی جگہ شیئر کرنے کے لیے لوکیشن کی اجازت دیں۔",
+  "Allow location access to share your delivery position.":
+      "ڈیلیوری کے دوران اپنی جگہ شیئر کرنے کے لیے لوکیشن کی اجازت دیں۔",
   "Amount to collect": "وصول کرنے کی رقم",
   "App Version": "ایپ ورژن",
   "Applying…": "لاگو ہو رہا ہے…",
-  "Are you sure you want to end your administrative session?": "کیا آپ انتظامی پینل سے سائن آؤٹ کرنا چاہتے ہیں؟",
+  "Are you sure you want to end your administrative session?":
+      "کیا آپ انتظامی پینل سے سائن آؤٹ کرنا چاہتے ہیں؟",
   "Assigned": "رائیڈر مقرر",
   "Audit": "آڈٹ",
-  "Awaiting rider acceptance and collection": "رائیڈر کی منظوری اور وصولی کا انتظار ہے",
+  "Awaiting rider acceptance and collection":
+      "رائیڈر کی منظوری اور وصولی کا انتظار ہے",
   "Back": "واپس",
   "Block at this branch": "اس برانچ میں بلاک کریں",
   "Block customer account": "صارف کا اکاؤنٹ بلاک کریں",
   "Blocked": "بلاک شدہ",
   "Branch Deals": "برانچ کی پیشکشیں",
   "Branch status updated.": "برانچ کی حیثیت اپ ڈیٹ ہو گئی۔",
-  "{branch} will accept new orders again.": "{branch} دوبارہ نئے آرڈرز قبول کرے گی۔",
-  "{branch} will stop accepting new orders. Existing deliveries can continue.": "{branch} نئے آرڈرز لینا بند کر دے گی۔ جاری ڈیلیوریز جاری رہ سکتی ہیں۔",
+  "{branch} will accept new orders again.":
+      "{branch} دوبارہ نئے آرڈرز قبول کرے گی۔",
+  "{branch} will stop accepting new orders. Existing deliveries can continue.":
+      "{branch} نئے آرڈرز لینا بند کر دے گی۔ جاری ڈیلیوریز جاری رہ سکتی ہیں۔",
   "Browse Menu": "مینو دیکھیں",
   "Call": "فون کریں",
   "Cancel": "منسوخ کریں",
@@ -50,7 +55,8 @@ const urduMessages = <String, String>{
   "Completed": "مکمل",
   "Confirm cash on delivery": "ڈیلیوری پر نقد ادائیگی کی تصدیق کریں",
   "Confirm delivery": "ڈیلیوری کی تصدیق کریں",
-  "Confirm handover and collection of {amount}.": "آرڈر حوالے کرنے اور {amount} وصول کرنے کی تصدیق کریں۔",
+  "Confirm handover and collection of {amount}.":
+      "آرڈر حوالے کرنے اور {amount} وصول کرنے کی تصدیق کریں۔",
   "Confirm order": "آرڈر کی تصدیق کریں",
   "Confirm Sign Out": "سائن آؤٹ کی تصدیق",
   "Continue with Google Button": "گوگل سے جاری رکھنے کا بٹن",
@@ -59,8 +65,10 @@ const urduMessages = <String, String>{
   "Could not save language preference.": "زبان کی ترجیح محفوظ نہیں ہو سکی۔",
   "Coupon code": "کوپن کوڈ",
   "Coupon discount": "کوپن کی رعایت",
-  "Coupons cannot be combined with loyalty tokens.": "کوپن اور لائلٹی ٹوکن ایک ساتھ استعمال نہیں ہو سکتے۔",
-  "Create a branch and provision its first administrator.": "برانچ بنائیں اور اس کا پہلا منتظم مقرر کریں۔",
+  "Coupons cannot be combined with loyalty tokens.":
+      "کوپن اور لائلٹی ٹوکن ایک ساتھ استعمال نہیں ہو سکتے۔",
+  "Create a branch and provision its first administrator.":
+      "برانچ بنائیں اور اس کا پہلا منتظم مقرر کریں۔",
   "Create branch and admin": "برانچ اور منتظم بنائیں",
   "Customer Directory": "صارفین کی فہرست",
   "Customer Reviews": "صارفین کے جائزے",
@@ -86,27 +94,33 @@ const urduMessages = <String, String>{
   "Delivery rider": "ڈیلیوری رائیڈر",
   "Delivery Riders": "ڈیلیوری رائیڈرز",
   "Delivery Status Timeline": "ڈیلیوری کی پیش رفت",
-  "Download verified. Tap Install to continue.": "ڈاؤن لوڈ کی تصدیق ہو گئی۔ جاری رکھنے کے لیے انسٹال کریں۔",
-  "e.g. Extra sauce, no spicy seasoning...": "مثلاً اضافی ساس، تیز مصالحہ نہ ڈالیں",
+  "Download verified. Tap Install to continue.":
+      "ڈاؤن لوڈ کی تصدیق ہو گئی۔ جاری رکھنے کے لیے انسٹال کریں۔",
+  "e.g. Extra sauce, no spicy seasoning...":
+      "مثلاً اضافی ساس، تیز مصالحہ نہ ڈالیں",
   "Earnings": "آمدنی",
   "Email": "ای میل",
   "Email Address": "ای میل پتہ",
   "Email Address Field": "ای میل درج کرنے کی جگہ",
   "Email Offers": "ای میل آفرز",
   "Enter a valid email address": "درست ای میل پتہ درج کریں",
-  "Enter a valid Pakistani mobile number.": "درست پاکستانی موبائل نمبر درج کریں۔",
-  "Enter the code sent by SMS.": "ایس ایم ایس میں موصول ہونے والا کوڈ درج کریں۔",
+  "Enter a valid Pakistani mobile number.":
+      "درست پاکستانی موبائل نمبر درج کریں۔",
+  "Enter the code sent by SMS.":
+      "ایس ایم ایس میں موصول ہونے والا کوڈ درج کریں۔",
   "Enter the six-digit code.": "چھ ہندسوں کا کوڈ درج کریں۔",
   "Enter your email": "اپنی ای میل درج کریں",
   "Enter your password": "اپنا پاس ورڈ درج کریں",
-  "Are you sure you want to exit the Super Admin HQ?": "کیا آپ سپر ایڈمن پینل سے سائن آؤٹ کرنا چاہتے ہیں؟",
+  "Are you sure you want to exit the Super Admin HQ?":
+      "کیا آپ سپر ایڈمن پینل سے سائن آؤٹ کرنا چاہتے ہیں؟",
   "Expand Sidebar": "سائیڈ مینو کھولیں",
   "Explain what happened": "بتائیں کہ کیا ہوا",
   "Explore the menu": "مینو دیکھیں",
   "Failed delivery": "ڈیلیوری کا مسئلہ",
   "Fee Breakdown": "فیس کی تفصیل",
   "Finding a rider": "رائیڈر تلاش کیا جا رہا ہے",
-  "Firebase will use your number to verify your sign-in and prevent abuse.": "فائر بیس سائن اِن کی تصدیق اور غلط استعمال کی روک تھام کے لیے آپ کا نمبر استعمال کرے گا۔",
+  "Firebase will use your number to verify your sign-in and prevent abuse.":
+      "فائر بیس سائن اِن کی تصدیق اور غلط استعمال کی روک تھام کے لیے آپ کا نمبر استعمال کرے گا۔",
   "Fleet & Riders Overview": "فلیٹ اور رائیڈرز",
   "Food Fight delivery": "فوڈ فائٹ ڈیلیوری",
   "Food Fight is up to date.": "فوڈ فائٹ تازہ ترین ورژن پر ہے۔",
@@ -138,11 +152,14 @@ const urduMessages = <String, String>{
   "Load older orders": "پرانے آرڈر لوڈ کریں",
   "Loading customer accounts...": "صارفین کے اکاؤنٹس لوڈ ہو رہے ہیں...",
   "Location Access": "مقام تک رسائی",
-  "Location updates stopped. Check GPS and retry.": "لوکیشن کی اپ ڈیٹس رک گئی ہیں۔ جی پی ایس چیک کریں اور دوبارہ کوشش کریں۔",
+  "Location updates stopped. Check GPS and retry.":
+      "لوکیشن کی اپ ڈیٹس رک گئی ہیں۔ جی پی ایس چیک کریں اور دوبارہ کوشش کریں۔",
   "Log In": "سائن اِن",
   "Log In Button": "سائن اِن کا بٹن",
-  "Meal is packaged and awaiting pickup": "کھانا پیک ہو گیا ہے اور وصولی کا انتظار ہے",
-  "Meal packed and awaiting rider": "کھانا پیک ہو گیا ہے اور رائیڈر کا انتظار ہے",
+  "Meal is packaged and awaiting pickup":
+      "کھانا پیک ہو گیا ہے اور وصولی کا انتظار ہے",
+  "Meal packed and awaiting rider":
+      "کھانا پیک ہو گیا ہے اور رائیڈر کا انتظار ہے",
   "Menu": "مینو",
   "Menu Items": "مینو کی اشیا",
   "MENU & OFFERS": "مینو اور پیشکشیں",
@@ -176,7 +193,8 @@ const urduMessages = <String, String>{
   "Order Not Found": "آرڈر نہیں ملا",
   "Order placed": "آرڈر دے دیا گیا",
   "Order Ready": "آرڈر تیار ہے",
-  "Order {order} has been sent to the kitchen.": "آرڈر {order} کچن کو بھیج دیا گیا ہے۔",
+  "Order {order} has been sent to the kitchen.":
+      "آرڈر {order} کچن کو بھیج دیا گیا ہے۔",
   "Order submitted to restaurant": "آرڈر ریستوران کو بھیج دیا گیا ہے",
   "Order Summary": "آرڈر کا خلاصہ",
   "Order update": "آرڈر کی تازہ صورتِ حال",
@@ -190,9 +208,11 @@ const urduMessages = <String, String>{
   "Paid": "ادائیگی ہو چکی ہے",
   "Password": "پاس ورڈ",
   "Password Field": "پاس ورڈ درج کرنے کی جگہ",
-  "Password must be at least 6 characters": "پاس ورڈ کم از کم ۶ حروف کا ہونا چاہیے",
+  "Password must be at least 6 characters":
+      "پاس ورڈ کم از کم ۶ حروف کا ہونا چاہیے",
   "Pay in cash when your order arrives": "آرڈر پہنچنے پر نقد ادائیگی کریں",
-  "Pay PKR {amount} when your order arrives.": "آرڈر پہنچنے پر {amount} روپے ادا کریں۔",
+  "Pay PKR {amount} when your order arrives.":
+      "آرڈر پہنچنے پر {amount} روپے ادا کریں۔",
   "Payment Method": "ادائیگی کا طریقہ",
   "Pending": "زیرِ انتظار",
   "Picked Up": "رائیڈر نے وصول کیا",
@@ -216,7 +236,8 @@ const urduMessages = <String, String>{
   "Reactivate": "بحال کریں",
   "Reactivate branch?": "برانچ بحال کریں؟",
   "Ready": "تیار",
-  "Receive deals and promotions via email": "آفرز اور رعایتیں ای میل پر حاصل کریں",
+  "Receive deals and promotions via email":
+      "آفرز اور رعایتیں ای میل پر حاصل کریں",
   "Recently ordered": "حال ہی میں منگوائے گئے",
   "Recorded orders: {count}": "درج شدہ آرڈرز: {count}",
   "Refresh": "تازہ کریں",
@@ -232,10 +253,12 @@ const urduMessages = <String, String>{
   "Review order": "آرڈر کا جائزہ لیں",
   "Rider assigned": "رائیڈر مقرر ہو گیا",
   "Rider Console": "رائیڈر پینل",
-  "Rider payouts are not available yet.": "رائیڈر کی ادائیگیوں کی تفصیل ابھی دستیاب نہیں ہے۔",
+  "Rider payouts are not available yet.":
+      "رائیڈر کی ادائیگیوں کی تفصیل ابھی دستیاب نہیں ہے۔",
   "Rs.": "روپے",
   "Sales & Reports": "فروخت اور رپورٹس",
-  "Search by customer name, email or phone...": "نام، ای میل یا فون نمبر سے تلاش کریں...",
+  "Search by customer name, email or phone...":
+      "نام، ای میل یا فون نمبر سے تلاش کریں...",
   "Search orders": "آرڈرز تلاش کریں",
   "Search the menu": "مینو میں تلاش کریں",
   "{seconds}s": "{seconds} سیکنڈ",
@@ -247,7 +270,8 @@ const urduMessages = <String, String>{
   "Send code": "کوڈ بھیجیں",
   "Settings": "ترتیبات",
   "Settled": "حساب مکمل",
-  "Sharing your position during active deliveries": "جاری ڈیلیوری کے دوران آپ کی جگہ شیئر ہو رہی ہے",
+  "Sharing your position during active deliveries":
+      "جاری ڈیلیوری کے دوران آپ کی جگہ شیئر ہو رہی ہے",
   "Sign Out": "سائن آؤٹ",
   "SMS code": "ایس ایم ایس کوڈ",
   "Special Instructions": "خصوصی ہدایات",
@@ -268,7 +292,8 @@ const urduMessages = <String, String>{
   "The chefs have confirmed your meal": "کچن نے آپ کے آرڈر کی تصدیق کر دی ہے",
   "Theme": "ظاہری انداز",
   "This delivery is no longer available.": "یہ ڈیلیوری اب دستیاب نہیں ہے۔",
-  "This document has not been published yet.": "یہ دستاویز ابھی شائع نہیں ہوئی۔",
+  "This document has not been published yet.":
+      "یہ دستاویز ابھی شائع نہیں ہوئی۔",
   "This month": "اس مہینے",
   "This order has been cancelled": "یہ آرڈر منسوخ ہو گیا ہے",
   "This order is no longer available.": "یہ آرڈر اب دستیاب نہیں ہے۔",
@@ -283,18 +308,29 @@ const urduMessages = <String, String>{
   "Total Payable": "کل قابلِ ادائیگی رقم",
   "Track Live": "لائیو ٹریکنگ",
   "Try Again": "دوبارہ کوشش کریں",
-  "Turn on device location to share your delivery position.": "ڈیلیوری کے دوران اپنی جگہ شیئر کرنے کے لیے لوکیشن آن کریں۔",
-  "Unable to apply coupon. Try again.": "کوپن لاگو نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
-  "Unable to join the waitlist. Please try again.": "انتظار کی فہرست میں شامل نہیں ہو سکے۔ دوبارہ کوشش کریں۔",
-  "Unable to load customers. Please try again.": "صارفین لوڈ نہیں ہو سکے۔ دوبارہ کوشش کریں۔",
-  "Unable to load deliveries. Please try again.": "ڈیلیوریز لوڈ نہیں ہو سکیں۔ دوبارہ کوشش کریں۔",
-  "Unable to load earnings. Please try again.": "آمدنی لوڈ نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
-  "Unable to load older orders. Please try again.": "پرانے آرڈر لوڈ نہیں ہو سکے۔ دوبارہ کوشش کریں۔",
-  "Unable to load restaurant branches.": "ریستوران کی برانچیں لوڈ نہیں ہو سکیں۔",
+  "Turn on device location to share your delivery position.":
+      "ڈیلیوری کے دوران اپنی جگہ شیئر کرنے کے لیے لوکیشن آن کریں۔",
+  "Unable to apply coupon. Try again.":
+      "کوپن لاگو نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+  "Unable to join the waitlist. Please try again.":
+      "انتظار کی فہرست میں شامل نہیں ہو سکے۔ دوبارہ کوشش کریں۔",
+  "Unable to load customers. Please try again.":
+      "صارفین لوڈ نہیں ہو سکے۔ دوبارہ کوشش کریں۔",
+  "Unable to load deliveries. Please try again.":
+      "ڈیلیوریز لوڈ نہیں ہو سکیں۔ دوبارہ کوشش کریں۔",
+  "Unable to load earnings. Please try again.":
+      "آمدنی لوڈ نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
+  "Unable to load older orders. Please try again.":
+      "پرانے آرڈر لوڈ نہیں ہو سکے۔ دوبارہ کوشش کریں۔",
+  "Unable to load restaurant branches.":
+      "ریستوران کی برانچیں لوڈ نہیں ہو سکیں۔",
   "Unable to load this document.": "دستاویز لوڈ نہیں ہو سکی۔",
-  "Unable to load this order. Please try again.": "آرڈر لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
-  "Unable to load your rider profile. Please try again.": "رائیڈر پروفائل لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
-  "Unable to open this action on your device.": "اس ڈیوائس پر یہ کارروائی نہیں کھل سکی۔",
+  "Unable to load this order. Please try again.":
+      "آرڈر لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+  "Unable to load your rider profile. Please try again.":
+      "رائیڈر پروفائل لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+  "Unable to open this action on your device.":
+      "اس ڈیوائس پر یہ کارروائی نہیں کھل سکی۔",
   "Unable to refresh deliveries.": "ڈیلیوریز تازہ نہیں ہو سکیں۔",
   "Unable to update customer access.": "صارف کی رسائی تبدیل نہیں ہو سکی۔",
   "Unable to update this branch.": "اس برانچ کو اپ ڈیٹ نہیں کیا جا سکا۔",
@@ -315,6 +351,8 @@ const urduMessages = <String, String>{
   "Your bag is empty": "آپ کا بیگ خالی ہے",
   "Your rider has collected the meal": "رائیڈر نے آپ کا کھانا وصول کر لیا ہے",
   "Your rider has collected your meal": "رائیڈر نے آپ کا کھانا وصول کر لیا ہے",
-  "Your rider is on the way to your address": "رائیڈر آپ کے پتے کی طرف روانہ ہے",
-  "Your rider is preparing to collect the order": "رائیڈر آرڈر وصول کرنے کی تیاری کر رہا ہے",
+  "Your rider is on the way to your address":
+      "رائیڈر آپ کے پتے کی طرف روانہ ہے",
+  "Your rider is preparing to collect the order":
+      "رائیڈر آرڈر وصول کرنے کی تیاری کر رہا ہے",
 };

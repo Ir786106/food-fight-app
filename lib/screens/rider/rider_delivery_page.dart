@@ -99,7 +99,8 @@ class _RiderDeliveryPageState extends State<RiderDeliveryPage> {
                     subtitle: Text(order.deliveryAddress)),
                 ListTile(
                   title: Text(order.customerName),
-                  subtitle: Text(order.customerPhone, textDirection: TextDirection.ltr),
+                  subtitle: Text(order.customerPhone,
+                      textDirection: TextDirection.ltr),
                   trailing: order.customerPhone.isEmpty
                       ? null
                       : IconButton(
@@ -119,7 +120,8 @@ class _RiderDeliveryPageState extends State<RiderDeliveryPage> {
                       ? 'Paid'
                       : 'Amount to collect')),
                   subtitle: Text(context.tr(order.paymentMethod)),
-                  trailing: Text('${context.tr('Rs.')} ${order.total.toStringAsFixed(2)}'),
+                  trailing: Text(
+                      '${context.tr('Rs.')} ${order.total.toStringAsFixed(2)}'),
                 )),
                 if (order.cancellationReason?.isNotEmpty == true)
                   ListTile(title: Text(order.cancellationReason!)),

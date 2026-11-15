@@ -39,8 +39,18 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final m = months[dt.month - 1];
     final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
@@ -99,100 +109,111 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
             ),
           ],
         ),
-      body: Column(
-        children: [
-          // Search & Filter header
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            decoration: BoxDecoration(
-              color: SuperAdminTheme.getCardBg(context),
-              border: Border(
-                bottom: BorderSide(
-                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+        body: Column(
+          children: [
+            // Search & Filter header
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              decoration: BoxDecoration(
+                color: SuperAdminTheme.getCardBg(context),
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? Colors.white10 : Colors.grey.shade200,
+                  ),
                 ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: (val) => auditProvider.setSearchQuery(val),
-                  decoration: InputDecoration(
-                    hintText: 'Search by action, actor, or description...',
-                    hintStyle: TextStyle(fontSize: 13, color: textMuted),
-                    prefixIcon: Icon(Icons.search_rounded, size: 20, color: textMuted),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              auditProvider.setSearchQuery('');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF22172C) : Colors.grey.shade100,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Search bar
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (val) => auditProvider.setSearchQuery(val),
+                    decoration: InputDecoration(
+                      hintText: 'Search by action, actor, or description...',
+                      hintStyle: TextStyle(fontSize: 13, color: textMuted),
+                      prefixIcon: Icon(Icons.search_rounded,
+                          size: 20, color: textMuted),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                auditProvider.setSearchQuery('');
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF22172C)
+                          : Colors.grey.shade100,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                // Entity Filter Horizontal List
-                SizedBox(
-                  height: 38,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _entityTabs.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final tab = _entityTabs[index];
-                      final isSelected = auditProvider.entityFilter == tab['id'];
+                  const SizedBox(height: 12),
+                  // Entity Filter Horizontal List
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _entityTabs.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final tab = _entityTabs[index];
+                        final isSelected =
+                            auditProvider.entityFilter == tab['id'];
 
-                      return FilterChip(
-                        selected: isSelected,
-                        label: Text(
-                          tab['label']!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                            color: isSelected
-                                ? Colors.white
-                                : textDark.withValues(alpha: 0.8),
+                        return FilterChip(
+                          selected: isSelected,
+                          label: Text(
+                            tab['label']!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? Colors.white
+                                  : textDark.withValues(alpha: 0.8),
+                            ),
                           ),
-                        ),
-                        selectedColor: SuperAdminTheme.primary,
-                        backgroundColor: isDark ? const Color(0xFF22172C) : Colors.grey.shade100,
-                        checkmarkColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: isSelected
-                                ? SuperAdminTheme.primary
-                                : (isDark ? Colors.white12 : Colors.grey.shade300),
+                          selectedColor: SuperAdminTheme.primary,
+                          backgroundColor: isDark
+                              ? const Color(0xFF22172C)
+                              : Colors.grey.shade100,
+                          checkmarkColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? SuperAdminTheme.primary
+                                  : (isDark
+                                      ? Colors.white12
+                                      : Colors.grey.shade300),
+                            ),
                           ),
-                        ),
-                        onSelected: (val) {
-                          auditProvider.setEntityFilter(tab['id']!);
-                        },
-                      );
-                    },
+                          onSelected: (val) {
+                            auditProvider.setEntityFilter(tab['id']!);
+                          },
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // Log List Content
-          Expanded(
-            child: _buildLogContent(context, auditProvider),
-          ),
-        ],
-      ),
+            // Log List Content
+            Expanded(
+              child: _buildLogContent(context, auditProvider),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -299,9 +320,11 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: entityConfig['color'].withValues(alpha: 0.12),
+                              color:
+                                  entityConfig['color'].withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -361,9 +384,11 @@ class _SuperAdminAuditLogsScreenState extends State<SuperAdminAuditLogsScreen> {
               children: [
                 // Actor Pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF22172C) : Colors.grey.shade100,
+                    color:
+                        isDark ? const Color(0xFF22172C) : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isDark ? Colors.white10 : Colors.grey.shade300,

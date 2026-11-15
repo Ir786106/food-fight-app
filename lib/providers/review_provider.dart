@@ -80,7 +80,8 @@ class ReviewProvider extends ChangeNotifier with SafeChangeNotifier {
     notifyListenersPostFrame();
 
     _branchSubscription?.cancel();
-    _branchSubscription = _reviewService.streamBranchReviews(branchId: branchId).listen(
+    _branchSubscription =
+        _reviewService.streamBranchReviews(branchId: branchId).listen(
       (data) {
         _branchReviews = data;
         _isLoading = false;

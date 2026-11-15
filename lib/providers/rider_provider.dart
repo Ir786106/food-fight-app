@@ -47,7 +47,8 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
   List<RiderModel> get onlineRiders =>
       _riders.where((r) => r.isActive && r.isOnline).toList();
   List<OrderModel> get assignedDeliveries => {
-        for (final order in _recentDeliveries.where((order) => !order.status.isTerminal))
+        for (final order
+            in _recentDeliveries.where((order) => !order.status.isTerminal))
           order.id: order,
         for (final order in _assignedDeliveries) order.id: order,
       }.values.toList()
@@ -128,7 +129,8 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
         final activeIds = orders.map((order) => order.id).toSet();
         for (final previous in _assignedDeliveries) {
           if (!activeIds.contains(previous.id)) {
-            unawaited(_retainFinishedDelivery(previous.id, riderId, generation));
+            unawaited(
+                _retainFinishedDelivery(previous.id, riderId, generation));
           }
         }
         _assignedDeliveries = orders;
@@ -148,7 +150,8 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
       deliveryHistoryLoading = false;
       deliveryHistoryError = null;
       if (_loadingHistory || _olderPage != null) {
-        for (final order in _recentDeliveries.where((order) => order.status.isTerminal)) {
+        for (final order
+            in _recentDeliveries.where((order) => order.status.isTerminal)) {
           _olderDeliveries[order.id] = order;
         }
       }
@@ -188,7 +191,9 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
       String orderId, String riderId, int generation) async {
     final order = await OrderService.getOrder(orderId);
     if (generation != _deliveryGeneration ||
-        order == null || order.riderId != riderId || !order.status.isTerminal) {
+        order == null ||
+        order.riderId != riderId ||
+        !order.status.isTerminal) {
       return;
     }
     _olderDeliveries[order.id] = order;
@@ -199,7 +204,10 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
   Future<void> loadOlderDeliveries() async {
     final riderId = _deliveryRiderId;
     final cursor = _olderPage ?? _recentPage;
-    if (riderId == null || cursor == null || !hasOlderDeliveries || _loadingHistory) {
+    if (riderId == null ||
+        cursor == null ||
+        !hasOlderDeliveries ||
+        _loadingHistory) {
       return;
     }
     final generation = _deliveryGeneration;
@@ -210,7 +218,8 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
       final page = await OrderService.fetchNextRiderOrderPage(riderId, cursor);
       if (generation != _deliveryGeneration) return;
       _olderPage = page;
-      for (final order in page.orders.where((order) => order.status.isTerminal)) {
+      for (final order
+          in page.orders.where((order) => order.status.isTerminal)) {
         _olderDeliveries.putIfAbsent(order.id, () => order);
       }
       _updateHistory();

@@ -21,10 +21,12 @@ class ReportService {
         query = query.where('branchId', isEqualTo: branchId);
       }
       if (startDate != null) {
-        query = query.where('createdAt', isGreaterThanOrEqualTo: startDate.millisecondsSinceEpoch);
+        query = query.where('createdAt',
+            isGreaterThanOrEqualTo: startDate.millisecondsSinceEpoch);
       }
       if (endDate != null) {
-        query = query.where('createdAt', isLessThanOrEqualTo: endDate.millisecondsSinceEpoch);
+        query = query.where('createdAt',
+            isLessThanOrEqualTo: endDate.millisecondsSinceEpoch);
       }
 
       final snapshot = await query.get();
@@ -44,7 +46,8 @@ class ReportService {
         final total = (data['total'] ?? 0).toDouble();
         final createdAtMs = data['createdAt'] as int? ?? 0;
         final date = DateTime.fromMillisecondsSinceEpoch(createdAtMs);
-        final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        final dateKey =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
         if (status == 'pending') {
           pendingOrders++;
@@ -60,10 +63,17 @@ class ReportService {
 
           // Daily stats
           if (!dailyMap.containsKey(dateKey)) {
-            dailyMap[dateKey] = {'date': DateTime(date.year, date.month, date.day), 'revenue': 0.0, 'count': 0};
+            dailyMap[dateKey] = {
+              'date': DateTime(date.year, date.month, date.day),
+              'revenue': 0.0,
+              'count': 0
+            };
           }
-          dailyMap[dateKey]!['revenue'] = ((dailyMap[dateKey]!['revenue'] as num?)?.toDouble() ?? 0.0) + total;
-          dailyMap[dateKey]!['count'] = ((dailyMap[dateKey]!['count'] as num?)?.toInt() ?? 0) + 1;
+          dailyMap[dateKey]!['revenue'] =
+              ((dailyMap[dateKey]!['revenue'] as num?)?.toDouble() ?? 0.0) +
+                  total;
+          dailyMap[dateKey]!['count'] =
+              ((dailyMap[dateKey]!['count'] as num?)?.toInt() ?? 0) + 1;
 
           // Item sales
           final items = (data['items'] as List?) ?? [];
@@ -72,7 +82,9 @@ class ReportService {
               final food = itemJson['food'] as Map? ?? itemJson;
               final itemId = (food['id'] ?? '').toString();
               final itemName = (food['name'] ?? 'Item').toString();
-              final basePrice = (food['price'] is num) ? (food['price'] as num).toDouble() : 0.0;
+              final basePrice = (food['price'] is num)
+                  ? (food['price'] as num).toDouble()
+                  : 0.0;
               final qty = (itemJson['quantity'] as num?)?.toInt() ?? 1;
               final double lineRevenue = itemJson['totalPrice'] != null
                   ? (itemJson['totalPrice'] as num).toDouble()
@@ -90,8 +102,12 @@ class ReportService {
                   'image': img,
                 };
               }
-              itemSalesMap[itemId]!['qty'] = ((itemSalesMap[itemId]!['qty'] as num?)?.toInt() ?? 0) + qty;
-              itemSalesMap[itemId]!['revenue'] = ((itemSalesMap[itemId]!['revenue'] as num?)?.toDouble() ?? 0.0) + lineRevenue;
+              itemSalesMap[itemId]!['qty'] =
+                  ((itemSalesMap[itemId]!['qty'] as num?)?.toInt() ?? 0) + qty;
+              itemSalesMap[itemId]!['revenue'] =
+                  ((itemSalesMap[itemId]!['revenue'] as num?)?.toDouble() ??
+                          0.0) +
+                      lineRevenue;
             }
           }
         }
@@ -119,7 +135,12 @@ class ReportService {
       }).toList();
       dailySalesList.sort((a, b) => b.date.compareTo(a.date));
 
-      final avgOrder = totalOrders > 0 ? (totalRevenue / (totalOrders - cancelledOrders > 0 ? totalOrders - cancelledOrders : 1)) : 0.0;
+      final avgOrder = totalOrders > 0
+          ? (totalRevenue /
+              (totalOrders - cancelledOrders > 0
+                  ? totalOrders - cancelledOrders
+                  : 1))
+          : 0.0;
 
       return ReportModel(
         totalRevenue: totalRevenue,

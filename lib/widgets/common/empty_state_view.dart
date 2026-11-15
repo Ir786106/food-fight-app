@@ -22,9 +22,8 @@ class EmptyStateView extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor = isDark ? Colors.white : AppColors.textPrimary;
-    final secondaryTextColor = isDark
-        ? Colors.white.withValues(alpha: 0.65)
-        : AppColors.textSecondary;
+    final secondaryTextColor =
+        isDark ? Colors.white.withValues(alpha: 0.65) : AppColors.textSecondary;
 
     return Center(
       child: SingleChildScrollView(
@@ -109,7 +108,8 @@ class EmptyStateView extends StatelessWidget {
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),

@@ -27,7 +27,11 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
 
   static const List<Map<String, String>> _availablePermissions = [
     {'id': 'orders', 'label': 'Orders & Dispatch', 'icon': 'receipt_long'},
-    {'id': 'menu', 'label': 'Menu Items & Modifiers', 'icon': 'restaurant_menu'},
+    {
+      'id': 'menu',
+      'label': 'Menu Items & Modifiers',
+      'icon': 'restaurant_menu'
+    },
     {'id': 'categories', 'label': 'Food Categories', 'icon': 'category'},
     {'id': 'coupons', 'label': 'Deals & Coupons', 'icon': 'local_offer'},
     {'id': 'customers', 'label': 'Customer Accounts', 'icon': 'people'},
@@ -73,9 +77,12 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
 
           return AlertDialog(
             backgroundColor: AdminTheme.getCardBg(dialogCtx),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
-              existing == null ? 'Create Sub-Admin Account' : 'Edit Sub-Admin Restrictions',
+              existing == null
+                  ? 'Create Sub-Admin Account'
+                  : 'Edit Sub-Admin Restrictions',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -93,23 +100,28 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                     children: [
                       Text(
                         'Branch: ${currentAdmin.branchId ?? "Main Location"}',
-                        style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.primaryBlue, fontSize: 13),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AdminTheme.primaryBlue,
+                            fontSize: 13),
                       ),
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: nameCtrl,
-                        validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Full Name'),
+                        validator: (val) => ValidatorUtils.validateRequired(val,
+                            fieldName: 'Full Name'),
                         decoration: InputDecoration(
                           labelText: 'Full Name *',
                           hintText: 'e.g. Ali Ahmed',
                           filled: true,
-                          fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -119,31 +131,44 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                           labelText: 'Email Address *',
                           hintText: 'e.g. subadmin@foodfight.pk',
                           filled: true,
-                          fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: phoneCtrl,
                         keyboardType: TextInputType.phone,
-                        validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Phone'),
+                        validator: (val) => ValidatorUtils.validateRequired(val,
+                            fieldName: 'Phone'),
                         decoration: InputDecoration(
                           labelText: 'Phone Number *',
                           hintText: 'e.g. +92 300 0000000',
                           filled: true,
-                          fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      if (existing == null) TextFormField(
-                        controller: passwordCtrl, obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Initial password', helperText: 'Leave blank to link an existing account'),
-                        validator: (v) => v != null && v.isNotEmpty && v.length < 8 ? 'Use at least 8 characters' : null,
-                      ),
+                      if (existing == null)
+                        TextFormField(
+                          controller: passwordCtrl,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                              labelText: 'Initial password',
+                              helperText:
+                                  'Leave blank to link an existing account'),
+                          validator: (v) =>
+                              v != null && v.isNotEmpty && v.length < 8
+                                  ? 'Use at least 8 characters'
+                                  : null,
+                        ),
                       Text(
                         'Operational Permissions (Restrictions)',
                         style: TextStyle(
@@ -160,11 +185,13 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
+                          border: Border.all(
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.grey.shade300),
                         ),
                         child: Column(
                           children: _availablePermissions.map((perm) {
@@ -173,7 +200,10 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                             return CheckboxListTile(
                               dense: true,
                               value: isChecked,
-                              title: Text(perm['label']!, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              title: Text(perm['label']!,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
                               activeColor: AdminTheme.primaryBlue,
                               onChanged: (val) {
                                 setDialogState(() {
@@ -202,7 +232,8 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AdminTheme.primaryBlue,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: isSaving
                     ? null
@@ -211,19 +242,31 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                         setDialogState(() => isSaving = true);
 
                         try {
-                          await FirebaseFunctions.instance.httpsCallable('provisionTeamMember').call({
-                            'role': 'staff', 'name': nameCtrl.text.trim(), 'email': emailCtrl.text.trim(),
-                            'phone': phoneCtrl.text.trim(), 'password': passwordCtrl.text,
-                            'linkExisting': passwordCtrl.text.isEmpty, 'userId': existing?.id,
+                          await FirebaseFunctions.instance
+                              .httpsCallable('provisionTeamMember')
+                              .call({
+                            'role': 'staff',
+                            'name': nameCtrl.text.trim(),
+                            'email': emailCtrl.text.trim(),
+                            'phone': phoneCtrl.text.trim(),
+                            'password': passwordCtrl.text,
+                            'linkExisting': passwordCtrl.text.isEmpty,
+                            'userId': existing?.id,
                             'branchId': currentAdmin.branchId,
-                            'permissions': {for (final p in _availablePermissions) p['id']!: selectedPerms.contains(p['id'])},
+                            'permissions': {
+                              for (final p in _availablePermissions)
+                                p['id']!: selectedPerms.contains(p['id'])
+                            },
                           });
 
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (mounted) {
-                            AppSnackbar.showSnackBar(context,
+                            AppSnackbar.showSnackBar(
+                              context,
                               SnackBar(
-                                content: Text(existing == null ? 'Sub-Admin created successfully!' : 'Sub-Admin updated!'),
+                                content: Text(existing == null
+                                    ? 'Sub-Admin created successfully!'
+                                    : 'Sub-Admin updated!'),
                                 backgroundColor: AppColors.success,
                               ),
                             );
@@ -231,15 +274,23 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                         } catch (e) {
                           setDialogState(() => isSaving = false);
                           if (mounted) {
-                            AppSnackbar.showSnackBar(context,
-                              SnackBar(content: Text('Error saving sub-admin: $e'), backgroundColor: AppColors.error),
+                            AppSnackbar.showSnackBar(
+                              context,
+                              SnackBar(
+                                  content: Text('Error saving sub-admin: $e'),
+                                  backgroundColor: AppColors.error),
                             );
                           }
                         }
                       },
                 child: isSaving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(existing == null ? 'Create Sub-Admin' : 'Save Changes'),
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : Text(
+                        existing == null ? 'Create Sub-Admin' : 'Save Changes'),
               ),
             ],
           );
@@ -253,17 +304,22 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
     try {
       await StaffRepository.setStatus(admin.id, newStatus);
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text('Sub-admin "${admin.name}" marked as $newStatus'),
-            backgroundColor: newStatus == 'active' ? AppColors.success : AppColors.warning,
+            backgroundColor:
+                newStatus == 'active' ? AppColors.success : AppColors.warning,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
-          SnackBar(content: Text('Failed to update status: $e'), backgroundColor: AppColors.error),
+        AppSnackbar.showSnackBar(
+          context,
+          SnackBar(
+              content: Text('Failed to update status: $e'),
+              backgroundColor: AppColors.error),
         );
       }
     }
@@ -279,10 +335,15 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
     final auth = context.watch<AuthProvider>();
     final currentAdmin = auth.currentUser;
     final branchId = currentAdmin?.branchId?.trim();
-    if (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty || branchId.toLowerCase() == 'all')) {
+    if (!auth.isSuperAdmin &&
+        (branchId == null ||
+            branchId.isEmpty ||
+            branchId.toLowerCase() == 'all')) {
       return const AdminScaffold(
         currentRoute: '/admin/sub-admins',
-        body: Center(child: Text('This account needs a branch assignment before managing staff.')),
+        body: Center(
+            child: Text(
+                'This account needs a branch assignment before managing staff.')),
       );
     }
     final scopedBranch = auth.isSuperAdmin ? null : branchId;
@@ -298,7 +359,8 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Sub-Admin Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            const Text('Sub-Admin Management',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             Text(
               'Branch: ${branchId ?? "All Branches"}',
               style: const TextStyle(fontSize: 11, color: Colors.white70),
@@ -342,10 +404,14 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                             : null,
                         filled: true,
                         fillColor: cardBg,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.grey.shade300),
                         ),
                       ),
                     ),
@@ -355,11 +421,14 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AdminTheme.primaryBlue,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add Sub-Admin', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text('Add Sub-Admin',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () => _openSubAdminDialog(),
                   ),
                 ],
@@ -373,33 +442,42 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                 stream: _staffStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingIndicator(message: 'Loading sub-admins...');
+                    return const LoadingIndicator(
+                        message: 'Loading sub-admins...');
                   }
 
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.error)));
+                    return Center(
+                        child: Text('Error: ${snapshot.error}',
+                            style: const TextStyle(color: AppColors.error)));
                   }
 
-                  var subAdmins = (snapshot.data ?? const <AdminAccountModel>[]).where((a) {
+                  var subAdmins =
+                      (snapshot.data ?? const <AdminAccountModel>[]).where((a) {
                     // Filter: must be sub-admin created under this branch or by this admin
-                    final isCreatedByMe = a.parentAdminId != null && a.parentAdminId == currentAdmin?.id;
-                    final isBranchStaff = a.isSubAdmin && a.branchId == branchId;
+                    final isCreatedByMe = a.parentAdminId != null &&
+                        a.parentAdminId == currentAdmin?.id;
+                    final isBranchStaff =
+                        a.isSubAdmin && a.branchId == branchId;
                     return isCreatedByMe || isBranchStaff;
                   }).toList();
 
                   final query = _searchCtrl.text.trim().toLowerCase();
                   if (query.isNotEmpty) {
-                    subAdmins = subAdmins.where((a) =>
-                        a.name.toLowerCase().contains(query) ||
-                        a.email.toLowerCase().contains(query) ||
-                        a.phone.toLowerCase().contains(query)).toList();
+                    subAdmins = subAdmins
+                        .where((a) =>
+                            a.name.toLowerCase().contains(query) ||
+                            a.email.toLowerCase().contains(query) ||
+                            a.phone.toLowerCase().contains(query))
+                        .toList();
                   }
 
                   if (subAdmins.isEmpty) {
                     return EmptyStateView(
                       icon: Icons.group_off_rounded,
                       title: 'No Sub-Admins Found',
-                      description: 'Create restricted sub-admin accounts for your branch staff members.',
+                      description:
+                          'Create restricted sub-admin accounts for your branch staff members.',
                       buttonText: 'Add Sub-Admin',
                       onButtonPressed: () => _openSubAdminDialog(),
                     );
@@ -416,7 +494,10 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                         decoration: BoxDecoration(
                           color: cardBg,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                          border: Border.all(
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.grey.shade200),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,38 +506,56 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 22,
-                                  backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.12),
+                                  backgroundColor: AdminTheme.primaryBlue
+                                      .withValues(alpha: 0.12),
                                   child: Text(
-                                    admin.name.isNotEmpty ? admin.name[0].toUpperCase() : 'S',
-                                    style: const TextStyle(color: AdminTheme.primaryBlue, fontWeight: FontWeight.bold, fontSize: 18),
+                                    admin.name.isNotEmpty
+                                        ? admin.name[0].toUpperCase()
+                                        : 'S',
+                                    style: const TextStyle(
+                                        color: AdminTheme.primaryBlue,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         admin.name,
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textDark),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: textDark),
                                       ),
                                       Text(
                                         '${admin.email} • ${admin.phone}',
-                                        style: TextStyle(color: textMuted, fontSize: 12.5),
+                                        style: TextStyle(
+                                            color: textMuted, fontSize: 12.5),
                                       ),
                                     ],
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: admin.isActive ? AppColors.success.withValues(alpha: 0.12) : AppColors.error.withValues(alpha: 0.12),
+                                    color: admin.isActive
+                                        ? AppColors.success
+                                            .withValues(alpha: 0.12)
+                                        : AppColors.error
+                                            .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     admin.status.toUpperCase(),
                                     style: TextStyle(
-                                      color: admin.isActive ? AppColors.success : AppColors.error,
+                                      color: admin.isActive
+                                          ? AppColors.success
+                                          : AppColors.error,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11,
                                     ),
@@ -487,9 +586,15 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                                       value: 'toggle',
                                       child: Row(
                                         children: [
-                                          Icon(admin.isActive ? Icons.block_rounded : Icons.check_circle_rounded, size: 18),
+                                          Icon(
+                                              admin.isActive
+                                                  ? Icons.block_rounded
+                                                  : Icons.check_circle_rounded,
+                                              size: 18),
                                           const SizedBox(width: 8),
-                                          Text(admin.isActive ? 'Suspend Account' : 'Activate Account'),
+                                          Text(admin.isActive
+                                              ? 'Suspend Account'
+                                              : 'Activate Account'),
                                         ],
                                       ),
                                     ),
@@ -504,24 +609,33 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                             // Permissions pills
                             Text(
                               'Allowed Actions:',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: textMuted),
                             ),
                             const SizedBox(height: 6),
                             Wrap(
                               spacing: 6,
                               runSpacing: 6,
                               children: _availablePermissions.map((p) {
-                                final isAllowed = admin.permissions.contains(p['id']);
+                                final isAllowed =
+                                    admin.permissions.contains(p['id']);
                                 return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: isAllowed
-                                        ? AdminTheme.primaryBlue.withValues(alpha: 0.1)
-                                        : (isDark ? Colors.white10 : Colors.grey.shade100),
+                                        ? AdminTheme.primaryBlue
+                                            .withValues(alpha: 0.1)
+                                        : (isDark
+                                            ? Colors.white10
+                                            : Colors.grey.shade100),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                       color: isAllowed
-                                          ? AdminTheme.primaryBlue.withValues(alpha: 0.3)
+                                          ? AdminTheme.primaryBlue
+                                              .withValues(alpha: 0.3)
                                           : Colors.transparent,
                                     ),
                                   ),
@@ -529,17 +643,25 @@ class _ManageSubAdminsScreenState extends State<ManageSubAdminsScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        isAllowed ? Icons.check : Icons.lock_outline,
+                                        isAllowed
+                                            ? Icons.check
+                                            : Icons.lock_outline,
                                         size: 12,
-                                        color: isAllowed ? AdminTheme.primaryBlue : Colors.grey,
+                                        color: isAllowed
+                                            ? AdminTheme.primaryBlue
+                                            : Colors.grey,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
                                         p['label']!,
                                         style: TextStyle(
                                           fontSize: 11,
-                                          fontWeight: isAllowed ? FontWeight.w600 : FontWeight.normal,
-                                          color: isAllowed ? AdminTheme.primaryBlue : Colors.grey,
+                                          fontWeight: isAllowed
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                          color: isAllowed
+                                              ? AdminTheme.primaryBlue
+                                              : Colors.grey,
                                         ),
                                       ),
                                     ],

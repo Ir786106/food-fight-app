@@ -121,16 +121,17 @@ class _ItemCustomizationBottomSheetState
                           borderRadius: BorderRadius.circular(16),
                         ),
                         alignment: Alignment.center,
-                        child: food.imageUrl != null && food.imageUrl!.isNotEmpty
-                            ? NetworkImageView(
-                                imageUrl: food.imageUrl,
-                                width: 76,
-                                height: 76,
-                                borderRadius: 16,
-                                fallbackEmoji: food.imageEmoji,
-                              )
-                            : Text(food.imageEmoji,
-                                style: const TextStyle(fontSize: 36)),
+                        child:
+                            food.imageUrl != null && food.imageUrl!.isNotEmpty
+                                ? NetworkImageView(
+                                    imageUrl: food.imageUrl,
+                                    width: 76,
+                                    height: 76,
+                                    borderRadius: 16,
+                                    fallbackEmoji: food.imageEmoji,
+                                  )
+                                : Text(food.imageEmoji,
+                                    style: const TextStyle(fontSize: 36)),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -142,7 +143,8 @@ class _ItemCustomizationBottomSheetState
                                 Expanded(
                                   child: Text(
                                     food.name,
-                                    style: theme.textTheme.titleMedium?.copyWith(
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 17,
                                     ),
@@ -151,7 +153,8 @@ class _ItemCustomizationBottomSheetState
                                 if (food.isSpicy)
                                   const Padding(
                                     padding: EdgeInsets.only(left: 4),
-                                    child: Text('🌶️', style: TextStyle(fontSize: 13)),
+                                    child: Text('🌶️',
+                                        style: TextStyle(fontSize: 13)),
                                   ),
                               ],
                             ),
@@ -223,7 +226,8 @@ class _ItemCustomizationBottomSheetState
                     ),
                     const SizedBox(height: 10),
                     ...food.variants!.map((variant) {
-                      final isSelected = _selectedVariant?.label == variant.label;
+                      final isSelected =
+                          _selectedVariant?.label == variant.label;
 
                       return GestureDetector(
                         onTap: () {
@@ -242,7 +246,8 @@ class _ItemCustomizationBottomSheetState
                             border: Border.all(
                               color: isSelected
                                   ? colorScheme.primary
-                                  : colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                  : colorScheme.outlineVariant
+                                      .withValues(alpha: 0.6),
                               width: isSelected ? 1.8 : 1,
                             ),
                           ),
@@ -253,9 +258,15 @@ class _ItemCustomizationBottomSheetState
                                 height: 20,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                  color: isSelected
+                                      ? AppColors.brandYellow
+                                      : Colors.transparent,
                                   border: Border.all(
-                                    color: isSelected ? AppColors.brandYellow : (isDark ? AppColors.darkBorder : AppColors.border),
+                                    color: isSelected
+                                        ? AppColors.brandYellow
+                                        : (isDark
+                                            ? AppColors.darkBorder
+                                            : AppColors.border),
                                     width: 2,
                                   ),
                                 ),
@@ -306,7 +317,9 @@ class _ItemCustomizationBottomSheetState
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14.5,
-                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      color: isDark
+                                          ? AppColors.brandYellow
+                                          : AppColors.brandMaroon,
                                     ),
                                   ),
                                   if (variant.discount > 0)
@@ -346,16 +359,22 @@ class _ItemCustomizationBottomSheetState
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                            color: isDark
+                                ? AppColors.darkSurfaceElevated
+                                : AppColors.surfaceMuted,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isDark ? AppColors.darkBorder : AppColors.border,
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.border,
                             ),
                           ),
                           child: Text(
                             'Optional',
                             style: TextStyle(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.textSecondary,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
@@ -389,7 +408,8 @@ class _ItemCustomizationBottomSheetState
                             border: Border.all(
                               color: isSelected
                                   ? colorScheme.primary
-                                  : colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                  : colorScheme.outlineVariant
+                                      .withValues(alpha: 0.6),
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
@@ -399,15 +419,22 @@ class _ItemCustomizationBottomSheetState
                                 width: 22,
                                 height: 22,
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                                  color: isSelected
+                                      ? AppColors.brandYellow
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: isSelected ? AppColors.brandYellow : (isDark ? AppColors.darkBorder : AppColors.border),
+                                    color: isSelected
+                                        ? AppColors.brandYellow
+                                        : (isDark
+                                            ? AppColors.darkBorder
+                                            : AppColors.border),
                                     width: 2,
                                   ),
                                 ),
                                 child: isSelected
-                                    ? const Icon(Icons.check, size: 16, color: AppColors.onYellow)
+                                    ? const Icon(Icons.check,
+                                        size: 16, color: AppColors.onYellow)
                                     : null,
                               ),
                               const SizedBox(width: 12),
@@ -426,7 +453,9 @@ class _ItemCustomizationBottomSheetState
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13.5,
-                                  color: isDark ? AppColors.brandYellow : AppColors.amberDark,
+                                  color: isDark
+                                      ? AppColors.brandYellow
+                                      : AppColors.amberDark,
                                 ),
                               ),
                             ],
@@ -452,11 +481,13 @@ class _ItemCustomizationBottomSheetState
                     decoration: InputDecoration(
                       hintText: 'e.g. Extra napkins, no spicy sauce...',
                       filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      fillColor: colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                          color:
+                              colorScheme.outlineVariant.withValues(alpha: 0.6),
                         ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -491,7 +522,8 @@ class _ItemCustomizationBottomSheetState
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: colorScheme.outlineVariant.withValues(alpha: 0.6),
@@ -501,7 +533,9 @@ class _ItemCustomizationBottomSheetState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
-                        onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
+                        onTap: _quantity > 1
+                            ? () => setState(() => _quantity--)
+                            : null,
                         child: Container(
                           width: 34,
                           height: 34,
@@ -514,7 +548,8 @@ class _ItemCustomizationBottomSheetState
                             size: 16,
                             color: _quantity > 1
                                 ? colorScheme.onSurface
-                                : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                                : colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.4),
                           ),
                         ),
                       ),
@@ -539,7 +574,8 @@ class _ItemCustomizationBottomSheetState
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.brandYellow.withValues(alpha: 0.4),
+                                color: AppColors.brandYellow
+                                    .withValues(alpha: 0.4),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -568,7 +604,8 @@ class _ItemCustomizationBottomSheetState
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
                             title: const Text('Start New Order?'),
                             content: const Text(
                               'Your cart contains items from a different branch. Adding this item will start a fresh cart for this branch.',
@@ -597,11 +634,14 @@ class _ItemCustomizationBottomSheetState
                                     selectedAddons: _selectedAddons.toList(),
                                   );
                                   Navigator.of(context).pop();
-                                  AppSnackbar.showSnackBar(context,
+                                  AppSnackbar.showSnackBar(
+                                    context,
                                     SnackBar(
-                                      content: Text('${food.name} added to new cart!'),
+                                      content: Text(
+                                          '${food.name} added to new cart!'),
                                       backgroundColor: AppColors.brandMaroon,
-                                      duration: const Duration(milliseconds: 1000),
+                                      duration:
+                                          const Duration(milliseconds: 1000),
                                     ),
                                   );
                                 },
@@ -629,9 +669,11 @@ class _ItemCustomizationBottomSheetState
                       final variantSuffix = _selectedVariant != null
                           ? ' (${_selectedVariant!.label})'
                           : '';
-                      AppSnackbar.showSnackBar(context,
+                      AppSnackbar.showSnackBar(
+                        context,
                         SnackBar(
-                          content: Text('${food.name}$variantSuffix added to bucket!'),
+                          content: Text(
+                              '${food.name}$variantSuffix added to bucket!'),
                           backgroundColor: AppColors.brandMaroon,
                           duration: const Duration(milliseconds: 1000),
                         ),

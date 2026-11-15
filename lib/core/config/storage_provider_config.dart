@@ -14,14 +14,17 @@ class StorageProviderConfig {
   /// Firebase Storage is primary for authenticated uploads and participant-scoped rules.
   static const StorageProvider activeProvider = StorageProvider.firebase;
 
-  static const bool signedSupabaseUploads = bool.fromEnvironment('SIGNED_SUPABASE_UPLOADS');
+  static const bool signedSupabaseUploads =
+      bool.fromEnvironment('SIGNED_SUPABASE_UPLOADS');
 
   /// Whether Supabase should remain active as a read fallback for legacy URLs
   static const bool enableSupabaseReadFallback = true;
 
   /// Optional Cloudinary configuration if Firebase Blaze plan is not yet active
-  static const String cloudinaryCloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME', defaultValue: '');
-  static const String cloudinaryUploadPreset = String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET', defaultValue: '');
+  static const String cloudinaryCloudName =
+      String.fromEnvironment('CLOUDINARY_CLOUD_NAME', defaultValue: '');
+  static const String cloudinaryUploadPreset =
+      String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET', defaultValue: '');
 
   /// Diagnostic logger to track image URL types
   static void logImageDiagnostic(String? rawUrl, {String? tag}) {

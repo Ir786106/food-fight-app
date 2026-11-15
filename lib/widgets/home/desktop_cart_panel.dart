@@ -21,7 +21,8 @@ class DesktopCartPanel extends StatelessWidget {
       width: 270,
       decoration: BoxDecoration(
         color: colors.surface,
-        border: BorderDirectional(start: BorderSide(color: colors.outlineVariant)),
+        border:
+            BorderDirectional(start: BorderSide(color: colors.outlineVariant)),
       ),
       child: SafeArea(
         child: Padding(
@@ -34,7 +35,8 @@ class DesktopCartPanel extends StatelessWidget {
                   Icon(Icons.shopping_bag_outlined, color: colors.primary),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(context.tr('Your bag'), style: theme.textTheme.titleMedium),
+                    child: Text(context.tr('Your bag'),
+                        style: theme.textTheme.titleMedium),
                   ),
                 ],
               ),
@@ -59,10 +61,13 @@ class DesktopCartPanel extends StatelessWidget {
                             contentPadding: EdgeInsets.zero,
                             leading: SizedBox.square(
                               dimension: 42,
-                              child: NetworkImageView(imageUrl: item.food.imageUrl),
+                              child: NetworkImageView(
+                                  imageUrl: item.food.imageUrl),
                             ),
-                            title: Text(item.displayName, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text('${item.quantity} × Rs. ${item.singleUnitPrice.toStringAsFixed(0)}'),
+                            title: Text(item.displayName,
+                                maxLines: 2, overflow: TextOverflow.ellipsis),
+                            subtitle: Text(
+                                '${item.quantity} × Rs. ${item.singleUnitPrice.toStringAsFixed(0)}'),
                           );
                         },
                       ),
@@ -72,11 +77,14 @@ class DesktopCartPanel extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child: Text(context.tr('Subtotal'))),
-                    Text('Rs. ${cart!.subtotal.toStringAsFixed(0)}', style: theme.textTheme.titleSmall),
+                    Text('Rs. ${cart!.subtotal.toStringAsFixed(0)}',
+                        style: theme.textTheme.titleSmall),
                   ],
                 ),
                 const SizedBox(height: 10),
-                FilledButton(onPressed: onOpenCart, child: Text(context.tr('View cart'))),
+                FilledButton(
+                    onPressed: onOpenCart,
+                    child: Text(context.tr('View cart'))),
               ],
             ],
           ),

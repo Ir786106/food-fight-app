@@ -11,6 +11,7 @@ import '../widgets/common/location_primer_dialog.dart';
 import '../widgets/common/city_picker_sheet.dart';
 
 enum BranchSortField { revenue, orderCount, profit, name }
+
 typedef BranchSortOption = BranchSortField;
 
 /// Manages multi-branch states for Customer storefront, Admin branch-scoping, and Super Admin oversight.
@@ -56,7 +57,8 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
     return _branches.where((b) => b.isActive).toList();
   }
 
-  BranchModel? get selectedBranch => _selectedBranch ?? (_branches.isNotEmpty ? _branches.first : null);
+  BranchModel? get selectedBranch =>
+      _selectedBranch ?? (_branches.isNotEmpty ? _branches.first : null);
   bool get isLoading => _isLoading;
   bool get isResolvingLocation => _isResolvingLocation;
   String? get errorMessage => _errorMessage;
@@ -106,12 +108,15 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
         _isLoading = false;
         _errorMessage = null;
 
-        if (!_platformMetrics && _selectedBranch == null && _branches.isNotEmpty) {
+        if (!_platformMetrics &&
+            _selectedBranch == null &&
+            _branches.isNotEmpty) {
           // If we have saved branch ID in prefs, try restoring it
           _restoreSavedBranchOrNearest();
         } else if (_selectedBranch != null) {
           // Update selected instance with fresh data from firestore
-          final updated = _branches.where((b) => b.id == _selectedBranch!.id).firstOrNull;
+          final updated =
+              _branches.where((b) => b.id == _selectedBranch!.id).firstOrNull;
           if (updated != null) {
             _selectedBranch = updated;
           }
@@ -151,7 +156,9 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
       }
 
       if (_savedCity != null && _savedCity!.isNotEmpty) {
-        final cityMatch = activeBranches.where((b) => b.city.toLowerCase() == _savedCity!.toLowerCase()).firstOrNull;
+        final cityMatch = activeBranches
+            .where((b) => b.city.toLowerCase() == _savedCity!.toLowerCase())
+            .firstOrNull;
         if (cityMatch != null) {
           _selectedBranch = cityMatch;
           notifyListeners();
@@ -159,11 +166,13 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
         }
       }
 
-      _selectedBranch = _branches.firstWhere((b) => b.isActive, orElse: () => _branches.first);
+      _selectedBranch = _branches.firstWhere((b) => b.isActive,
+          orElse: () => _branches.first);
       notifyListeners();
     } catch (_) {
       if (_branches.isNotEmpty) {
-        _selectedBranch = _branches.firstWhere((b) => b.isActive, orElse: () => _branches.first);
+        _selectedBranch = _branches.firstWhere((b) => b.isActive,
+            orElse: () => _branches.first);
         notifyListeners();
       }
     }
@@ -189,19 +198,23 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
       try {
         isServiceEnabled = await Geolocator.isLocationServiceEnabled();
       } catch (e) {
-        AppLogger.warn('Geolocator service check failed: $e', tag: 'BranchProvider');
+        AppLogger.warn('Geolocator service check failed: $e',
+            tag: 'BranchProvider');
       }
 
       LocationPermission permission = LocationPermission.denied;
       try {
         permission = await Geolocator.checkPermission();
       } catch (e) {
-        AppLogger.warn('Geolocator permission check failed: $e', tag: 'BranchProvider');
+        AppLogger.warn('Geolocator permission check failed: $e',
+            tag: 'BranchProvider');
       }
 
       // If first launch and context is present, show location primer
       final primerShown = prefs.getBool(_prefPrimerShownKey) ?? false;
-      if (context != null && (!primerShown || forcePrompt) && permission == LocationPermission.denied) {
+      if (context != null &&
+          (!primerShown || forcePrompt) &&
+          permission == LocationPermission.denied) {
         if (!context.mounted) return;
         final allow = await LocationPrimerDialog.show(context);
         await prefs.setBool(_prefPrimerShownKey, true);
@@ -209,7 +222,8 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
           try {
             permission = await Geolocator.requestPermission();
           } catch (e) {
-            AppLogger.warn('Geolocator requestPermission failed: $e', tag: 'BranchProvider');
+            AppLogger.warn('Geolocator requestPermission failed: $e',
+                tag: 'BranchProvider');
           }
         } else if (allow == false) {
           // Manual city selection chosen
@@ -222,7 +236,9 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
         }
       }
 
-      if (isServiceEnabled && (permission == LocationPermission.whileInUse || permission == LocationPermission.always)) {
+      if (isServiceEnabled &&
+          (permission == LocationPermission.whileInUse ||
+              permission == LocationPermission.always)) {
         try {
           final pos = await Geolocator.getCurrentPosition(
             locationSettings: const LocationSettings(
@@ -240,7 +256,8 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
           notifyListeners();
           return;
         } catch (e) {
-          AppLogger.warn('Failed to obtain GPS position: $e', tag: 'BranchProvider');
+          AppLogger.warn('Failed to obtain GPS position: $e',
+              tag: 'BranchProvider');
         }
       }
 
@@ -259,11 +276,13 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
         } else if (context != null && context.mounted) {
           await _promptCityPicker(context);
         } else if (_selectedBranch == null && _branches.isNotEmpty) {
-          _selectedBranch = _branches.firstWhere((b) => b.isActive, orElse: () => _branches.first);
+          _selectedBranch = _branches.firstWhere((b) => b.isActive,
+              orElse: () => _branches.first);
         }
       }
     } catch (e) {
-      AppLogger.error('autoResolveNearestBranch error: $e', tag: 'BranchProvider');
+      AppLogger.error('autoResolveNearestBranch error: $e',
+          tag: 'BranchProvider');
     } finally {
       _isResolvingLocation = false;
       notifyListeners();
@@ -272,7 +291,9 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Internal Haversine distance evaluation across active branches
   void _computeNearestBranch(double userLat, double userLng) {
-    final list = activeBranches.where((b) => b.latitude != null && b.longitude != null).toList();
+    final list = activeBranches
+        .where((b) => b.latitude != null && b.longitude != null)
+        .toList();
     if (list.isEmpty) {
       _isOutOfDeliveryArea = false;
       if (_branches.isNotEmpty) {
@@ -305,10 +326,12 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
         final nextOpen = list.where((b) => b.isActive).firstOrNull;
         if (nextOpen != null) {
           _selectedBranch = nextOpen;
-          _closedBranchFallbackNotice = 'Branch "${nearest.name}" is temporarily closed. Serving you from "${nextOpen.name}".';
+          _closedBranchFallbackNotice =
+              'Branch "${nearest.name}" is temporarily closed. Serving you from "${nextOpen.name}".';
         } else {
           _selectedBranch = nearest;
-          _closedBranchFallbackNotice = 'Branch "${nearest.name}" is currently closed.';
+          _closedBranchFallbackNotice =
+              'Branch "${nearest.name}" is currently closed.';
         }
       }
       _persistBranchSelection(nearest.id);
@@ -347,7 +370,9 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
 
     final shiftKm = branchRef.distanceToKm(newLat, newLng);
     if (shiftKm >= 1.0) {
-      AppLogger.info('Location shifted by ${shiftKm.toStringAsFixed(2)} km. Re-evaluating nearest branch.', tag: 'BranchProvider');
+      AppLogger.info(
+          'Location shifted by ${shiftKm.toStringAsFixed(2)} km. Re-evaluating nearest branch.',
+          tag: 'BranchProvider');
       _userLatitude = newLat;
       _userLongitude = newLng;
       _computeNearestBranch(newLat, newLng);
@@ -361,7 +386,9 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefCityKey, cityName);
 
-    final matches = activeBranches.where((b) => b.city.toLowerCase() == cityName.toLowerCase()).toList();
+    final matches = activeBranches
+        .where((b) => b.city.toLowerCase() == cityName.toLowerCase())
+        .toList();
     if (matches.isNotEmpty) {
       _selectedBranch = matches.first;
       _isOutOfDeliveryArea = false;
@@ -380,7 +407,8 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Manually prompt customer to pick their city/area
-  Future<void> promptManualCitySelection(BuildContext context) => _promptCityPicker(context);
+  Future<void> promptManualCitySelection(BuildContext context) =>
+      _promptCityPicker(context);
 
   Future<void> _promptCityPicker(BuildContext context) async {
     final availableCities = activeBranches.map((b) => b.city).toSet().toList();
@@ -404,7 +432,8 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefBranchKey, branchId);
     } catch (e) {
-      AppLogger.warn('Failed to persist branch selection: $e', tag: 'BranchProvider');
+      AppLogger.warn('Failed to persist branch selection: $e',
+          tag: 'BranchProvider');
     }
   }
 
@@ -412,7 +441,7 @@ class BranchProvider extends ChangeNotifier with SafeChangeNotifier {
   String getDeliveryLabel() {
     final branch = selectedBranch;
     if (branch == null) return 'Select your area';
-    
+
     // Dynamic estimated delivery time calculation
     int minutes = 20;
     if (_distanceToNearestKm != null && _distanceToNearestKm! > 0) {

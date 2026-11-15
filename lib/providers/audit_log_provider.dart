@@ -10,7 +10,8 @@ class AuditLogProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AuditLogModel> _logs = [];
   bool _isLoading = false;
   String? _errorMessage;
-  String _entityFilter = 'all'; // 'all', 'order', 'menu', 'category', 'coupon', 'admin', 'system'
+  String _entityFilter =
+      'all'; // 'all', 'order', 'menu', 'category', 'coupon', 'admin', 'system'
   String _searchQuery = '';
   StreamSubscription<List<AuditLogModel>>? _subscription;
 

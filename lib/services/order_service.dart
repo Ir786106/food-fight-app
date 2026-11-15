@@ -9,7 +9,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 class OrderPage {
   const OrderPage._(this.orders, this._lastDocument);
 
-  factory OrderPage._fromSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) =>
+  factory OrderPage._fromSnapshot(
+          QuerySnapshot<Map<String, dynamic>> snapshot) =>
       OrderPage._(
         [
           for (final doc in snapshot.docs)
@@ -31,13 +32,15 @@ class OrderService {
   /// Generate unique, human-readable order number like "FF-83921"
   static String generateOrderNumber() {
     final now = DateTime.now();
-    final timeTail = (now.millisecondsSinceEpoch % 100000).toString().padLeft(5, '0');
+    final timeTail =
+        (now.millisecondsSinceEpoch % 100000).toString().padLeft(5, '0');
     final random = Random().nextInt(90) + 10;
     return 'FF-$timeTail$random';
   }
 
   /// Watch orders for a specific customer in real-time
-  static Stream<List<OrderModel>> watchCustomerOrders(String customerId, {int? limit}) {
+  static Stream<List<OrderModel>> watchCustomerOrders(String customerId,
+      {int? limit}) {
     Query query = _collection
         .where('customerId', isEqualTo: customerId)
         .orderBy('createdAt', descending: true);
@@ -54,26 +57,35 @@ class OrderService {
   }
 
   static Query<Map<String, dynamic>> _customerQuery(String customerId) =>
-      FirebaseFirestore.instance.collection(FirestoreCollections.orders)
+      FirebaseFirestore.instance
+          .collection(FirestoreCollections.orders)
           .where('customerId', isEqualTo: customerId);
 
   static Query<Map<String, dynamic>> _riderQuery(String riderId) =>
-      FirebaseFirestore.instance.collection(FirestoreCollections.orders)
+      FirebaseFirestore.instance
+          .collection(FirestoreCollections.orders)
           .where('riderId', isEqualTo: riderId);
 
   static Stream<OrderPage> watchRiderOrderPage(String riderId) =>
-      _riderQuery(riderId).orderBy('createdAt', descending: true)
-          .limit(pageSize).snapshots().map(OrderPage._fromSnapshot);
+      _riderQuery(riderId)
+          .orderBy('createdAt', descending: true)
+          .limit(pageSize)
+          .snapshots()
+          .map(OrderPage._fromSnapshot);
 
   static Stream<List<OrderModel>> watchActiveRiderOrders(String riderId) =>
       _riderQuery(riderId)
-          .where('status', whereNotIn: ['delivered', 'cancelled', 'canceled', 'failed'])
+          .where('status',
+              whereNotIn: ['delivered', 'cancelled', 'canceled', 'failed'])
           .snapshots()
-          .map((snapshot) => OrderPage._fromSnapshot(snapshot).orders
-              .where((order) => !order.status.isTerminal).toList());
+          .map((snapshot) => OrderPage._fromSnapshot(snapshot)
+              .orders
+              .where((order) => !order.status.isTerminal)
+              .toList());
 
   static Stream<List<OrderModel>> watchRecentRiderEarnings(
-    String riderId, DateTime since,
+    String riderId,
+    DateTime since,
   ) =>
       _riderQuery(riderId)
           .where('status', isEqualTo: 'delivered')
@@ -82,7 +94,8 @@ class OrderService {
           .map((snapshot) => OrderPage._fromSnapshot(snapshot).orders);
 
   static Future<OrderPage> fetchNextRiderOrderPage(
-    String riderId, OrderPage after,
+    String riderId,
+    OrderPage after,
   ) async {
     final cursor = after._lastDocument;
     if (cursor == null) return const OrderPage._([], null);
@@ -95,18 +108,26 @@ class OrderService {
   }
 
   static Stream<OrderPage> watchCustomerOrderPage(String customerId) =>
-      _customerQuery(customerId).orderBy('createdAt', descending: true)
-          .limit(pageSize).snapshots().map(OrderPage._fromSnapshot);
-
-  static Stream<List<OrderModel>> watchActiveCustomerOrders(String customerId) =>
       _customerQuery(customerId)
-          .where('status', whereNotIn: ['delivered', 'cancelled', 'canceled', 'failed'])
+          .orderBy('createdAt', descending: true)
+          .limit(pageSize)
           .snapshots()
-          .map((snapshot) => OrderPage._fromSnapshot(snapshot).orders
-              .where((order) => !order.status.isTerminal).toList());
+          .map(OrderPage._fromSnapshot);
+
+  static Stream<List<OrderModel>> watchActiveCustomerOrders(
+          String customerId) =>
+      _customerQuery(customerId)
+          .where('status',
+              whereNotIn: ['delivered', 'cancelled', 'canceled', 'failed'])
+          .snapshots()
+          .map((snapshot) => OrderPage._fromSnapshot(snapshot)
+              .orders
+              .where((order) => !order.status.isTerminal)
+              .toList());
 
   static Future<OrderPage> fetchNextCustomerOrderPage(
-    String customerId, OrderPage after,
+    String customerId,
+    OrderPage after,
   ) async {
     final cursor = after._lastDocument;
     if (cursor == null) return const OrderPage._([], null);
@@ -117,6 +138,7 @@ class OrderService {
         .get(const GetOptions(source: Source.server));
     return OrderPage._fromSnapshot(snapshot);
   }
+
   /// Watch a single order in real-time (for order tracking)
   static Stream<OrderModel?> watchOrder(String orderId) {
     return _collection.doc(orderId).snapshots().map((doc) {
@@ -135,7 +157,9 @@ class OrderService {
   }) {
     Query query = _collection;
 
-    if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+    if (branchId != null &&
+        branchId.isNotEmpty &&
+        branchId.toLowerCase() != 'all') {
       query = query.where('branchId', isEqualTo: branchId);
     }
 
@@ -163,13 +187,16 @@ class OrderService {
     String? status,
     String? branchId,
   }) {
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-        .collection(FirestoreCollections.orders);
-    if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
+    Query<Map<String, dynamic>> query =
+        FirebaseFirestore.instance.collection(FirestoreCollections.orders);
+    if (branchId != null &&
+        branchId.isNotEmpty &&
+        branchId.toLowerCase() != 'all') {
       query = query.where('branchId', isEqualTo: branchId);
     }
     if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
-      query = query.where('status', isEqualTo: OrderStatus.fromString(status).name);
+      query =
+          query.where('status', isEqualTo: OrderStatus.fromString(status).name);
     }
     return query.orderBy('createdAt', descending: true);
   }
@@ -177,10 +204,11 @@ class OrderService {
   static Stream<OrderPage> watchAdminOrderPage({
     String? status,
     String? branchId,
-  }) => _adminQuery(status: status, branchId: branchId)
-      .limit(pageSize)
-      .snapshots()
-      .map(OrderPage._fromSnapshot);
+  }) =>
+      _adminQuery(status: status, branchId: branchId)
+          .limit(pageSize)
+          .snapshots()
+          .map(OrderPage._fromSnapshot);
 
   static Future<OrderPage> fetchNextAdminOrderPage({
     required OrderPage after,
@@ -215,7 +243,8 @@ class OrderService {
   }
 
   /// The server checks ownership, pending state and the cancellation window.
-  static Future<bool> cancelOrderByCustomer(String orderId, {String? reason}) async {
+  static Future<bool> cancelOrderByCustomer(String orderId,
+      {String? reason}) async {
     await updateOrderStatus(
       orderId,
       OrderStatus.cancelled,
@@ -257,7 +286,8 @@ class OrderService {
   static Future<Map<String, dynamic>> getTodaySummary() async {
     try {
       final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+      final startOfDay =
+          DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
 
       final snapshot = await _collection
           .where('createdAt', isGreaterThanOrEqualTo: startOfDay)

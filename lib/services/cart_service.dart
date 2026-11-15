@@ -14,19 +14,24 @@ class CartService extends ChangeNotifier {
 
   int get itemCount => _items.fold(0, (sum, item) => sum + item.quantity);
 
-  double get subtotal =>
-      _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  double get subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
   double get deliveryFee => _items.isEmpty ? 0 : 249;
 
   double get total => subtotal + deliveryFee;
 
-  void addToCart(FoodModel food, {int quantity = 1, String? note, String? selectedSize}) {
-    final existingIndex = _items.indexWhere((i) => i.food.id == food.id && i.selectedSize == selectedSize);
+  void addToCart(FoodModel food,
+      {int quantity = 1, String? note, String? selectedSize}) {
+    final existingIndex = _items.indexWhere(
+        (i) => i.food.id == food.id && i.selectedSize == selectedSize);
     if (existingIndex != -1) {
       _items[existingIndex].quantity += quantity;
     } else {
-      _items.add(CartItemModel(food: food, quantity: quantity, note: note, selectedSize: selectedSize));
+      _items.add(CartItemModel(
+          food: food,
+          quantity: quantity,
+          note: note,
+          selectedSize: selectedSize));
     }
     notifyListeners();
   }

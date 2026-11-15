@@ -49,7 +49,8 @@ class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
       onError: (e) {
         _isLoading = false;
         _errorMessage = 'Failed to load delivery areas: $e';
-        AppLogger.error('DeliveryAreaProvider watch error: $e', tag: 'DeliveryAreaProvider');
+        AppLogger.error('DeliveryAreaProvider watch error: $e',
+            tag: 'DeliveryAreaProvider');
         notifyListeners();
       },
     );
@@ -83,7 +84,8 @@ class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to create delivery area: $e';
-      AppLogger.error('Create delivery area error: $e', tag: 'DeliveryAreaProvider');
+      AppLogger.error('Create delivery area error: $e',
+          tag: 'DeliveryAreaProvider');
       notifyListeners();
       return false;
     }
@@ -96,7 +98,8 @@ class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to update delivery area: $e';
-      AppLogger.error('Update delivery area error: $e', tag: 'DeliveryAreaProvider');
+      AppLogger.error('Update delivery area error: $e',
+          tag: 'DeliveryAreaProvider');
       notifyListeners();
       return false;
     }
@@ -109,7 +112,8 @@ class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to delete delivery area: $e';
-      AppLogger.error('Delete delivery area error: $e', tag: 'DeliveryAreaProvider');
+      AppLogger.error('Delete delivery area error: $e',
+          tag: 'DeliveryAreaProvider');
       notifyListeners();
       return false;
     }
@@ -122,7 +126,8 @@ class DeliveryAreaProvider extends ChangeNotifier with SafeChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to toggle delivery area: $e';
-      AppLogger.error('Toggle delivery area error: $e', tag: 'DeliveryAreaProvider');
+      AppLogger.error('Toggle delivery area error: $e',
+          tag: 'DeliveryAreaProvider');
       notifyListeners();
       return false;
     }

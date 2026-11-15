@@ -86,7 +86,8 @@ class RestaurantService {
       final fallback = _defaultPartners.where((r) => r.id == id);
       return fallback.isNotEmpty ? fallback.first : null;
     } catch (e) {
-      AppLogger.error('Failed to get restaurant by id: $e', tag: 'RestaurantService');
+      AppLogger.error('Failed to get restaurant by id: $e',
+          tag: 'RestaurantService');
       final fallback = _defaultPartners.where((r) => r.id == id);
       return fallback.isNotEmpty ? fallback.first : null;
     }

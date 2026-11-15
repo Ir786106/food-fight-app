@@ -12,7 +12,8 @@ import 'package:food_fight/core/utils/image_compressor.dart';
 /// Supabase Image Storage Service Implementation
 /// Supabase is used EXCLUSIVELY for image storage (menu items, categories, profile photos)
 class SupabaseImageStorageService implements IImageStorageService {
-  static final SupabaseImageStorageService _instance = SupabaseImageStorageService._internal();
+  static final SupabaseImageStorageService _instance =
+      SupabaseImageStorageService._internal();
 
   SupabaseImageStorageService._internal();
 
@@ -76,7 +77,8 @@ class SupabaseImageStorageService implements IImageStorageService {
   }
 
   /// Generate a unique filename: e.g. products/product_<timestamp>.jpg
-  static String generateUniqueFileName(String path, String originalName, String extension) {
+  static String generateUniqueFileName(
+      String path, String originalName, String extension) {
     final cleanExt = extension.toLowerCase();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
@@ -96,9 +98,11 @@ class SupabaseImageStorageService implements IImageStorageService {
   }
 
   /// Initialize Supabase
-  static Future<void> initialize({String? url, String? publishableKey, String? anonKey}) async {
+  static Future<void> initialize(
+      {String? url, String? publishableKey, String? anonKey}) async {
     final targetUrl = url ?? SupabaseConfig.url;
-    final targetKey = publishableKey ?? anonKey ?? SupabaseConfig.publishableKey;
+    final targetKey =
+        publishableKey ?? anonKey ?? SupabaseConfig.publishableKey;
 
     try {
       if (_client == null) {
@@ -107,9 +111,12 @@ class SupabaseImageStorageService implements IImageStorageService {
           publishableKey: targetKey,
         );
       }
-      AppLogger.info('Supabase Storage initialized successfully (bucket: $_bucket)', tag: 'SupabaseStorage');
+      AppLogger.info(
+          'Supabase Storage initialized successfully (bucket: $_bucket)',
+          tag: 'SupabaseStorage');
     } catch (e) {
-      AppLogger.error('Supabase initialization warning: $e', tag: 'SupabaseStorage');
+      AppLogger.error('Supabase initialization warning: $e',
+          tag: 'SupabaseStorage');
     }
   }
 
@@ -119,16 +126,20 @@ class SupabaseImageStorageService implements IImageStorageService {
       final client = _client;
       if (client == null) return false;
       final items = await client.storage.from(_bucket).list();
-      AppLogger.info('Verified access to bucket "$_bucket": found ${items.length} items', tag: 'SupabaseStorage');
+      AppLogger.info(
+          'Verified access to bucket "$_bucket": found ${items.length} items',
+          tag: 'SupabaseStorage');
       return true;
     } catch (e) {
-      AppLogger.error('Bucket "$_bucket" access check: $e', tag: 'SupabaseStorage');
+      AppLogger.error('Bucket "$_bucket" access check: $e',
+          tag: 'SupabaseStorage');
       return false;
     }
   }
 
   /// Pick an image from Camera or Gallery
-  static Future<XFile?> pickImage({ImageSource source = ImageSource.gallery}) async {
+  static Future<XFile?> pickImage(
+      {ImageSource source = ImageSource.gallery}) async {
     final ImagePicker picker = ImagePicker();
     try {
       return await picker.pickImage(
@@ -144,7 +155,8 @@ class SupabaseImageStorageService implements IImageStorageService {
   }
 
   /// Pick a video from Camera or Gallery
-  static Future<XFile?> pickVideo({ImageSource source = ImageSource.gallery}) async {
+  static Future<XFile?> pickVideo(
+      {ImageSource source = ImageSource.gallery}) async {
     final ImagePicker picker = ImagePicker();
     try {
       return await picker.pickVideo(
@@ -173,7 +185,8 @@ class SupabaseImageStorageService implements IImageStorageService {
     required XFile image,
     required String path,
     void Function(double)? onProgress,
-  }) => _uploadSigned(image, path, 80, onProgress);
+  }) =>
+      _uploadSigned(image, path, 80, onProgress);
 
   @override
   Future<String> uploadCompressedImage({
@@ -181,7 +194,8 @@ class SupabaseImageStorageService implements IImageStorageService {
     required String path,
     int quality = 80,
     void Function(double)? onProgress,
-  }) => _uploadSigned(image, path, quality, onProgress);
+  }) =>
+      _uploadSigned(image, path, quality, onProgress);
 
   Future<String> _uploadSigned(
     XFile image,
@@ -195,7 +209,8 @@ class SupabaseImageStorageService implements IImageStorageService {
     }
     final purpose = signedPurposeForPath(path);
     if (purpose == null) {
-      throw StorageException(message: 'This image type cannot use signed uploads.');
+      throw StorageException(
+          message: 'This image type cannot use signed uploads.');
     }
     onProgress?.call(0);
     if (await image.length() > 20 * 1024 * 1024) {
@@ -207,10 +222,13 @@ class SupabaseImageStorageService implements IImageStorageService {
       quality: quality,
     );
     final jpeg = bytes.length >= 4 &&
-        bytes[0] == 0xff && bytes[1] == 0xd8 &&
-        bytes[bytes.length - 2] == 0xff && bytes.last == 0xd9;
+        bytes[0] == 0xff &&
+        bytes[1] == 0xd8 &&
+        bytes[bytes.length - 2] == 0xff &&
+        bytes.last == 0xd9;
     if (!jpeg || bytes.length > 2 * 1024 * 1024) {
-      throw StorageException(message: 'Choose an image that can be compressed to under 2 MB.');
+      throw StorageException(
+          message: 'Choose an image that can be compressed to under 2 MB.');
     }
 
     try {
@@ -222,15 +240,19 @@ class SupabaseImageStorageService implements IImageStorageService {
       final token = data['token'] as String;
       final storage = client.storage.from(_bucket);
       await storage.uploadBinaryToSignedUrl(
-        objectPath, token, bytes,
+        objectPath,
+        token,
+        bytes,
         const FileOptions(contentType: 'image/jpeg', upsert: false),
       );
       onProgress?.call(1);
       return storage.getPublicUrl(objectPath);
     } on FirebaseFunctionsException catch (error) {
-      throw StorageException(message: error.message ?? 'Could not authorize image upload.');
+      throw StorageException(
+          message: error.message ?? 'Could not authorize image upload.');
     } catch (_) {
-      throw StorageException(message: 'Could not upload the image. Please try again.');
+      throw StorageException(
+          message: 'Could not upload the image. Please try again.');
     }
   }
 
@@ -257,25 +279,29 @@ class SupabaseImageStorageService implements IImageStorageService {
 
     final Uint8List bytes = await video.readAsBytes();
     final String rawExt = video.name.split('.').last.toLowerCase();
-    final String cleanExt = supportedVideoExtensions.contains(rawExt) ? rawExt : 'mp4';
+    final String cleanExt =
+        supportedVideoExtensions.contains(rawExt) ? rawExt : 'mp4';
 
     final String cleanPath = path.endsWith('/') ? path : '$path/';
-    final String fileName = generateUniqueFileName(cleanPath, video.name, cleanExt);
+    final String fileName =
+        generateUniqueFileName(cleanPath, video.name, cleanExt);
     final String fullStoragePath = '$cleanPath$fileName';
     final String contentType = getMimeType(cleanExt);
 
     try {
       await client.storage.from(_bucket).uploadBinary(
-        fullStoragePath,
-        bytes,
-        fileOptions: FileOptions(
-          contentType: contentType,
-          upsert: false,
-        ),
-      );
+            fullStoragePath,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: contentType,
+              upsert: false,
+            ),
+          );
 
-      final String publicUrl = client.storage.from(_bucket).getPublicUrl(fullStoragePath);
-      AppLogger.info('Video uploaded successfully: $publicUrl', tag: 'SupabaseStorage');
+      final String publicUrl =
+          client.storage.from(_bucket).getPublicUrl(fullStoragePath);
+      AppLogger.info('Video uploaded successfully: $publicUrl',
+          tag: 'SupabaseStorage');
       return publicUrl;
     } catch (e) {
       String errorMsg = e.toString();
@@ -290,7 +316,8 @@ class SupabaseImageStorageService implements IImageStorageService {
         }
       } catch (_) {}
 
-      final detailedMsg = 'Video upload failed [Bucket: $_bucket, Path: $fullStoragePath, Ext: $cleanExt, MIME: $contentType${statusCode != null ? ", Status: $statusCode" : ""}]: $errorMsg';
+      final detailedMsg =
+          'Video upload failed [Bucket: $_bucket, Path: $fullStoragePath, Ext: $cleanExt, MIME: $contentType${statusCode != null ? ", Status: $statusCode" : ""}]: $errorMsg';
       AppLogger.error(detailedMsg, tag: 'SupabaseStorage');
       throw StorageException(message: detailedMsg);
     }
@@ -306,12 +333,14 @@ class SupabaseImageStorageService implements IImageStorageService {
       String filePath = pathOrUrl;
       if (pathOrUrl.startsWith('http')) {
         final uri = Uri.parse(pathOrUrl);
-        filePath = uri.pathSegments.skipWhile((s) => s != _bucket).skip(1).join('/');
+        filePath =
+            uri.pathSegments.skipWhile((s) => s != _bucket).skip(1).join('/');
       }
 
       if (filePath.isNotEmpty) {
         await client.storage.from(_bucket).remove([filePath]);
-        AppLogger.info('Deleted storage image: $filePath', tag: 'SupabaseStorage');
+        AppLogger.info('Deleted storage image: $filePath',
+            tag: 'SupabaseStorage');
       }
     } catch (e) {
       AppLogger.error('Failed to delete image: $e', tag: 'SupabaseStorage');
@@ -333,7 +362,9 @@ class SupabaseImageStorageService implements IImageStorageService {
   @override
   Future<Uint8List> downloadImage(String path) async {
     final client = _client;
-    if (client == null) throw StorageException(message: 'Storage not initialized');
+    if (client == null) {
+      throw StorageException(message: 'Storage not initialized');
+    }
     return await client.storage.from(_bucket).download(path);
   }
 

@@ -102,7 +102,8 @@ class HomeDealsCarousel extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppColors.brandYellow,
                           borderRadius: BorderRadius.circular(8),

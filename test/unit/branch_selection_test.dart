@@ -6,7 +6,8 @@ void main() {
   group('Branch Selection & Haversine Distance Tests', () {
     final branches = BranchService.getDefaultBranches();
 
-    test('All seeded branches have valid GPS coordinates and delivery radii', () {
+    test('All seeded branches have valid GPS coordinates and delivery radii',
+        () {
       expect(branches.length, 5);
       for (final b in branches) {
         expect(b.latitude, isNotNull);
@@ -18,7 +19,7 @@ void main() {
 
     test('Calculates accurate Haversine distance between points', () {
       final dhaBranch = branches.firstWhere((b) => b.id == 'branch-dha-lhr');
-      
+
       // Point ~2.5 km away from DHA Lahore branch (e.g. 31.4850, 74.3950)
       final distance = dhaBranch.distanceToKm(31.4850, 74.3950);
       expect(distance, greaterThan(1.0));
@@ -27,16 +28,18 @@ void main() {
 
     test('Detects customer is within delivery radius', () {
       final dhaBranch = branches.firstWhere((b) => b.id == 'branch-dha-lhr');
-      
+
       // Point within 5 km of DHA branch
       final isInside = dhaBranch.isWithinDeliveryRadius(31.4850, 74.3950);
       expect(isInside, isTrue);
     });
 
-    test('Detects customer in Arifwala is out of radius from Lahore branches', () {
+    test('Detects customer in Arifwala is out of radius from Lahore branches',
+        () {
       final dhaBranch = branches.firstWhere((b) => b.id == 'branch-dha-lhr');
-      final gulbergBranch = branches.firstWhere((b) => b.id == 'branch-gulberg-lhr');
-      
+      final gulbergBranch =
+          branches.firstWhere((b) => b.id == 'branch-gulberg-lhr');
+
       // Arifwala coordinates: ~30.5333 N, 73.0667 E
       const arifwalaLat = 30.5333;
       const arifwalaLng = 73.0667;
@@ -49,8 +52,10 @@ void main() {
       expect(distGulberg, greaterThan(120.0));
 
       // Neither Lahore branch delivers to Arifwala!
-      expect(dhaBranch.isWithinDeliveryRadius(arifwalaLat, arifwalaLng), isFalse);
-      expect(gulbergBranch.isWithinDeliveryRadius(arifwalaLat, arifwalaLng), isFalse);
+      expect(
+          dhaBranch.isWithinDeliveryRadius(arifwalaLat, arifwalaLng), isFalse);
+      expect(gulbergBranch.isWithinDeliveryRadius(arifwalaLat, arifwalaLng),
+          isFalse);
     });
 
     test('Nearest active branch resolution among multiple branches', () {
@@ -59,14 +64,17 @@ void main() {
       const isbLng = 73.0550;
 
       final sorted = List<BranchModel>.from(branches)
-        ..sort((a, b) => a.distanceToKm(isbLat, isbLng).compareTo(b.distanceToKm(isbLat, isbLng)));
+        ..sort((a, b) => a
+            .distanceToKm(isbLat, isbLng)
+            .compareTo(b.distanceToKm(isbLat, isbLng)));
 
       final nearest = sorted.first;
       expect(nearest.id, 'branch-f7-isb');
       expect(nearest.isWithinDeliveryRadius(isbLat, isbLng), isTrue);
     });
 
-    test('Branch fallback routes to next open branch when nearest is closed', () {
+    test('Branch fallback routes to next open branch when nearest is closed',
+        () {
       final testBranches = [
         BranchModel(
           id: 'branch-closed',
@@ -100,7 +108,8 @@ void main() {
       const customerLat = 31.4710;
       const customerLng = 74.4010;
 
-      final closedDist = testBranches.first.distanceToKm(customerLat, customerLng);
+      final closedDist =
+          testBranches.first.distanceToKm(customerLat, customerLng);
       final openDist = testBranches[1].distanceToKm(customerLat, customerLng);
       expect(closedDist, lessThan(openDist));
 

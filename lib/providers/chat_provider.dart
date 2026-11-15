@@ -23,7 +23,8 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
 
   // Messages in active thread
   List<ChatMessageModel> _activeMessages = [];
-  List<ChatMessageModel> get activeMessages => List.unmodifiable(_activeMessages);
+  List<ChatMessageModel> get activeMessages =>
+      List.unmodifiable(_activeMessages);
 
   // Admin chat list
   List<ChatModel> _adminChats = [];
@@ -70,9 +71,12 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
   void setConversationVisible(bool visible) {
     _conversationVisible = visible;
     if (visible && _activeChat != null && _readerId != null) {
-      _chatService.markAsRead(_activeChat!.id, _readerId!, _readerRole!,
-        messageIds: _activeMessages.map((m) => m.id).toList())
-        .catchError((Object error) { AppLogger.warn('Could not update read receipts', tag: 'ChatProvider'); });
+      _chatService
+          .markAsRead(_activeChat!.id, _readerId!, _readerRole!,
+              messageIds: _activeMessages.map((m) => m.id).toList())
+          .catchError((Object error) {
+        AppLogger.warn('Could not update read receipts', tag: 'ChatProvider');
+      });
     }
   }
 
@@ -83,18 +87,26 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
       if (session != _session || isDisposed) return;
       if (chat == null) throw StateError('Conversation not found');
       openExistingChat(chat, userId, role);
-    } catch (_) { _errorMessage = 'Could not open this conversation.'; _isLoadingMessages = false; notifyListeners(); }
+    } catch (_) {
+      _errorMessage = 'Could not open this conversation.';
+      _isLoadingMessages = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadOlderMessages() async {
     final chat = _activeChat;
-    if (_loadingOlder || !_hasMore || chat == null || _activeMessages.isEmpty) return;
+    if (_loadingOlder || !_hasMore || chat == null || _activeMessages.isEmpty) {
+      return;
+    }
     _loadingOlder = true;
     notifyListeners();
     try {
-      final page = await _chatService.getMessagesBefore(chat.id, beforeMessageId: _activeMessages.first.id);
+      final page = await _chatService.getMessagesBefore(chat.id,
+          beforeMessageId: _activeMessages.first.id);
       if (_activeChat?.id != chat.id) return;
-      _activeMessages = ChatService.mergeMessages(page.messages, _activeMessages);
+      _activeMessages =
+          ChatService.mergeMessages(page.messages, _activeMessages);
       _hasMore = page.hasMore;
     } catch (_) {
       _errorMessage = 'Could not load earlier messages. Please retry.';
@@ -107,8 +119,11 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
   Future<bool> retryFailedImage() async {
     final image = _failedImage;
     if (image == null) return false;
-    return sendImage(image: image, senderId: _failedSenderId!,
-      senderRole: _failedSenderRole!, senderName: _failedSenderName!);
+    return sendImage(
+        image: image,
+        senderId: _failedSenderId!,
+        senderRole: _failedSenderRole!,
+        senderName: _failedSenderName!);
   }
 
   // Unread totals
@@ -162,28 +177,28 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
 
     _chatsSubscription = _chatService
         .streamBranchChats(
-          branchId,
-          statusFilter: statusFilter,
-          isSuperAdmin: isSuperAdmin,
-        )
+      branchId,
+      statusFilter: statusFilter,
+      isSuperAdmin: isSuperAdmin,
+    )
         .listen(
-          (chats) {
-            _adminChats = chats;
-            _isLoadingChats = false;
-            notifyListeners();
-          },
-          onError: (e) {
-            if (e.toString().contains('permission-denied')) {
-              _chatsSubscription?.cancel();
-              _chatsSubscription = null;
-              return;
-            }
-            _isLoadingChats = false;
-            _errorMessage = 'Failed to load admin chats: $e';
-            AppLogger.error('Admin chats stream error: $e', tag: 'ChatProvider');
-            notifyListeners();
-          },
-        );
+      (chats) {
+        _adminChats = chats;
+        _isLoadingChats = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        if (e.toString().contains('permission-denied')) {
+          _chatsSubscription?.cancel();
+          _chatsSubscription = null;
+          return;
+        }
+        _isLoadingChats = false;
+        _errorMessage = 'Failed to load admin chats: $e';
+        AppLogger.error('Admin chats stream error: $e', tag: 'ChatProvider');
+        notifyListeners();
+      },
+    );
   }
 
   /// Select or create chat channel and subscribe to message updates
@@ -230,8 +245,11 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
     _subscribeToActiveMessages(chat.id, userId, userRole);
   }
 
-  void _subscribeToActiveMessages(String chatId, String userId, String userRole) {
-    _readerId = userId; _readerRole = userRole; _failedImage = null;
+  void _subscribeToActiveMessages(
+      String chatId, String userId, String userRole) {
+    _readerId = userId;
+    _readerRole = userRole;
+    _failedImage = null;
     _messagesSubscription?.cancel();
     _activeChatSubscription?.cancel();
     _activeMessages = [];
@@ -241,7 +259,10 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
       if (_activeChat?.id != chatId) return;
       _activeChat = chat;
       notifyListeners();
-    }, onError: (_) { _errorMessage = 'Could not refresh conversation status.'; notifyListeners(); });
+    }, onError: (_) {
+      _errorMessage = 'Could not refresh conversation status.';
+      notifyListeners();
+    });
     _messagesSubscription = _chatService.streamMessages(chatId).listen(
       (messages) {
         if (_activeChat?.id != chatId) return;
@@ -251,11 +272,17 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
 
         // Mark as read automatically when new messages arrive while viewing
-        if (_conversationVisible && messages.any((message) =>
-            message.senderId != userId && !message.readBy.contains(userId))) {
-          _chatService.markAsRead(chatId, userId, userRole,
-            messageIds: messages.map((message) => message.id).toList())
-            .catchError((Object error) { AppLogger.warn('Could not update read receipts', tag: 'ChatProvider'); });
+        if (_conversationVisible &&
+            messages.any((message) =>
+                message.senderId != userId &&
+                !message.readBy.contains(userId))) {
+          _chatService
+              .markAsRead(chatId, userId, userRole,
+                  messageIds: messages.map((message) => message.id).toList())
+              .catchError((Object error) {
+            AppLogger.warn('Could not update read receipts',
+                tag: 'ChatProvider');
+          });
         }
       },
       onError: (e) {
@@ -323,31 +350,48 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Upload and send to the captured conversation, even if another room opens.
-  Future<bool> sendImage({required XFile image, required String senderId,
-    required String senderRole, required String senderName}) async {
+  Future<bool> sendImage(
+      {required XFile image,
+      required String senderId,
+      required String senderRole,
+      required String senderName}) async {
     final chat = _activeChat;
     if (chat == null || _isSending) return false;
     _isSending = true;
     _uploadProgress = 0;
     _sendErrorMessage = null;
     _failedImage = image;
-    _failedSenderId = senderId; _failedSenderRole = senderRole; _failedSenderName = senderName;
+    _failedSenderId = senderId;
+    _failedSenderRole = senderRole;
+    _failedSenderName = senderName;
     notifyListeners();
     try {
-      final url = await _chatService.uploadChatImage(imageFileOrBytes: image,
-        fileName: image.name, chatId: chat.id, onProgress: (value) {
-          _uploadProgress = value; notifyListeners();
-        });
+      final url = await _chatService.uploadChatImage(
+          imageFileOrBytes: image,
+          fileName: image.name,
+          chatId: chat.id,
+          onProgress: (value) {
+            _uploadProgress = value;
+            notifyListeners();
+          });
       if (url == null) throw StateError('Upload did not complete');
-      await _chatService.sendMessage(chatId: chat.id, senderId: senderId,
-        senderRole: senderRole, senderName: senderName, text: '', type: 'image', imageUrl: url);
+      await _chatService.sendMessage(
+          chatId: chat.id,
+          senderId: senderId,
+          senderRole: senderRole,
+          senderName: senderName,
+          text: '',
+          type: 'image',
+          imageUrl: url);
       _failedImage = null;
       return true;
     } catch (_) {
       _sendErrorMessage = 'Photo could not be sent. Retry when connected.';
       return false;
     } finally {
-      _uploadProgress = null; _isSending = false; notifyListeners();
+      _uploadProgress = null;
+      _isSending = false;
+      notifyListeners();
     }
   }
 

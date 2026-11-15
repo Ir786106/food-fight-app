@@ -13,25 +13,30 @@ class CustomerService {
       FirebaseFunctions.instance.httpsCallable('manageBranchCustomers');
 
   static Future<List<UserModel>> getCustomers() async {
-    final result = await _directory.call<Map<String, dynamic>>({'action': 'list'});
+    final result =
+        await _directory.call<Map<String, dynamic>>({'action': 'list'});
     final customers = result.data['customers'] as List;
     return customers
-        .map((data) => UserModel.fromJson(Map<String, dynamic>.from(data as Map)))
+        .map((data) =>
+            UserModel.fromJson(Map<String, dynamic>.from(data as Map)))
         .toList();
   }
 
   /// Toggle customer active / blocked status
-  static Future<void> toggleCustomerStatus(String userId, bool currentStatus) async {
+  static Future<void> toggleCustomerStatus(
+      String userId, bool currentStatus) async {
     await _directory.call({
       'action': 'setStatus',
       'customerId': userId,
       'active': !currentStatus,
     });
-    AppLogger.info('Toggled customer status for $userId to ${!currentStatus}', tag: 'CustomerService');
+    AppLogger.info('Toggled customer status for $userId to ${!currentStatus}',
+        tag: 'CustomerService');
   }
 
   /// Fetch stats for a specific customer (total orders, total spent)
-  static Future<Map<String, dynamic>> getCustomerStats(String customerId, {String? branchId}) async {
+  static Future<Map<String, dynamic>> getCustomerStats(String customerId,
+      {String? branchId}) async {
     try {
       Query q = _ordersCollection.where('customerId', isEqualTo: customerId);
       if (branchId != null && branchId.isNotEmpty) {
@@ -55,7 +60,8 @@ class CustomerService {
         'totalSpent': totalSpent,
       };
     } catch (e) {
-      AppLogger.error('Error fetching customer stats: $e', tag: 'CustomerService');
+      AppLogger.error('Error fetching customer stats: $e',
+          tag: 'CustomerService');
       return {
         'totalOrders': 0,
         'totalSpent': 0.0,

@@ -17,8 +17,10 @@ class OptionTemplateProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _currentBranchId;
 
   List<OptionTemplateModel> get templates => _templates;
-  List<OptionTemplateModel> get sizeSets => _templates.where((t) => t.isSizeSet).toList();
-  List<OptionTemplateModel> get extrasGroups => _templates.where((t) => t.isExtrasGroup).toList();
+  List<OptionTemplateModel> get sizeSets =>
+      _templates.where((t) => t.isSizeSet).toList();
+  List<OptionTemplateModel> get extrasGroups =>
+      _templates.where((t) => t.isExtrasGroup).toList();
   bool get isLoading => _isLoading;
   String? get error => _error;
 

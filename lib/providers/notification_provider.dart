@@ -12,7 +12,8 @@ class NotificationProvider extends ChangeNotifier with SafeChangeNotifier {
   StreamSubscription<List<NotificationModel>>? _sub;
   String? _currentUserId;
 
-  List<NotificationModel> get notifications => List.unmodifiable(_notifications);
+  List<NotificationModel> get notifications =>
+      List.unmodifiable(_notifications);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -71,7 +72,8 @@ class NotificationProvider extends ChangeNotifier with SafeChangeNotifier {
   Future<void> markAllAsRead(String userId) async {
     try {
       await _service.markAllAsRead(userId);
-      _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+      _notifications =
+          _notifications.map((n) => n.copyWith(isRead: true)).toList();
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();

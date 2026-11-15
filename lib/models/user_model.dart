@@ -11,8 +11,11 @@ class UserModel {
 
   static bool isProfileActive(Map<String, dynamic> json) {
     final active = json['isActive'];
-    return (active == null || active == true || active == 1 ||
-            active == '1' || active == 'true') &&
+    return (active == null ||
+            active == true ||
+            active == 1 ||
+            active == '1' ||
+            active == 'true') &&
         json['isBlocked'] != true &&
         !const {'blocked', 'suspended', 'deactivated', 'inactive'}
             .contains(json['status']);
@@ -69,8 +72,11 @@ class UserModel {
 
   /// Whether this account is a Sub-Admin under a parent Branch Admin
   bool get isSubAdmin =>
-      userRole == UserRole.subAdmin || userRole == UserRole.staff ||
-      (userRole == UserRole.admin && parentAdminId != null && parentAdminId!.isNotEmpty);
+      userRole == UserRole.subAdmin ||
+      userRole == UserRole.staff ||
+      (userRole == UserRole.admin &&
+          parentAdminId != null &&
+          parentAdminId!.isNotEmpty);
 
   /// Check granular permission for Admin/Sub-Admin
   bool can(String permission) {
@@ -85,10 +91,14 @@ class UserModel {
         granted.replaceFirst(RegExp(r'^(manage_|view_)'), '') == requested);
   }
 
-  bool canEditBranchRecord(String? recordBranchId) => isActive && isAdmin &&
+  bool canEditBranchRecord(String? recordBranchId) =>
+      isActive &&
+      isAdmin &&
       (isSuperAdmin ||
-       (branchId != null && branchId!.isNotEmpty && branchId != 'all' &&
-        branchId == recordBranchId));
+          (branchId != null &&
+              branchId!.isNotEmpty &&
+              branchId != 'all' &&
+              branchId == recordBranchId));
 
   UserModel copyWith({
     String? id,
@@ -143,11 +153,14 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     List<String>? parsedPermissions;
     if (json['permissions'] is List) {
-      parsedPermissions = (json['permissions'] as List).whereType<String>().toList();
+      parsedPermissions =
+          (json['permissions'] as List).whereType<String>().toList();
     } else if (json['permissions'] is Map) {
-      parsedPermissions = (json['permissions'] as Map).entries
+      parsedPermissions = (json['permissions'] as Map)
+          .entries
           .where((entry) => entry.value == true)
-          .map((entry) => entry.key.toString()).toList();
+          .map((entry) => entry.key.toString())
+          .toList();
     }
 
     final rawRole = json['role']?.toString();
@@ -167,7 +180,8 @@ class UserModel {
       profileImage: json['profileImage'],
       permissions: parsedPermissions,
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
-      parentAdminId: json['parentAdminId']?.toString() ?? json['parent_admin_id']?.toString(),
+      parentAdminId: json['parentAdminId']?.toString() ??
+          json['parent_admin_id']?.toString(),
     );
   }
 }

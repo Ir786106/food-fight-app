@@ -28,7 +28,8 @@ void main() {
       cart = CartProvider();
     });
 
-    test('Order number generation is collision resistant and starts with FF-', () {
+    test('Order number generation is collision resistant and starts with FF-',
+        () {
       final num1 = OrderService.generateOrderNumber();
       final num2 = OrderService.generateOrderNumber();
 

@@ -91,7 +91,9 @@ void main() {
       expect(route, equals('/rider/dashboard'));
     });
 
-    test('Offline / network timeout: Logged-in user stays logged in and never sent to /login', () {
+    test(
+        'Offline / network timeout: Logged-in user stays logged in and never sent to /login',
+        () {
       final route = decideRoute(
         isAuthenticated: true,
         onboardingCompleted: true,
@@ -102,7 +104,9 @@ void main() {
       expect(route, isNot(equals('/login')));
     });
 
-    test('Offline with unknown role defaults to safe storefront /home and never /login', () {
+    test(
+        'Offline with unknown role defaults to safe storefront /home and never /login',
+        () {
       final route = decideRoute(
         isAuthenticated: true,
         onboardingCompleted: true,
@@ -113,11 +117,14 @@ void main() {
       expect(route, isNot(equals('/login')));
     });
 
-    test('Role caching in SharedPreferences preserves role across offline restarts', () async {
+    test(
+        'Role caching in SharedPreferences preserves role across offline restarts',
+        () async {
       SharedPreferences.setMockInitialValues({});
       await FirebaseAuthService.cacheRoleLocally('user_xyz_123', 'admin');
 
-      final cachedRole = await FirebaseAuthService.getCachedUserRole('user_xyz_123');
+      final cachedRole =
+          await FirebaseAuthService.getCachedUserRole('user_xyz_123');
       expect(cachedRole, equals('admin'));
     });
   });

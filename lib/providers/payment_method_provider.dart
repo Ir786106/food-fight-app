@@ -16,7 +16,9 @@ class PaymentMethodProvider extends ChangeNotifier with SafeChangeNotifier {
 
   PaymentMethodModel? get defaultMethod {
     final matches = _methods.where((m) => m.isDefault);
-    return matches.isNotEmpty ? matches.first : (_methods.isNotEmpty ? _methods.first : null);
+    return matches.isNotEmpty
+        ? matches.first
+        : (_methods.isNotEmpty ? _methods.first : null);
   }
 
   void watchMethods(String userId) {

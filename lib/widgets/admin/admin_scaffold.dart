@@ -70,10 +70,30 @@ class AdminScaffold extends StatelessWidget {
 
   Widget? _buildBottomBar(BuildContext context) {
     const allDestinations = [
-      ('/admin/dashboard', 'Dashboard', Icons.dashboard_outlined, Icons.dashboard_rounded),
-      ('/admin/orders', 'Orders', Icons.receipt_long_outlined, Icons.receipt_long_rounded),
-      ('/admin/menu', 'Menu', Icons.restaurant_menu_outlined, Icons.restaurant_menu_rounded),
-      ('/admin/chats', 'Chats', Icons.chat_bubble_outline_rounded, Icons.chat_rounded),
+      (
+        '/admin/dashboard',
+        'Dashboard',
+        Icons.dashboard_outlined,
+        Icons.dashboard_rounded
+      ),
+      (
+        '/admin/orders',
+        'Orders',
+        Icons.receipt_long_outlined,
+        Icons.receipt_long_rounded
+      ),
+      (
+        '/admin/menu',
+        'Menu',
+        Icons.restaurant_menu_outlined,
+        Icons.restaurant_menu_rounded
+      ),
+      (
+        '/admin/chats',
+        'Chats',
+        Icons.chat_bubble_outline_rounded,
+        Icons.chat_rounded
+      ),
     ];
 
     final user = context.watch<AuthProvider?>()?.currentUser;
@@ -102,8 +122,10 @@ class AdminScaffold extends StatelessWidget {
       },
       destinations: destinations.map((d) {
         return NavigationDestination(
-          icon: Icon(d.$3, size: 22, color: isDark ? Colors.white70 : Colors.black87),
-          selectedIcon: Icon(d.$4, size: 22, color: isDark ? Colors.white : AppColors.onYellow),
+          icon: Icon(d.$3,
+              size: 22, color: isDark ? Colors.white70 : Colors.black87),
+          selectedIcon: Icon(d.$4,
+              size: 22, color: isDark ? Colors.white : AppColors.onYellow),
           label: context.tr(d.$2),
         );
       }).toList(),

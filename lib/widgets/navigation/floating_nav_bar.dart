@@ -192,8 +192,7 @@ class FloatingNavBar extends StatelessWidget {
     bool showDotBadge = false,
   }) {
     final activeColor = isDark ? AppColors.brandYellow : AppColors.brandMaroon;
-    final inactiveColor =
-        Theme.of(context).colorScheme.onSurfaceVariant;
+    final inactiveColor = Theme.of(context).colorScheme.onSurfaceVariant;
     final activePillBg =
         (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
             .withValues(alpha: isDark ? 0.18 : 0.10);
@@ -338,7 +337,8 @@ class FloatingNavBar extends StatelessWidget {
       width: 184,
       decoration: BoxDecoration(
         color: colors.surface,
-        border: BorderDirectional(end: BorderSide(color: colors.outlineVariant)),
+        border:
+            BorderDirectional(end: BorderSide(color: colors.outlineVariant)),
       ),
       child: SafeArea(
         child: Column(
@@ -349,7 +349,8 @@ class FloatingNavBar extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(AppConstants.logoPath, width: 38, height: 38),
+                    child: Image.asset(AppConstants.logoPath,
+                        width: 38, height: 38),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -367,40 +368,41 @@ class FloatingNavBar extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                itemCount: _destinations.length,
-                itemBuilder: (context, index) {
-                  final item = _destinations[index];
-                  final selected = index == currentIndex;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  itemCount: _destinations.length,
+                  itemBuilder: (context, index) {
+                    final item = _destinations[index];
+                    final selected = index == currentIndex;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 10),
+                        minLeadingWidth: 24,
+                        selected: selected,
+                        selectedColor: accent,
+                        selectedTileColor: accent.withValues(alpha: 0.12),
+                        leading: Badge(
+                          isLabelVisible: (index == 2 && chatUnread > 0) ||
+                              (index == 1 && hasActiveOrder),
+                          label: index == 2
+                              ? Text(chatUnread > 99 ? '99+' : '$chatUnread')
+                              : null,
+                          child: Icon(
+                              selected ? item.activeIcon : item.inactiveIcon),
+                        ),
+                        title: Text(
+                          context.tr(item.label),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () => onTabSelected(index),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                      minLeadingWidth: 24,
-                      selected: selected,
-                      selectedColor: accent,
-                      selectedTileColor: accent.withValues(alpha: 0.12),
-                      leading: Badge(
-                        isLabelVisible:
-                            (index == 2 && chatUnread > 0) ||
-                            (index == 1 && hasActiveOrder),
-                        label: index == 2
-                            ? Text(chatUnread > 99 ? '99+' : '$chatUnread')
-                            : null,
-                        child: Icon(selected ? item.activeIcon : item.inactiveIcon),
-                      ),
-                      title: Text(
-                        context.tr(item.label),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => onTabSelected(index),
-                    ),
-                  );
-                },
+                    );
+                  },
                 ),
               ),
             ),

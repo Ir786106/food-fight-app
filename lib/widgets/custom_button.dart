@@ -107,9 +107,11 @@ class CustomButton extends StatelessWidget {
         buttonWidget = TextButton(
           onPressed: isLoading ? null : onPressed,
           style: TextButton.styleFrom(
-            foregroundColor: textColor ?? (isDark ? AppColors.darkAmberDark : AppColors.amberDark),
+            foregroundColor: textColor ??
+                (isDark ? AppColors.darkAmberDark : AppColors.amberDark),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radius12)),
           ),
           child: isLoading
               ? SizedBox(
@@ -117,7 +119,10 @@ class CustomButton extends StatelessWidget {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: textColor ?? (isDark ? AppColors.darkAmberDark : AppColors.amberDark),
+                    color: textColor ??
+                        (isDark
+                            ? AppColors.darkAmberDark
+                            : AppColors.amberDark),
                   ),
                 )
               : Row(
@@ -145,7 +150,8 @@ class CustomButton extends StatelessWidget {
           child: ElevatedButton(
             onPressed: isLoading ? null : onPressed,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.ctaDark,
+              backgroundColor:
+                  isDark ? AppColors.darkSurfaceElevated : AppColors.ctaDark,
               foregroundColor: Colors.white,
               elevation: 4,
               shadowColor: Colors.black.withValues(alpha: isDark ? 0.45 : 0.2),
@@ -158,7 +164,8 @@ class CustomButton extends StatelessWidget {
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.2, color: Colors.white),
                   )
                 : Row(
                     children: [
@@ -167,7 +174,8 @@ class CustomButton extends StatelessWidget {
                         height: 40,
                         decoration: BoxDecoration(
                           color: AppColors.brandYellow,
-                          borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radiusFull),
                         ),
                         child: Icon(
                           icon ?? Icons.shopping_bag_rounded,
@@ -190,10 +198,12 @@ class CustomButton extends StatelessWidget {
                       ),
                       if (priceBadge != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+                            borderRadius:
+                                BorderRadius.circular(AppDimens.radiusFull),
                           ),
                           child: Text(
                             priceBadge!,
@@ -228,7 +238,8 @@ class CustomButton extends StatelessWidget {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.error),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.error),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -264,9 +275,11 @@ class CustomButton extends StatelessWidget {
           child: OutlinedButton(
             onPressed: isLoading ? null : onPressed,
             style: OutlinedButton.styleFrom(
-              foregroundColor: textColor ?? (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+              foregroundColor: textColor ??
+                  (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
               side: BorderSide(
-                color: color ?? (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                color: color ??
+                    (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
                 width: 1.5,
               ),
               shape: RoundedRectangleBorder(
@@ -279,7 +292,10 @@ class CustomButton extends StatelessWidget {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: textColor ?? (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                      color: textColor ??
+                          (isDark
+                              ? AppColors.brandYellow
+                              : AppColors.brandMaroon),
                     ),
                   )
                 : Row(
@@ -299,7 +315,10 @@ class CustomButton extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
-                              color: textColor ?? (isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+                              color: textColor ??
+                                  (isDark
+                                      ? AppColors.brandYellow
+                                      : AppColors.brandMaroon),
                             ),
                           ),
                         ),
@@ -322,7 +341,9 @@ class CustomButton extends StatelessWidget {
               backgroundColor: btnColor,
               foregroundColor: fgColor,
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              disabledBackgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+              disabledBackgroundColor: isDark
+                  ? AppColors.darkSurfaceElevated
+                  : AppColors.surfaceMuted,
               disabledForegroundColor: AppColors.textMuted,
               elevation: 0,
               shape: RoundedRectangleBorder(

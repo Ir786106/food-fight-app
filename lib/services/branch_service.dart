@@ -17,7 +17,8 @@ class BranchService {
         return BranchModel.fromJson({
           ...data,
           'revenue': data['totalRevenue'] ?? data['revenue'],
-          'orderCount': data['totalOrders'] ?? data['orderCount'] ?? data['ordersCount'],
+          'orderCount':
+              data['totalOrders'] ?? data['orderCount'] ?? data['ordersCount'],
         });
       }).toList();
       list.sort((a, b) => b.revenue.compareTo(a.revenue));
@@ -41,7 +42,8 @@ class BranchService {
                 expenses: SafeConvert.toDouble(
                     currentMetrics[branch.id]?['expenses'], branch.expenses),
                 orderCount: SafeConvert.toInt(
-                    currentMetrics[branch.id]?['totalOrders'], branch.orderCount),
+                    currentMetrics[branch.id]?['totalOrders'],
+                    branch.orderCount),
               ),
           ]);
         }
@@ -113,13 +115,14 @@ class BranchService {
     required String address,
     required String phone,
     required String openingHours,
-  }) => _collection.doc(branchId).update({
-    'name': name,
-    'address': address,
-    'phone': phone,
-    'openingHours': openingHours,
-    'updatedAt': DateTime.now().millisecondsSinceEpoch,
-  });
+  }) =>
+      _collection.doc(branchId).update({
+        'name': name,
+        'address': address,
+        'phone': phone,
+        'openingHours': openingHours,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      });
 
   static Future<void> updateBranch(BranchModel branch) async {
     final data = _publicData(branch);

@@ -117,11 +117,17 @@ class ReviewService implements IReviewService {
 
   @override
   Future<ReviewModel?> createReview(ReviewModel review) async {
-    final result = await FirebaseFunctions.instance.httpsCallable('submitOrderReview').call({
-      'orderId': review.orderId, 'itemId': review.itemId, 'targetType': review.targetType,
-      'rating': review.rating, 'reviewText': review.reviewText,
+    final result = await FirebaseFunctions.instance
+        .httpsCallable('submitOrderReview')
+        .call({
+      'orderId': review.orderId,
+      'itemId': review.itemId,
+      'targetType': review.targetType,
+      'rating': review.rating,
+      'reviewText': review.reviewText,
     });
-    return ReviewModel.fromJson(jsonDecode(jsonEncode(result.data)) as Map<String,dynamic>);
+    return ReviewModel.fromJson(
+        jsonDecode(jsonEncode(result.data)) as Map<String, dynamic>);
   }
 
   @override
@@ -207,5 +213,4 @@ class ReviewService implements IReviewService {
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     });
   }
-
 }

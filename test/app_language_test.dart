@@ -22,7 +22,8 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets('uses Urdu device locale until English is saved', (tester) async {
-    tester.binding.platformDispatcher.localeTestValue = const Locale('ur', 'PK');
+    tester.binding.platformDispatcher.localeTestValue =
+        const Locale('ur', 'PK');
     addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
     final language = AppLanguage();
     addTearDown(language.dispose);
@@ -114,10 +115,14 @@ void main() {
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: RiderDeliveryPage(
           orderId: order.id,
-          advance: (order) async { accepted = order.id; },
+          advance: (order) async {
+            accepted = order.id;
+          },
           decline: (_) async {},
           fail: (_) async {},
-          open: (uri) async { opened = uri; },
+          open: (uri) async {
+            opened = uri;
+          },
         ),
       ),
     ));
@@ -191,7 +196,8 @@ void main() {
     final home = find.text('ہوم');
     final profile = find.text('پروفائل');
     expect(Directionality.of(tester.element(home)), TextDirection.rtl);
-    expect(tester.getCenter(home).dx, greaterThan(tester.getCenter(profile).dx));
+    expect(
+        tester.getCenter(home).dx, greaterThan(tester.getCenter(profile).dx));
     await tester.tap(profile);
     expect(selectedTab, 3);
     expect(tester.takeException(), isNull);

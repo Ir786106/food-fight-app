@@ -56,7 +56,9 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       text: coupon != null ? coupon.minimumOrder.toStringAsFixed(0) : '500',
     );
     final maxDiscCtrl = TextEditingController(
-      text: coupon?.maximumDiscount != null ? coupon!.maximumDiscount!.toStringAsFixed(0) : '300',
+      text: coupon?.maximumDiscount != null
+          ? coupon!.maximumDiscount!.toStringAsFixed(0)
+          : '300',
     );
     final descCtrl = TextEditingController(text: coupon?.description ?? '');
     int validDays = 30;
@@ -70,7 +72,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
 
           return AlertDialog(
             backgroundColor: AdminTheme.getCardBg(dialogContext),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               coupon == null ? 'Create Coupon' : 'Edit Coupon',
               style: TextStyle(
@@ -88,17 +91,20 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                     TextFormField(
                       controller: codeCtrl,
                       textCapitalization: TextCapitalization.characters,
-                      validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Coupon code'),
+                      validator: (val) => ValidatorUtils.validateRequired(val,
+                          fieldName: 'Coupon code'),
                       decoration: InputDecoration(
                         labelText: 'Promo Code *',
                         hintText: 'e.g. FIGHT50, BURGER20',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     Text(
                       'Discount Type',
                       style: TextStyle(
@@ -111,42 +117,55 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isDark ? Colors.white24 : Colors.grey.shade300),
+                        border: Border.all(
+                            color:
+                                isDark ? Colors.white24 : Colors.grey.shade300),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: selectedType,
                           items: const [
-                            DropdownMenuItem(value: 'percentage', child: Text('Percentage Discount (%)')),
-                            DropdownMenuItem(value: 'flat', child: Text('Flat Amount (Rs.)')),
-                            DropdownMenuItem(value: 'free_delivery', child: Text('Free Delivery')),
+                            DropdownMenuItem(
+                                value: 'percentage',
+                                child: Text('Percentage Discount (%)')),
+                            DropdownMenuItem(
+                                value: 'flat',
+                                child: Text('Flat Amount (Rs.)')),
+                            DropdownMenuItem(
+                                value: 'free_delivery',
+                                child: Text('Free Delivery')),
                           ],
-                          onChanged: (val) => setDialogState(() => selectedType = val!),
+                          onChanged: (val) =>
+                              setDialogState(() => selectedType = val!),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     if (selectedType != 'free_delivery') ...[
                       TextFormField(
                         controller: valueCtrl,
                         keyboardType: TextInputType.number,
-                        validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Discount value'),
+                        validator: (val) => ValidatorUtils.validateRequired(val,
+                            fieldName: 'Discount value'),
                         decoration: InputDecoration(
                           labelText: selectedType == 'percentage'
                               ? 'Discount % (e.g. 20)'
                               : 'Flat Discount Rs. (e.g. 200)',
                           filled: true,
-                          fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                       const SizedBox(height: 12),
                     ],
-
                     if (selectedType == 'percentage') ...[
                       TextFormField(
                         controller: maxDiscCtrl,
@@ -155,45 +174,55 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                           labelText: 'Max Discount Cap Rs. (optional)',
                           hintText: 'e.g. 300',
                           filled: true,
-                          fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                       const SizedBox(height: 12),
                     ],
-
                     TextFormField(
                       controller: minOrderCtrl,
                       keyboardType: TextInputType.number,
-                      validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Minimum order'),
+                      validator: (val) => ValidatorUtils.validateRequired(val,
+                          fieldName: 'Minimum order'),
                       decoration: InputDecoration(
                         labelText: 'Minimum Order Requirement (Rs.)',
                         hintText: 'e.g. 500',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     TextFormField(
                       controller: descCtrl,
                       maxLines: 2,
                       decoration: InputDecoration(
                         labelText: 'Description / Terms',
-                        hintText: 'e.g. Get 20% off on all burgers above Rs. 500',
+                        hintText:
+                            'e.g. Get 20% off on all burgers above Rs. 500',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
                         Text(
                           'Valid for:',
-                          style: TextStyle(fontSize: 13, color: AdminTheme.getTextMuted(dialogContext)),
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: AdminTheme.getTextMuted(dialogContext)),
                         ),
                         const SizedBox(width: 8),
                         DropdownButton<int>(
@@ -206,7 +235,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                             DropdownMenuItem(value: 90, child: Text('90 Days')),
                             DropdownMenuItem(value: 365, child: Text('1 Year')),
                           ],
-                          onChanged: (v) => setDialogState(() => validDays = v!),
+                          onChanged: (v) =>
+                              setDialogState(() => validDays = v!),
                         ),
                       ],
                     ),
@@ -223,7 +253,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AdminTheme.primaryBlue,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: isSaving
                     ? null
@@ -231,14 +262,20 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                         if (!formKey.currentState!.validate()) return;
 
                         final code = codeCtrl.text.trim().toUpperCase();
-                        final val = double.tryParse(valueCtrl.text.trim()) ?? 0.0;
-                        final minOrder = double.tryParse(minOrderCtrl.text.trim()) ?? 0.0;
-                        final maxDisc = double.tryParse(maxDiscCtrl.text.trim());
+                        final val =
+                            double.tryParse(valueCtrl.text.trim()) ?? 0.0;
+                        final minOrder =
+                            double.tryParse(minOrderCtrl.text.trim()) ?? 0.0;
+                        final maxDisc =
+                            double.tryParse(maxDiscCtrl.text.trim());
 
                         setDialogState(() => isSaving = true);
                         try {
                           final provider = context.read<CouponProvider>();
-                          final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
+                          final currentBranchId = context
+                              .read<AuthProvider>()
+                              .currentUser
+                              ?.branchId;
 
                           if (coupon == null) {
                             await provider.createCoupon(CouponModel(
@@ -250,7 +287,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                               minimumOrder: minOrder,
                               maximumDiscount: maxDisc,
                               validFrom: DateTime.now(),
-                              validUntil: DateTime.now().add(Duration(days: validDays)),
+                              validUntil:
+                                  DateTime.now().add(Duration(days: validDays)),
                               isActive: true,
                               branchId: currentBranchId,
                             ));
@@ -264,7 +302,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                               minimumOrder: minOrder,
                               maximumDiscount: maxDisc,
                               validFrom: coupon.validFrom,
-                              validUntil: DateTime.now().add(Duration(days: validDays)),
+                              validUntil:
+                                  DateTime.now().add(Duration(days: validDays)),
                               isActive: coupon.isActive,
                               usageCount: coupon.usageCount,
                               usageLimit: coupon.usageLimit,
@@ -276,8 +315,11 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                         } catch (e) {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
-                            AppSnackbar.showSnackBar(ctx,
-                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                            AppSnackbar.showSnackBar(
+                              ctx,
+                              SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: AppColors.error),
                             );
                           }
                         }
@@ -286,7 +328,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : Text(coupon == null ? 'Create' : 'Save Changes'),
               ),
@@ -304,19 +347,24 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
         backgroundColor: AdminTheme.getCardBg(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Coupon'),
-        content: Text('Are you sure you want to permanently delete "${coupon.code}"?'),
+        content: Text(
+            'Are you sure you want to permanently delete "${coupon.code}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
-              final success = await context.read<CouponProvider>().deleteCoupon(coupon.id);
+              final success =
+                  await context.read<CouponProvider>().deleteCoupon(coupon.id);
               if (mounted && success) {
-                AppSnackbar.showSnackBar(context,
+                AppSnackbar.showSnackBar(
+                  context,
                   SnackBar(content: Text('Coupon "${coupon.code}" deleted')),
                 );
               }
@@ -339,7 +387,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       currentRoute: '/admin/coupons',
       backgroundColor: AdminTheme.getBackground(context),
       appBar: AppBar(
-        title: const Text('Manage Coupons & Deals', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Manage Coupons & Deals',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -353,7 +402,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       body: Consumer<CouponProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.coupons.isEmpty) {
-            return const LoadingIndicator(message: 'Loading active promo deals...');
+            return const LoadingIndicator(
+                message: 'Loading active promo deals...');
           }
 
           if (provider.errorMessage != null && provider.coupons.isEmpty) {
@@ -397,11 +447,14 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                 : null,
                             filled: true,
                             fillColor: cardBg,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: isDark ? Colors.white12 : Colors.grey.shade300,
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.grey.shade300,
                               ),
                             ),
                           ),
@@ -412,12 +465,15 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AdminTheme.primaryBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () => _openCouponDialog(),
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add Coupon', style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: const Text('Add Coupon',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -428,47 +484,67 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                   child: filteredCoupons.isEmpty
                       ? EmptyStateView(
                           icon: Icons.local_offer_rounded,
-                          title: provider.coupons.isEmpty ? 'No Coupons Created' : 'No Matching Coupons',
+                          title: provider.coupons.isEmpty
+                              ? 'No Coupons Created'
+                              : 'No Matching Coupons',
                           description: provider.coupons.isEmpty
                               ? 'Create promo codes and discounts to boost order conversions.'
                               : 'Try searching with another keyword.',
-                          buttonText: provider.coupons.isEmpty ? 'Create First Coupon' : null,
-                          onButtonPressed: provider.coupons.isEmpty ? () => _openCouponDialog() : null,
+                          buttonText: provider.coupons.isEmpty
+                              ? 'Create First Coupon'
+                              : null,
+                          onButtonPressed: provider.coupons.isEmpty
+                              ? () => _openCouponDialog()
+                              : null,
                         )
                       : RefreshIndicator(
                           onRefresh: () => provider.fetchCoupons(),
                           child: ListView.separated(
                             padding: const EdgeInsets.all(16),
                             itemCount: filteredCoupons.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final coupon = filteredCoupons[index];
-                              final editable = context.read<AuthProvider>().currentUser?.canEditBranchRecord(coupon.branchId) == true;
-                              final isExpired = DateTime.now().isAfter(coupon.validUntil);
+                              final editable = context
+                                      .read<AuthProvider>()
+                                      .currentUser
+                                      ?.canEditBranchRecord(coupon.branchId) ==
+                                  true;
+                              final isExpired =
+                                  DateTime.now().isAfter(coupon.validUntil);
 
                               return Material(
                                 color: cardBg,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   side: BorderSide(
-                                    color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.shade200,
                                   ),
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 6),
                                             decoration: BoxDecoration(
-                                              color: AdminTheme.primaryBlue.withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: AdminTheme.primaryBlue
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                               border: Border.all(
-                                                color: AdminTheme.primaryBlue.withValues(alpha: 0.3),
+                                                color: AdminTheme.primaryBlue
+                                                    .withValues(alpha: 0.3),
                                               ),
                                             ),
                                             child: Text(
@@ -484,18 +560,27 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                           Row(
                                             children: [
                                               Switch(
-                                                value: coupon.isActive && !isExpired,
-                                                activeThumbColor: AdminTheme.primaryBlue,
-                                                onChanged: isExpired || !editable
+                                                value: coupon.isActive &&
+                                                    !isExpired,
+                                                activeThumbColor:
+                                                    AdminTheme.primaryBlue,
+                                                onChanged: isExpired ||
+                                                        !editable
                                                     ? null
-                                                    : (val) => provider.toggleActive(coupon.id, coupon.isActive),
+                                                    : (val) =>
+                                                        provider.toggleActive(
+                                                            coupon.id,
+                                                            coupon.isActive),
                                               ),
                                               PopupMenuButton<String>(
                                                 enabled: editable,
-                                                icon: Icon(Icons.more_vert_rounded, color: textMuted),
+                                                icon: Icon(
+                                                    Icons.more_vert_rounded,
+                                                    color: textMuted),
                                                 onSelected: (val) {
                                                   if (val == 'edit') {
-                                                    _openCouponDialog(coupon: coupon);
+                                                    _openCouponDialog(
+                                                        coupon: coupon);
                                                   } else if (val == 'delete') {
                                                     _confirmDelete(coupon);
                                                   }
@@ -505,7 +590,10 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                                     value: 'edit',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.edit_rounded, size: 18, color: AppColors.darkBrown),
+                                                        Icon(Icons.edit_rounded,
+                                                            size: 18,
+                                                            color: AppColors
+                                                                .darkBrown),
                                                         SizedBox(width: 8),
                                                         Text('Edit'),
                                                       ],
@@ -515,9 +603,17 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                                     value: 'delete',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
+                                                        Icon(
+                                                            Icons
+                                                                .delete_rounded,
+                                                            size: 18,
+                                                            color: AppColors
+                                                                .error),
                                                         SizedBox(width: 8),
-                                                        Text('Delete', style: TextStyle(color: AppColors.error)),
+                                                        Text('Delete',
+                                                            style: TextStyle(
+                                                                color: AppColors
+                                                                    .error)),
                                                       ],
                                                     ),
                                                   ),
@@ -528,10 +624,14 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      if (coupon.description?.isNotEmpty == true)
+                                      if (coupon.description?.isNotEmpty ==
+                                          true)
                                         Text(
                                           coupon.description!,
-                                          style: TextStyle(color: textDark, fontSize: 13, fontWeight: FontWeight.w500),
+                                          style: TextStyle(
+                                              color: textDark,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500),
                                         ),
                                       const SizedBox(height: 8),
                                       Wrap(
@@ -541,20 +641,25 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                                           _buildBadge(
                                             label: coupon.type == 'percentage'
                                                 ? '${coupon.value.toStringAsFixed(0)}% OFF'
-                                                : (coupon.type == 'free_delivery'
+                                                : (coupon.type ==
+                                                        'free_delivery'
                                                     ? 'FREE DELIVERY'
                                                     : 'Rs. ${coupon.value.toStringAsFixed(0)} OFF'),
                                             color: AppColors.success,
                                           ),
                                           _buildBadge(
-                                            label: 'Min Rs. ${coupon.minimumOrder.toStringAsFixed(0)}',
+                                            label:
+                                                'Min Rs. ${coupon.minimumOrder.toStringAsFixed(0)}',
                                             color: AppColors.darkBrown,
                                           ),
                                           if (isExpired)
-                                            _buildBadge(label: 'EXPIRED', color: AppColors.error)
+                                            _buildBadge(
+                                                label: 'EXPIRED',
+                                                color: AppColors.error)
                                           else
                                             _buildBadge(
-                                              label: 'Expires ${_formatDate(coupon.validUntil)}',
+                                              label:
+                                                  'Expires ${_formatDate(coupon.validUntil)}',
                                               color: AppColors.warning,
                                             ),
                                           _buildBadge(

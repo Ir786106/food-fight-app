@@ -124,7 +124,8 @@ class _MenuScreenState extends State<MenuScreen> {
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                      constraints:
+                          const BoxConstraints(minWidth: 18, minHeight: 18),
                       child: Center(
                         child: Text(
                           '${cart.itemCount}',
@@ -197,12 +198,17 @@ class _MenuScreenState extends State<MenuScreen> {
                     return GestureDetector(
                       onTap: () => setState(() => _selectedCategory = cat),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : colorScheme.surface,
+                          color: isSelected
+                              ? AppColors.primary
+                              : colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isSelected ? AppColors.primary : colorScheme.outlineVariant,
+                            color: isSelected
+                                ? AppColors.primary
+                                : colorScheme.outlineVariant,
                           ),
                         ),
                         child: Row(
@@ -212,7 +218,9 @@ class _MenuScreenState extends State<MenuScreen> {
                             Text(
                               cat,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : colorScheme.onSurface,
+                                color: isSelected
+                                    ? Colors.white
+                                    : colorScheme.onSurface,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
@@ -241,21 +249,28 @@ class _MenuScreenState extends State<MenuScreen> {
                     backgroundColor: colorScheme.surface,
                     selectedColor: AppColors.primary.withValues(alpha: 0.15),
                     labelStyle: TextStyle(
-                      color: _onlySpicy ? AppColors.primary : colorScheme.onSurface,
+                      color: _onlySpicy
+                          ? AppColors.primary
+                          : colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: _onlySpicy ? AppColors.primary : colorScheme.outlineVariant,
+                        color: _onlySpicy
+                            ? AppColors.primary
+                            : colorScheme.outlineVariant,
                       ),
                     ),
                   ),
                   const Spacer(),
                   Text(
                     '${filtered.length} dishes',
-                    style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -266,19 +281,23 @@ class _MenuScreenState extends State<MenuScreen> {
                 child: menuProvider.isLoading && allFoods.isEmpty
                     ? (MediaQuery.sizeOf(context).width >= 720
                         ? GridView.builder(
-                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 440,
                               childAspectRatio: 2.8,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
                             ),
                             itemCount: 6,
-                            itemBuilder: (_, __) => const FoodCardSkeleton.row(),
+                            itemBuilder: (_, __) =>
+                                const FoodCardSkeleton.row(),
                           )
                         : ListView.separated(
                             itemCount: 6,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemBuilder: (_, __) => const FoodCardSkeleton.row(),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, __) =>
+                                const FoodCardSkeleton.row(),
                           ))
                     : menuProvider.errorMessage != null && allFoods.isEmpty
                         ? ErrorView(
@@ -303,7 +322,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                 },
                                 child: MediaQuery.sizeOf(context).width >= 720
                                     ? GridView.builder(
-                                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                        gridDelegate:
+                                            const SliverGridDelegateWithMaxCrossAxisExtent(
                                           maxCrossAxisExtent: 440,
                                           childAspectRatio: 2.3,
                                           mainAxisSpacing: 12,
@@ -314,7 +334,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                           final food = filtered[index];
                                           return FoodCard(
                                             food: food,
-                                            onTap: () => Navigator.of(context).pushNamed(
+                                            onTap: () =>
+                                                Navigator.of(context).pushNamed(
                                               '/food-detail',
                                               arguments: food,
                                             ),
@@ -323,12 +344,14 @@ class _MenuScreenState extends State<MenuScreen> {
                                       )
                                     : ListView.separated(
                                         itemCount: filtered.length,
-                                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(height: 12),
                                         itemBuilder: (context, index) {
                                           final food = filtered[index];
                                           return FoodCard(
                                             food: food,
-                                            onTap: () => Navigator.of(context).pushNamed(
+                                            onTap: () =>
+                                                Navigator.of(context).pushNamed(
                                               '/food-detail',
                                               arguments: food,
                                             ),

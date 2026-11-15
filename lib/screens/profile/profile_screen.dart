@@ -59,14 +59,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showChangePasswordDialog(BuildContext context) async {
-    final changed = await showDialog<bool>(context: context, builder: (_) => const ChangePasswordDialog());
-    if (context.mounted && changed == true) AppSnackbar.showSuccess(context, 'Password updated.');
+    final changed = await showDialog<bool>(
+        context: context, builder: (_) => const ChangePasswordDialog());
+    if (context.mounted && changed == true) {
+      AppSnackbar.showSuccess(context, 'Password updated.');
+    }
   }
 
   void _showHelpCenterDialog(BuildContext context) {
     final phone = context.read<BranchProvider>().selectedBranch?.phone;
-    showModalBottomSheet(context: context, isScrollControlled: true,
-      builder: (_) => HelpCenterSheet(branchPhone: phone));
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => HelpCenterSheet(branchPhone: phone));
   }
 
   @override
@@ -92,7 +97,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       customerTierBadge = 'SILVER SNACKER';
     }
 
-    final addressLabels = addressProv.addresses.map((a) => a.label).where((l) => l.isNotEmpty).take(3).join(', ');
+    final addressLabels = addressProv.addresses
+        .map((a) => a.label)
+        .where((l) => l.isNotEmpty)
+        .take(3)
+        .join(', ');
     final addressSubtitle = addressesCount == 0
         ? 'No saved addresses yet'
         : '$addressesCount ${addressesCount == 1 ? "saved address" : "saved addresses"}${addressLabels.isNotEmpty ? " ($addressLabels)" : ""}';
@@ -105,7 +114,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        title: Text(context.tr('Profile'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
+        title: Text(context.tr('Profile'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: AppColors.brandMaroon),
@@ -126,10 +136,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                  border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.border),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -145,10 +157,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: 72,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.brandYellow, width: 2),
+                            border: Border.all(
+                                color: AppColors.brandYellow, width: 2),
                           ),
                           child: ClipOval(
-                            child: user?.profileImage != null && user!.profileImage!.isNotEmpty
+                            child: user?.profileImage != null &&
+                                    user!.profileImage!.isNotEmpty
                                 ? NetworkImageView(
                                     imageUrl: user.profileImage,
                                     width: 72,
@@ -159,11 +173,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: AppColors.yellowSoft,
                                     alignment: Alignment.center,
                                     child: Text(
-                                      (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'F',
+                                      (user?.name.isNotEmpty == true)
+                                          ? user!.name[0].toUpperCase()
+                                          : 'F',
                                       style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.w800,
-                                        color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                        color: isDark
+                                            ? AppColors.brandYellow
+                                            : AppColors.brandMaroon,
                                       ),
                                     ),
                                   ),
@@ -173,14 +191,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           bottom: 0,
                           right: 0,
                           child: InkWell(
-                            onTap: () => Navigator.of(context).pushNamed('/edit-profile'),
+                            onTap: () => Navigator.of(context)
+                                .pushNamed('/edit-profile'),
                             child: Container(
                               padding: const EdgeInsets.all(5),
                               decoration: const BoxDecoration(
                                 color: AppColors.brandYellow,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.camera_alt_rounded, color: AppColors.onYellow, size: 13),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  color: AppColors.onYellow, size: 13),
                             ),
                           ),
                         ),
@@ -192,7 +212,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.name.isNotEmpty == true ? user!.name : 'Foodie Fighter',
+                            user?.name.isNotEmpty == true
+                                ? user!.name
+                                : 'Foodie Fighter',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -221,7 +243,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: AppColors.yellowSoft,
                                   borderRadius: BorderRadius.circular(8),
@@ -231,7 +254,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ? 'SUPER ADMIN'
                                       : (user?.isAdmin == true
                                           ? 'RESTAURANT ADMIN'
-                                          : (user?.isRider == true ? 'RIDER' : customerTierBadge)),
+                                          : (user?.isRider == true
+                                              ? 'RIDER'
+                                              : customerTierBadge)),
                                   style: const TextStyle(
                                     color: AppColors.maroonDeep,
                                     fontSize: 9.5,
@@ -261,7 +286,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: 'Orders',
                       icon: Icons.receipt_long_outlined,
                       accentColor: AppColors.brandMaroon,
-                      onTap: () => Navigator.of(context).pushNamed('/order-history'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/order-history'),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -272,7 +298,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: 'Favorites',
                       icon: Icons.favorite_outline_rounded,
                       accentColor: AppColors.tomato,
-                      onTap: () => Navigator.of(context).pushNamed('/favorites'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/favorites'),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -283,7 +310,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: 'Addresses',
                       icon: Icons.location_on_outlined,
                       accentColor: AppColors.warning,
-                      onTap: () => Navigator.of(context).pushNamed('/addresses'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/addresses'),
                     ),
                   ),
                 ],
@@ -300,19 +328,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: 'Change name, phone and profile photo',
                   onTap: () => Navigator.of(context).pushNamed('/edit-profile'),
                 ),
-                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                Divider(
+                    height: 1,
+                    color: isDark ? AppColors.darkDivider : AppColors.divider,
+                    indent: 56),
                 _buildMenuItem(
                   icon: Icons.location_on_outlined,
                   title: 'Saved Delivery Addresses',
                   subtitle: addressSubtitle,
                   onTap: () => Navigator.of(context).pushNamed('/addresses'),
                 ),
-                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                Divider(
+                    height: 1,
+                    color: isDark ? AppColors.darkDivider : AppColors.divider,
+                    indent: 56),
                 _buildMenuItem(
                   icon: Icons.credit_card_outlined,
                   title: 'Payment Methods',
                   subtitle: 'JazzCash & Easypaisa wallet references',
-                  onTap: () => Navigator.of(context).pushNamed('/payment-methods'),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/payment-methods'),
                 ),
               ]),
 
@@ -324,7 +359,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.stars_rounded,
                   title: 'Food Fight Loyalty Tokens',
-                  subtitle: '${loyalty.balance} Tokens (Rs. ${(loyalty.balance * loyalty.tokenValueInCurrency).toStringAsFixed(0)} value • $customerTierBadge)',
+                  subtitle:
+                      '${loyalty.balance} Tokens (Rs. ${(loyalty.balance * loyalty.tokenValueInCurrency).toStringAsFixed(0)} value • $customerTierBadge)',
                   trailingBadge: '${loyalty.balance} PTS',
                   iconColor: AppColors.brandMaroon,
                   onTap: () => Navigator.of(context).pushNamed('/loyalty'),
@@ -352,23 +388,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.notifications_none_rounded,
                   title: 'Notifications',
                   subtitle: 'Push notifications & order alerts',
-                  onTap: () => Navigator.of(context).pushNamed('/notifications'),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/notifications'),
                 ),
-                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                Divider(
+                    height: 1,
+                    color: isDark ? AppColors.darkDivider : AppColors.divider,
+                    indent: 56),
                 _buildMenuItem(
                   icon: Icons.headset_mic_outlined,
                   title: 'Help Center',
                   subtitle: 'Real-time chat, FAQs & helpline',
                   onTap: () => _showHelpCenterDialog(context),
                 ),
-                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                Divider(
+                    height: 1,
+                    color: isDark ? AppColors.darkDivider : AppColors.divider,
+                    indent: 56),
                 _buildMenuItem(
                   icon: Icons.lock_outline_rounded,
                   title: 'Change Password',
                   subtitle: 'Update your current password',
                   onTap: () => _showChangePasswordDialog(context),
                 ),
-                Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                Divider(
+                    height: 1,
+                    color: isDark ? AppColors.darkDivider : AppColors.divider,
+                    indent: 56),
                 _buildMenuItem(
                   icon: Icons.settings_outlined,
                   title: context.tr('Settings'),
@@ -378,7 +424,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ]),
 
               // Privileged Portals (if Admin, Super Admin, or Rider)
-              if (auth.isAdmin || auth.isSuperAdmin || user?.isRider == true) ...[
+              if (auth.isAdmin ||
+                  auth.isSuperAdmin ||
+                  user?.isRider == true) ...[
                 const SizedBox(height: 18),
                 _buildSectionHeader('ROLE PORTALS'),
                 _buildCardGroup([
@@ -388,26 +436,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Restaurant Admin Portal',
                       subtitle: 'Orders, menu, categories & kitchen console',
                       iconColor: AppColors.brandMaroon,
-                      onTap: () => Navigator.of(context).pushNamed('/admin/dashboard'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/admin/dashboard'),
                     ),
                   if (auth.isSuperAdmin) ...[
-                    Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                    Divider(
+                        height: 1,
+                        color:
+                            isDark ? AppColors.darkDivider : AppColors.divider,
+                        indent: 56),
                     _buildMenuItem(
                       icon: Icons.shield_rounded,
                       title: 'Super Admin HQ Console',
                       subtitle: 'Platform analytics, staff & system audit logs',
                       iconColor: AppColors.brandMaroon,
-                      onTap: () => Navigator.of(context).pushNamed('/super-admin/dashboard'),
+                      onTap: () => Navigator.of(context)
+                          .pushNamed('/super-admin/dashboard'),
                     ),
                   ],
-                  if (user?.isRider == true || auth.isAdmin || auth.isSuperAdmin) ...[
-                    Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),
+                  if (user?.isRider == true ||
+                      auth.isAdmin ||
+                      auth.isSuperAdmin) ...[
+                    Divider(
+                        height: 1,
+                        color:
+                            isDark ? AppColors.darkDivider : AppColors.divider,
+                        indent: 56),
                     _buildMenuItem(
                       icon: Icons.moped_rounded,
                       title: 'Rider Delivery Mode',
                       subtitle: 'Active deliveries, pickup & dispatch map',
                       iconColor: AppColors.brandMaroon,
-                      onTap: () => Navigator.of(context).pushNamed('/rider/dashboard'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/rider/dashboard'),
                     ),
                   ],
                 ]),
@@ -425,8 +486,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context: context,
                       builder: (ctx) => AlertDialog(
                         backgroundColor: colorScheme.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        title: Text(context.tr('Sign Out'), style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        title: Text(context.tr('Sign Out'),
+                            style: TextStyle(
+                                color: colorScheme.onSurface,
+                                fontWeight: FontWeight.bold)),
                         content: Text(
                           'Are you sure you want to sign out from Food Fight?',
                           style: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -434,10 +499,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: Text(context.tr('Cancel'), style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                            child: Text(context.tr('Cancel'),
+                                style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant)),
                           ),
                           FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                            style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.error),
                             onPressed: () => Navigator.pop(ctx, true),
                             child: Text(context.tr('Sign Out')),
                           ),
@@ -448,7 +516,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context.read<CartProvider>().clearCart();
                       await auth.signOut();
                       if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (r) => false);
+                        Navigator.of(context, rootNavigator: true)
+                            .pushNamedAndRemoveUntil('/login', (r) => false);
                       }
                     }
                   },
@@ -458,7 +527,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+                        Icon(Icons.logout_rounded,
+                            color: AppColors.error, size: 20),
                         SizedBox(width: 8),
                         Text(
                           'Log Out',
@@ -514,7 +584,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+            border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.border),
           ),
           child: Column(
             children: [
@@ -582,7 +653,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
+          side: BorderSide(
+              color: isDark ? AppColors.darkBorder : AppColors.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -639,7 +711,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.5)),
+                border: Border.all(
+                    color: AppColors.brandYellow.withValues(alpha: 0.5)),
               ),
               child: Text(
                 trailingBadge,
@@ -652,7 +725,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(width: 8),
           ],
-          Icon(Icons.arrow_forward_ios_rounded, size: 13, color: colorScheme.onSurfaceVariant),
+          Icon(Icons.arrow_forward_ios_rounded,
+              size: 13, color: colorScheme.onSurfaceVariant),
         ],
       ),
     );

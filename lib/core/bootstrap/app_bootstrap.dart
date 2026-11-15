@@ -27,35 +27,45 @@ class AppBootstrap {
     _hasStarted = true;
 
     final stopwatch = Stopwatch()..start();
-    AppLogger.info('[PERF] AppBootstrap started in parallel with splash', tag: 'Bootstrap');
+    AppLogger.info('[PERF] AppBootstrap started in parallel with splash',
+        tag: 'Bootstrap');
 
     try {
       await Future.wait([
         _initAppCheck().timeout(
           const Duration(seconds: 4),
           onTimeout: () {
-            AppLogger.warn('[AppBootstrap] App Check init timed out (4s), continuing without blocking', tag: 'Bootstrap');
+            AppLogger.warn(
+                '[AppBootstrap] App Check init timed out (4s), continuing without blocking',
+                tag: 'Bootstrap');
           },
         ),
         _initSupabase().timeout(
           const Duration(seconds: 5),
           onTimeout: () {
-            AppLogger.warn('[AppBootstrap] Supabase init timed out (5s), continuing without blocking', tag: 'Bootstrap');
+            AppLogger.warn(
+                '[AppBootstrap] Supabase init timed out (5s), continuing without blocking',
+                tag: 'Bootstrap');
           },
         ),
         _initFcmListeners().timeout(
           const Duration(seconds: 4),
           onTimeout: () {
-            AppLogger.warn('[AppBootstrap] FCM listeners init timed out (4s), continuing without blocking', tag: 'Bootstrap');
+            AppLogger.warn(
+                '[AppBootstrap] FCM listeners init timed out (4s), continuing without blocking',
+                tag: 'Bootstrap');
           },
         ),
       ]);
     } catch (e) {
-      AppLogger.error('[AppBootstrap] Unexpected bootstrap error: $e', tag: 'Bootstrap');
+      AppLogger.error('[AppBootstrap] Unexpected bootstrap error: $e',
+          tag: 'Bootstrap');
     } finally {
       stopwatch.stop();
       _hasCompleted = true;
-      AppLogger.info('[PERF] AppBootstrap completed in ${stopwatch.elapsedMilliseconds}ms', tag: 'Bootstrap');
+      AppLogger.info(
+          '[PERF] AppBootstrap completed in ${stopwatch.elapsedMilliseconds}ms',
+          tag: 'Bootstrap');
     }
   }
 
@@ -70,9 +80,13 @@ class AppBootstrap {
             ? AndroidProvider.playIntegrity
             : AndroidProvider.debug,
       );
-      AppLogger.info('[AppBootstrap] Firebase App Check activated (${kReleaseMode ? 'playIntegrity' : 'debug'})', tag: 'Bootstrap');
+      AppLogger.info(
+          '[AppBootstrap] Firebase App Check activated (${kReleaseMode ? 'playIntegrity' : 'debug'})',
+          tag: 'Bootstrap');
     } catch (e) {
-      AppLogger.warn('[AppBootstrap] App Check activation notice (non-fatal): $e', tag: 'Bootstrap');
+      AppLogger.warn(
+          '[AppBootstrap] App Check activation notice (non-fatal): $e',
+          tag: 'Bootstrap');
     }
   }
 
@@ -83,9 +97,11 @@ class AppBootstrap {
         url: SupabaseConfig.url,
         publishableKey: SupabaseConfig.publishableKey,
       );
-      AppLogger.info('[AppBootstrap] Supabase initialized successfully', tag: 'Bootstrap');
+      AppLogger.info('[AppBootstrap] Supabase initialized successfully',
+          tag: 'Bootstrap');
     } catch (e) {
-      AppLogger.warn('[AppBootstrap] Supabase init notice (non-fatal): $e', tag: 'Bootstrap');
+      AppLogger.warn('[AppBootstrap] Supabase init notice (non-fatal): $e',
+          tag: 'Bootstrap');
     }
   }
 
@@ -93,9 +109,12 @@ class AppBootstrap {
   static Future<void> _initFcmListeners() async {
     try {
       await FcmService.initializeListenersOnly();
-      AppLogger.info('[AppBootstrap] FCM background stream listeners registered', tag: 'Bootstrap');
+      AppLogger.info(
+          '[AppBootstrap] FCM background stream listeners registered',
+          tag: 'Bootstrap');
     } catch (e) {
-      AppLogger.warn('[AppBootstrap] FCM listeners notice (non-fatal): $e', tag: 'Bootstrap');
+      AppLogger.warn('[AppBootstrap] FCM listeners notice (non-fatal): $e',
+          tag: 'Bootstrap');
     }
   }
 }

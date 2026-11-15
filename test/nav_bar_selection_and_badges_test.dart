@@ -4,7 +4,9 @@ import 'package:food_fight/widgets/navigation/floating_nav_bar.dart';
 
 void main() {
   group('FloatingNavBar Widget & Badge Tests', () {
-    testWidgets('Renders all 4 destinations and displays clear labels for all items', (tester) async {
+    testWidgets(
+        'Renders all 4 destinations and displays clear labels for all items',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -29,7 +31,8 @@ void main() {
       expect(find.text('Profile'), findsOneWidget);
     });
 
-    testWidgets('Switching tabs invokes onTabSelected with correct index', (tester) async {
+    testWidgets('Switching tabs invokes onTabSelected with correct index',
+        (tester) async {
       int selected = 0;
 
       await tester.pumpWidget(
@@ -59,7 +62,8 @@ void main() {
       expect(selected, equals(3));
     });
 
-    testWidgets('Chat unread badge and active order dot are displayed', (tester) async {
+    testWidgets('Chat unread badge and active order dot are displayed',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -77,7 +81,8 @@ void main() {
       expect(find.text('5'), findsOneWidget);
     });
 
-    testWidgets('Displays tablet rail on large screens (>= 840px)', (tester) async {
+    testWidgets('Displays tablet rail on large screens (>= 840px)',
+        (tester) async {
       tester.view.physicalSize = const Size(1024, 768);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);

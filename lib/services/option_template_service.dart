@@ -4,8 +4,10 @@ import '../models/option_template_model.dart';
 
 class OptionTemplateService {
   final FirebaseFirestore? _customFirestore;
-  OptionTemplateService({FirebaseFirestore? firestore}) : _customFirestore = firestore;
-  FirebaseFirestore get _firestore => _customFirestore ?? FirebaseFirestore.instance;
+  OptionTemplateService({FirebaseFirestore? firestore})
+      : _customFirestore = firestore;
+  FirebaseFirestore get _firestore =>
+      _customFirestore ?? FirebaseFirestore.instance;
   final String _collection = 'optionTemplates';
 
   CollectionReference<Map<String, dynamic>> get _templatesRef =>
@@ -13,7 +15,8 @@ class OptionTemplateService {
 
   /// Stream templates available to a branch (including global templates)
   Stream<List<OptionTemplateModel>> streamTemplates({String? branchId}) {
-    Query<Map<String, dynamic>> query = _templatesRef.where('isActive', isEqualTo: true);
+    Query<Map<String, dynamic>> query =
+        _templatesRef.where('isActive', isEqualTo: true);
 
     if (branchId != null && branchId.isNotEmpty && branchId != 'all') {
       query = query.where('branchId', whereIn: [branchId, null, '', 'all']);
@@ -31,13 +34,17 @@ class OptionTemplateService {
   /// Create a template
   Future<String> createTemplate(OptionTemplateModel template) async {
     try {
-      final docRef = template.id.isNotEmpty ? _templatesRef.doc(template.id) : _templatesRef.doc();
+      final docRef = template.id.isNotEmpty
+          ? _templatesRef.doc(template.id)
+          : _templatesRef.doc();
       final data = template.copyWith(id: docRef.id).toJson();
       await docRef.set(data);
-      AppLogger.info('Option template created: ${docRef.id}', tag: 'OptionTemplateService');
+      AppLogger.info('Option template created: ${docRef.id}',
+          tag: 'OptionTemplateService');
       return docRef.id;
     } catch (e) {
-      AppLogger.error('Error creating option template: $e', tag: 'OptionTemplateService');
+      AppLogger.error('Error creating option template: $e',
+          tag: 'OptionTemplateService');
       rethrow;
     }
   }
@@ -46,9 +53,11 @@ class OptionTemplateService {
   Future<void> updateTemplate(OptionTemplateModel template) async {
     try {
       await _templatesRef.doc(template.id).update(template.toJson());
-      AppLogger.info('Option template updated: ${template.id}', tag: 'OptionTemplateService');
+      AppLogger.info('Option template updated: ${template.id}',
+          tag: 'OptionTemplateService');
     } catch (e) {
-      AppLogger.error('Error updating option template: $e', tag: 'OptionTemplateService');
+      AppLogger.error('Error updating option template: $e',
+          tag: 'OptionTemplateService');
       rethrow;
     }
   }
@@ -57,9 +66,11 @@ class OptionTemplateService {
   Future<void> deleteTemplate(String templateId) async {
     try {
       await _templatesRef.doc(templateId).delete();
-      AppLogger.info('Option template deleted: $templateId', tag: 'OptionTemplateService');
+      AppLogger.info('Option template deleted: $templateId',
+          tag: 'OptionTemplateService');
     } catch (e) {
-      AppLogger.error('Error deleting option template: $e', tag: 'OptionTemplateService');
+      AppLogger.error('Error deleting option template: $e',
+          tag: 'OptionTemplateService');
       rethrow;
     }
   }
@@ -99,7 +110,8 @@ class OptionTemplateService {
         minSelections: 1,
         maxSelections: 1,
         items: const [
-          OptionTemplateItem(id: 'm', name: 'Medium', price: 0, isDefault: true),
+          OptionTemplateItem(
+              id: 'm', name: 'Medium', price: 0, isDefault: true),
           OptionTemplateItem(id: 'l', name: 'Large', price: 400),
           OptionTemplateItem(id: 'xl', name: 'Extra Large', price: 800),
         ],
@@ -116,11 +128,16 @@ class OptionTemplateService {
         minSelections: 0,
         maxSelections: 5,
         items: const [
-          OptionTemplateItem(id: 'cheese', name: 'Extra Mozzarella Cheese', price: 150),
-          OptionTemplateItem(id: 'chicken', name: 'Extra Smoked Chicken', price: 180),
-          OptionTemplateItem(id: 'olives', name: 'Black Olives & Jalapenos', price: 80),
-          OptionTemplateItem(id: 'mushrooms', name: 'Fresh Mushrooms', price: 100),
-          OptionTemplateItem(id: 'onion_pepper', name: 'Crunchy Capsicum & Onion', price: 60),
+          OptionTemplateItem(
+              id: 'cheese', name: 'Extra Mozzarella Cheese', price: 150),
+          OptionTemplateItem(
+              id: 'chicken', name: 'Extra Smoked Chicken', price: 180),
+          OptionTemplateItem(
+              id: 'olives', name: 'Black Olives & Jalapenos', price: 80),
+          OptionTemplateItem(
+              id: 'mushrooms', name: 'Fresh Mushrooms', price: 100),
+          OptionTemplateItem(
+              id: 'onion_pepper', name: 'Crunchy Capsicum & Onion', price: 60),
         ],
         createdAt: now,
         updatedAt: now,
@@ -135,18 +152,23 @@ class OptionTemplateService {
         minSelections: 0,
         maxSelections: 4,
         items: const [
-          OptionTemplateItem(id: 'garlic_mayo', name: 'Garlic Mayo Dip', price: 70),
-          OptionTemplateItem(id: 'chipotle', name: 'Smoky Chipotle Sauce', price: 80),
-          OptionTemplateItem(id: 'honey_mustard', name: 'Honey Mustard Dip', price: 80),
+          OptionTemplateItem(
+              id: 'garlic_mayo', name: 'Garlic Mayo Dip', price: 70),
+          OptionTemplateItem(
+              id: 'chipotle', name: 'Smoky Chipotle Sauce', price: 80),
+          OptionTemplateItem(
+              id: 'honey_mustard', name: 'Honey Mustard Dip', price: 80),
           OptionTemplateItem(id: 'ranch', name: 'Creamy Ranch Dip', price: 90),
         ],
         createdAt: now,
         updatedAt: now,
       ));
 
-      AppLogger.info('Default option templates seeded successfully', tag: 'OptionTemplateService');
+      AppLogger.info('Default option templates seeded successfully',
+          tag: 'OptionTemplateService');
     } catch (e) {
-      AppLogger.error('Error seeding default templates: $e', tag: 'OptionTemplateService');
+      AppLogger.error('Error seeding default templates: $e',
+          tag: 'OptionTemplateService');
     }
   }
 }

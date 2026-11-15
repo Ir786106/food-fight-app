@@ -90,14 +90,15 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startParallelRouting() {
-    final minAnimationDelay = Future.delayed(const Duration(milliseconds: 1400));
+    final minAnimationDelay =
+        Future.delayed(const Duration(milliseconds: 1400));
     final routeResolution = _decideDestinationRoute();
 
     Future.wait([minAnimationDelay, routeResolution])
         .timeout(
-          const Duration(seconds: 28),
-          onTimeout: () => [null, null],
-        )
+      const Duration(seconds: 28),
+      onTimeout: () => [null, null],
+    )
         .then((results) async {
       if (!mounted || _hasNavigated) return;
 
@@ -112,7 +113,8 @@ class _SplashScreenState extends State<SplashScreen>
       }
 
       _hasNavigated = true;
-      final elapsed = widget.startupStopwatch?.elapsedMilliseconds ?? AppStartupMetrics.elapsedMs;
+      final elapsed = widget.startupStopwatch?.elapsedMilliseconds ??
+          AppStartupMetrics.elapsedMs;
       AppLogger.info(
         '[PERF] Cold start to routed screen: $destination at +${elapsed}ms',
         tag: 'Performance',
@@ -173,7 +175,9 @@ class _SplashScreenState extends State<SplashScreen>
       final auth = context.read<AuthProvider>();
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser == null) {
-        if (!auth.edition.allowsCustomerRegistration) return RoleRouter.loginRoute;
+        if (!auth.edition.allowsCustomerRegistration) {
+          return RoleRouter.loginRoute;
+        }
         final prefs = await SharedPreferences.getInstance();
         final onboardingCompleted =
             prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
@@ -295,10 +299,14 @@ class _SplashScreenState extends State<SplashScreen>
                               height: logoSize,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.45), width: 2),
+                                border: Border.all(
+                                    color: AppColors.brandYellow
+                                        .withValues(alpha: 0.45),
+                                    width: 2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.brandYellow.withValues(alpha: 0.18 * _logoFade.value),
+                                    color: AppColors.brandYellow.withValues(
+                                        alpha: 0.18 * _logoFade.value),
                                     blurRadius: 28,
                                     offset: const Offset(0, 10),
                                     spreadRadius: 2,

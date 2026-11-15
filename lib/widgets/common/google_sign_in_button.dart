@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 /// Styled "Continue with Google" button with custom-drawn official 4-color Google icon
 class GoogleSignInButton extends StatelessWidget {
-  static bool get isSupported => kIsWeb ||
+  static bool get isSupported =>
+      kIsWeb ||
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.macOS;
@@ -36,7 +37,8 @@ class GoogleSignInButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.7 : 0.9),
+            color: colorScheme.outlineVariant
+                .withValues(alpha: isDark ? 0.7 : 0.9),
             width: 1.2,
           ),
         ),
@@ -46,39 +48,39 @@ class GoogleSignInButton extends StatelessWidget {
         child: InkWell(
           onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 54,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: isLoading
-              ? Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const GoogleLogoWidget(size: 22),
-                    const SizedBox(width: 12),
-                    Text(
-                      text,
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        letterSpacing: 0.2,
+          child: Container(
+            height: 54,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: isLoading
+                ? Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colorScheme.primary,
                       ),
                     ),
-                  ],
-                ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const GoogleLogoWidget(size: 22),
+                      const SizedBox(width: 12),
+                      Text(
+                        text,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -107,10 +109,18 @@ class _GoogleLogoPainter extends CustomPainter {
     final double cy = h / 2;
     final double radius = w * 0.44;
 
-    final Paint blue = Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.fill;
-    final Paint red = Paint()..color = const Color(0xFFEA4335)..style = PaintingStyle.fill;
-    final Paint yellow = Paint()..color = const Color(0xFFFBBC05)..style = PaintingStyle.fill;
-    final Paint green = Paint()..color = const Color(0xFF34A853)..style = PaintingStyle.fill;
+    final Paint blue = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+    final Paint red = Paint()
+      ..color = const Color(0xFFEA4335)
+      ..style = PaintingStyle.fill;
+    final Paint yellow = Paint()
+      ..color = const Color(0xFFFBBC05)
+      ..style = PaintingStyle.fill;
+    final Paint green = Paint()
+      ..color = const Color(0xFF34A853)
+      ..style = PaintingStyle.fill;
 
     final Rect rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
 
@@ -149,8 +159,11 @@ class _GoogleLogoPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), radius * 0.58, centerWhite);
 
     // Blue horizontal bar
-    final Paint barPaint = Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.fill;
-    final Rect barRect = Rect.fromLTWH(cx, cy - (radius * 0.24), radius, radius * 0.48);
+    final Paint barPaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+    final Rect barRect =
+        Rect.fromLTWH(cx, cy - (radius * 0.24), radius, radius * 0.48);
     canvas.drawRect(barRect, barPaint);
   }
 

@@ -9,7 +9,8 @@ import 'package:food_fight/core/errors/app_exception.dart';
 
 /// Cloudinary Image Storage Service (Fallback provider if Firebase Blaze is not active).
 class CloudinaryImageStorageService implements IImageStorageService {
-  static final CloudinaryImageStorageService _instance = CloudinaryImageStorageService._internal();
+  static final CloudinaryImageStorageService _instance =
+      CloudinaryImageStorageService._internal();
   CloudinaryImageStorageService._internal();
   factory CloudinaryImageStorageService() => _instance;
 
@@ -53,7 +54,8 @@ class CloudinaryImageStorageService implements IImageStorageService {
 
       const cloudName = StorageProviderConfig.cloudinaryCloudName;
       const uploadPreset = StorageProviderConfig.cloudinaryUploadPreset;
-      const uploadUrl = 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+      const uploadUrl =
+          'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
 
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
@@ -75,16 +77,20 @@ class CloudinaryImageStorageService implements IImageStorageService {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final secureUrl = response.data['secure_url']?.toString() ?? response.data['url']?.toString();
+        final secureUrl = response.data['secure_url']?.toString() ??
+            response.data['url']?.toString();
         if (secureUrl != null && secureUrl.isNotEmpty) {
-          AppLogger.info('Cloudinary upload success: $secureUrl', tag: 'CloudinaryStorage');
+          AppLogger.info('Cloudinary upload success: $secureUrl',
+              tag: 'CloudinaryStorage');
           return secureUrl;
         }
       }
 
-      throw StorageException(message: 'Upload failed with status ${response.statusCode}');
+      throw StorageException(
+          message: 'Upload failed with status ${response.statusCode}');
     } catch (e, stack) {
-      AppLogger.error('Cloudinary upload error: $e\n$stack', tag: 'CloudinaryStorage');
+      AppLogger.error('Cloudinary upload error: $e\n$stack',
+          tag: 'CloudinaryStorage');
       throw StorageException(
         message: 'No connection. Please check your internet and try again.',
       );
@@ -106,7 +112,8 @@ class CloudinaryImageStorageService implements IImageStorageService {
       );
       return Uint8List.fromList(response.data ?? []);
     } catch (e) {
-      AppLogger.error('Cloudinary download error: $e', tag: 'CloudinaryStorage');
+      AppLogger.error('Cloudinary download error: $e',
+          tag: 'CloudinaryStorage');
       return Uint8List(0);
     }
   }
@@ -114,7 +121,8 @@ class CloudinaryImageStorageService implements IImageStorageService {
   @override
   Future<void> deleteImage(String path) async {
     // Cloudinary client delete requires signature/admin API
-    AppLogger.info('Cloudinary image deletion requested for $path', tag: 'CloudinaryStorage');
+    AppLogger.info('Cloudinary image deletion requested for $path',
+        tag: 'CloudinaryStorage');
   }
 
   @override

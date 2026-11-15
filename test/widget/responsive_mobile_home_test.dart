@@ -34,7 +34,8 @@ class _TestMenuProvider extends MenuProvider {
   @override
   String? get currentBranchId => 'branch-1';
   @override
-  void watchMenuItems({String? categoryId, bool activeOnly = false, String? branchId}) {}
+  void watchMenuItems(
+      {String? categoryId, bool activeOnly = false, String? branchId}) {}
 }
 
 class _TestBranchProvider extends BranchProvider {
@@ -45,7 +46,8 @@ class _TestBranchProvider extends BranchProvider {
   @override
   List<BranchModel> get activeBranches => [_branch];
   @override
-  Future<void> autoResolveNearestBranch({BuildContext? context, bool forcePrompt = false}) async {}
+  Future<void> autoResolveNearestBranch(
+      {BuildContext? context, bool forcePrompt = false}) async {}
   @override
   String getDeliveryLabel() => 'Delivering from Food Fight Lahore • 15 min';
 }
@@ -106,18 +108,49 @@ void main() {
 
   final now = DateTime.now();
   final List<CategoryModel> mockCategories = [
-    CategoryModel(id: 'cat-1', name: 'Burgers', order: 1, isActive: true, createdAt: now, updatedAt: now),
-    CategoryModel(id: 'cat-2', name: 'Pizzas', order: 2, isActive: true, createdAt: now, updatedAt: now),
-    CategoryModel(id: 'cat-3', name: 'Broast & Chicken', order: 3, isActive: true, createdAt: now, updatedAt: now),
-    CategoryModel(id: 'cat-4', name: 'Fries & Sides', order: 4, isActive: true, createdAt: now, updatedAt: now),
-    CategoryModel(id: 'cat-5', name: 'Beverages', order: 5, isActive: true, createdAt: now, updatedAt: now),
+    CategoryModel(
+        id: 'cat-1',
+        name: 'Burgers',
+        order: 1,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now),
+    CategoryModel(
+        id: 'cat-2',
+        name: 'Pizzas',
+        order: 2,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now),
+    CategoryModel(
+        id: 'cat-3',
+        name: 'Broast & Chicken',
+        order: 3,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now),
+    CategoryModel(
+        id: 'cat-4',
+        name: 'Fries & Sides',
+        order: 4,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now),
+    CategoryModel(
+        id: 'cat-5',
+        name: 'Beverages',
+        order: 5,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now),
   ];
 
   final List<MenuItemModel> mockMenuItems = [
     MenuItemModel(
       id: 'item-1',
       name: 'Double Trouble Smash Burger with Melted Cheddar',
-      description: 'Two smashed beef patties, house secret sauce, pickles and cheddar',
+      description:
+          'Two smashed beef patties, house secret sauce, pickles and cheddar',
       price: 850,
       categoryId: 'cat-1',
       branchId: 'branch-1',
@@ -158,14 +191,19 @@ void main() {
   }) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<CategoryProvider>.value(value: _TestCategoryProvider(mockCategories)),
-        ChangeNotifierProvider<MenuProvider>.value(value: _TestMenuProvider(mockMenuItems)),
-        ChangeNotifierProvider<BranchProvider>.value(value: _TestBranchProvider(mockBranch)),
+        ChangeNotifierProvider<CategoryProvider>.value(
+            value: _TestCategoryProvider(mockCategories)),
+        ChangeNotifierProvider<MenuProvider>.value(
+            value: _TestMenuProvider(mockMenuItems)),
+        ChangeNotifierProvider<BranchProvider>.value(
+            value: _TestBranchProvider(mockBranch)),
         ChangeNotifierProvider<DealProvider>.value(value: _TestDealProvider()),
         ChangeNotifierProvider<AuthProvider>.value(value: _TestAuthProvider()),
-        ChangeNotifierProvider<LoyaltyProvider>.value(value: _TestLoyaltyProvider()),
+        ChangeNotifierProvider<LoyaltyProvider>.value(
+            value: _TestLoyaltyProvider()),
         ChangeNotifierProvider<CartProvider>.value(value: _TestCartProvider()),
-        ChangeNotifierProvider<NotificationProvider?>.value(value: _TestNotificationProvider()),
+        ChangeNotifierProvider<NotificationProvider?>.value(
+            value: _TestNotificationProvider()),
       ],
       child: MaterialApp(
         home: MediaQuery(
@@ -179,13 +217,16 @@ void main() {
     );
   }
 
-  group('Mobile Customer Panel Responsive & RenderFlex Overflow Verification', () {
+  group('Mobile Customer Panel Responsive & RenderFlex Overflow Verification',
+      () {
     const testWidths = [320.0, 360.0, 393.0, 412.0];
     const textScales = [1.0, 1.3, 1.5];
 
     for (final width in testWidths) {
       for (final scale in textScales) {
-        testWidgets('Width ${width.toInt()}dp with ${scale}x text scale renders with ZERO overflow', (tester) async {
+        testWidgets(
+            'Width ${width.toInt()}dp with ${scale}x text scale renders with ZERO overflow',
+            (tester) async {
           tester.view.physicalSize = Size(width * 2, 840 * 2);
           tester.view.devicePixelRatio = 2.0;
           addTearDown(() => tester.view.resetPhysicalSize());
@@ -201,7 +242,8 @@ void main() {
           expect(find.textContaining('Tariq'), findsOneWidget);
 
           // Verify delivery label is rendered without truncation crash
-          expect(find.textContaining('Delivering from Food Fight'), findsOneWidget);
+          expect(find.textContaining('Delivering from Food Fight'),
+              findsOneWidget);
 
           // Verify category chips are present
           expect(find.text('Burgers'), findsWidgets);

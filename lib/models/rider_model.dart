@@ -66,10 +66,13 @@ class RiderModel {
       riderId: json['riderId']?.toString() ?? json['rider_id']?.toString(),
       vehicleType: json['vehicleType']?.toString() ?? 'Motorcycle',
       vehicleNumber: json['vehicleNumber']?.toString(),
-      isActive: json['isActive'] == 1 || json['isActive'] == true || json['isActive'] == null,
+      isActive: json['isActive'] == 1 ||
+          json['isActive'] == true ||
+          json['isActive'] == null,
       isOnline: json['isOnline'] == 1 || json['isOnline'] == true,
       rating: SafeConvert.toDouble(json['rating'], 5.0),
-      totalDeliveries: SafeConvert.toInt(json['totalDeliveries'] ?? json['total_deliveries']),
+      totalDeliveries: SafeConvert.toInt(
+          json['totalDeliveries'] ?? json['total_deliveries']),
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );

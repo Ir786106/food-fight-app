@@ -27,7 +27,8 @@ class AppStrings {
   static const String invalidInput = 'Please enter valid input';
   static const String fieldRequired = 'This field is required';
   static const String invalidEmail = 'Please enter a valid email address';
-  static const String passwordTooShort = 'Password must be at least 6 characters';
+  static const String passwordTooShort =
+      'Password must be at least 6 characters';
   static const String passwordMismatch = 'Passwords do not match';
   static const String imageUploadFailed = 'Failed to upload image';
   static const String orderFailed = 'Failed to place order. Please try again';

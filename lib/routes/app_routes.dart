@@ -74,12 +74,13 @@ import '../screens/super_admin/audit/super_admin_audit_logs_screen.dart';
 /// to directly.
 class AppRoutes {
   static Map<String, WidgetBuilder> routesFor(AppEdition edition) => {
-    for (final entry in routes.entries)
-      if (edition.allowsRoute(entry.key)) entry.key: entry.value,
-  };
+        for (final entry in routes.entries)
+          if (edition.allowsRoute(entry.key)) entry.key: entry.value,
+      };
 
   static Map<String, WidgetBuilder> routes = {
-    '/admin/menu-reports': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: MenuReportsScreen()),
+    '/admin/menu-reports': (context) => const AdminRouteGuard(
+        requiredPermission: 'menu', child: MenuReportsScreen()),
     // -------------------------------------------------------------------------
     // 1. Shared & Customer Storefront Routes
     // -------------------------------------------------------------------------
@@ -94,7 +95,8 @@ class AppRoutes {
     '/reset-password': (context) => const ResetPasswordScreen(),
 
     // Customer Navigation & Food Discovery
-    '/home': (context) => const CustomerRouteGuard(child: MainNavigationScreen()),
+    '/home': (context) =>
+        const CustomerRouteGuard(child: MainNavigationScreen()),
     '/restaurant-detail': (context) => const RestaurantDetailScreen(),
     '/food-detail': (context) => const FoodDetailScreen(),
     '/menu': (context) => const MenuScreen(),
@@ -123,38 +125,61 @@ class AppRoutes {
     // 2. Restaurant Admin Panel Routes (Protected by AdminRouteGuard)
     // -------------------------------------------------------------------------
     // Requires authenticated user with 'admin' or 'super_admin' role
-    '/admin/dashboard': (context) => const AdminRouteGuard(child: AdminDashboardScreen()),
-    '/admin/orders': (context) => const AdminRouteGuard(requiredPermission: 'orders', child: AdminOrdersScreen()),
-    '/admin/chats': (context) => const AdminRouteGuard(requiredPermission: 'chats', child: AdminChatsScreen()),
-    '/admin/menu': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: ManageMenuScreen()),
-    '/admin/menu/add': (context) => const AdminRouteGuard(requiredPermission: 'menu', child: AddEditMenuItemScreen()),
-    '/admin/categories': (context) => const AdminRouteGuard(requiredPermission: 'categories', child: ManageCategoriesScreen()),
-    '/admin/customers': (context) => const AdminRouteGuard(requiredPermission: 'customers', child: ManageCustomersScreen()),
-    '/admin/delivery-areas': (context) => const AdminRouteGuard(requiredPermission: 'delivery_areas', child: ManageDeliveryAreasScreen()),
-    '/admin/riders': (context) => const AdminRouteGuard(requiredPermission: 'riders', child: ManageRidersScreen()),
-    '/admin/coupons': (context) => const AdminRouteGuard(requiredPermission: 'coupons', child: ManageCouponsScreen()),
-    '/admin/deals': (context) => const AdminRouteGuard(child: ManageDealsScreen()),
-    '/admin/reviews': (context) => const AdminRouteGuard(requiredPermission: 'reviews', child: AdminReviewsScreen()),
-    '/admin/reports': (context) => const AdminRouteGuard(requiredPermission: 'reports', child: SalesReportsScreen()),
-    '/admin/settings': (context) => const AdminRouteGuard(blockSubAdmin: true, child: AdminRestaurantSettingsScreen()),
-    '/admin/sub-admins': (context) => const AdminRouteGuard(blockSubAdmin: true, child: ManageSubAdminsScreen()),
+    '/admin/dashboard': (context) =>
+        const AdminRouteGuard(child: AdminDashboardScreen()),
+    '/admin/orders': (context) => const AdminRouteGuard(
+        requiredPermission: 'orders', child: AdminOrdersScreen()),
+    '/admin/chats': (context) => const AdminRouteGuard(
+        requiredPermission: 'chats', child: AdminChatsScreen()),
+    '/admin/menu': (context) => const AdminRouteGuard(
+        requiredPermission: 'menu', child: ManageMenuScreen()),
+    '/admin/menu/add': (context) => const AdminRouteGuard(
+        requiredPermission: 'menu', child: AddEditMenuItemScreen()),
+    '/admin/categories': (context) => const AdminRouteGuard(
+        requiredPermission: 'categories', child: ManageCategoriesScreen()),
+    '/admin/customers': (context) => const AdminRouteGuard(
+        requiredPermission: 'customers', child: ManageCustomersScreen()),
+    '/admin/delivery-areas': (context) => const AdminRouteGuard(
+        requiredPermission: 'delivery_areas',
+        child: ManageDeliveryAreasScreen()),
+    '/admin/riders': (context) => const AdminRouteGuard(
+        requiredPermission: 'riders', child: ManageRidersScreen()),
+    '/admin/coupons': (context) => const AdminRouteGuard(
+        requiredPermission: 'coupons', child: ManageCouponsScreen()),
+    '/admin/deals': (context) =>
+        const AdminRouteGuard(child: ManageDealsScreen()),
+    '/admin/reviews': (context) => const AdminRouteGuard(
+        requiredPermission: 'reviews', child: AdminReviewsScreen()),
+    '/admin/reports': (context) => const AdminRouteGuard(
+        requiredPermission: 'reports', child: SalesReportsScreen()),
+    '/admin/settings': (context) => const AdminRouteGuard(
+        blockSubAdmin: true, child: AdminRestaurantSettingsScreen()),
+    '/admin/sub-admins': (context) => const AdminRouteGuard(
+        blockSubAdmin: true, child: ManageSubAdminsScreen()),
 
     // -------------------------------------------------------------------------
     // 3. Platform Super Admin Panel Routes (Protected by SuperAdminRouteGuard)
     // -------------------------------------------------------------------------
     // Requires authenticated user with 'super_admin' clearance exclusively
-    '/super-admin/dashboard': (context) => const SuperAdminRouteGuard(child: SuperAdminDashboardScreen()),
-    '/super-admin/users': (context) => const SuperAdminRouteGuard(child: SuperAdminUsersScreen()),
-    '/super-admin/branches': (context) => const SuperAdminRouteGuard(child: SuperAdminBranchesScreen()),
-    '/super-admin/admins': (context) => const SuperAdminRouteGuard(child: SuperAdminManageAdminsScreen()),
-    '/super-admin/settings': (context) => const SuperAdminRouteGuard(child: SuperAdminSystemSettingsScreen()),
-    '/super-admin/audit': (context) => const SuperAdminRouteGuard(child: SuperAdminAuditLogsScreen()),
+    '/super-admin/dashboard': (context) =>
+        const SuperAdminRouteGuard(child: SuperAdminDashboardScreen()),
+    '/super-admin/users': (context) =>
+        const SuperAdminRouteGuard(child: SuperAdminUsersScreen()),
+    '/super-admin/branches': (context) =>
+        const SuperAdminRouteGuard(child: SuperAdminBranchesScreen()),
+    '/super-admin/admins': (context) =>
+        const SuperAdminRouteGuard(child: SuperAdminManageAdminsScreen()),
+    '/super-admin/settings': (context) =>
+        const SuperAdminRouteGuard(child: SuperAdminSystemSettingsScreen()),
+    '/super-admin/audit': (context) =>
+        const SuperAdminRouteGuard(child: SuperAdminAuditLogsScreen()),
 
     // -------------------------------------------------------------------------
     // 4. Delivery Rider Console Routes (Protected by RiderRouteGuard)
     // -------------------------------------------------------------------------
     '/rider': (context) => const RiderRouteGuard(child: RiderDashboardScreen()),
-    '/rider/dashboard': (context) => const RiderRouteGuard(child: RiderDashboardScreen()),
+    '/rider/dashboard': (context) =>
+        const RiderRouteGuard(child: RiderDashboardScreen()),
   };
 }
 
@@ -196,9 +221,11 @@ class AdminRouteGuard extends StatelessWidget {
       return _buildAccessDeniedScreen(
         context: context,
         title: 'Sign In Required',
-        message: 'You must be signed in with an authorized administrator account to access this console.',
+        message:
+            'You must be signed in with an authorized administrator account to access this console.',
         actionLabel: 'Go to Sign In',
-        onAction: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (r) => false),
+        onAction: () => Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/login', (r) => false),
         icon: Icons.lock_outline_rounded,
         accentColor: AppColors.primary,
       );
@@ -214,9 +241,11 @@ class AdminRouteGuard extends StatelessWidget {
       return _buildAccessDeniedScreen(
         context: context,
         title: 'Access Restricted',
-        message: 'Your current account does not have administrative privileges for the restaurant portal.',
+        message:
+            'Your current account does not have administrative privileges for the restaurant portal.',
         actionLabel: 'Return to Customer App',
-        onAction: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false),
+        onAction: () => Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/home', (r) => false),
         icon: Icons.shield_outlined,
         accentColor: AppColors.error,
       );
@@ -228,22 +257,29 @@ class AdminRouteGuard extends StatelessWidget {
       return _buildAccessDeniedScreen(
         context: context,
         title: 'Action Prohibited',
-        message: 'Sub-admin staff accounts are not authorized to manage other administrative accounts.',
+        message:
+            'Sub-admin staff accounts are not authorized to manage other administrative accounts.',
         actionLabel: 'Back to Dashboard',
-        onAction: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false),
+        onAction: () => Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/admin/dashboard', (r) => false),
         icon: Icons.admin_panel_settings_outlined,
         accentColor: AppColors.warning,
       );
     }
 
     // Case 4: Sub-admin permission restriction
-    if (requiredPermission != null && user != null && user.isSubAdmin && !user.can(requiredPermission!)) {
+    if (requiredPermission != null &&
+        user != null &&
+        user.isSubAdmin &&
+        !user.can(requiredPermission!)) {
       return _buildAccessDeniedScreen(
         context: context,
         title: 'Section Restricted',
-        message: 'Your sub-admin account is restricted from accessing the "$requiredPermission" module. Contact your branch manager to request access.',
+        message:
+            'Your sub-admin account is restricted from accessing the "$requiredPermission" module. Contact your branch manager to request access.',
         actionLabel: 'Back to Dashboard',
-        onAction: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false),
+        onAction: () => Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/admin/dashboard', (r) => false),
         icon: Icons.lock_clock_rounded,
         accentColor: AppColors.warning,
       );
@@ -265,7 +301,8 @@ class AdminRouteGuard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF141419) : const Color(0xFFF9F9FB),
+      backgroundColor:
+          isDark ? const Color(0xFF141419) : const Color(0xFFF9F9FB),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -383,9 +420,11 @@ class SuperAdminRouteGuard extends StatelessWidget {
       return _buildAccessDeniedScreen(
         context: context,
         title: 'Super Admin Authentication Required',
-        message: 'This area contains platform-level governance tools. Please sign in with your Super Administrator credentials.',
+        message:
+            'This area contains platform-level governance tools. Please sign in with your Super Administrator credentials.',
         actionLabel: 'Go to Sign In',
-        onAction: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (r) => false),
+        onAction: () => Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/login', (r) => false),
         icon: Icons.security_rounded,
         accentColor: SuperAdminTheme.primary,
       );
@@ -395,13 +434,17 @@ class SuperAdminRouteGuard extends StatelessWidget {
     return _buildAccessDeniedScreen(
       context: context,
       title: 'Super Admin Clearance Required',
-      message: 'Your account has restaurant-level permissions, but lacks platform governance clearance to access the Super Admin control suite.',
-      actionLabel: auth.isAdmin ? 'Return to Admin Dashboard' : 'Return to Customer App',
+      message:
+          'Your account has restaurant-level permissions, but lacks platform governance clearance to access the Super Admin control suite.',
+      actionLabel:
+          auth.isAdmin ? 'Return to Admin Dashboard' : 'Return to Customer App',
       onAction: () {
         if (auth.isAdmin) {
-          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
+          Navigator.of(context, rootNavigator: true)
+              .pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
         } else {
-          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
+          Navigator.of(context, rootNavigator: true)
+              .pushNamedAndRemoveUntil('/home', (r) => false);
         }
       },
       icon: Icons.gavel_rounded,
@@ -464,7 +507,8 @@ class SuperAdminRouteGuard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(icon, size: 38, color: SuperAdminTheme.accentGold),
+                    child:
+                        Icon(icon, size: 38, color: SuperAdminTheme.accentGold),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -553,17 +597,20 @@ class RiderRouteGuard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.delivery_dining_rounded, size: 64, color: AppColors.primary),
+                const Icon(Icons.delivery_dining_rounded,
+                    size: 64, color: AppColors.primary),
                 const SizedBox(height: 16),
                 const Text(
                   'Rider Login Required',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                const Text('Please sign in to access your delivery dispatch console.'),
+                const Text(
+                    'Please sign in to access your delivery dispatch console.'),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (r) => false),
+                  onPressed: () => Navigator.of(context, rootNavigator: true)
+                      .pushNamedAndRemoveUntil('/login', (r) => false),
                   child: const Text('Go to Sign In'),
                 ),
               ],
@@ -582,17 +629,20 @@ class RiderRouteGuard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.shield_outlined, size: 64, color: AppColors.warning),
+                const Icon(Icons.shield_outlined,
+                    size: 64, color: AppColors.warning),
                 const SizedBox(height: 16),
                 const Text(
                   'Rider Clearance Required',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                const Text('Your account is not registered as an active delivery rider.'),
+                const Text(
+                    'Your account is not registered as an active delivery rider.'),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false),
+                  onPressed: () => Navigator.of(context, rootNavigator: true)
+                      .pushNamedAndRemoveUntil('/home', (r) => false),
                   child: const Text('Return to Home'),
                 ),
               ],
@@ -640,7 +690,10 @@ class CustomerRouteGuard extends StatelessWidget {
     }
 
     // Active Delivery Rider should land on Rider dashboard unless they have admin permissions
-    if (auth.isLoggedIn && auth.isRider && !auth.isAdmin && !auth.isSuperAdmin) {
+    if (auth.isLoggedIn &&
+        auth.isRider &&
+        !auth.isAdmin &&
+        !auth.isSuperAdmin) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context, rootNavigator: true)
             .pushNamedAndRemoveUntil(RoleRouter.riderHome, (r) => false);

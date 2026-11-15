@@ -10,7 +10,8 @@ class AppLanguage extends ChangeNotifier {
   static const supportedLocales = [english, urdu];
 
   Locale? _selectedLocale;
-  Locale get locale => _selectedLocale ??
+  Locale get locale =>
+      _selectedLocale ??
       (WidgetsBinding.instance.platformDispatcher.locale.languageCode == 'ur'
           ? urdu
           : english);

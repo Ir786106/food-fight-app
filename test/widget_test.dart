@@ -19,7 +19,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
   });
 
-  testWidgets('FoodCard should not produce a right overflow in a narrow layout', (tester) async {
+  testWidgets('FoodCard should not produce a right overflow in a narrow layout',
+      (tester) async {
     final food = FoodModel(
       id: 'food-1',
       name: 'Chicken Supreme Spicy Pizza',
@@ -65,7 +66,8 @@ void main() {
     expect(UserRole.fromString('customer'), UserRole.customer);
     expect(UserRole.fromString(null), UserRole.customer);
 
-    expect(RoleRouter.homeRouteForRole('super_admin'), '/super-admin/dashboard');
+    expect(
+        RoleRouter.homeRouteForRole('super_admin'), '/super-admin/dashboard');
     expect(RoleRouter.homeRouteForRole('admin'), '/admin/dashboard');
     expect(RoleRouter.homeRouteForRole('delivery_rider'), '/rider/dashboard');
     expect(RoleRouter.homeRouteForRole('customer'), '/home');

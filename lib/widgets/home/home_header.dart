@@ -38,7 +38,8 @@ class HomeHeader extends StatelessWidget {
             children: [
               // Branch location read-only indicator pill
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurface : AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
@@ -47,7 +48,8 @@ class HomeHeader extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -69,7 +71,9 @@ class HomeHeader extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -93,7 +97,8 @@ class HomeHeader extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                          color: Colors.black
+                              .withValues(alpha: isDark ? 0.3 : 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -119,7 +124,9 @@ class HomeHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w400,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
               letterSpacing: -0.2,
               height: 1.15,
             ),
@@ -161,7 +168,8 @@ class HomeHeader extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.search_rounded,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    color:
+                        isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                     size: 22,
                   ),
                   const SizedBox(width: 12),
@@ -170,7 +178,9 @@ class HomeHeader extends StatelessWidget {
                       'Search burgers, pizza, shawarma...',
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -3,11 +3,13 @@ import '../../core/utils/safe_convert.dart';
 /// System Audit Log Model for Super Admin monitoring
 class AuditLogModel {
   final String id;
-  final String action; // e.g. 'order_status_update', 'admin_created', 'menu_item_deleted', 'coupon_created'
+  final String
+      action; // e.g. 'order_status_update', 'admin_created', 'menu_item_deleted', 'coupon_created'
   final String actorName;
   final String actorEmail;
   final String actorRole; // 'super_admin', 'admin', 'system', 'customer'
-  final String targetEntity; // 'order', 'menu', 'category', 'coupon', 'admin', 'system'
+  final String
+      targetEntity; // 'order', 'menu', 'category', 'coupon', 'admin', 'system'
   final String targetId;
   final String description;
   final DateTime timestamp;

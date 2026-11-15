@@ -5,7 +5,8 @@ import 'package:food_fight/models/cart_item_model.dart';
 
 void main() {
   group('Multi-Size Variant & Extras Data Model Tests', () {
-    test('MenuItemModel calculates price range and variant status correctly', () {
+    test('MenuItemModel calculates price range and variant status correctly',
+        () {
       final pizza = MenuItemModel(
         id: 'pizza_1',
         name: 'Chicken Tikka Pizza',
@@ -15,7 +16,8 @@ void main() {
         variants: [
           const MenuVariant(label: 'Small', price: 399),
           const MenuVariant(label: 'Medium', price: 799),
-          const MenuVariant(label: 'Large', price: 1199, discount: 10), // 1079.1
+          const MenuVariant(
+              label: 'Large', price: 1199, discount: 10), // 1079.1
           const MenuVariant(label: 'XL', price: 1599),
         ],
         addons: [
@@ -45,7 +47,8 @@ void main() {
       expect(restored.variants![2].discount, 10);
     });
 
-    test('Backward compatibility: legacy sizePrices map converts to variants', () {
+    test('Backward compatibility: legacy sizePrices map converts to variants',
+        () {
       final legacyJson = {
         'id': 'legacy_item',
         'name': 'Legacy Pizza',
@@ -66,7 +69,8 @@ void main() {
       expect(item.maxPrice, 1200.0);
     });
 
-    test('Single flat-price item without variants works backward-compatibly', () {
+    test('Single flat-price item without variants works backward-compatibly',
+        () {
       final burger = MenuItemModel(
         id: 'burger_1',
         name: 'Zinger Burger',
@@ -86,7 +90,9 @@ void main() {
       expect(burger.formattedPriceRange, 'Rs. 349');
     });
 
-    test('FoodModel accurately reflects startingPrice across variants and fallback', () {
+    test(
+        'FoodModel accurately reflects startingPrice across variants and fallback',
+        () {
       final foodWithVariants = FoodModel(
         id: 'f1',
         name: 'Broast',
@@ -119,7 +125,9 @@ void main() {
   });
 
   group('CartItemModel & Line Pricing Tests', () {
-    test('Calculates unit price and total price accurately with variants and addons', () {
+    test(
+        'Calculates unit price and total price accurately with variants and addons',
+        () {
       final food = FoodModel(
         id: 'pizza_tikka',
         name: 'Chicken Tikka',
@@ -164,7 +172,8 @@ void main() {
       expect(line1.lineKey != line2.lineKey, isTrue);
     });
 
-    test('CartItemModel JSON serializes and restores variant and addons info', () {
+    test('CartItemModel JSON serializes and restores variant and addons info',
+        () {
       final food = FoodModel(
         id: 'broast_1',
         name: 'Broast',

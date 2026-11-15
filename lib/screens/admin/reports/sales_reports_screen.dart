@@ -33,15 +33,22 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = context.watch<AuthProvider>();
-    final branchId = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
-    if (!auth.isSuperAdmin && (branchId == null || branchId.isEmpty || branchId.toLowerCase() == 'all')) return;
+    final branchId =
+        auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    if (!auth.isSuperAdmin &&
+        (branchId == null ||
+            branchId.isEmpty ||
+            branchId.toLowerCase() == 'all')) {
+      return;
+    }
     if (!_initialized || _lastBranchId != branchId) {
       _initialized = true;
       _lastBranchId = branchId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _lastBranchId == branchId) {
           final rp = context.read<ReportProvider>();
-          rp.setPreset(rp.selectedPreset, branchId: branchId, replaceBranch: true);
+          rp.setPreset(rp.selectedPreset,
+              branchId: branchId, replaceBranch: true);
         }
       });
     }
@@ -58,13 +65,17 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
 
     final reportProvider = context.watch<ReportProvider>();
     final branch = auth.isSuperAdmin ? null : user?.branchId?.trim();
-    if (!auth.isSuperAdmin && (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
+    if (!auth.isSuperAdmin &&
+        (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
       return const AdminScaffold(
         currentRoute: '/admin/reports',
-        body: ErrorView(message: 'This account needs a branch assignment before viewing reports.'),
+        body: ErrorView(
+            message:
+                'This account needs a branch assignment before viewing reports.'),
       );
     }
-    final report = reportProvider.currentBranchId == branch ? reportProvider.report : null;
+    final report =
+        reportProvider.currentBranchId == branch ? reportProvider.report : null;
 
     return AdminScaffold(
       currentRoute: '/admin/reports',
@@ -74,9 +85,12 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Sales & Analytics 📈', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            const Text('Sales & Analytics 📈',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             Text(
-              user?.branchId != null ? 'Branch: ${user!.branchId}' : 'All Branches (HQ)',
+              user?.branchId != null
+                  ? 'Branch: ${user!.branchId}'
+                  : 'All Branches (HQ)',
               style: const TextStyle(fontSize: 10.5, color: Colors.white70),
             ),
           ],
@@ -90,7 +104,8 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.download_rounded),
               tooltip: 'Export CSV',
@@ -106,14 +121,18 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                 lastDate: DateTime.now().add(const Duration(days: 1)),
               );
               if (range != null && context.mounted) {
-                context.read<ReportProvider>().setCustomDateRange(range.start, range.end);
+                context
+                    .read<ReportProvider>()
+                    .setCustomDateRange(range.start, range.end);
               }
             },
           ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Report',
-            onPressed: () => context.read<ReportProvider>().setPreset(reportProvider.selectedPreset),
+            onPressed: () => context
+                .read<ReportProvider>()
+                .setPreset(reportProvider.selectedPreset),
           ),
         ],
       ),
@@ -130,9 +149,12 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                 child: Row(
                   children: [
                     _buildPresetChip(context, 'today', 'Today', reportProvider),
-                    _buildPresetChip(context, 'week', 'This Week', reportProvider),
-                    _buildPresetChip(context, 'month', 'This Month', reportProvider),
-                    _buildPresetChip(context, 'all', 'All Time', reportProvider),
+                    _buildPresetChip(
+                        context, 'week', 'This Week', reportProvider),
+                    _buildPresetChip(
+                        context, 'month', 'This Month', reportProvider),
+                    _buildPresetChip(
+                        context, 'all', 'All Time', reportProvider),
                   ],
                 ),
               ),
@@ -141,12 +163,14 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
               if (reportProvider.isLoading && report == null)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
-                  child: LoadingIndicator(message: 'Generating sales report...'),
+                  child:
+                      LoadingIndicator(message: 'Generating sales report...'),
                 )
               else if (reportProvider.errorMessage != null && report == null)
                 ErrorView(
                   message: reportProvider.errorMessage!,
-                  onRetry: () => reportProvider.setPreset(reportProvider.selectedPreset),
+                  onRetry: () =>
+                      reportProvider.setPreset(reportProvider.selectedPreset),
                 )
               else if (report == null || report.totalOrders == 0)
                 Material(
@@ -154,7 +178,9 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
-                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.grey.shade200,
                     ),
                   ),
                   child: const Padding(
@@ -162,7 +188,8 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                     child: EmptyStateView(
                       icon: Icons.bar_chart_rounded,
                       title: 'No Sales in Selected Period',
-                      description: 'Orders placed during this time frame will be analyzed here.',
+                      description:
+                          'Orders placed during this time frame will be analyzed here.',
                     ),
                   ),
                 )
@@ -180,12 +207,14 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                         maxCrossAxisExtent: 260,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: isNarrow ? 2.1 : (isWide ? 1.75 : 1.5),
+                        childAspectRatio:
+                            isNarrow ? 2.1 : (isWide ? 1.75 : 1.5),
                       ),
                       children: [
                         StatCard(
                           title: 'Total Revenue',
-                          value: 'Rs. ${report.totalRevenue.toStringAsFixed(0)}',
+                          value:
+                              'Rs. ${report.totalRevenue.toStringAsFixed(0)}',
                           icon: Icons.account_balance_wallet_rounded,
                           color: AppColors.success,
                           subtitle: 'Gross Volume',
@@ -199,14 +228,16 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                         ),
                         StatCard(
                           title: 'Average Order Value',
-                          value: 'Rs. ${report.averageOrderValue.toStringAsFixed(0)}',
+                          value:
+                              'Rs. ${report.averageOrderValue.toStringAsFixed(0)}',
                           icon: Icons.trending_up_rounded,
                           color: AppColors.primaryYellow,
                           subtitle: 'Per non-cancelled order',
                         ),
                         StatCard(
                           title: 'Order Status',
-                          value: '${report.deliveredOrders} / ${report.cancelledOrders}',
+                          value:
+                              '${report.deliveredOrders} / ${report.cancelledOrders}',
                           icon: Icons.donut_large_rounded,
                           color: AppColors.accent,
                           subtitle: 'Delivered vs Cancelled',
@@ -260,11 +291,14 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade200,
                           ),
                         ),
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
                           leading: Stack(
                             children: [
                               ClipRRect(
@@ -284,7 +318,9 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                                   decoration: BoxDecoration(
                                     color: index == 0
                                         ? AppColors.warning
-                                        : (index == 1 ? Colors.grey.shade600 : Colors.brown.shade400),
+                                        : (index == 1
+                                            ? Colors.grey.shade600
+                                            : Colors.brown.shade400),
                                     borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(8),
                                       bottomRight: Radius.circular(6),
@@ -304,7 +340,10 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                           ),
                           title: Text(
                             item.name,
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textDark),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: textDark),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -351,18 +390,26 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade200,
                           ),
                         ),
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 4),
                           leading: CircleAvatar(
-                            backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.1),
-                            child: const Icon(Icons.calendar_today_rounded, color: AdminTheme.primaryBlue, size: 18),
+                            backgroundColor:
+                                AdminTheme.primaryBlue.withValues(alpha: 0.1),
+                            child: const Icon(Icons.calendar_today_rounded,
+                                color: AdminTheme.primaryBlue, size: 18),
                           ),
                           title: Text(
                             '${daily.date.day}/${daily.date.month}/${daily.date.year}',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textDark),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: textDark),
                           ),
                           subtitle: Text(
                             '${daily.ordersCount} orders',
@@ -452,7 +499,8 @@ class _SalesReportsScreenState extends State<SalesReportsScreen> {
       );
     } catch (e) {
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text('Failed to export report: $e'),
             backgroundColor: Colors.redAccent,

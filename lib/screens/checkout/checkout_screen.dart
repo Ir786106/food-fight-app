@@ -78,7 +78,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         FocusScope.of(context).unfocus();
       }
     } catch (_) {
-      if (mounted) AppSnackbar.showError(context, context.tr('Unable to apply coupon. Try again.'));
+      if (mounted) {
+        AppSnackbar.showError(
+            context, context.tr('Unable to apply coupon. Try again.'));
+      }
     } finally {
       if (mounted) setState(() => _isApplyingCoupon = false);
     }
@@ -88,7 +91,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final coupon = cart.appliedCoupon;
     final enabled = !_isPlacingOrder && !_isApplyingCoupon;
     if (cart.tokensToRedeem > 0) {
-      return Text(context.tr('Coupons cannot be combined with loyalty tokens.'));
+      return Text(
+          context.tr('Coupons cannot be combined with loyalty tokens.'));
     }
     if (coupon != null) {
       return ListTile(
@@ -180,7 +184,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   builder: (dialogContext) => AlertDialog(
                     title: Text(context.tr('Confirm cash on delivery')),
                     content: Text(
-                      dialogContext.tr('Pay PKR {amount} when your order arrives.')
+                      dialogContext
+                          .tr('Pay PKR {amount} when your order arrives.')
                           .replaceFirst('{amount}', total.toStringAsFixed(2)),
                     ),
                     actions: [
@@ -746,7 +751,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.payments_outlined),
                         title: Text(context.tr(_selectedPayment)),
-                        subtitle: Text(context.tr('Pay in cash when your order arrives')),
+                        subtitle: Text(
+                            context.tr('Pay in cash when your order arrives')),
                       ),
                     ],
                   );
@@ -892,14 +898,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           children: [
                             _summaryRow(
                               context,
-                              context.tr('Subtotal ({count} items)').replaceFirst('{count}', cart.itemCount.toString()),
+                              context
+                                  .tr('Subtotal ({count} items)')
+                                  .replaceFirst(
+                                      '{count}', cart.itemCount.toString()),
                               'Rs. ${cart.subtotal.toStringAsFixed(0)}',
                             ),
                             const SizedBox(height: 8),
                             _summaryRow(
                               context,
                               cart.selectedArea != null
-                                  ? context.tr('Delivery Fee ({area})').replaceFirst('{area}', cart.selectedArea!.name)
+                                  ? context
+                                      .tr('Delivery Fee ({area})')
+                                      .replaceFirst(
+                                          '{area}', cart.selectedArea!.name)
                                   : context.tr('Delivery Fee'),
                               cart.isFreeDelivery
                                   ? context.tr('FREE')
@@ -908,7 +920,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ? AppColors.success
                                   : null,
                             ),
-                            if (cart.couponDiscount > 0 && cart.tokensToRedeem == 0) ...[
+                            if (cart.couponDiscount > 0 &&
+                                cart.tokensToRedeem == 0) ...[
                               const SizedBox(height: 8),
                               _summaryRow(
                                 context,
@@ -1162,10 +1175,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 16),
           CustomButton(
-            text: _isPlacingOrder ? context.tr('Checking order...') : context.tr('Review order'),
+            text: _isPlacingOrder
+                ? context.tr('Checking order...')
+                : context.tr('Review order'),
             isLoading: _isPlacingOrder,
             icon: Icons.check_circle_outline_rounded,
-            onPressed: _isPlacingOrder || _isApplyingCoupon ? null : () => _submitOrder(cart, auth),
+            onPressed: _isPlacingOrder || _isApplyingCoupon
+                ? null
+                : () => _submitOrder(cart, auth),
           ),
         ],
       ),
@@ -1173,7 +1190,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _summaryRow(BuildContext context, String label, String value,
-      {bool isBold = false, Color? color}) => PriceSummaryRow(
+          {bool isBold = false, Color? color}) =>
+      PriceSummaryRow(
         label: label,
         amount: value,
         emphasized: isBold,

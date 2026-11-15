@@ -15,18 +15,21 @@ import 'package:food_fight/core/constants/firestore_collections.dart';
 
 /// Authentication state provider for role-based access & user session
 class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
-  AuthProvider({this.edition = AppEdition.combined, FirebaseAuthService? authService})
+  AuthProvider(
+      {this.edition = AppEdition.combined, FirebaseAuthService? authService})
       : _authService = authService ?? FirebaseAuthService();
 
   final AppEdition edition;
   bool get _restricted => edition != AppEdition.combined;
 
   Future<UserModel?> _admit(UserModel? user) async {
-    if (_restricted && user != null &&
+    if (_restricted &&
+        user != null &&
         (!user.isActive || !edition.allowsRole(user.userRole))) {
       _currentUser = null;
       await _authService.signOut();
-      throw AppException(message: 'This account cannot sign in to ${edition.title}.');
+      throw AppException(
+          message: 'This account cannot sign in to ${edition.title}.');
     }
     return user;
   }
@@ -62,7 +65,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         // Refresh from server in background to ensure up-to-date role
         unawaited(_refreshFromServerAsync(_currentUser!.id));
       }
-      AppLogger.info('Auth initialized (${_currentUser?.role})', tag: 'AuthProvider');
+      AppLogger.info('Auth initialized (${_currentUser?.role})',
+          tag: 'AuthProvider');
     } catch (e) {
       _currentUser = null;
       _errorMessage = _parseError(e, 'Could not verify your account.');
@@ -83,7 +87,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       (snapshot) {
         if (_currentUser?.id != uid || snapshot.metadata.isFromCache) return;
         if (!snapshot.exists || snapshot.data() == null) {
-          unawaited(_rejectProfile('Account profile not found, contact admin.'));
+          unawaited(
+              _rejectProfile('Account profile not found, contact admin.'));
           return;
         }
         final data = snapshot.data()!;
@@ -98,27 +103,32 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         FirebaseAuthService.cacheRoleLocally(uid, updatedUser.role);
 
         if (roleChanged) {
-          AppLogger.info('Live role changed to ${updatedUser.role}', tag: 'AuthProvider');
+          AppLogger.info('Live role changed to ${updatedUser.role}',
+              tag: 'AuthProvider');
         }
         notifyListeners();
       },
       onError: (e) {
-        AppLogger.warn('Error in user doc snapshot listener: $e', tag: 'AuthProvider');
+        AppLogger.warn('Error in user doc snapshot listener: $e',
+            tag: 'AuthProvider');
       },
     );
   }
 
   UserModel? _validateLiveProfile(Map<String, dynamic> data, String uid) {
     try {
-      final profile = FirebaseAuthService.validateSessionProfile(data, expectedUid: uid);
+      final profile =
+          FirebaseAuthService.validateSessionProfile(data, expectedUid: uid);
       if (_restricted && !edition.allowsRole(profile.userRole)) {
-        throw AppException(message: 'This account cannot sign in to ${edition.title}.');
+        throw AppException(
+            message: 'This account cannot sign in to ${edition.title}.');
       }
       return profile;
     } on AppException catch (error) {
       unawaited(_rejectProfile(error.message));
     } on TypeError {
-      unawaited(_rejectProfile('Invalid user document format. Please contact support.'));
+      unawaited(_rejectProfile(
+          'Invalid user document format. Please contact support.'));
     }
     return null;
   }
@@ -163,7 +173,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
 
     try {
       _currentUser = await _admit(await _authService.signIn(
-        email: email, password: password, allowCachedRole: !_restricted,
+        email: email,
+        password: password,
+        allowCachedRole: !_restricted,
       ));
       if (_currentUser != null) {
         FcmService.registerUserToken(_currentUser!.id);
@@ -174,7 +186,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _errorMessage = e.message;
       return false;
     } catch (e) {
-      _errorMessage = _parseError(e, 'Incorrect email or password, or account error. Please try again.');
+      _errorMessage = _parseError(e,
+          'Incorrect email or password, or account error. Please try again.');
       return false;
     } finally {
       _setLoading(false);
@@ -193,7 +206,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
 
     try {
       if (!edition.allowsCustomerRegistration) {
-        throw AppException(message: 'Contact your administrator for an account.');
+        throw AppException(
+            message: 'Contact your administrator for an account.');
       }
       _currentUser = await _authService.signUp(
         name: name,
@@ -210,7 +224,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _errorMessage = e.message;
       return false;
     } catch (e) {
-      _errorMessage = _parseError(e, 'An unexpected error occurred during registration. Please check your network and try again.');
+      _errorMessage = _parseError(e,
+          'An unexpected error occurred during registration. Please check your network and try again.');
       return false;
     } finally {
       _setLoading(false);
@@ -226,7 +241,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       if (!edition.allowsCustomerRegistration) {
         throw AppException(message: 'Use your staff email and password.');
       }
-      final user = await _admit(await _authService.signInWithGoogle(allowCachedRole: !_restricted));
+      final user = await _admit(
+          await _authService.signInWithGoogle(allowCachedRole: !_restricted));
       if (user == null) {
         // User cancelled the flow
         return false;
@@ -239,7 +255,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _errorMessage = e.message;
       return false;
     } catch (e) {
-      _errorMessage = _parseError(e, 'Failed to complete Google sign-in. Please try again.');
+      _errorMessage = _parseError(
+          e, 'Failed to complete Google sign-in. Please try again.');
       return false;
     } finally {
       _setLoading(false);
@@ -286,13 +303,19 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
       _userDocSubscription = null;
       if (_restricted) {
         await FcmService.unregisterUserToken().timeout(
-          const Duration(seconds: 3), onTimeout: () {},
+          const Duration(seconds: 3),
+          onTimeout: () {},
         );
       } else {
         await FcmService.unregisterUserToken();
       }
       final prefs = await SharedPreferences.getInstance();
-      for (final key in ['food_fight_cart_v1','food_fight_cart_branch_v1','food_fight_favorites_v1','pending_checkout_v1']) {
+      for (final key in [
+        'food_fight_cart_v1',
+        'food_fight_cart_branch_v1',
+        'food_fight_favorites_v1',
+        'pending_checkout_v1'
+      ]) {
         await prefs.remove(key);
       }
       await _authService.signOut();
@@ -327,10 +350,12 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
   Future<bool> sendPasswordResetEmail(String email) => sendPasswordReset(email);
 
   /// Update Profile Details
-  Future<bool> updateProfile({String? name, String? phone, String? profileImage}) async {
+  Future<bool> updateProfile(
+      {String? name, String? phone, String? profileImage}) async {
     _setLoading(true);
     try {
-      await _authService.updateProfile(name: name, phone: phone, profileImage: profileImage);
+      await _authService.updateProfile(
+          name: name, phone: phone, profileImage: profileImage);
       _currentUser = await _admit(_restricted
           ? await _authService.getVerifiedCurrentUser()
           : await _authService.getCurrentUser());
@@ -343,7 +368,8 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     }
   }
 
-  static String parseError(dynamic e, [String fallback = 'An unexpected error occurred. Please try again.']) {
+  static String parseError(dynamic e,
+      [String fallback = 'An unexpected error occurred. Please try again.']) {
     if (e == null) return fallback;
     if (e is AppException) return e.message;
     final str = e.toString().toLowerCase();
@@ -359,16 +385,23 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
     if (str.contains('timeout') || str.contains('timed out')) {
       return 'Request timed out after 20 seconds. Please check your internet connection.';
     }
-    if (str.contains('network') || str.contains('unavailable') || str.contains('socketexception') || str.contains('network-request-failed')) {
+    if (str.contains('network') ||
+        str.contains('unavailable') ||
+        str.contains('socketexception') ||
+        str.contains('network-request-failed')) {
       return 'Network connection failed. Please check your internet connection.';
     }
     if (str.contains('user-disabled')) {
       return 'This user account has been disabled. Please contact support.';
     }
-    if (str.contains('invalid-credential') || str.contains('wrong-password') || str.contains('user-not-found')) {
+    if (str.contains('invalid-credential') ||
+        str.contains('wrong-password') ||
+        str.contains('user-not-found')) {
       return 'Incorrect email or password. Please try again.';
     }
-    if (str.contains('typeerror') || str.contains('format') || str.contains('subtype')) {
+    if (str.contains('typeerror') ||
+        str.contains('format') ||
+        str.contains('subtype')) {
       return 'Data parsing error occurred. Please contact support.';
     }
     return fallback;

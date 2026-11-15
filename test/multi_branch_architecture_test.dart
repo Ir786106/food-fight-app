@@ -13,7 +13,9 @@ import 'package:food_fight/providers/cart_provider.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   group('Part 2.1 — Multi-Branch Data Models & Scoping', () {
-    test('BranchModel serialization, deserialization, and financial profit calculation', () {
+    test(
+        'BranchModel serialization, deserialization, and financial profit calculation',
+        () {
       final now = DateTime.now();
       final branch = BranchModel(
         id: 'branch-lahore-johar-town',
@@ -89,7 +91,9 @@ void main() {
       expect(restored.branchId, equals('branch-lahore-gulberg'));
     });
 
-    test('CategoryModel, CouponModel, DeliveryAreaModel retain branchId scoping', () {
+    test(
+        'CategoryModel, CouponModel, DeliveryAreaModel retain branchId scoping',
+        () {
       final now = DateTime.now();
       final category = CategoryModel(
         id: 'cat-pizza',
@@ -126,7 +130,8 @@ void main() {
     });
   });
 
-  group('Part 2.2 — Admin Branch Scoping & Sub-Admin Permission Management', () {
+  group('Part 2.2 — Admin Branch Scoping & Sub-Admin Permission Management',
+      () {
     test('AdminAccountModel with branchId and sub-admin hierarchy', () {
       final parentAdmin = AdminAccountModel(
         id: 'admin-101',
@@ -195,7 +200,8 @@ void main() {
     });
   });
 
-  group('Part 2.3 & 2.4 — Customer Multi-Branch Cart & Conflict Resolution', () {
+  group('Part 2.3 & 2.4 — Customer Multi-Branch Cart & Conflict Resolution',
+      () {
     test('Cart accurately tracks branchId of added item', () {
       final cart = CartProvider();
       final foodJohar = FoodModel(
@@ -218,7 +224,9 @@ void main() {
       expect(cart.isDifferentBranch('branch-lahore-gulberg'), isTrue);
     });
 
-    test('Adding item from different branch with clearIfDifferentBranch resets cart to new branch', () {
+    test(
+        'Adding item from different branch with clearIfDifferentBranch resets cart to new branch',
+        () {
       final cart = CartProvider();
       final foodJohar = FoodModel(
         id: 'f-01',

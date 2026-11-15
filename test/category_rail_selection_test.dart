@@ -29,7 +29,9 @@ void main() {
       ),
     ];
 
-    testWidgets('Renders top menu/search buttons, Firestore categories, and bottom filter button', (tester) async {
+    testWidgets(
+        'Renders top menu/search buttons, Firestore categories, and bottom filter button',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -59,7 +61,8 @@ void main() {
       expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
     });
 
-    testWidgets('Tapping category button invokes onCategorySelected callback', (tester) async {
+    testWidgets('Tapping category button invokes onCategorySelected callback',
+        (tester) async {
       String selected = 'All';
 
       await tester.pumpWidget(
@@ -88,7 +91,8 @@ void main() {
       expect(selected, equals('Burgers'));
     });
 
-    testWidgets('Menu and filter buttons invoke corresponding callbacks', (tester) async {
+    testWidgets('Menu and filter buttons invoke corresponding callbacks',
+        (tester) async {
       bool menuTapped = false;
       bool filterTapped = false;
 

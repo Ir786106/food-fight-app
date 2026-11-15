@@ -10,9 +10,9 @@ abstract final class StaffRepository {
         .where('role', whereIn: ['admin', 'staff', 'sub_admin']);
     if (branchId != null) query = query.where('branchId', isEqualTo: branchId);
     return query.snapshots().map((snapshot) => [
-      for (final doc in snapshot.docs)
-        AdminAccountModel.fromJson({...doc.data(), 'id': doc.id}),
-    ]);
+          for (final doc in snapshot.docs)
+            AdminAccountModel.fromJson({...doc.data(), 'id': doc.id}),
+        ]);
   }
 
   static Future<void> setStatus(String userId, String status) async {

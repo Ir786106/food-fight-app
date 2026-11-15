@@ -70,9 +70,11 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
       ),
       builder: (ctx) {
         return FutureBuilder<Map<String, dynamic>>(
-          future: CustomerService.getCustomerStats(customer.id, branchId: branchId),
+          future:
+              CustomerService.getCustomerStats(customer.id, branchId: branchId),
           builder: (context, snapshot) {
-            final stats = snapshot.data ?? {'totalOrders': 0, 'totalSpent': 0.0};
+            final stats =
+                snapshot.data ?? {'totalOrders': 0, 'totalSpent': 0.0};
             final totalOrders = (stats['totalOrders'] as num?)?.toInt() ?? 0;
             final totalSpent = (stats['totalSpent'] as num?)?.toDouble() ?? 0.0;
             final numbers = MaterialLocalizations.of(context);
@@ -94,14 +96,16 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   Row(
                     children: [
                       CircleAvatar(
                         radius: 28,
-                        backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.1),
+                        backgroundColor:
+                            AdminTheme.primaryBlue.withValues(alpha: 0.1),
                         child: Text(
-                          customer.name.isNotEmpty ? customer.name[0].toUpperCase() : 'C',
+                          customer.name.isNotEmpty
+                              ? customer.name[0].toUpperCase()
+                              : 'C',
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -134,7 +138,8 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                               Text(
                                 customer.phone,
                                 textDirection: TextDirection.ltr,
-                                style: TextStyle(color: textMuted, fontSize: 12),
+                                style:
+                                    TextStyle(color: textMuted, fontSize: 12),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -142,18 +147,25 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: customer.isActive ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
+                          color: customer.isActive
+                              ? AppColors.success.withValues(alpha: 0.1)
+                              : AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: customer.isActive ? AppColors.success.withValues(alpha: 0.4) : AppColors.error.withValues(alpha: 0.4),
+                            color: customer.isActive
+                                ? AppColors.success.withValues(alpha: 0.4)
+                                : AppColors.error.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Text(
                           context.tr(customer.isActive ? 'Active' : 'Blocked'),
                           style: TextStyle(
-                            color: customer.isActive ? AppColors.success : AppColors.error,
+                            color: customer.isActive
+                                ? AppColors.success
+                                : AppColors.error,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -162,25 +174,34 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-
                   Row(
                     children: [
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.grey.shade50,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                            border: Border.all(
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.grey.shade200),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(context.tr('Total Orders'), style: TextStyle(color: textMuted, fontSize: 12)),
+                              Text(context.tr('Total Orders'),
+                                  style: TextStyle(
+                                      color: textMuted, fontSize: 12)),
                               const SizedBox(height: 4),
                               Text(
                                 numbers.formatDecimal(totalOrders),
-                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textDark),
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: textDark),
                               ),
                             ],
                           ),
@@ -191,15 +212,24 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.grey.shade50,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                            border: Border.all(
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.grey.shade200),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(context.tr(platform ? 'Lifetime Spent' : 'Spent at this branch'),
-                                  style: TextStyle(color: textMuted, fontSize: 12)),
+                              Text(
+                                  context.tr(platform
+                                      ? 'Lifetime Spent'
+                                      : 'Spent at this branch'),
+                                  style: TextStyle(
+                                      color: textMuted, fontSize: 12)),
                               const SizedBox(height: 4),
                               Text(
                                 "${context.tr('Rs.')} ${numbers.formatDecimal(totalSpent.round())}",
@@ -216,21 +246,29 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: customer.isActive ? AppColors.error : AppColors.success,
+                        backgroundColor: customer.isActive
+                            ? AppColors.error
+                            : AppColors.success,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      icon: Icon(customer.isActive ? Icons.block_rounded : Icons.check_circle_rounded),
+                      icon: Icon(customer.isActive
+                          ? Icons.block_rounded
+                          : Icons.check_circle_rounded),
                       label: Text(
                         context.tr(platform
-                            ? (customer.isActive ? 'Block customer account' : 'Unblock customer account')
-                            : (customer.isActive ? 'Block at this branch' : 'Unblock at this branch')),
+                            ? (customer.isActive
+                                ? 'Block customer account'
+                                : 'Unblock customer account')
+                            : (customer.isActive
+                                ? 'Block at this branch'
+                                : 'Unblock at this branch')),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       onPressed: () async {
@@ -239,8 +277,10 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                         final updated = await provider.toggleCustomerStatus(
                             customer.id, customer.isActive);
                         if (!updated && pageContext.mounted) {
-                          AppSnackbar.showError(pageContext,
-                              pageContext.tr('Unable to update customer access.'));
+                          AppSnackbar.showError(
+                              pageContext,
+                              pageContext
+                                  .tr('Unable to update customer access.'));
                         }
                       },
                     ),
@@ -280,7 +320,8 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
       ),
       body: Consumer<CustomerProvider>(
         builder: (context, provider, _) {
-          final customers = _scopePending ? const <UserModel>[] : provider.customers;
+          final customers =
+              _scopePending ? const <UserModel>[] : provider.customers;
           return ResponsiveContainer.content(
             maxWidth: 1200,
             child: Column(
@@ -295,7 +336,8 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                           controller: _searchCtrl,
                           onChanged: (val) => provider.setSearch(val),
                           decoration: InputDecoration(
-                            hintText: context.tr('Search by customer name, email or phone...'),
+                            hintText: context.tr(
+                                'Search by customer name, email or phone...'),
                             prefixIcon: const Icon(Icons.search, size: 20),
                             suffixIcon: _searchCtrl.text.isNotEmpty
                                 ? IconButton(
@@ -308,11 +350,14 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                                 : null,
                             filled: true,
                             fillColor: cardBg,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: isDark ? Colors.white12 : Colors.grey.shade300,
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.grey.shade300,
                               ),
                             ),
                           ),
@@ -324,8 +369,10 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
 
                 // Customers List
                 Expanded(
-                  child: _scopePending || (provider.isLoading && customers.isEmpty)
-                      ? LoadingIndicator(message: context.tr('Loading customer accounts...'))
+                  child: _scopePending ||
+                          (provider.isLoading && customers.isEmpty)
+                      ? LoadingIndicator(
+                          message: context.tr('Loading customer accounts...'))
                       : provider.errorMessage != null && customers.isEmpty
                           ? ErrorView(
                               message: context.tr(provider.errorMessage!),
@@ -335,34 +382,48 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                               ? EmptyStateView(
                                   icon: Icons.people_outline_rounded,
                                   title: context.tr('No Customers Found'),
-                                  description: context.tr(_searchCtrl.text.isNotEmpty
+                                  description: context.tr(_searchCtrl
+                                          .text.isNotEmpty
                                       ? 'No customer matched your search query.'
                                       : 'Registered customers will appear here.'),
                                 )
                               : RefreshIndicator(
                                   onRefresh: provider.loadCustomers,
                                   child: ListView.separated(
-                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
                                     padding: const EdgeInsets.all(16),
                                     itemCount: customers.length,
-                                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 10),
                                     itemBuilder: (context, index) {
                                       final customer = customers[index];
 
                                       return Material(
                                         color: cardBg,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
                                           side: BorderSide(
-                                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                                            color: isDark
+                                                ? Colors.white
+                                                    .withValues(alpha: 0.08)
+                                                : Colors.grey.shade200,
                                           ),
                                         ),
                                         child: ListTile(
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16, vertical: 8),
                                           leading: CircleAvatar(
-                                            backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.1),
+                                            backgroundColor: AdminTheme
+                                                .primaryBlue
+                                                .withValues(alpha: 0.1),
                                             child: Text(
-                                              customer.name.isNotEmpty ? customer.name[0].toUpperCase() : 'C',
+                                              customer.name.isNotEmpty
+                                                  ? customer.name[0]
+                                                      .toUpperCase()
+                                                  : 'C',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 color: AdminTheme.primaryBlue,
@@ -380,37 +441,56 @@ class _ManageCustomersScreenState extends State<ManageCustomersScreen> {
                                             ),
                                           ),
                                           subtitle: Text(
-                                            customer.phone.isNotEmpty ? '${customer.email} • ${customer.phone}' : customer.email,
+                                            customer.phone.isNotEmpty
+                                                ? '${customer.email} • ${customer.phone}'
+                                                : customer.email,
                                             textDirection: TextDirection.ltr,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(color: textMuted, fontSize: 12.5),
+                                            style: TextStyle(
+                                                color: textMuted,
+                                                fontSize: 12.5),
                                           ),
                                           trailing: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                 decoration: BoxDecoration(
                                                   color: customer.isActive
-                                                      ? AppColors.success.withValues(alpha: 0.1)
-                                                      : AppColors.error.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(6),
+                                                      ? AppColors.success
+                                                          .withValues(
+                                                              alpha: 0.1)
+                                                      : AppColors.error
+                                                          .withValues(
+                                                              alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
-                                                  context.tr(customer.isActive ? 'Active' : 'Blocked'),
+                                                  context.tr(customer.isActive
+                                                      ? 'Active'
+                                                      : 'Blocked'),
                                                   style: TextStyle(
-                                                    color: customer.isActive ? AppColors.success : AppColors.error,
+                                                    color: customer.isActive
+                                                        ? AppColors.success
+                                                        : AppColors.error,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 11,
                                                   ),
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
-                                              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                                              const Icon(
+                                                  Icons.chevron_right_rounded,
+                                                  color: Colors.grey),
                                             ],
                                           ),
-                                          onTap: () => _showCustomerDetail(customer),
+                                          onTap: () =>
+                                              _showCustomerDetail(customer),
                                         ),
                                       );
                                     },

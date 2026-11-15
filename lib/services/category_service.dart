@@ -21,7 +21,9 @@ class CategoryService {
         return CategoryModel.fromJson(data);
       }).toList();
       if (branchId != null && branchId.isNotEmpty) {
-        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+        items = items
+            .where((c) => c.branchId == null || c.branchId == branchId)
+            .toList();
       }
       if (activeOnly) {
         return items.where((c) => c.isActive).toList();
@@ -40,7 +42,9 @@ class CategoryService {
         return CategoryModel.fromJson(data);
       }).toList();
       if (branchId != null && branchId.isNotEmpty) {
-        items = items.where((c) => c.branchId == null || c.branchId == branchId).toList();
+        items = items
+            .where((c) => c.branchId == null || c.branchId == branchId)
+            .toList();
       }
       return items;
     } catch (e) {
@@ -55,7 +59,8 @@ class CategoryService {
     final data = category.toJson();
     data['id'] = docRef.id;
     await docRef.set(data);
-    AppLogger.info('Created category: ${category.name} (${docRef.id})', tag: 'CategoryService');
+    AppLogger.info('Created category: ${category.name} (${docRef.id})',
+        tag: 'CategoryService');
     return docRef.id;
   }
 
@@ -72,7 +77,8 @@ class CategoryService {
   }
 
   /// Toggle category active status
-  static Future<void> toggleActive(String categoryId, bool currentStatus) async {
+  static Future<void> toggleActive(
+      String categoryId, bool currentStatus) async {
     await _collection.doc(categoryId).update({
       'isActive': currentStatus ? 0 : 1,
       'updatedAt': DateTime.now().millisecondsSinceEpoch,

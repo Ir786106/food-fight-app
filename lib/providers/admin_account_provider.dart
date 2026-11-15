@@ -37,7 +37,8 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
 
       final matchesRole = _roleFilter == 'all' || a.role == _roleFilter;
       final matchesStatus = _statusFilter == 'all' || a.status == _statusFilter;
-      final matchesBranch = _branchFilter == 'all' || a.branchId == _branchFilter;
+      final matchesBranch =
+          _branchFilter == 'all' || a.branchId == _branchFilter;
 
       return matchesSearch && matchesRole && matchesStatus && matchesBranch;
     }).toList();
@@ -67,7 +68,8 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
         _isLoading = false;
         _errorMessage = platformOperationError(e,
             fallback: 'Unable to load admin accounts. Please try again.');
-        AppLogger.error('AdminAccountProvider watch error: $e', tag: 'AdminAccountProvider');
+        AppLogger.error('AdminAccountProvider watch error: $e',
+            tag: 'AdminAccountProvider');
         notifyListeners();
       },
     );
@@ -94,13 +96,15 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Create new Admin/Staff account
-  Future<bool> createAdminAccount(AdminAccountModel admin, {String? createdBy, BranchModel? newBranch}) async {
+  Future<bool> createAdminAccount(AdminAccountModel admin,
+      {String? createdBy, BranchModel? newBranch}) async {
     _actionError = null;
     _isLoading = true;
     notifyListeners();
 
     try {
-      await SuperAdminService.createAdminAccount(admin, createdBy: createdBy, newBranch: newBranch);
+      await SuperAdminService.createAdminAccount(admin,
+          createdBy: createdBy, newBranch: newBranch);
       _isLoading = false;
       notifyListeners();
       return true;
@@ -108,14 +112,16 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
       _isLoading = false;
       _actionError = platformOperationError(e,
           fallback: 'Unable to create the admin account. Please try again.');
-      AppLogger.error('AdminAccountProvider create error: $e', tag: 'AdminAccountProvider');
+      AppLogger.error('AdminAccountProvider create error: $e',
+          tag: 'AdminAccountProvider');
       notifyListeners();
       return false;
     }
   }
 
   /// Update admin info and permissions
-  Future<bool> updateAdminAccount(AdminAccountModel admin, {String? updatedBy}) async {
+  Future<bool> updateAdminAccount(AdminAccountModel admin,
+      {String? updatedBy}) async {
     _actionError = null;
     try {
       await SuperAdminService.updateAdminAccount(admin, updatedBy: updatedBy);
@@ -123,22 +129,26 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
     } catch (e) {
       _actionError = platformOperationError(e,
           fallback: 'Unable to update the admin account. Please try again.');
-      AppLogger.error('AdminAccountProvider update error: $e', tag: 'AdminAccountProvider');
+      AppLogger.error('AdminAccountProvider update error: $e',
+          tag: 'AdminAccountProvider');
       notifyListeners();
       return false;
     }
   }
 
   /// Set status: activate, deactivate, suspend
-  Future<bool> setAdminStatus(String adminId, String newStatus, {String? changedBy}) async {
+  Future<bool> setAdminStatus(String adminId, String newStatus,
+      {String? changedBy}) async {
     _actionError = null;
     try {
-      await SuperAdminService.setAdminStatus(adminId, newStatus, changedBy: changedBy);
+      await SuperAdminService.setAdminStatus(adminId, newStatus,
+          changedBy: changedBy);
       return true;
     } catch (e) {
       _actionError = platformOperationError(e,
           fallback: 'Unable to change account status. Please try again.');
-      AppLogger.error('AdminAccountProvider setStatus error: $e', tag: 'AdminAccountProvider');
+      AppLogger.error('AdminAccountProvider setStatus error: $e',
+          tag: 'AdminAccountProvider');
       notifyListeners();
       return false;
     }

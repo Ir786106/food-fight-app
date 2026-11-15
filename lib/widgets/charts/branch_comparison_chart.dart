@@ -63,7 +63,9 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: widget.isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: widget.isDark
+                          ? Colors.white
+                          : const Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -71,7 +73,8 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                     'Gross revenue performance across all 5 branches',
                     style: TextStyle(
                       fontSize: 12,
-                      color: widget.isDark ? Colors.white60 : Colors.grey.shade600,
+                      color:
+                          widget.isDark ? Colors.white60 : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -142,15 +145,18 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                           response.spot == null) {
                         _touchedGroupIndex = null;
                       } else {
-                        _touchedGroupIndex = response.spot!.touchedBarGroupIndex;
+                        _touchedGroupIndex =
+                            response.spot!.touchedBarGroupIndex;
                       }
                     });
                   },
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -166,7 +172,9 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                         return Text(
                           formatted,
                           style: TextStyle(
-                            color: widget.isDark ? Colors.white38 : Colors.grey.shade500,
+                            color: widget.isDark
+                                ? Colors.white38
+                                : Colors.grey.shade500,
                             fontSize: 10,
                           ),
                         );
@@ -193,7 +201,9 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                           child: Text(
                             shortName,
                             style: TextStyle(
-                              color: widget.isDark ? Colors.white60 : Colors.grey.shade700,
+                              color: widget.isDark
+                                  ? Colors.white60
+                                  : Colors.grey.shade700,
                               fontSize: 10,
                               fontWeight: _touchedGroupIndex == idx
                                   ? FontWeight.bold
@@ -226,7 +236,10 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                         toY: branch.revenue > 0 ? branch.revenue : 50,
                         gradient: LinearGradient(
                           colors: isTouched
-                              ? [const Color(0xFFEC4899), const Color(0xFF8B5CF6)]
+                              ? [
+                                  const Color(0xFFEC4899),
+                                  const Color(0xFF8B5CF6)
+                                ]
                               : [
                                   const Color(0xFF7C3AED),
                                   const Color(0xFFA78BFA),
@@ -235,7 +248,8 @@ class _BranchComparisonChartState extends State<BranchComparisonChart> {
                           end: Alignment.topCenter,
                         ),
                         width: 22,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
                           toY: maxY,

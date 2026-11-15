@@ -35,7 +35,8 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
       currentRoute: '/admin/reviews',
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Customer Reviews & Ratings', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Customer Reviews & Ratings',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: colorScheme.surface,
         elevation: 0,
         actions: [
@@ -43,7 +44,8 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Reviews',
             onPressed: () {
-              final branchId = context.read<AuthProvider>().currentUser?.branchId;
+              final branchId =
+                  context.read<AuthProvider>().currentUser?.branchId;
               reviewProvider.watchBranchReviews(branchId);
             },
           ),
@@ -149,7 +151,8 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
                   (review.userName != null && review.userName!.isNotEmpty)
                       ? review.userName![0].toUpperCase()
                       : 'U',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onYellow),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: AppColors.onYellow),
                 ),
               ),
               const SizedBox(width: 12),
@@ -159,11 +162,13 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
                   children: [
                     Text(
                       review.userName ?? 'Verified Customer',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     Text(
                       '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year} • Order #${review.orderId}',
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                          fontSize: 11, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -172,7 +177,9 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
               Row(
                 children: List.generate(5, (i) {
                   return Icon(
-                    i < review.rating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                    i < review.rating.round()
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
                     size: 18,
                     color: AppColors.brandYellow,
                   );
@@ -197,14 +204,16 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
               decoration: BoxDecoration(
                 color: AppColors.brandYellow.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: AppColors.brandYellow.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.reply_rounded, size: 14, color: AppColors.brandYellow),
+                      Icon(Icons.reply_rounded,
+                          size: 14, color: AppColors.brandYellow),
                       SizedBox(width: 6),
                       Text(
                         'Branch Management Reply:',
@@ -235,7 +244,8 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
             children: [
               if (review.isHidden)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -258,7 +268,9 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
               const SizedBox(width: 8),
               IconButton(
                 icon: Icon(
-                  review.isHidden ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                  review.isHidden
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
                   size: 18,
                   color: review.isHidden ? AppColors.success : Colors.grey,
                 ),
@@ -294,8 +306,10 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
               controller: ctrl,
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Thank you for your feedback! We are thrilled to serve you...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                hintText:
+                    'Thank you for your feedback! We are thrilled to serve you...',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ],
@@ -313,7 +327,9 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
             onPressed: () async {
               final text = ctrl.text.trim();
               if (text.isNotEmpty) {
-                await context.read<ReviewProvider>().addAdminReply(review.id, text);
+                await context
+                    .read<ReviewProvider>()
+                    .addAdminReply(review.id, text);
               }
               if (ctx.mounted) Navigator.pop(ctx);
             },

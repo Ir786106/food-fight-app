@@ -32,7 +32,8 @@ class SessionBindings extends StatefulWidget {
   State<SessionBindings> createState() => _SessionBindingsState();
 }
 
-class _SessionBindingsState extends State<SessionBindings> with WidgetsBindingObserver {
+class _SessionBindingsState extends State<SessionBindings>
+    with WidgetsBindingObserver {
   Timer? _updateTimer;
   String? _promptedUpdateTag;
   bool _checkingUpdate = false;
@@ -46,7 +47,9 @@ class _SessionBindingsState extends State<SessionBindings> with WidgetsBindingOb
       final release = provider.availableRelease;
       final prefs = await SharedPreferences.getInstance();
       final navigator = appNavigatorKey.currentState;
-      if (!mounted || navigator == null || release == null ||
+      if (!mounted ||
+          navigator == null ||
+          release == null ||
           WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
           _promptedUpdateTag == release.tagName) {
         return;
@@ -83,18 +86,27 @@ class _SessionBindingsState extends State<SessionBindings> with WidgetsBindingOb
         context.read<OrderProvider>().watchCustomerOrders(user.id);
         context.read<LoyaltyProvider>().watchAccount(user.id);
       } else if (user.can('chats')) {
-        context.read<ChatProvider>().streamAdminChats(user.branchId ?? '', isSuperAdmin: user.isSuperAdmin);
+        context.read<ChatProvider>().streamAdminChats(user.branchId ?? '',
+            isSuperAdmin: user.isSuperAdmin);
       }
       FcmService.onOpen = (data) {
         if (!mounted) return;
         final nav = appNavigatorKey.currentState;
         if (nav == null) return;
         final chatId = data['chatId']?.toString();
-        final orderId = data['orderId']?.toString() ?? data['referenceId']?.toString();
+        final orderId =
+            data['orderId']?.toString() ?? data['referenceId']?.toString();
         if (chatId != null) {
-          nav.pushNamed(user.isAdmin ? '/admin/chats' : '/chat', arguments: {'chatId': chatId});
+          nav.pushNamed(user.isAdmin ? '/admin/chats' : '/chat',
+              arguments: {'chatId': chatId});
         } else if (orderId != null) {
-          nav.pushNamed(user.isRider ? '/rider' : user.isAdmin ? '/admin/orders' : '/order-tracking', arguments: orderId);
+          nav.pushNamed(
+              user.isRider
+                  ? '/rider'
+                  : user.isAdmin
+                      ? '/admin/orders'
+                      : '/order-tracking',
+              arguments: orderId);
         } else {
           nav.pushNamed('/notifications');
         }
@@ -103,12 +115,15 @@ class _SessionBindingsState extends State<SessionBindings> with WidgetsBindingOb
         final screen = appNavigatorKey.currentContext;
         if (screen != null) {
           AppSnackbar.showInfo(screen, title,
-          action: SnackBarAction(label: 'View', onPressed: () => FcmService.onOpen?.call(data)));
+              action: SnackBarAction(
+                  label: 'View',
+                  onPressed: () => FcmService.onOpen?.call(data)));
         }
       };
       FcmService.routePending();
     });
   }
+
   @override
   void dispose() {
     _updateTimer?.cancel();
@@ -117,6 +132,7 @@ class _SessionBindingsState extends State<SessionBindings> with WidgetsBindingOb
     FcmService.onForeground = null;
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) => widget.child;
 }

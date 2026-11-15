@@ -1,31 +1,40 @@
 /// Interface for report service
 abstract class IReportService {
   /// Get daily sales report
-  Future<DailySalesReport> getDailySalesReport(String restaurantId, DateTime date);
+  Future<DailySalesReport> getDailySalesReport(
+      String restaurantId, DateTime date);
 
   /// Get weekly sales report
-  Future<WeeklySalesReport> getWeeklySalesReport(String restaurantId, DateTime startDate, DateTime endDate);
+  Future<WeeklySalesReport> getWeeklySalesReport(
+      String restaurantId, DateTime startDate, DateTime endDate);
 
   /// Get monthly sales report
-  Future<MonthlySalesReport> getMonthlySalesReport(String restaurantId, int year, int month);
+  Future<MonthlySalesReport> getMonthlySalesReport(
+      String restaurantId, int year, int month);
 
   /// Get custom date range report
-  Future<CustomDateRangeReport> getCustomDateRangeReport(String restaurantId, DateTime startDate, DateTime endDate);
+  Future<CustomDateRangeReport> getCustomDateRangeReport(
+      String restaurantId, DateTime startDate, DateTime endDate);
 
   /// Get order summary report
-  Future<OrderSummaryReport> getOrderSummaryReport(String restaurantId, DateTime startDate, DateTime endDate);
+  Future<OrderSummaryReport> getOrderSummaryReport(
+      String restaurantId, DateTime startDate, DateTime endDate);
 
   /// Get product report
-  Future<ProductReport> getProductReport(String restaurantId, DateTime startDate, DateTime endDate);
+  Future<ProductReport> getProductReport(
+      String restaurantId, DateTime startDate, DateTime endDate);
 
   /// Get customer report
-  Future<CustomerReport> getCustomerReport(String restaurantId, DateTime startDate, DateTime endDate);
+  Future<CustomerReport> getCustomerReport(
+      String restaurantId, DateTime startDate, DateTime endDate);
 
   /// Get rider report
-  Future<RiderReport> getRiderReport(String restaurantId, DateTime startDate, DateTime endDate);
+  Future<RiderReport> getRiderReport(
+      String restaurantId, DateTime startDate, DateTime endDate);
 
   /// Export report as CSV
-  Future<String> exportReportToCsv(String reportType, DateTime startDate, DateTime endDate);
+  Future<String> exportReportToCsv(
+      String reportType, DateTime startDate, DateTime endDate);
 }
 
 /// Daily sales report

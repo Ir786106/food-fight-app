@@ -39,7 +39,8 @@ class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Change preset date range and fetch report
-  void setPreset(String preset, {String? branchId, bool replaceBranch = false}) {
+  void setPreset(String preset,
+      {String? branchId, bool replaceBranch = false}) {
     _selectedPreset = preset;
     if ((replaceBranch || branchId != null) && _currentBranchId != branchId) {
       _currentBranchId = branchId;
@@ -69,20 +70,24 @@ class ReportProvider extends ChangeNotifier with SafeChangeNotifier {
         break;
     }
 
-    fetchReport(startDate: _startDate, endDate: _endDate, branchId: _currentBranchId);
+    fetchReport(
+        startDate: _startDate, endDate: _endDate, branchId: _currentBranchId);
   }
 
   /// Set custom date range
   void setCustomDateRange(DateTime start, DateTime end, {String? branchId}) {
     _selectedPreset = 'custom';
     _startDate = start;
-    _endDate = DateTime(end.year, end.month, end.day + 1).subtract(const Duration(milliseconds: 1));
+    _endDate = DateTime(end.year, end.month, end.day + 1)
+        .subtract(const Duration(milliseconds: 1));
     if (branchId != null) _currentBranchId = branchId;
-    fetchReport(startDate: start, endDate: _endDate, branchId: _currentBranchId);
+    fetchReport(
+        startDate: start, endDate: _endDate, branchId: _currentBranchId);
   }
 
   /// Fetch sales report
-  Future<void> fetchReport({DateTime? startDate, DateTime? endDate, String? branchId}) async {
+  Future<void> fetchReport(
+      {DateTime? startDate, DateTime? endDate, String? branchId}) async {
     if (branchId != null) _currentBranchId = branchId;
     final requestId = ++_requestId;
     _isLoading = true;

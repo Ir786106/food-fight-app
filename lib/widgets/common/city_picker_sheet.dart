@@ -84,14 +84,18 @@ class CityPickerSheet extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.brandMaroon,
                         ),
                       ),
                       Text(
                         'We will route your orders to the matching Food Fight kitchen',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -107,22 +111,28 @@ class CityPickerSheet extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (ctx, index) {
                 final city = availableCities[index];
-                final isSelected = city.toLowerCase() == (currentCity ?? '').toLowerCase();
+                final isSelected =
+                    city.toLowerCase() == (currentCity ?? '').toLowerCase();
 
                 return InkWell(
                   onTap: () => onCitySelected(city),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.brandYellow.withValues(alpha: 0.15)
-                          : (isDark ? AppColors.darkSurfaceElevated : Colors.grey.shade50),
+                          : (isDark
+                              ? AppColors.darkSurfaceElevated
+                              : Colors.grey.shade50),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.brandYellow
-                            : (isDark ? AppColors.darkBorder : AppColors.border),
+                            : (isDark
+                                ? AppColors.darkBorder
+                                : AppColors.border),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -130,7 +140,11 @@ class CityPickerSheet extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.storefront_rounded,
-                          color: isSelected ? AppColors.brandMaroon : (isDark ? AppColors.darkTextMuted : AppColors.textSecondary),
+                          color: isSelected
+                              ? AppColors.brandMaroon
+                              : (isDark
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textSecondary),
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -139,8 +153,12 @@ class CityPickerSheet extends StatelessWidget {
                             city,
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ),

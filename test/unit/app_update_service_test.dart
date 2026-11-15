@@ -9,16 +9,20 @@ void main() {
     svc = AppUpdateService();
   });
 
-  test('blocks an untrusted redirect before requesting the destination', () async {
+  test('blocks an untrusted redirect before requesting the destination',
+      () async {
     final visited = <String>[];
     await expectLater(
-      svc.testTrustedAsset<String>('https://github.com/release.apk', (url, options) async {
+      svc.testTrustedAsset<String>('https://github.com/release.apk',
+          (url, options) async {
         visited.add(url);
         expect(options.followRedirects, isFalse);
         return Response<String>(
           requestOptions: RequestOptions(path: url),
           statusCode: 302,
-          headers: Headers.fromMap({'location': ['https://untrusted.example/release.apk']}),
+          headers: Headers.fromMap({
+            'location': ['https://untrusted.example/release.apk']
+          }),
         );
       }),
       throwsStateError,
@@ -47,7 +51,8 @@ void main() {
     test('up-to-date returns false', () {
       expect(svc.testIsNewer('1.7.0', '1.7.0', 8, 8), isFalse);
     });
-    test('newer release name needs a higher Android build number when known', () {
+    test('newer release name needs a higher Android build number when known',
+        () {
       expect(svc.testIsNewer('1.9.0', '1.8.0', 17, 17), isFalse);
       expect(svc.testIsNewer('1.9.0', '1.8.0', 16, 17), isFalse);
       expect(svc.testIsNewer('1.9.0', '1.8.0', 18, 17), isTrue);
@@ -78,16 +83,26 @@ void main() {
 
   group('URL allowlist', () {
     test('allows github.com', () {
-      expect(svc.testIsAllowedUrl('https://github.com/user/repo/releases/download/v1/app.apk'), isTrue);
+      expect(
+          svc.testIsAllowedUrl(
+              'https://github.com/user/repo/releases/download/v1/app.apk'),
+          isTrue);
     });
     test('allows objects.githubusercontent.com', () {
-      expect(svc.testIsAllowedUrl('https://objects.githubusercontent.com/github-production-release-asset-1234/app.apk'), isTrue);
+      expect(
+          svc.testIsAllowedUrl(
+              'https://objects.githubusercontent.com/github-production-release-asset-1234/app.apk'),
+          isTrue);
     });
     test('rejects http (cleartext)', () {
-      expect(svc.testIsAllowedUrl('http://github.com/user/repo/releases/download/v1/app.apk'), isFalse);
+      expect(
+          svc.testIsAllowedUrl(
+              'http://github.com/user/repo/releases/download/v1/app.apk'),
+          isFalse);
     });
     test('rejects unknown host', () {
-      expect(svc.testIsAllowedUrl('https://malicious-site.com/app.apk'), isFalse);
+      expect(
+          svc.testIsAllowedUrl('https://malicious-site.com/app.apk'), isFalse);
     });
     test('rejects empty string', () {
       expect(svc.testIsAllowedUrl(''), isFalse);
@@ -96,10 +111,10 @@ void main() {
 
   group('Android release assets', () {
     Map<String, Object> asset(String name) => {
-      'name': name,
-      'browser_download_url': 'https://github.com/releases/$name',
-      'size': 64000000,
-    };
+          'name': name,
+          'browser_download_url': 'https://github.com/releases/$name',
+          'size': 64000000,
+        };
 
     test('prefers the published universal APK and its own checksum', () {
       final files = [
@@ -111,26 +126,37 @@ void main() {
       ];
       final selected = svc.testSelectApkAssets(files, '1.8.0');
       expect(selected?.apkUrl, endsWith('FoodFight_v1.8.0_release.apk'));
-      expect(selected?.checksumUrl, endsWith('FoodFight_v1.8.0_release.apk.sha256'));
+      expect(selected?.checksumUrl,
+          endsWith('FoodFight_v1.8.0_release.apk.sha256'));
     });
 
-    test('keeps a single older APK compatible and rejects a missing checksum', () {
+    test('keeps a single older APK compatible and rejects a missing checksum',
+        () {
       final old = asset('food-fight-v1.7.0.apk');
       expect(svc.testSelectApkAssets([old], '1.7.0'), isNull);
-      expect(svc.testSelectApkAssets([old, asset('food-fight-v1.7.0.apk.sha256')], '1.7.0'),
+      expect(
+          svc.testSelectApkAssets(
+              [old, asset('food-fight-v1.7.0.apk.sha256')], '1.7.0'),
           isNotNull);
     });
 
-    test('rejects ambiguous APKs and checksums hosted outside the allowlist', () {
-      expect(svc.testSelectApkAssets([
-        asset('rider.apk'), asset('customer.apk'),
-      ], '1.8.0'), isNull);
-      expect(svc.testSelectApkAssets([
-        asset('FoodFight_v1.8.0_release.apk'),
-        {...asset('FoodFight_v1.8.0_release.apk.sha256'),
-          'browser_download_url': 'https://example.test/hash'},
-      ], '1.8.0'), isNull);
+    test('rejects ambiguous APKs and checksums hosted outside the allowlist',
+        () {
+      expect(
+          svc.testSelectApkAssets([
+            asset('rider.apk'),
+            asset('customer.apk'),
+          ], '1.8.0'),
+          isNull);
+      expect(
+          svc.testSelectApkAssets([
+            asset('FoodFight_v1.8.0_release.apk'),
+            {
+              ...asset('FoodFight_v1.8.0_release.apk.sha256'),
+              'browser_download_url': 'https://example.test/hash'
+            },
+          ], '1.8.0'),
+          isNull);
     });
   });
-
 }

@@ -30,8 +30,12 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = context.watch<AuthProvider>();
-    final branch = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
-    if (!auth.isSuperAdmin && (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) return;
+    final branch =
+        auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    if (!auth.isSuperAdmin &&
+        (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
+      return;
+    }
     if (!_initialized || branch != _fleetBranch) {
       _initialized = true;
       _fleetBranch = branch;
@@ -51,8 +55,10 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
     final emailCtrl = TextEditingController(text: rider?.email ?? '');
     final passwordCtrl = TextEditingController();
     final phoneCtrl = TextEditingController(text: rider?.phone ?? '');
-    final vehicleTypeCtrl = TextEditingController(text: rider?.vehicleType ?? 'Motorcycle');
-    final vehicleNumberCtrl = TextEditingController(text: rider?.vehicleNumber ?? '');
+    final vehicleTypeCtrl =
+        TextEditingController(text: rider?.vehicleType ?? 'Motorcycle');
+    final vehicleNumberCtrl =
+        TextEditingController(text: rider?.vehicleNumber ?? '');
     bool obscurePassword = true;
     bool isSaving = false;
 
@@ -62,7 +68,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
         builder: (dialogContext, setModalState) {
           return AlertDialog(
             backgroundColor: AdminTheme.getCardBg(dialogContext),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
               children: [
                 Icon(
@@ -72,8 +79,11 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  rider == null ? 'Register New Delivery Rider' : 'Edit Rider Profile',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  rider == null
+                      ? 'Register New Delivery Rider'
+                      : 'Edit Rider Profile',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ],
             ),
@@ -91,11 +101,14 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         decoration: BoxDecoration(
                           color: AdminTheme.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AdminTheme.primaryBlue.withValues(alpha: 0.3)),
+                          border: Border.all(
+                              color: AdminTheme.primaryBlue
+                                  .withValues(alpha: 0.3)),
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.info_outline_rounded, size: 18, color: AdminTheme.primaryBlue),
+                            Icon(Icons.info_outline_rounded,
+                                size: 18, color: AdminTheme.primaryBlue),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -109,7 +122,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     ],
                     TextFormField(
                       controller: nameCtrl,
-                      validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Full Name'),
+                      validator: (v) => ValidatorUtils.validateRequired(v,
+                          fieldName: 'Full Name'),
                       decoration: const InputDecoration(
                         labelText: 'Rider Full Name *',
                         prefixIcon: Icon(Icons.person_outline),
@@ -125,7 +139,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         labelText: 'Login Email Address *',
                         hintText: 'e.g. rider1@foodfight.pk',
                         prefixIcon: const Icon(Icons.email_outlined),
-                        helperText: rider == null ? 'Rider will use this to sign in' : null,
+                        helperText: rider == null
+                            ? 'Rider will use this to sign in'
+                            : null,
                       ),
                     ),
                     if (rider == null) ...[
@@ -135,7 +151,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         obscureText: obscurePassword,
                         validator: (v) {
                           if (v == null || v.isEmpty) return null;
-                          if (v.length < 8) return 'Password must be at least 8 characters';
+                          if (v.length < 8) {
+                            return 'Password must be at least 8 characters';
+                          }
                           return null;
                         },
                         decoration: InputDecoration(
@@ -144,12 +162,16 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               size: 20,
                             ),
-                            onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
+                            onPressed: () => setModalState(
+                                () => obscurePassword = !obscurePassword),
                           ),
-                          helperText: 'Leave blank to link an existing customer or rider account',
+                          helperText:
+                              'Leave blank to link an existing customer or rider account',
                         ),
                       ),
                     ],
@@ -157,7 +179,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     TextFormField(
                       controller: phoneCtrl,
                       keyboardType: TextInputType.phone,
-                      validator: (v) => (v == null || v.length < 10) ? 'Valid phone required' : null,
+                      validator: (v) => (v == null || v.length < 10)
+                          ? 'Valid phone required'
+                          : null,
                       decoration: const InputDecoration(
                         labelText: 'Mobile Phone *',
                         hintText: '0300 1234567',
@@ -190,7 +214,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: AdminTheme.primaryBlue),
+                style: FilledButton.styleFrom(
+                    backgroundColor: AdminTheme.primaryBlue),
                 onPressed: isSaving
                     ? null
                     : () async {
@@ -213,7 +238,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                             id: rider.id,
                             userId: rider.userId,
                             name: nameCtrl.text.trim(),
-                            email: rider.email ?? emailCtrl.text.trim().toLowerCase(),
+                            email: rider.email ??
+                                emailCtrl.text.trim().toLowerCase(),
                             phone: phoneCtrl.text.trim(),
                             vehicleType: vehicleTypeCtrl.text.trim(),
                             vehicleNumber: vehicleNumberCtrl.text.trim(),
@@ -232,14 +258,16 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         }
                         if (mounted) {
                           final err = riderProv.errorMessage;
-                          AppSnackbar.showSnackBar(context,
+                          AppSnackbar.showSnackBar(
+                            context,
                             SnackBar(
                               content: Text(ok
                                   ? (rider == null
                                       ? 'Rider registered! Login Email: ${emailCtrl.text.trim()}'
                                       : 'Rider profile updated!')
                                   : (err ?? 'Failed to register rider')),
-                              backgroundColor: ok ? AppColors.success : AppColors.error,
+                              backgroundColor:
+                                  ok ? AppColors.success : AppColors.error,
                               duration: const Duration(seconds: 4),
                             ),
                           );
@@ -249,7 +277,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : Text(rider == null ? 'Register Rider' : 'Save Changes'),
               ),
@@ -264,10 +293,13 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
   Widget build(BuildContext context) {
     final access = context.watch<AuthProvider>();
     final branch = access.currentUser?.branchId?.trim();
-    if (!access.isSuperAdmin && (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
+    if (!access.isSuperAdmin &&
+        (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
       return const AdminScaffold(
         currentRoute: '/admin/riders',
-        body: ErrorView(message: 'This account needs a branch assignment before viewing riders.'),
+        body: ErrorView(
+            message:
+                'This account needs a branch assignment before viewing riders.'),
       );
     }
     final riderProvider = context.watch<RiderProvider>();
@@ -305,10 +337,11 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
           actions: [
             if (context.watch<AuthProvider>().edition == AppEdition.combined)
               IconButton(
-              icon: const Icon(Icons.two_wheeler_rounded),
-              tooltip: 'Open Rider Console',
-              onPressed: () => Navigator.pushNamed(context, '/rider/dashboard'),
-            ),
+                icon: const Icon(Icons.two_wheeler_rounded),
+                tooltip: 'Open Rider Console',
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/rider/dashboard'),
+              ),
             IconButton(
               icon: const Icon(Icons.person_add_rounded),
               tooltip: 'Register Rider',
@@ -337,10 +370,13 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: isDark ? Colors.white12 : Colors.grey.shade300,
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.grey.shade300,
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                         ),
                       ),
                     ),
@@ -348,8 +384,10 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                     FilledButton.icon(
                       style: FilledButton.styleFrom(
                         backgroundColor: AdminTheme.primaryBlue,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
                       onPressed: () => _showAddEditRiderModal(),
                       icon: const Icon(Icons.add),
@@ -363,15 +401,20 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
               Expanded(
                 child: Builder(
                   builder: (context) {
-                    if (riderProvider.isLoading && riderProvider.riders.isEmpty) {
-                      return const Center(child: LoadingIndicator(message: 'Loading rider fleet...'));
+                    if (riderProvider.isLoading &&
+                        riderProvider.riders.isEmpty) {
+                      return const Center(
+                          child: LoadingIndicator(
+                              message: 'Loading rider fleet...'));
                     }
 
-                    if (riderProvider.errorMessage != null && riderProvider.riders.isEmpty) {
+                    if (riderProvider.errorMessage != null &&
+                        riderProvider.riders.isEmpty) {
                       return Center(
                         child: ErrorView(
                           message: riderProvider.errorMessage!,
-                          onRetry: () => riderProvider.watchAllRiders(branchId: _fleetBranch),
+                          onRetry: () => riderProvider.watchAllRiders(
+                              branchId: _fleetBranch),
                         ),
                       );
                     }
@@ -381,7 +424,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         child: EmptyStateView(
                           icon: Icons.two_wheeler_rounded,
                           title: 'No Riders Registered',
-                          description: 'Add your restaurant delivery champions to start assigning orders.',
+                          description:
+                              'Add your restaurant delivery champions to start assigning orders.',
                         ),
                       );
                     }
@@ -393,24 +437,30 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         if (isDesktop) {
                           // Grid Layout for Tablet/Desktop
                           return GridView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 440,
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
                               childAspectRatio: 2.3,
                             ),
                             itemCount: riders.length,
-                            itemBuilder: (ctx, i) => _buildRiderCard(context, riders[i]),
+                            itemBuilder: (ctx, i) =>
+                                _buildRiderCard(context, riders[i]),
                           );
                         }
 
                         // Mobile Stacked List
                         return ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           itemCount: riders.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
-                          itemBuilder: (ctx, i) => _buildRiderCard(context, riders[i]),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (ctx, i) =>
+                              _buildRiderCard(context, riders[i]),
                         );
                       },
                     );
@@ -459,7 +509,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                 : AdminTheme.primaryBlue.withValues(alpha: 0.12),
             child: Icon(
               Icons.two_wheeler_rounded,
-              color: rider.isOnline ? AppColors.success : AdminTheme.primaryBlue,
+              color:
+                  rider.isOnline ? AppColors.success : AdminTheme.primaryBlue,
               size: 26,
             ),
           ),
@@ -484,7 +535,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: rider.isOnline
                             ? AppColors.success.withValues(alpha: 0.12)
@@ -496,7 +548,8 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: rider.isOnline ? AppColors.success : Colors.grey,
+                          color:
+                              rider.isOnline ? AppColors.success : Colors.grey,
                         ),
                       ),
                     ),
@@ -513,7 +566,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Icon(Icons.email_outlined, size: 12.5, color: AdminTheme.primaryBlue.withValues(alpha: 0.8)),
+                      Icon(Icons.email_outlined,
+                          size: 12.5,
+                          color: AdminTheme.primaryBlue.withValues(alpha: 0.8)),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -521,7 +576,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.brandYellow : AdminTheme.primaryBlue,
+                            color: isDark
+                                ? AppColors.brandYellow
+                                : AdminTheme.primaryBlue,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -533,14 +590,17 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, color: AppColors.warning, size: 16),
+                    const Icon(Icons.star_rounded,
+                        color: AppColors.warning, size: 16),
                     const SizedBox(width: 3),
                     Text(
                       rider.rating.toStringAsFixed(1),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                     const SizedBox(width: 14),
-                    const Icon(Icons.local_shipping_outlined, size: 15, color: AppColors.textSecondary),
+                    const Icon(Icons.local_shipping_outlined,
+                        size: 15, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       '${rider.totalDeliveries} Deliveries',
@@ -557,7 +617,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
               if (val == 'edit') {
                 _showAddEditRiderModal(rider: rider);
               } else if (val == 'toggle_active') {
-                context.read<RiderProvider>().toggleActive(rider.id, !rider.isActive);
+                context
+                    .read<RiderProvider>()
+                    .toggleActive(rider.id, !rider.isActive);
               }
             },
             itemBuilder: (ctx) => [
@@ -576,14 +638,20 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      rider.isActive ? Icons.cancel_outlined : Icons.check_circle_outline,
-                      color: rider.isActive ? AppColors.error : AppColors.success,
+                      rider.isActive
+                          ? Icons.cancel_outlined
+                          : Icons.check_circle_outline,
+                      color:
+                          rider.isActive ? AppColors.error : AppColors.success,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       rider.isActive ? 'Deactivate' : 'Activate',
-                      style: TextStyle(color: rider.isActive ? AppColors.error : AppColors.success),
+                      style: TextStyle(
+                          color: rider.isActive
+                              ? AppColors.error
+                              : AppColors.success),
                     ),
                   ],
                 ),

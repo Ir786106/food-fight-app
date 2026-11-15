@@ -62,7 +62,9 @@ class FoodDetailBottomBar extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.remove_rounded, size: 20),
                   onPressed: onDecrement,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                   splashRadius: 20,
                 ),
                 Padding(
@@ -72,7 +74,9 @@ class FoodDetailBottomBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ),

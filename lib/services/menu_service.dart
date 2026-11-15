@@ -27,8 +27,12 @@ class MenuService {
         return MenuItemModel.fromJson(data);
       }).toList();
 
-      if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
-        items = items.where((i) => i.branchId == null || i.branchId == branchId).toList();
+      if (branchId != null &&
+          branchId.isNotEmpty &&
+          branchId.toLowerCase() != 'all') {
+        items = items
+            .where((i) => i.branchId == null || i.branchId == branchId)
+            .toList();
       }
 
       if (activeOnly) {
@@ -59,7 +63,9 @@ class MenuService {
       if (items.isEmpty && includeLegacy) {
         // Fallback for alternate collection name 'menu_items'
         Query altQuery = FirebaseFirestore.instance.collection('menu_items');
-        if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
+        if (categoryId != null &&
+            categoryId.isNotEmpty &&
+            categoryId != 'All') {
           altQuery = altQuery.where('categoryId', isEqualTo: categoryId);
         }
         final altSnapshot = await altQuery.get();
@@ -72,8 +78,12 @@ class MenuService {
         }
       }
 
-      if (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all') {
-        items = items.where((i) => i.branchId == null || i.branchId == branchId).toList();
+      if (branchId != null &&
+          branchId.isNotEmpty &&
+          branchId.toLowerCase() != 'all') {
+        items = items
+            .where((i) => i.branchId == null || i.branchId == branchId)
+            .toList();
       }
 
       return items;
@@ -89,7 +99,10 @@ class MenuService {
       var doc = await _collection.doc(id).get();
       if (!doc.exists || doc.data() == null) {
         // Fallback to alternate collection name
-        doc = await FirebaseFirestore.instance.collection('menu_items').doc(id).get();
+        doc = await FirebaseFirestore.instance
+            .collection('menu_items')
+            .doc(id)
+            .get();
       }
       if (!doc.exists || doc.data() == null) return null;
       final data = doc.data() as Map<String, dynamic>;
@@ -107,7 +120,8 @@ class MenuService {
     final data = item.toJson();
     data['id'] = docRef.id;
     await docRef.set(data);
-    AppLogger.info('Created menu item: ${item.name} (${docRef.id})', tag: 'MenuService');
+    AppLogger.info('Created menu item: ${item.name} (${docRef.id})',
+        tag: 'MenuService');
     return docRef.id;
   }
 
@@ -131,13 +145,17 @@ class MenuService {
   }
 
   /// Apply one availability update atomically to the selected menu items.
-  static Future<void> setItemsActive(Set<String> ids, {required bool active}) async {
+  static Future<void> setItemsActive(Set<String> ids,
+      {required bool active}) async {
     if (ids.isEmpty) return;
-    if (ids.length > 500) throw ArgumentError.value(ids.length, 'ids', 'Too many items');
+    if (ids.length > 500) {
+      throw ArgumentError.value(ids.length, 'ids', 'Too many items');
+    }
     final batch = FirebaseFirestore.instance.batch();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     for (final id in ids) {
-      batch.update(_collection.doc(id), {'isActive': active ? 1 : 0, 'updatedAt': timestamp});
+      batch.update(_collection.doc(id),
+          {'isActive': active ? 1 : 0, 'updatedAt': timestamp});
     }
     await batch.commit();
   }
@@ -151,7 +169,8 @@ class MenuService {
     final batch = FirebaseFirestore.instance.batch();
     final updatedAt = FieldValue.serverTimestamp();
     for (final id in itemIds) {
-      batch.update(_collection.doc(id), {'imageUrl': imageUrl, 'updatedAt': updatedAt});
+      batch.update(
+          _collection.doc(id), {'imageUrl': imageUrl, 'updatedAt': updatedAt});
     }
     await batch.commit();
   }

@@ -25,15 +25,18 @@ class _OrderStatusDonutChartState extends State<OrderStatusDonutChart> {
 
   @override
   Widget build(BuildContext context) {
-    final total = widget.deliveredCount + widget.pendingCount + widget.cancelledCount;
+    final total =
+        widget.deliveredCount + widget.pendingCount + widget.cancelledCount;
 
     if (total == 0) {
       return const SizedBox.shrink();
     }
 
-    final deliveredPct = ((widget.deliveredCount / total) * 100).toStringAsFixed(0);
+    final deliveredPct =
+        ((widget.deliveredCount / total) * 100).toStringAsFixed(0);
     final pendingPct = ((widget.pendingCount / total) * 100).toStringAsFixed(0);
-    final cancelledPct = ((widget.cancelledCount / total) * 100).toStringAsFixed(0);
+    final cancelledPct =
+        ((widget.cancelledCount / total) * 100).toStringAsFixed(0);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -150,14 +153,17 @@ class _OrderStatusDonutChartState extends State<OrderStatusDonutChart> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: widget.isDark ? Colors.white : Colors.black87,
+                              color:
+                                  widget.isDark ? Colors.white : Colors.black87,
                             ),
                           ),
                           Text(
                             'Orders',
                             style: TextStyle(
                               fontSize: 10,
-                              color: widget.isDark ? Colors.white54 : Colors.grey.shade600,
+                              color: widget.isDark
+                                  ? Colors.white54
+                                  : Colors.grey.shade600,
                             ),
                           ),
                         ],

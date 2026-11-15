@@ -79,7 +79,9 @@ void main() {
       expect(cart.total, 600.0);
     });
 
-    test('Different special instructions keep otherwise identical items separate', () {
+    test(
+        'Different special instructions keep otherwise identical items separate',
+        () {
       cart.addToCart(foodA, note: 'No sauce');
       cart.addToCart(foodA, note: 'Extra sauce');
       cart.addToCart(foodA, note: ' No sauce ');
@@ -100,7 +102,8 @@ void main() {
       expect(cart.total, 1300.0 + 150.0);
     });
 
-    test('4. Add Product A x 1 again -> merges line and updates quantity to 2', () {
+    test('4. Add Product A x 1 again -> merges line and updates quantity to 2',
+        () {
       cart.addToCart(foodA);
       final variantM = foodB.variants![1];
       cart.addToCart(foodB, selectedVariant: variantM, selectedSize: 'Medium');
@@ -116,11 +119,13 @@ void main() {
     test('5. Add Product C x 3 (variant Quarter Rs. 300)', () {
       cart.addToCart(foodA); // 1
       final variantM = foodB.variants![1];
-      cart.addToCart(foodB, selectedVariant: variantM, selectedSize: 'Medium'); // 1
+      cart.addToCart(foodB,
+          selectedVariant: variantM, selectedSize: 'Medium'); // 1
       cart.addToCart(foodA); // now 2
 
       final variantQ = foodC.variants![0];
-      cart.addToCart(foodC, quantity: 3, selectedVariant: variantQ, selectedSize: 'Quarter');
+      cart.addToCart(foodC,
+          quantity: 3, selectedVariant: variantQ, selectedSize: 'Quarter');
 
       expect(cart.items.length, 3);
       expect(cart.itemCount, 6); // 2 + 1 + 3
@@ -212,7 +217,9 @@ void main() {
   });
 
   group('Cart Widget Integration & Single Source of Truth Test', () {
-    testWidgets('Tapping + adds product and immediately reflects in Cart badge & My Cart', (tester) async {
+    testWidgets(
+        'Tapping + adds product and immediately reflects in Cart badge & My Cart',
+        (tester) async {
       final cart = CartProvider();
       final testFood = FoodModel(
         id: 'test-item-1',
@@ -262,7 +269,8 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<CartProvider>.value(value: cart),
-            ChangeNotifierProvider<LoyaltyProvider>.value(value: LoyaltyProvider()),
+            ChangeNotifierProvider<LoyaltyProvider>.value(
+                value: LoyaltyProvider()),
           ],
           child: const MaterialApp(
             home: CartScreen(),

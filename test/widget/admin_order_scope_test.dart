@@ -12,14 +12,16 @@ import 'package:provider/provider.dart';
 
 void main() {
   Widget app(String? branchId, _OrdersSpy orders) => MultiProvider(
-    providers: [
-      ChangeNotifierProvider<AuthProvider>(create: (_) => _BranchAdmin(branchId)),
-      ChangeNotifierProvider<OrderProvider>.value(value: orders),
-    ],
-    child: const MaterialApp(home: AdminOrdersScreen()),
-  );
+        providers: [
+          ChangeNotifierProvider<AuthProvider>(
+              create: (_) => _BranchAdmin(branchId)),
+          ChangeNotifierProvider<OrderProvider>.value(value: orders),
+        ],
+        child: const MaterialApp(home: AdminOrdersScreen()),
+      );
 
-  testWidgets('branch admin opens and refreshes the same order scope', (tester) async {
+  testWidgets('branch admin opens and refreshes the same order scope',
+      (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(412, 840);
     addTearDown(tester.view.resetPhysicalSize);
@@ -55,14 +57,16 @@ void main() {
     await tester.pumpWidget(MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>(create: (_) => _BranchAdmin('a')),
-        ChangeNotifierProvider<CustomerProvider>(create: (_) => _CustomersStub()),
+        ChangeNotifierProvider<CustomerProvider>(
+            create: (_) => _CustomersStub()),
       ],
       child: MaterialApp(
         locale: AppLanguage.urdu,
         supportedLocales: AppLanguage.supportedLocales,
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.6)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(1.6)),
           child: child!,
         ),
         home: const ManageCustomersScreen(),
@@ -74,7 +78,8 @@ void main() {
     expect(find.text('ڈیش بورڈ'), findsOneWidget);
     expect(find.text('گفتگو'), findsOneWidget);
     expect(Directionality.of(tester.element(heading)), TextDirection.rtl);
-    final contact = tester.widget<Text>(find.text('customer@example.com • 03001234567'));
+    final contact =
+        tester.widget<Text>(find.text('customer@example.com • 03001234567'));
     expect(contact.textDirection, TextDirection.ltr);
     expect(find.text('بلاک شدہ'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'unknown');
@@ -86,7 +91,8 @@ void main() {
 
 class _CustomersStub extends CustomerProvider {
   @override
-  Future<void> loadCustomers({String? branchId, bool scopeChanged = false}) async {
+  Future<void> loadCustomers(
+      {String? branchId, bool scopeChanged = false}) async {
     notifyListenersPostFrame();
   }
 

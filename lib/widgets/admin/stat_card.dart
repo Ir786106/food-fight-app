@@ -23,8 +23,10 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF1A1A22) : Colors.white;
-    final valueColor = isDark ? const Color(0xFFF7F7FA) : const Color(0xFF1E293B);
-    final titleColor = isDark ? const Color(0xFFA2A2B0) : const Color(0xFF64748B);
+    final valueColor =
+        isDark ? const Color(0xFFF7F7FA) : const Color(0xFF1E293B);
+    final titleColor =
+        isDark ? const Color(0xFFA2A2B0) : const Color(0xFF64748B);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.05);
@@ -64,7 +66,8 @@ class StatCard extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: effectiveColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                      color: effectiveColor.withValues(
+                          alpha: isDark ? 0.22 : 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, color: effectiveColor, size: 17),

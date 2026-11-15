@@ -38,7 +38,9 @@ class RiderService {
 
   /// Stream all delivery riders (Admin / Super Admin)
   static Stream<List<RiderModel>> watchAllRiders({String? branchId}) {
-    final query = branchId == null ? _ridersCol : _ridersCol.where('branchId', isEqualTo: branchId);
+    final query = branchId == null
+        ? _ridersCol
+        : _ridersCol.where('branchId', isEqualTo: branchId);
     return query.snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -190,8 +192,8 @@ class RiderService {
   static Future<void> refreshRiderOrders(String riderId) async {
     // The live listener already maintains the history. Refresh the recent window
     // without repeating an unbounded server read on every pull gesture.
-    await _riderOrdersQuery(riderId).limit(50)
+    await _riderOrdersQuery(riderId)
+        .limit(50)
         .get(const GetOptions(source: Source.server));
   }
-
 }

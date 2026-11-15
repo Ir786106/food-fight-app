@@ -103,7 +103,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -121,24 +122,28 @@ class _SearchScreenState extends State<SearchScreen> {
                   decoration: InputDecoration(
                     hintText: 'Search delicious meals, pizza, burgers...',
                     hintStyle: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       fontSize: 14,
                     ),
                     filled: false,
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
+                    prefixIcon: const Icon(Icons.search_rounded,
+                        color: AppColors.primary, size: 22),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: Icon(Icons.cancel_rounded, size: 20, color: colorScheme.onSurfaceVariant),
+                            icon: Icon(Icons.cancel_rounded,
+                                size: 20, color: colorScheme.onSurfaceVariant),
                             onPressed: () {
                               _controller.clear();
                               setState(() => _searchQuery = '');
                             },
                           )
                         : null,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
@@ -148,7 +153,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: Builder(
                   builder: (context) {
                     if (menuProvider.isLoading && allFoods.isEmpty) {
-                      return const LoadingIndicator(message: 'Searching live menu...');
+                      return const LoadingIndicator(
+                          message: 'Searching live menu...');
                     }
 
                     if (menuProvider.errorMessage != null && allFoods.isEmpty) {
@@ -187,9 +193,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                 ),
                                 backgroundColor: colorScheme.surface,
                                 side: BorderSide(
-                                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                  color: colorScheme.outlineVariant
+                                      .withValues(alpha: 0.6),
                                 ),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20)),
                                 onPressed: () {
                                   _controller.text = tag;
                                   setState(() => _searchQuery = tag);

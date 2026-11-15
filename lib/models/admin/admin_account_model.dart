@@ -8,7 +8,8 @@ class AdminAccountModel {
   final String phone;
   final String role; // 'admin', 'staff', 'super_admin'
   final String status; // 'active', 'suspended', 'deactivated'
-  final List<String> permissions; // e.g., 'manage_menu', 'manage_orders', 'view_reports', 'manage_coupons'
+  final List<String>
+      permissions; // e.g., 'manage_menu', 'manage_orders', 'view_reports', 'manage_coupons'
   final String? restaurantId;
   final String? branchId;
   final String? parentAdminId;
@@ -30,14 +31,22 @@ class AdminAccountModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.lastLoginAt,
-  })  : permissions = permissions ?? const ['manage_menu', 'manage_orders', 'manage_coupons', 'view_reports'],
+  })  : permissions = permissions ??
+            const [
+              'manage_menu',
+              'manage_orders',
+              'manage_coupons',
+              'view_reports'
+            ],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
   bool get isActive => status == 'active';
   bool get isSuspended => status == 'suspended';
   bool get isDeactivated => status == 'deactivated';
-  bool get isSubAdmin => role == 'staff' || role == 'sub_admin' ||
+  bool get isSubAdmin =>
+      role == 'staff' ||
+      role == 'sub_admin' ||
       (parentAdminId?.isNotEmpty ?? false);
 
   AdminAccountModel copyWith({
@@ -87,7 +96,8 @@ class AdminAccountModel {
       if (parentAdminId != null) 'parentAdminId': parentAdminId,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
-      if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.millisecondsSinceEpoch,
+      if (lastLoginAt != null)
+        'lastLoginAt': lastLoginAt!.millisecondsSinceEpoch,
     };
   }
 
@@ -97,7 +107,10 @@ class AdminAccountModel {
       perms = (json['permissions'] as List).whereType<String>().toList();
     } else if (json['permissions'] is Map) {
       final map = json['permissions'] as Map;
-      perms = map.entries.where((e) => e.value == true).map((e) => e.key.toString()).toList();
+      perms = map.entries
+          .where((e) => e.value == true)
+          .map((e) => e.key.toString())
+          .toList();
     }
 
     return AdminAccountModel(
