@@ -1,4 +1,5 @@
 import '../../widgets/checkout/price_summary_row.dart';
+import '../../widgets/checkout/checkout_payment_section.dart';
 import '../../core/localization/app_language.dart';
 import 'package:food_fight/core/utils/app_insets.dart';
 import 'package:food_fight/core/utils/app_snackbar.dart';
@@ -31,7 +32,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isApplyingCoupon = false;
   String _selectedAddressLabel = 'Home';
   String? _selectedAddressId;
-  static const _selectedPayment = 'Cash on Delivery';
   bool _isPlacingOrder = false;
   bool _initialized = false;
 
@@ -171,7 +171,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           customerName: user.name,
           customerPhone: phone,
           deliveryAddress: address,
-          paymentMethod: _selectedPayment,
+          paymentMethod: CheckoutPaymentSection.cashOnDelivery,
           paymentStatus: 'pending',
           restaurantName: branch.name,
           branchId: cart.branchId ?? branch.id,
@@ -732,24 +732,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       const SizedBox(height: 24),
 
-                      // 3. Payment Method Selector as Radio List
-                      Text(
-                        context.tr('Payment Method'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.payments_outlined),
-                        title: Text(context.tr(_selectedPayment)),
-                        subtitle: Text(
-                            context.tr('Pay in cash when your order arrives')),
-                      ),
+                      const CheckoutPaymentSection(),
                     ],
                   );
 

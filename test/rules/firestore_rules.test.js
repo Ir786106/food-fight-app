@@ -490,6 +490,26 @@ describe('Food Fight Firestore Security Rules', () => {
     await assertFails(inbox(staff).where('branchId', '==', 'b').get());
   });
 
+  it('accepts wallet references and rejects card fields in saved payment methods', async () => {
+    const owner = testEnv.authenticatedContext('wallet-owner').firestore();
+    const other = testEnv.authenticatedContext('other').firestore();
+    const path = 'users/wallet-owner/payment_methods/wallet';
+    const wallet = {
+      id: 'wallet', userId: 'wallet-owner', type: 'jazzcash', gateway: 'jazzcash',
+      accountReference: '03000000000', maskedNumber: '0300 •••• 0000',
+      title: 'JazzCash Account (0000)', token: '', cardBrand: null, expiry: null,
+      isDefault: 0, createdAt: 123,
+    };
+    await assertFails(owner.doc(path).set({...wallet, cardNumber: 'unexpected'}));
+    await assertFails(owner.doc(path).set({...wallet, accountReference: 'invalid'}));
+    await assertSucceeds(owner.doc(path).set(wallet));
+    await assertSucceeds(owner.doc(path).update({isDefault: 1}));
+    await assertFails(owner.doc(path).update({cvv: 'unexpected'}));
+    await assertFails(owner.doc(path).update({token: 'unexpected'}));
+    await assertFails(other.doc(path).get());
+    await assertSucceeds(owner.doc(path).delete());
+  });
+
   it('restricts platform-wide order aggregates to Super Admin', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore();

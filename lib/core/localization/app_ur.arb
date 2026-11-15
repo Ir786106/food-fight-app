@@ -183,6 +183,7 @@
   "message_add_address": "پتہ شامل کریں",
   "message_payment_method": "ادائیگی کا طریقہ",
   "message_cash_on_delivery": "ڈیلیوری پر نقد ادائیگی",
+  "message_online_payment_unavailable": "آن لائن ادائیگی فی الحال دستیاب نہیں ہے۔",
   "message_pay_in_cash_when_your_order_arrives": "آرڈر پہنچنے پر نقد ادائیگی کریں",
   "message_fee_breakdown": "فیس کی تفصیل",
   "message_grand_total": "مجموعی رقم",

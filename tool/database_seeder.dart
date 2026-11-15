@@ -18,10 +18,12 @@ class DatabaseSeeder {
     };
 
     try {
-      AppLogger.info('Starting Food Fight database migration and seed...', tag: 'DatabaseSeeder');
+      AppLogger.info('Starting Food Fight database migration and seed...',
+          tag: 'DatabaseSeeder');
 
       // 1. Ensure settings/global_settings exists
-      final settingsRef = _firestore.collection('settings').doc('global_settings');
+      final settingsRef =
+          _firestore.collection('settings').doc('global_settings');
       final settingsDoc = await settingsRef.get();
       if (!settingsDoc.exists) {
         await settingsRef.set({
@@ -41,7 +43,8 @@ class DatabaseSeeder {
           'updatedAt': FieldValue.serverTimestamp(),
         });
         results['globalSettingsCreated'] = true;
-        AppLogger.info('global_settings seeded successfully', tag: 'DatabaseSeeder');
+        AppLogger.info('global_settings seeded successfully',
+            tag: 'DatabaseSeeder');
       } else {
         // Ensure new loyalty fields are present
         await settingsRef.set({
@@ -49,12 +52,17 @@ class DatabaseSeeder {
           'loyaltyEarnRate': settingsDoc.data()?['loyaltyEarnRate'] ?? 100,
           'loyaltyRedeemRate': settingsDoc.data()?['loyaltyRedeemRate'] ?? 1.0,
           'minTokensToRedeem': settingsDoc.data()?['minTokensToRedeem'] ?? 10,
-          'orderCancellationWindowMinutes': settingsDoc.data()?['orderCancellationWindowMinutes'] ?? 10,
-          'defaultDeliveryCharge': settingsDoc.data()?['defaultDeliveryCharge'] ?? 150.0,
+          'orderCancellationWindowMinutes':
+              settingsDoc.data()?['orderCancellationWindowMinutes'] ?? 10,
+          'defaultDeliveryCharge':
+              settingsDoc.data()?['defaultDeliveryCharge'] ?? 150.0,
           'isStoreOpen': settingsDoc.data()?['isStoreOpen'] ?? true,
-          'isMaintenanceMode': settingsDoc.data()?['isMaintenanceMode'] ?? false,
-          'allowCashOnDelivery': settingsDoc.data()?['allowCashOnDelivery'] ?? true,
-          'allowOnlinePayment': settingsDoc.data()?['allowOnlinePayment'] ?? true,
+          'isMaintenanceMode':
+              settingsDoc.data()?['isMaintenanceMode'] ?? false,
+          'allowCashOnDelivery':
+              settingsDoc.data()?['allowCashOnDelivery'] ?? true,
+          'allowOnlinePayment':
+              settingsDoc.data()?['allowOnlinePayment'] ?? true,
         }, SetOptions(merge: true));
       }
 
@@ -73,7 +81,9 @@ class DatabaseSeeder {
       int updatedCount = 0;
 
       final branchesSnap = await _firestore.collection('branches').get();
-      final defaultBranchId = branchesSnap.docs.isNotEmpty ? branchesSnap.docs.first.id : 'branch_1';
+      final defaultBranchId = branchesSnap.docs.isNotEmpty
+          ? branchesSnap.docs.first.id
+          : 'branch_1';
 
       for (final doc in usersSnap.docs) {
         final data = doc.data();
@@ -123,13 +133,16 @@ class DatabaseSeeder {
 
       if (updatedCount > 0) {
         await batch.commit();
-        AppLogger.info('Migrated $updatedCount user documents with branch & permissions', tag: 'DatabaseSeeder');
+        AppLogger.info(
+            'Migrated $updatedCount user documents with branch & permissions',
+            tag: 'DatabaseSeeder');
       }
       results['usersUpdated'] = updatedCount;
 
       return results;
     } catch (e, stack) {
-      AppLogger.error('Database migration/seed error: $e\n$stack', tag: 'DatabaseSeeder');
+      AppLogger.error('Database migration/seed error: $e\n$stack',
+          tag: 'DatabaseSeeder');
       rethrow;
     }
   }

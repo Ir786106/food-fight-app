@@ -178,8 +178,28 @@ service cloud.firestore {
 
       // Saved payment methods subcollection
       match /payment_methods/{methodId} {
+        function validWalletReference() {
+          let data = request.resource.data;
+          return data.keys().hasOnly([
+            'id', 'userId', 'type', 'gateway', 'maskedNumber', 'title',
+            'token', 'accountReference', 'cardBrand', 'expiry', 'isDefault', 'createdAt'
+          ]) &&
+          data.get('id', '') == methodId && data.get('userId', '') == userId &&
+          data.get('type', '') in ['jazzcash', 'easypaisa'] && data.gateway == data.type &&
+          data.get('accountReference', '').matches('^03[0-9]{9}$') &&
+          data.get('maskedNumber', '').matches('^03[0-9]{2} •••• [0-9]{4}$') &&
+          data.get('title', '').matches('^(JazzCash|Easypaisa) Account [(][0-9]{4}[)]$') &&
+          data.get('token', '') == '' && data.get('cardBrand', null) == null &&
+          data.get('expiry', null) == null &&
+          data.get('isDefault', null) in [0, 1, true, false] &&
+          (data.createdAt is int || data.createdAt is timestamp);
+        }
         allow read: if isAuthenticated() && isOwner(userId);
-        allow create, update: if isAuthenticated() && isOwner(userId);
+        allow create: if isOwner(userId) && validWalletReference();
+        allow update: if isOwner(userId) && (validWalletReference() ||
+          (resource.data.get('userId', '') == userId &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isDefault']) &&
+           request.resource.data.get('isDefault', null) in [0, 1, true, false]));
         allow delete: if isAuthenticated() && isOwner(userId);
       }
     }

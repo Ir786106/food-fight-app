@@ -183,6 +183,7 @@
   "message_add_address": "Add Address",
   "message_payment_method": "Payment Method",
   "message_cash_on_delivery": "Cash on Delivery",
+  "message_online_payment_unavailable": "Online payment is currently unavailable.",
   "message_pay_in_cash_when_your_order_arrives": "Pay in cash when your order arrives",
   "message_fee_breakdown": "Fee Breakdown",
   "message_grand_total": "Grand Total",

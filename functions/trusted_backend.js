@@ -111,10 +111,22 @@ if (require.main === module) {
   const callables = require("./index");
   const handlers = Object.fromEntries(operations.map((name) => [name, callables[name].run]));
   const allowedOrigins = (process.env.FOODFIGHT_WEB_ORIGINS ?? "").split(",").map((value) => value.trim()).filter(Boolean);
-  createServer({
+  const port = Number(process.env.PORT ?? 8080);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("PORT must be an integer between 1 and 65535.");
+  }
+  const server = createServer({
     handlers, allowedOrigins,
     verifyToken: (token) => firebase.auth().verifyIdToken(token, true),
-  }).listen(Number(process.env.PORT ?? 8080), usingEmulators ? "127.0.0.1" : "0.0.0.0");
+  });
+  server.listen(port, usingEmulators ? "127.0.0.1" : "0.0.0.0");
+  const shutdown = () => {
+    const deadline = setTimeout(() => server.closeAllConnections(), 15000);
+    deadline.unref();
+    server.close(() => clearTimeout(deadline));
+  };
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
 }
 
 module.exports = { createServer };

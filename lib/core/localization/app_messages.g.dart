@@ -192,6 +192,8 @@ const urduMessages = <String, String>{
   "Offline": "آف لائن",
   "On the way": "راستے میں",
   "Online": "آن لائن",
+  "Online payment is currently unavailable.":
+      "آن لائن ادائیگی فی الحال دستیاب نہیں ہے۔",
   "Oops! Something went wrong": "کچھ غلط ہو گیا",
   "Open Release Page": "ریلیز کا صفحہ کھولیں",
   "Open Settings to Allow Install": "انسٹال کی اجازت کے لیے ترتیبات کھولیں",
