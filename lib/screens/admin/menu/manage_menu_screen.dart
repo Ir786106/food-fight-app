@@ -27,17 +27,23 @@ class ManageMenuScreen extends StatefulWidget {
 class _ManageMenuScreenState extends State<ManageMenuScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String? _lastBranchId;
+  bool _menuScopeInitialized = false;
+  bool _menuScopeAllowed = false;
   bool _updatingMenu = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final auth = context.read<AuthProvider>();
-    final branchId = auth.currentUser?.branchId;
-    if (_lastBranchId != branchId) {
+    final auth = context.watch<AuthProvider>();
+    final branchId = auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
+    final allowed = auth.isSuperAdmin ||
+        (branchId != null && branchId.isNotEmpty && branchId.toLowerCase() != 'all');
+    if (!_menuScopeInitialized || _menuScopeAllowed != allowed || _lastBranchId != branchId) {
+      _menuScopeInitialized = true;
+      _menuScopeAllowed = allowed;
       _lastBranchId = branchId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && _menuScopeAllowed && _lastBranchId == branchId) {
           context.read<MenuProvider>().watchMenuItems(branchId: branchId);
           context.read<CategoryProvider>().watchCategories(branchId: branchId);
         }
@@ -129,6 +135,15 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_menuScopeAllowed) {
+      return AdminScaffold(
+        currentRoute: '/admin/menu',
+        appBar: AppBar(title: const Text('Manage Menu')),
+        body: const ErrorView(
+          message: 'Ask a Super Admin to assign your branch before managing its menu.',
+        ),
+      );
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = AdminTheme.getCardBg(context);
     final textDark = AdminTheme.getTextDark(context);
@@ -280,8 +295,8 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                   ? const LoadingIndicator(message: 'Loading menu items...')
                   : menuProvider.errorMessage != null && menuProvider.menuItems.isEmpty
                       ? ErrorView(
-                          message: menuProvider.errorMessage!,
-                          onRetry: () => menuProvider.fetchMenuItems(),
+                          message: 'Unable to load the menu. Check your connection and retry.',
+                          onRetry: () => menuProvider.watchMenuItems(branchId: _lastBranchId),
                         )
                       : menuItems.isEmpty
                           ? EmptyStateView(
@@ -301,7 +316,10 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
                                   : null,
                             )
                           : RefreshIndicator(
-                              onRefresh: () => menuProvider.fetchMenuItems(),
+                              onRefresh: () => menuProvider.fetchMenuItems(
+                                branchId: _lastBranchId,
+                                includeLegacy: false,
+                              ),
                               child: ListView.separated(
                                 padding: const EdgeInsets.all(16),
                                 itemCount: menuItems.length,

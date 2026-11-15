@@ -62,22 +62,10 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         // Refresh from server in background to ensure up-to-date role
         unawaited(_refreshFromServerAsync(_currentUser!.id));
       }
-      AppLogger.info('Auth initialized: ${_currentUser?.email} (${_currentUser?.role})', tag: 'AuthProvider');
+      AppLogger.info('Auth initialized (${_currentUser?.role})', tag: 'AuthProvider');
     } catch (e) {
-      AppLogger.error('Auth initialization error: $e', tag: 'AuthProvider');
-      if (_restricted) {
-        _currentUser = null;
-        _errorMessage = _parseError(e, 'Could not verify your account.');
-        return;
-      }
-      try {
-        _currentUser = await _authService.getCurrentUser(preferCache: true);
-        if (_currentUser != null) {
-          FcmService.registerUserToken(_currentUser!.id);
-          _listenToUserDoc(_currentUser!.id);
-          unawaited(_refreshFromServerAsync(_currentUser!.id));
-        }
-      } catch (_) {}
+      _currentUser = null;
+      _errorMessage = _parseError(e, 'Could not verify your account.');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -93,23 +81,14 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         .snapshots()
         .listen(
       (snapshot) {
-        if (_currentUser?.id != uid || (_restricted && snapshot.metadata.isFromCache)) return;
+        if (_currentUser?.id != uid || snapshot.metadata.isFromCache) return;
         if (!snapshot.exists || snapshot.data() == null) {
-          if (_restricted) unawaited(signOut());
+          unawaited(_rejectProfile('Account profile not found, contact admin.'));
           return;
         }
         final data = snapshot.data()!;
-        data['id'] = uid;
-        final updatedUser = UserModel.fromJson(data);
-
-        // Live deactivation: immediately sign out deactivated user
-        if (!updatedUser.isActive || (_restricted &&
-            (!edition.allowsRole(UserRole.fromString(data['role'])) ||
-                data['isBlocked'] == true || data['status'] == 'blocked'))) {
-          AppLogger.warn('User ${updatedUser.id} deactivated in real-time. Signing out.', tag: 'AuthProvider');
-          signOut();
-          _errorMessage = 'Your account has been deactivated by administrator.';
-          notifyListeners();
+        final updatedUser = _validateLiveProfile(data, uid);
+        if (updatedUser == null) {
           return;
         }
 
@@ -119,7 +98,7 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         FirebaseAuthService.cacheRoleLocally(uid, updatedUser.role);
 
         if (roleChanged) {
-          AppLogger.info('Live role changed for $uid: ${updatedUser.role}', tag: 'AuthProvider');
+          AppLogger.info('Live role changed to ${updatedUser.role}', tag: 'AuthProvider');
         }
         notifyListeners();
       },
@@ -127,6 +106,28 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
         AppLogger.warn('Error in user doc snapshot listener: $e', tag: 'AuthProvider');
       },
     );
+  }
+
+  UserModel? _validateLiveProfile(Map<String, dynamic> data, String uid) {
+    try {
+      final profile = FirebaseAuthService.validateSessionProfile(data, expectedUid: uid);
+      if (_restricted && !edition.allowsRole(profile.userRole)) {
+        throw AppException(message: 'This account cannot sign in to ${edition.title}.');
+      }
+      return profile;
+    } on AppException catch (error) {
+      unawaited(_rejectProfile(error.message));
+    } on TypeError {
+      unawaited(_rejectProfile('Invalid user document format. Please contact support.'));
+    }
+    return null;
+  }
+
+  Future<void> _rejectProfile(String message) async {
+    _currentUser = null;
+    _errorMessage = message;
+    notifyListeners();
+    await signOut();
   }
 
   /// Background refresh from server to ensure fresh profile data
@@ -140,17 +141,9 @@ class AuthProvider extends ChangeNotifier with SafeChangeNotifier {
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        data['id'] = uid;
-        final freshUser = UserModel.fromJson(data);
         if (_currentUser?.id != uid) return;
-        if (!freshUser.isActive || (_restricted &&
-            (!edition.allowsRole(UserRole.fromString(data['role'])) ||
-                data['isBlocked'] == true || data['status'] == 'blocked'))) {
-          await signOut();
-          _errorMessage = 'Your account has been deactivated by administrator.';
-          notifyListeners();
-          return;
-        }
+        final freshUser = _validateLiveProfile(data, uid);
+        if (freshUser == null) return;
 
         if (freshUser.role != _currentUser?.role ||
             freshUser.name != _currentUser?.name ||

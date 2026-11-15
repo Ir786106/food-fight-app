@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/admin_account_model.dart';
 import 'package:food_fight/services/super_admin_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/errors/platform_operation_error.dart';
 import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for managing Admin and Staff accounts in Super Admin panel
@@ -11,6 +12,7 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AdminAccountModel> _admins = [];
   bool _isLoading = false;
   String? _errorMessage;
+  String? _actionError;
   String _searchQuery = '';
   String _roleFilter = 'all'; // 'all', 'admin', 'staff', 'super_admin'
   String _statusFilter = 'all'; // 'all', 'active', 'suspended', 'deactivated'
@@ -20,6 +22,7 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AdminAccountModel> get admins => List.unmodifiable(_admins);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get actionError => _actionError;
   String get searchQuery => _searchQuery;
   String get roleFilter => _roleFilter;
   String get statusFilter => _statusFilter;
@@ -62,7 +65,8 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
       },
       onError: (e) {
         _isLoading = false;
-        _errorMessage = 'Failed to load admin accounts: $e';
+        _errorMessage = platformOperationError(e,
+            fallback: 'Unable to load admin accounts. Please try again.');
         AppLogger.error('AdminAccountProvider watch error: $e', tag: 'AdminAccountProvider');
         notifyListeners();
       },
@@ -91,6 +95,7 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Create new Admin/Staff account
   Future<bool> createAdminAccount(AdminAccountModel admin, {String? createdBy, BranchModel? newBranch}) async {
+    _actionError = null;
     _isLoading = true;
     notifyListeners();
 
@@ -101,7 +106,8 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to create admin: $e';
+      _actionError = platformOperationError(e,
+          fallback: 'Unable to create the admin account. Please try again.');
       AppLogger.error('AdminAccountProvider create error: $e', tag: 'AdminAccountProvider');
       notifyListeners();
       return false;
@@ -110,11 +116,13 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Update admin info and permissions
   Future<bool> updateAdminAccount(AdminAccountModel admin, {String? updatedBy}) async {
+    _actionError = null;
     try {
       await SuperAdminService.updateAdminAccount(admin, updatedBy: updatedBy);
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to update admin: $e';
+      _actionError = platformOperationError(e,
+          fallback: 'Unable to update the admin account. Please try again.');
       AppLogger.error('AdminAccountProvider update error: $e', tag: 'AdminAccountProvider');
       notifyListeners();
       return false;
@@ -123,11 +131,13 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Set status: activate, deactivate, suspend
   Future<bool> setAdminStatus(String adminId, String newStatus, {String? changedBy}) async {
+    _actionError = null;
     try {
       await SuperAdminService.setAdminStatus(adminId, newStatus, changedBy: changedBy);
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to change admin status: $e';
+      _actionError = platformOperationError(e,
+          fallback: 'Unable to change account status. Please try again.');
       AppLogger.error('AdminAccountProvider setStatus error: $e', tag: 'AdminAccountProvider');
       notifyListeners();
       return false;

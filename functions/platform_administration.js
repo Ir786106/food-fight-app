@@ -7,11 +7,7 @@ const modules = [
   "riders", "reports", "chats", "reviews", "deals", "restaurants",
 ];
 
-function isActiveProfile(profile) {
-  return !!profile && profile.isBlocked !== true &&
-    !["blocked", "suspended", "deactivated"].includes(profile.status) &&
-    (profile.isActive == null || [true, 1, "1", "true"].includes(profile.isActive));
-}
+const { isActiveProfile } = require("./account_status");
 
 function platformAdministration({ db, auth, fail, timestamp, aggregateField }) {
   const users = db.collection("users");
@@ -34,7 +30,7 @@ function platformAdministration({ db, auth, fail, timestamp, aggregateField }) {
     const branchManager = allowBranchManager && actor?.role === "admin" &&
       !actor.parentAdminId && typeof actor.branchId === "string" &&
       actor.branchId.trim() && actor.branchId !== "all";
-    if (account.disabled || !isActiveProfile(actor) ||
+    if (account.disabled || !isActiveProfile(actor, actorId) ||
         (actor.role !== "super_admin" && !branchManager)) {
       fail("permission-denied", "This action requires an active Super Admin account.");
     }

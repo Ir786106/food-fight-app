@@ -169,8 +169,9 @@ class OrderModel {
 
   DateTime? timestampFor(OrderStatus value) {
     for (final event in statusHistory.reversed) {
-      if (event.status == value && event.timestamp.millisecondsSinceEpoch > 0)
+      if (event.status == value && event.timestamp.millisecondsSinceEpoch > 0) {
         return event.timestamp;
+      }
     }
     if (value == OrderStatus.pending) return createdAt;
     if (value == OrderStatus.delivered) return deliveredAt;

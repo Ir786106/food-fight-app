@@ -114,7 +114,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
       } else {
         AppSnackbar.showSnackBar(context,
           SnackBar(
-            content: Text(provider.errorMessage ?? 'Failed to update settings'),
+            content: Text(provider.settingsSaveError ?? 'Failed to update settings'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -307,7 +307,8 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                           keyboardType: TextInputType.number,
                           validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Free delivery threshold'),
                           decoration: const InputDecoration(
-                            labelText: 'Free Delivery Order Threshold (Rs.) *',
+                            labelText: 'Free Delivery From (Rs.) *',
+                            helperMaxLines: 3,
                             helperText: 'Orders above this amount automatically receive free delivery',
                             prefixIcon: Icon(Icons.local_shipping_outlined),
                           ),
@@ -325,7 +326,8 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                             return null;
                           },
                           decoration: const InputDecoration(
-                            labelText: 'Order Cancellation Window (minutes) *',
+                            labelText: 'Cancellation Window (min) *',
+                            helperMaxLines: 3,
                             helperText: 'Window within which customers are permitted to self-cancel an order (1–60 min)',
                             prefixIcon: Icon(Icons.timer_outlined),
                           ),
@@ -413,7 +415,7 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
                             )
                           : const Icon(Icons.check_circle_rounded),
                       label: Text(
-                        _isSaving ? 'Synchronizing System Configuration...' : 'Save Global Settings',
+                        _isSaving ? 'Saving settings…' : 'Save Global Settings',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       onPressed: _isSaving || !provider.settingsReady ? null : _handleSave,
@@ -440,7 +442,6 @@ class _SuperAdminSystemSettingsScreenState extends State<SuperAdminSystemSetting
   }) {
     return Material(
       color: cardBg,
-      borderRadius: BorderRadius.circular(14),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade200),

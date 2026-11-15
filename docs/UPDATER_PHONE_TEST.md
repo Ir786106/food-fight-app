@@ -1,6 +1,6 @@
 # Android in-app updater
 
-**Status: manual, pending.** This procedure requires a physical Android phone and the signed APK currently in use.
+**In-app updater status: manual, pending.** The separate USB installation check passed on a TECNO CD7. Android accepted the signed upgrade from 1.8.2 (build 19) to 1.8.3 (build 20) through an in-place install, retained the original install timestamp, and launched the app to the login screen. An authenticated session and saved account data were not verified. The USB test did not exercise update discovery, download, the Android installer prompt, or cancellation from within Food Fight.
 
 1. Install the old signed APK and sign in. Save an address, choose a language and record the app version and build number.
 2. Verify the candidate APK against the old APK with `tool/verify_apk_signing.ps1`. Compare the Android package ID and confirm the candidate versionCode is higher. Generate the matching SHA-256 sidecar.

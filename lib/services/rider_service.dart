@@ -121,9 +121,10 @@ class RiderService {
       await _firestore.runTransaction((transaction) async {
         final riderRef = _ridersCol.doc(riderId);
         final rider = await transaction.get(riderRef);
-        if (!rider.exists)
+        if (!rider.exists) {
           throw StateError(
               'Rider profile not found. Contact your administrator.');
+        }
         final active = rider.data()?['isActive'];
         if (isOnline && active != true && active != 1) {
           throw StateError(

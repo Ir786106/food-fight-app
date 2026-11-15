@@ -16,6 +16,9 @@ Use a fresh emulator instance for each integration suite. The platform suite che
 
     firebase emulators:exec --project demo-food-fight --config firebase.demo.json --only auth,firestore "node --test functions/order_lifecycle.emulator.test.js"
     firebase emulators:exec --project demo-food-fight --config firebase.demo.json --only auth,firestore "node --test functions/platform_administration.emulator.test.js"
+    firebase emulators:exec --inspect-functions --project demo-food-fight --config firebase.demo.json --only auth,firestore,functions "node --test functions/platform_callable.emulator.test.js"
+
+Set `GCLOUD_PROJECT=demo-food-fight` in the test shell before running these commands. The callable test exercises the same HTTP endpoints as the app, including denial for anonymous, customer and suspended sessions.
 
 | Identity | Expected result |
 | --- | --- |
@@ -25,6 +28,16 @@ Use a fresh emulator instance for each integration suite. The platform suite che
 | Public branch profile | Public metadata readable. Financial fields absent after authorized cleanup |
 
 ## Functional smoke tests
+
+### Super Admin Android checks
+
+Use the signed QA APK and a staging-configured build for successful server actions. The local combined APK uses the production Firebase configuration. On that APK, check the error and retry presentation without submitting account or settings changes.
+
+1. Sign in as the authorized Super Admin. Open HQ and refresh. With both functions deployed on staging, confirm `getPlatformMetrics` loads and that zero orders is a valid result. Simulate loss of connectivity after a successful load and check that the previous figures remain labeled.
+2. Open Admin & Staff on a narrow screen. Confirm there is one Add Account control, Open Branch is accessible, and edit dialogs remain usable with large text. On staging only, create, edit, suspend and reactivate a disposable branch account through `mutatePlatform`. Verify it cannot access another branch.
+3. Open Settings in light and dark mode. Check that helper text wraps and that a save error leaves the dashboard state intact. Test saves with staging settings only.
+
+### Order and settlement checks
 
 1. Super Admin records both branches' starting private order counts and revenue.
 2. Customer places a COD order in branch A. Admin opens and assigns it. Rider accepts, picks up, delivers and records cash. Admin confirms COD settlement.

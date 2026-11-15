@@ -29,6 +29,12 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _historyError;
   bool _earningsLoading = false;
   bool _earningsUnavailable = false;
+  bool deliveryLoading = false;
+  bool deliveryHistoryLoading = false;
+  bool profileLoading = false;
+  String? deliveryError;
+  String? deliveryHistoryError;
+  String? profileError;
 
   StreamSubscription<RiderModel?>? _profileSub;
   RiderModel? _currentRider;
@@ -95,22 +101,30 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
     _currentRider = null;
     _deliveryRiderId = riderId;
     final generation = _deliveryGeneration;
-    _isLoading = true;
-    _errorMessage = null;
+    deliveryLoading = true;
+    deliveryHistoryLoading = true;
+    profileLoading = true;
+    _earningsLoading = true;
     notifyListenersPostFrame();
 
     _profileSub?.cancel();
     _profileSub = RiderService.watchRider(riderId).listen((rider) {
+      if (generation != _deliveryGeneration) return;
+      profileLoading = false;
+      profileError = null;
       _currentRider = rider;
       notifyListeners();
     }, onError: (_) {
-      _errorMessage = 'Unable to load your rider profile. Please try again.';
+      if (generation != _deliveryGeneration) return;
+      profileLoading = false;
+      profileError = 'Unable to load your rider profile. Please try again.';
       notifyListeners();
     });
 
     _deliveriesSub?.cancel();
     _deliveriesSub = OrderService.watchActiveRiderOrders(riderId).listen(
       (orders) {
+        if (generation != _deliveryGeneration) return;
         final activeIds = orders.map((order) => order.id).toSet();
         for (final previous in _assignedDeliveries) {
           if (!activeIds.contains(previous.id)) {
@@ -118,17 +132,21 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
           }
         }
         _assignedDeliveries = orders;
-        _isLoading = false;
-        _errorMessage = null;
+        deliveryLoading = false;
+        deliveryError = null;
         notifyListeners();
       },
       onError: (_) {
-        _isLoading = false;
-        _errorMessage = 'Unable to load deliveries. Please try again.';
+        if (generation != _deliveryGeneration) return;
+        deliveryLoading = false;
+        deliveryError = 'Unable to load deliveries. Please try again.';
         notifyListeners();
       },
     );
     _historySub = OrderService.watchRiderOrderPage(riderId).listen((page) {
+      if (generation != _deliveryGeneration) return;
+      deliveryHistoryLoading = false;
+      deliveryHistoryError = null;
       if (_loadingHistory || _olderPage != null) {
         for (final order in _recentDeliveries.where((order) => order.status.isTerminal)) {
           _olderDeliveries[order.id] = order;
@@ -139,7 +157,9 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
       _updateHistory();
       notifyListeners();
     }, onError: (_) {
-      _errorMessage = 'Unable to load deliveries. Please try again.';
+      if (generation != _deliveryGeneration) return;
+      deliveryHistoryLoading = false;
+      deliveryHistoryError = 'Unable to load deliveries. Please try again.';
       notifyListeners();
     });
     final now = DateTime.now();
@@ -149,12 +169,14 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
     _earningsLoading = true;
     _earningsSub = OrderService.watchRecentRiderEarnings(riderId, since).listen(
       (orders) {
+        if (generation != _deliveryGeneration) return;
         _earningsOrders = orders;
         _earningsLoading = false;
         _earningsUnavailable = false;
         notifyListeners();
       },
       onError: (_) {
+        if (generation != _deliveryGeneration) return;
         _earningsLoading = false;
         _earningsUnavailable = true;
         notifyListeners();
@@ -235,6 +257,12 @@ class RiderProvider extends ChangeNotifier with SafeChangeNotifier {
     _historyError = null;
     _earningsLoading = false;
     _earningsUnavailable = false;
+    deliveryLoading = false;
+    deliveryHistoryLoading = false;
+    profileLoading = false;
+    deliveryError = null;
+    deliveryHistoryError = null;
+    profileError = null;
   }
 
   Future<bool> createRider(RiderModel rider) async {

@@ -1,6 +1,8 @@
 import 'package:food_fight/models/rider_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import 'package:food_fight/models/food_model.dart';
@@ -12,6 +14,7 @@ import 'package:food_fight/models/payment_method_model.dart';
 import 'package:food_fight/models/address_model.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/models/review_model.dart';
+import 'package:food_fight/models/user_model.dart';
 
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/providers/cart_provider.dart';
@@ -148,7 +151,11 @@ class StubCouponProvider extends ChangeNotifier implements CouponProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class StubRiderProvider extends ChangeNotifier implements RiderProvider {
+class StubRiderProvider extends RiderProvider {
+  StubRiderProvider({String? deliveryError}) {
+    this.deliveryError = deliveryError;
+  }
+
   @override
   List<OrderModel> get earningsOrders => [];
   @override
@@ -171,6 +178,36 @@ class StubRiderProvider extends ChangeNotifier implements RiderProvider {
   bool get isLoading => false;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _TrackingRiderProvider extends StubRiderProvider {
+  @override
+  bool get isOnline => true;
+
+  @override
+  List<OrderModel> get assignedDeliveries => [
+        OrderModel.fromJson({
+          'id': 'gps-order',
+          'status': 'pickedUp',
+          'riderId': 'gps-rider',
+        }),
+      ];
+
+  @override
+  void watchRiderDeliveries(String riderId, {String? riderPhone}) {
+    notifyListeners();
+  }
+}
+
+class _TrackingAuthProvider extends AuthProvider {
+  @override
+  final currentUser = UserModel(
+    id: 'gps-rider',
+    name: 'Test Rider',
+    email: '',
+    phone: '',
+    role: 'rider',
+  );
 }
 
 void main() {
@@ -217,6 +254,8 @@ void main() {
     RouteSettings? settings,
     Brightness brightness = Brightness.light,
     double bottomInset = 0,
+    RiderProvider? riderProvider,
+    AuthProvider? authProvider,
   }) {
     final cart = CartProvider();
     cart.addToCart(testFood);
@@ -226,7 +265,9 @@ void main() {
         ChangeNotifierProvider<ThemeProvider>.value(value: ThemeProvider()),
         ChangeNotifierProvider<CartProvider>.value(value: cart),
         ChangeNotifierProvider<ReviewProvider>.value(value: StubReviewProvider()),
-        ChangeNotifierProvider<AuthProvider>.value(value: AuthProvider()),
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: authProvider ?? AuthProvider(),
+        ),
         ChangeNotifierProvider<OrderProvider>.value(value: OrderProvider()),
         ChangeNotifierProvider<ChatProvider>.value(value: StubChatProvider()),
         ChangeNotifierProvider<LoyaltyProvider>.value(value: LoyaltyProvider()),
@@ -236,7 +277,9 @@ void main() {
         ChangeNotifierProvider<RestaurantProvider>.value(value: StubRestaurantProvider()),
         ChangeNotifierProvider<BranchProvider>.value(value: StubBranchProvider()),
         ChangeNotifierProvider<CouponProvider>.value(value: StubCouponProvider()),
-        ChangeNotifierProvider<RiderProvider>.value(value: StubRiderProvider()),
+        ChangeNotifierProvider<RiderProvider>.value(
+          value: riderProvider ?? StubRiderProvider(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -261,6 +304,80 @@ void main() {
       ),
     );
   }
+
+  testWidgets('delivery errors stay on rider delivery tabs', (tester) async {
+    const message = 'Delivery requests are temporarily unavailable';
+    await tester.pumpWidget(createTestApp(
+      child: const RiderDashboardScreen(),
+      size: const Size(390, 844),
+      textScale: 1,
+      riderProvider: StubRiderProvider(deliveryError: message),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(message), findsOneWidget);
+
+    for (final label in ['Earnings', 'Profile']) {
+      await tester.tap(find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text(label),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text(message), findsNothing);
+    }
+  });
+
+  testWidgets('rider GPS retry shows actionable and sanitized errors',
+      (tester) async {
+    const channel = MethodChannel('flutter.baseflow.com/geolocator');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    var locationEnabled = false;
+    var platformFailure = false;
+    var permissionRequests = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'isLocationServiceEnabled':
+          if (platformFailure) {
+            throw PlatformException(code: 'test_error', message: 'native detail');
+          }
+          return locationEnabled;
+        case 'checkPermission':
+          return LocationPermission.denied.index;
+        case 'requestPermission':
+          permissionRequests++;
+          return LocationPermission.deniedForever.index;
+        default:
+          throw MissingPluginException(call.method);
+      }
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(createTestApp(
+      child: const RiderDashboardScreen(),
+      size: const Size(390, 844),
+      textScale: 1,
+      riderProvider: _TrackingRiderProvider(),
+      authProvider: _TrackingAuthProvider(),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Turn on device location to share your delivery position.'),
+        findsOneWidget);
+    expect(permissionRequests, 0);
+
+    locationEnabled = true;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Allow location access to share your delivery position.'),
+        findsOneWidget);
+    expect(permissionRequests, 1);
+
+    platformFailure = true;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Location updates stopped. Check GPS and retry.'),
+        findsOneWidget);
+    expect(find.textContaining('native detail'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   group('Full Device Matrix Verification (10 Sizes x 3 Text Scales = Zero Overflows)', () {
     for (final (label, size) in deviceMatrix) {

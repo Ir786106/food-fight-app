@@ -1,5 +1,6 @@
 import '../../core/localization/app_language.dart';
 import 'dart:async';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,6 +65,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
       _locationGeneration++;
       _positions?.cancel();
       _positions = null;
+      if (_locationError != null) setState(() => _locationError = null);
     } else if (_positions == null &&
         !_startingLocation &&
         _locationError == null) {
@@ -77,20 +79,27 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     final generation = ++_locationGeneration;
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        throw StateError(
-            'Turn on device location to share your delivery position.');
+        _showLocationError(
+            generation, 'Turn on device location to share your delivery position.');
+        return;
       }
+      if (!mounted || generation != _locationGeneration) return;
       var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied)
+      if (!mounted || generation != _locationGeneration) return;
+      if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+      }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        throw StateError(
-            'Allow location access to share your delivery position.');
+        _showLocationError(
+            generation, 'Allow location access to share your delivery position.');
+        return;
       }
       if (!mounted ||
           generation != _locationGeneration ||
-          _broadcastOrders.isEmpty) return;
+          _broadcastOrders.isEmpty) {
+        return;
+      }
       final LocationSettings settings = !kIsWeb &&
               defaultTargetPlatform == TargetPlatform.android
           ? AndroidSettings(
@@ -117,20 +126,24 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
               speed: position.speed);
         }
       }, onError: (_) {
-        if (mounted)
-          setState(() => _locationError =
-              'Location updates stopped. Check GPS and retry.');
+        if (!mounted || generation != _locationGeneration) return;
+        _showLocationError(
+            generation, 'Location updates stopped. Check GPS and retry.');
         _positions?.cancel();
         _positions = null;
       });
-      setState(() => _locationError = null);
-    } catch (error) {
-      if (mounted)
-        setState(() =>
-            _locationError = error.toString().replaceFirst('Bad state: ', ''));
+    } catch (_) {
+      _showLocationError(
+          generation, 'Location updates stopped. Check GPS and retry.');
     } finally {
       _startingLocation = false;
+      if (mounted && generation != _locationGeneration) _syncTracking();
     }
+  }
+
+  void _showLocationError(int generation, String message) {
+    if (!mounted || generation != _locationGeneration) return;
+    setState(() => _locationError = message);
   }
 
   @override
@@ -147,7 +160,9 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
   Future<void> _advance(OrderModel order) async {
     if (_busy.contains(order.id) ||
         !_riders.isOnline ||
-        (_isOffer(order) && _offerExpired(order))) return;
+        (_isOffer(order) && _offerExpired(order))) {
+      return;
+    }
     setState(() => _busy.add(order.id));
     try {
       if (order.status == OrderStatus.assigned &&
@@ -185,9 +200,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
         );
       }
     } catch (error) {
-      if (mounted)
-        AppSnackbar.showError(
-            context, error.toString().replaceFirst('Bad state: ', ''));
+      if (mounted) _showDeliveryError(error);
     } finally {
       if (mounted) setState(() => _busy.remove(order.id));
     }
@@ -199,7 +212,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     try {
       await RiderService.declineDelivery(order.id);
     } catch (error) {
-      if (mounted) AppSnackbar.showError(context, error.toString());
+      if (mounted) _showDeliveryError(error);
     } finally {
       if (mounted) setState(() => _busy.remove(order.id));
     }
@@ -223,8 +236,9 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                     child: Text(context.tr('Back'))),
                 FilledButton(
                     onPressed: () {
-                      if (reason.text.trim().length >= 3)
+                      if (reason.text.trim().length >= 3) {
                         Navigator.pop(ctx, true);
+                      }
                     },
                     child: Text(context.tr('Report failure')))
               ],
@@ -236,18 +250,20 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
       await OrderService.updateOrderStatus(order.id, OrderStatus.cancelled,
           cancellationReason: text);
     } catch (error) {
-      if (mounted) AppSnackbar.showError(context, error.toString());
+      if (mounted) _showDeliveryError(error);
     }
   }
 
   Future<void> _open(Uri uri) async {
     try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication))
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('No application available');
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         AppSnackbar.showError(
             context, context.tr('Unable to open this action on your device.'));
+      }
     }
   }
 
@@ -256,6 +272,19 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
 
   bool _offerExpired(OrderModel order) =>
       order.offerExpiresAt?.isAfter(DateTime.now()) == false;
+
+  void _showDeliveryError(Object error) {
+    final code = error is FirebaseFunctionsException ? error.code : null;
+    final message = switch (code) {
+      'not-found' => 'This delivery or its update service is unavailable. Refresh and try again.',
+      'unauthenticated' => 'Sign in again to update this delivery.',
+      'permission-denied' => 'You do not have permission to update this delivery.',
+      'failed-precondition' || 'aborted' => 'This delivery could not be updated. Refresh and check its current status.',
+      'unavailable' || 'deadline-exceeded' => 'Unable to reach the delivery service. Check your connection and retry.',
+      _ => 'Unable to update this delivery. Please try again.',
+    };
+    AppSnackbar.showError(context, context.tr(message));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +299,18 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
       1 => _orderTabs(offers, active, riders),
       2 => _earnings(riders),
       _ => _profile(riders),
+    };
+    final pageError = switch (_destination) {
+      0 => riders.deliveryError ?? riders.profileError,
+      1 => riders.deliveryError ?? riders.deliveryHistoryError,
+      3 => riders.profileError,
+      _ => null,
+    };
+    final pageLoading = switch (_destination) {
+      0 => riders.deliveryLoading,
+      1 => riders.deliveryLoading && riders.deliveryHistoryLoading,
+      3 => riders.profileLoading,
+      _ => false,
     };
     return PopScope(
       canPop: Navigator.of(context).canPop(),
@@ -326,7 +367,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
         ),
         body: Column(
           children: [
-            if (_locationError != null)
+            if (_locationError != null && _destination <= 1)
               ListTile(
                 leading: const Icon(Icons.location_off_outlined),
                 title: Text(context.tr(_locationError!)),
@@ -339,9 +380,9 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                   },
                 ),
               ),
-            if (riders.errorMessage != null)
+            if (pageError != null)
               ListTile(
-                title: Text(context.tr(riders.errorMessage!)),
+                title: Text(context.tr(pageError)),
                 trailing: AppButton(
                   label: context.tr('Retry'),
                   style: AppButtonStyle.ghost,
@@ -351,7 +392,7 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                 ),
               ),
             Expanded(
-              child: riders.isLoading
+              child: pageLoading
                   ? ListView.builder(
                       itemCount: 3,
                       padding: DesignSystem.screenPadding,
@@ -386,8 +427,13 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
                   ? null
                   : (value) async {
                       setState(() => _changingOnline = true);
-                      await riders.toggleOnline(_riderId!, value);
-                      if (mounted) setState(() => _changingOnline = false);
+                      final updated = await riders.toggleOnline(_riderId!, value);
+                      if (mounted) {
+                        setState(() => _changingOnline = false);
+                        if (!updated) {
+                          AppSnackbar.showError(context, context.tr('Unable to change availability. Please try again.'));
+                        }
+                      }
                     },
         ),
         if (active.isNotEmpty) ...[
@@ -473,9 +519,10 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     try {
       await RiderService.refreshRiderOrders(riderId);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         AppSnackbar.showError(
             context, context.tr('Unable to refresh deliveries.'));
+      }
     }
   }
 
@@ -485,7 +532,9 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     final filtered = orders.where((order) {
       final day = DateUtils.dateOnly(order.createdAt.toLocal());
       if (dates != null &&
-          (day.isBefore(dates.start) || day.isAfter(dates.end))) return false;
+          (day.isBefore(dates.start) || day.isAfter(dates.end))) {
+        return false;
+      }
       return order.orderNumber.toLowerCase().contains(_search) ||
           order.restaurantName.toLowerCase().contains(_search) ||
           order.customerName.toLowerCase().contains(_search);

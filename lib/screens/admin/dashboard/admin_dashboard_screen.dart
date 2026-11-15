@@ -57,6 +57,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final textMuted = AdminTheme.getTextMuted(context);
     final auth = context.watch<AuthProvider>();
     final user = auth.currentUser;
+    final assignedBranch = user?.branchId?.trim();
 
     return PopScope(
       canPop: false,
@@ -102,9 +103,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              _selectedBranchId != null
-                  ? 'Branch: $_selectedBranchId'
-                  : (user?.branchId != null ? 'Branch: ${user!.branchId}' : 'All Branches (HQ)'),
+              auth.isSuperAdmin
+                  ? (_selectedBranchId == null ? 'All Branches (HQ)' : 'Branch: $_selectedBranchId')
+                  : (assignedBranch != null && assignedBranch.isNotEmpty &&
+                          assignedBranch.toLowerCase() != 'all'
+                      ? 'Branch: $assignedBranch'
+                      : 'Branch assignment required'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white70, fontSize: 11),
@@ -179,7 +183,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       body: Consumer<AdminDashboardProvider>(
         builder: (context, dashboard, _) {
           if (!auth.isSuperAdmin && (user?.branchId?.trim().isNotEmpty != true || user?.branchId?.trim().toLowerCase() == 'all')) {
-            return const ErrorView(message: 'This account needs a branch assignment before viewing restaurant metrics.');
+            return const ErrorView(message: 'This account needs a branch assignment before viewing restaurant metrics. Ask a Super Admin to assign your branch, then sign in again.');
           }
           final currentScope = auth.isSuperAdmin ? _selectedBranchId : user?.branchId?.trim();
           if (dashboard.currentBranchId != currentScope ||

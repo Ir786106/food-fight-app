@@ -30,11 +30,17 @@ service cloud.firestore {
       return existingUser() &&
         getUserData().get('isActive', null) in [null, true, 1, 'true', '1'] &&
         getUserData().get('isBlocked', false) != true &&
-        !(getUserData().get('status', '') in ['blocked', 'suspended', 'deactivated']);
+        !(getUserData().get('status', '') in ['blocked', 'suspended', 'deactivated', 'inactive']);
     }
 
     function isSuperAdmin() {
-      return hasActiveProfile() && getUserRole() == 'super_admin';
+      return hasActiveProfile() && getUserRole() == 'super_admin' &&
+        profileIdsMatch(getUserData(), request.auth.uid);
+    }
+
+    function profileIdsMatch(profile, uid) {
+      return profile.get('id', null) in [null, '', uid] &&
+        profile.get('uid', null) in [null, '', uid];
     }
 
     function isAdmin() {
@@ -147,6 +153,7 @@ service cloud.firestore {
       // Privileged profiles are provisioned by Auth-backed Cloud Functions.
       allow create: if (
         isOwner(userId) &&
+        profileIdsMatch(request.resource.data, userId) &&
         (incomingRole() == 'customer' || (isOwner(userId) && incomingRole() == '')) &&
         request.resource.data.get('permissions', null) == null &&
         request.resource.data.get('isAdmin', false) == false &&
@@ -157,7 +164,8 @@ service cloud.firestore {
           isOwner(userId) &&
           !request.resource.data.diff(resource.data).affectedKeys().hasAny([
             'role', 'permissions', 'status', 'isActive', 'isBlocked', 'isAdmin', 'isSuperAdmin',
-            'branchId', 'parentAdminId', 'createdAt'
+            'id', 'uid', 'branchId', 'branch_id', 'parentAdminId',
+            'parent_admin_id', 'tenantId', 'tenant_id', 'createdAt'
           ])
         )
       );
@@ -166,7 +174,7 @@ service cloud.firestore {
       allow delete: if (existingRole() in ['customer', ''] && (isSuperAdmin() || isOwner(userId)) &&
         resource.data.get('isActive', null) in [null, true, 1, 'true', '1'] &&
         resource.data.get('isBlocked', false) != true &&
-        resource.data.get('status', '') != 'blocked');
+        !(resource.data.get('status', '') in ['blocked', 'suspended', 'deactivated', 'inactive']));
 
       // Saved payment methods subcollection
       match /payment_methods/{methodId} {
@@ -377,7 +385,7 @@ service cloud.firestore {
     // 11. SYSTEM SETTINGS
     // =========================================================================
     match /settings/{settingId} {
-      allow read: if settingId == 'global_settings' || isSuperAdmin();
+      allow read: if settingId in ['global_settings', 'app_update'] || isSuperAdmin();
       allow write: if settingId != 'global_settings' && isSuperAdmin();
     }
 
@@ -480,16 +488,6 @@ service cloud.firestore {
           request.resource.data.readBy.toSet().difference(resource.data.get('readBy', []).toSet()).hasOnly([request.auth.uid]);
         allow delete: if isSuperAdmin();
       }
-    }
-
-    // =========================================================================
-    // 18. SYSTEM SETTINGS & APP UPDATE CONFIGURATION
-    // =========================================================================
-    match /settings/app_update {
-      // Public read for in-app version checks and force-update enforcement
-      allow read: if true;
-      // Super admin only write
-      allow write: if isSuperAdmin();
     }
 
     // =========================================================================

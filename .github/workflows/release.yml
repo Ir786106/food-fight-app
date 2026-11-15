@@ -6,12 +6,27 @@ on:
       - 'v*'
 
 jobs:
+  verify:
+    if: vars.ENABLE_ANDROID_RELEASE == 'true'
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  windows:
+    if: vars.ENABLE_ANDROID_RELEASE == 'true'
+    uses: ./.github/workflows/windows-installer.yml
+    permissions:
+      contents: read
+
   build-and-release:
     if: vars.ENABLE_ANDROID_RELEASE == 'true'
-    name: Build & Publish Release APK
+    name: Build and verify Android APK
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      build: ${{ steps.version.outputs.BUILD_NUMBER }}
 
     steps:
       - name: Checkout code
@@ -155,20 +170,47 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           sha256sum FoodFight_v${VERSION}_release.apk > FoodFight_v${VERSION}_release.apk.sha256
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FoodFight-Android
+          path: FoodFight_v*_release.apk*
+          if-no-files-found: error
+
+  publish:
+    needs: [verify, build-and-release, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: FoodFight-*
+          merge-multiple: true
+      - name: Verify all release files
+        env:
+          VERSION: ${{ needs.build-and-release.outputs.version }}
+        run: |
+          for artifact in "FoodFight_v${VERSION}_release.apk" "FoodFight-${VERSION}-Windows-x64-Setup.exe"; do
+            test -s "$artifact"
+            sha256sum --check "$artifact.sha256"
+          done
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
-            FoodFight_v${{ steps.version.outputs.VERSION }}_release.apk
-            FoodFight_v${{ steps.version.outputs.VERSION }}_release.apk.sha256
+            FoodFight_v${{ needs.build-and-release.outputs.version }}_release.apk
+            FoodFight_v${{ needs.build-and-release.outputs.version }}_release.apk.sha256
+            FoodFight-${{ needs.build-and-release.outputs.version }}-Windows-x64-Setup.exe
+            FoodFight-${{ needs.build-and-release.outputs.version }}-Windows-x64-Setup.exe.sha256
           body: |
-            ## Food Fight v${{ steps.version.outputs.VERSION }}
+            ## Food Fight v${{ needs.build-and-release.outputs.version }}
             
             ### Installation
-            Download `FoodFight_v${{ steps.version.outputs.VERSION }}_release.apk` and install it.
+            On Android install the APK. On Windows x64 run the Setup EXE. Both downloads include SHA-256 checksums.
             
             Food Fight checks for updates when it opens. Use Settings → Check for Updates to check manually or enable automatic downloads.
 
-            Build: ${{ steps.version.outputs.BUILD_NUMBER }}
+            Build: ${{ needs.build-and-release.outputs.build }}
 

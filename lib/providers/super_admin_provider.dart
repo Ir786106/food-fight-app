@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_fight/models/admin/system_settings_model.dart';
 import 'package:food_fight/services/super_admin_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
+import 'package:food_fight/core/errors/platform_operation_error.dart';
 import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
 /// Provider for Super Admin Dashboard KPIs and global platform configuration
@@ -14,6 +15,8 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _settingsError;
+  String? _settingsSaveError;
+  bool _isSavingSettings = false;
   bool _settingsReady = false;
   StreamSubscription<SystemSettingsModel>? _settingsSub;
 
@@ -21,6 +24,7 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   SystemSettingsModel get settings => _settings;
   bool get settingsReady => _settingsReady;
   String? get settingsError => _settingsError;
+  String? get settingsSaveError => _settingsSaveError;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -64,6 +68,7 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
 
   /// Load platform-wide metrics
   Future<void> loadMetrics() async {
+    if (_isLoading) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListenersPostFrame();
@@ -74,7 +79,8 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to load platform metrics: $e';
+      _errorMessage = platformOperationError(e,
+          fallback: 'Unable to load platform metrics. Please try again.');
       AppLogger.error('SuperAdminProvider metrics error: $e',
           tag: 'SuperAdminProvider');
       notifyListeners();
@@ -110,22 +116,24 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   /// Update and save platform settings
   Future<bool> saveSettings(SystemSettingsModel newSettings,
       {String? savedBy}) async {
-    _isLoading = true;
+    if (_isSavingSettings) return false;
+    _isSavingSettings = true;
+    _settingsSaveError = null;
     notifyListeners();
 
     try {
       await SuperAdminService.saveSystemSettings(newSettings, savedBy: savedBy);
       _settings = newSettings;
-      _isLoading = false;
-      notifyListeners();
       return true;
     } catch (e) {
-      _isLoading = false;
-      _errorMessage = 'Failed to save settings: $e';
+      _settingsSaveError = platformOperationError(e,
+          fallback: 'Unable to save system settings. Please try again.');
       AppLogger.error('SuperAdminProvider saveSettings error: $e',
           tag: 'SuperAdminProvider');
-      notifyListeners();
       return false;
+    } finally {
+      _isSavingSettings = false;
+      notifyListeners();
     }
   }
 

@@ -48,7 +48,9 @@ class _SessionBindingsState extends State<SessionBindings> with WidgetsBindingOb
       final navigator = appNavigatorKey.currentState;
       if (!mounted || navigator == null || release == null ||
           WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
-          _promptedUpdateTag == release.tagName) return;
+          _promptedUpdateTag == release.tagName) {
+        return;
+      }
       _promptedUpdateTag = release.tagName;
       await AppUpdateBottomSheet.show(
         navigator.context,

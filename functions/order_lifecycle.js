@@ -10,9 +10,7 @@ const statuses = [...Object.keys(kitchenTransitions), "ready", ...activeDeliveri
 const staffRoles = ["admin", "sub_admin", "staff"];
 const riderRoles = ["rider", "delivery_rider"];
 const enabled = (value) => value === true || value === 1;
-const activeProfile = (profile) => profile && profile.isBlocked !== true &&
-  profile.status !== "blocked" &&
-  (profile.isActive == null || [true, 1, "1", "true"].includes(profile.isActive));
+const { isActiveProfile: activeProfile } = require("./account_status");
 const orderStatus = (value) => {
   const normalized = String(value ?? "").toLowerCase().replace(/[\s_-]/g, "");
   if (["canceled", "failed"].includes(normalized)) return "cancelled";
@@ -43,7 +41,7 @@ function orderLifecycle({ db, fieldValue, fail, validId, cents, millis }) {
     return db.runTransaction(async (transaction) => {
       const profile = system ? { role: "super_admin" } :
         (await transaction.get(db.collection("users").doc(uid))).data();
-      if (!activeProfile(profile)) {
+      if (!activeProfile(profile, uid)) {
         fail("permission-denied", "This account cannot manage orders.");
       }
       const order = (await transaction.get(orderRef)).data();

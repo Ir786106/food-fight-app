@@ -1,10 +1,11 @@
+const { isActiveProfile } = require("./account_status");
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { FieldValue, AggregateField } = require("firebase-admin/firestore");
 
 admin.initializeApp();
 const db = admin.firestore();
-const { platformAdministration, isActiveProfile } = require("./platform_administration");
+const { platformAdministration } = require("./platform_administration");
 const platform = platformAdministration({
   db, auth: admin.auth(), timestamp: () => FieldValue.serverTimestamp(),
   fail: (code, message) => { throw new functions.https.HttpsError(code, message); },
@@ -27,7 +28,7 @@ exports.manageBranchCustomers = functions.https.onCall(async (input, context) =>
     const permissions = actor?.permissions;
     const permitted = ["customers", "manage_customers"].some((key) =>
       Array.isArray(permissions) ? permissions.includes(key) : permissions?.[key] === true);
-    if (!isActiveProfile(actor)) fail("permission-denied", "Customer access is unavailable.");
+    if (!isActiveProfile(actor, actorId)) fail("permission-denied", "Customer access is unavailable.");
     if (actor.role === "super_admin") return null;
     if (!(actor.role === "admin" && !actor.parentAdminId) &&
         !(["admin", "staff", "sub_admin"].includes(actor.role) && permitted)) {
@@ -341,8 +342,7 @@ async function checkout(input, context, quoteOnly) {
   const orderRef = quoteOnly ? null : db.collection("orders").doc(orderId);
   return db.runTransaction(async (transaction) => {
     const profile = (await transaction.get(db.collection("users").doc(customerId))).data();
-    if (profile && ((profile.isActive != null && ![true, 1, "true", "1"].includes(profile.isActive)) ||
-        profile.status === "blocked" || profile.isBlocked === true)) {
+    if (profile && !isActiveProfile(profile)) {
       fail("permission-denied", "This account cannot place orders.");
     }
     const existing = orderRef && await transaction.get(orderRef);
@@ -642,9 +642,7 @@ exports.completePhoneProfile = functions.https.onCall(async (_, context) => {
     const snapshot = await transaction.get(ref);
     if (snapshot.exists) {
       const profile = snapshot.data();
-      if (profile.role !== "customer" || profile.isBlocked === true ||
-          profile.status === "blocked" ||
-          (profile.isActive != null && ![true, 1, "true", "1"].includes(profile.isActive))) {
+      if (profile.role !== "customer" || !isActiveProfile(profile)) {
         fail("permission-denied", "This account cannot use customer phone sign-in.");
       }
       return;
@@ -1064,7 +1062,7 @@ exports.provisionTeamMember = functions.https.onCall(async (data, context) => {
   const actor = actorSnap.data() || {};
   const superAdmin = actor.role === 'super_admin';
   const manager = actor.role === 'admin' && !actor.parentAdminId;
-  if (!isActiveProfile(actor) || (!superAdmin && !manager)) throw new functions.https.HttpsError('permission-denied', 'Only branch managers can manage team logins.');
+  if (!isActiveProfile(actor, context.auth.uid) || (!superAdmin && !manager)) throw new functions.https.HttpsError('permission-denied', 'Only branch managers can manage team logins.');
   const role = data.role === 'rider' ? 'rider' : data.role === 'staff' ? 'staff' : null;
   if (!role) throw new functions.https.HttpsError('invalid-argument', 'Invalid team role.');
   const branchId = superAdmin ? (data.branchId || actor.branchId) : actor.branchId;

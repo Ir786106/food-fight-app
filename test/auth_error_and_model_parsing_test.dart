@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
@@ -5,9 +6,70 @@ import 'package:food_fight/core/utils/validator_utils.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/providers/auth_provider.dart';
+import 'package:food_fight/services/firebase/firebase_auth_service.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
 
 void main() {
+  test('Firebase transport reset becomes a network retry message', () {
+    final error = FirebaseAuthService.authError(FirebaseAuthException(
+      code: 'internal-error',
+      message: 'I/O error during system call, Connection reset by peer',
+    ));
+    expect(error.code, 'network-request-failed');
+    expect(error.message, 'Network error. Please check your internet connection');
+  });
+
+  group('Authoritative session profile', () {
+    test('rejects conflicting persisted Super Admin identity fields', () {
+      for (final field in ['id', 'uid']) {
+        expect(
+          () => FirebaseAuthService.validateSessionProfile(
+            {'role': 'super_admin', field: 'another-account'},
+            expectedUid: 'platform-owner',
+          ),
+          throwsA(isA<AppException>().having(
+            (e) => e.code, 'code', 'profile-uid-mismatch',
+          )),
+        );
+      }
+      final legacy = FirebaseAuthService.validateSessionProfile(
+        {'role': 'super_admin', 'isActive': 1},
+        expectedUid: 'platform-owner',
+      );
+      expect(legacy.id, 'platform-owner');
+    });
+
+    test('accepts a canonical Super Admin without a branch and numeric activity',
+        () {
+      final user = FirebaseAuthService.validateSessionProfile({
+        'id': 'platform-owner',
+        'role': 'super_admin',
+        'isActive': 1,
+        'status': 'active',
+      });
+      expect(user.isSuperAdmin, isTrue);
+      expect(user.branchId, isNull);
+    });
+
+    test('distinguishes legacy role, unsupported role, and blocked profiles', () {
+      for (final (role, status, expected) in [
+        ('super admin', 'active', 'profile-role-migration-required'),
+        ('unknown-role', 'active', 'profile-role-invalid'),
+        ('super_admin', 'suspended', 'profile-disabled'),
+        ('delivery_rider', 'inactive', 'profile-disabled'),
+      ]) {
+        expect(
+          () => FirebaseAuthService.validateSessionProfile({
+            'role': role,
+            'isActive': true,
+            'status': status,
+          }),
+          throwsA(isA<AppException>().having((e) => e.code, 'code', expected)),
+        );
+      }
+    });
+  });
+
   group('AuthProvider Error Parsing Tests', () {
     test('Translates permission-denied to clear user message', () {
       final msg = AuthProvider.parseError('permission-denied');

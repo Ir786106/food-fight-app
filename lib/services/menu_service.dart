@@ -39,7 +39,11 @@ class MenuService {
   }
 
   /// Get menu items as a Future
-  static Future<List<MenuItemModel>> getMenuItems({String? categoryId, String? branchId}) async {
+  static Future<List<MenuItemModel>> getMenuItems({
+    String? categoryId,
+    String? branchId,
+    bool includeLegacy = true,
+  }) async {
     try {
       Query query = _collection;
       if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
@@ -52,7 +56,7 @@ class MenuService {
         return MenuItemModel.fromJson(data);
       }).toList();
 
-      if (items.isEmpty) {
+      if (items.isEmpty && includeLegacy) {
         // Fallback for alternate collection name 'menu_items'
         Query altQuery = FirebaseFirestore.instance.collection('menu_items');
         if (categoryId != null && categoryId.isNotEmpty && categoryId != 'All') {
@@ -75,7 +79,7 @@ class MenuService {
       return items;
     } catch (e) {
       AppLogger.error('Error fetching menu items: $e', tag: 'MenuService');
-      return [];
+      rethrow;
     }
   }
 

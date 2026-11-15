@@ -85,7 +85,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Search Dishes & Kitchens 🔍'),
+        title: const Text('Search Menu'),
         elevation: 0,
       ),
       body: SafeArea(

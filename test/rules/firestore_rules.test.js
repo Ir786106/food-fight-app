@@ -243,6 +243,55 @@ describe('Food Fight Firestore Security Rules', () => {
       await assertFails(db.doc('settings/app_update').set({ forceUpdate: true }));
     });
 
+    it('allows own-profile recovery while denying legacy Super Admin privileges', async () => {
+      const uid = 'legacy-platform-owner';
+      const ref = 'users/' + uid;
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().doc(ref).set({ role: 'super admin', isActive: 1, status: 'active' });
+      });
+      const db = testEnv.authenticatedContext(uid, { role: 'super_admin' }).firestore();
+      await assertSucceeds(db.doc(ref).get());
+      await assertFails(db.doc(ref).update({ role: 'super_admin' }));
+      await assertFails(db.doc('settings/app_update').set({ forceUpdate: true }));
+    });
+
+    it('denies inactive status even with a legacy active flag', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().doc('users/' + superAdminAuth.uid)
+          .update({ status: 'inactive', isActive: 1 });
+      });
+      const db = testEnv.authenticatedContext(superAdminAuth.uid, superAdminAuth.token).firestore();
+      await assertFails(db.doc('settings/app_update').set({ forceUpdate: true }));
+    });
+
+    it('rejects conflicting Super Admin profile IDs even with a privileged token', async () => {
+      const uid = 'identity-check-admin';
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().doc('users/' + uid).set({
+          role: 'super_admin', isActive: 1, uid: 'another-account',
+        });
+      });
+      const db = testEnv.authenticatedContext(uid, { role: 'super_admin' }).firestore();
+      await assertSucceeds(db.doc('users/' + uid).get());
+      await assertFails(db.doc('settings/app_update').set({ forceUpdate: true }));
+    });
+
+    it('protects profile identity and scope while allowing normal edits', async () => {
+      const uid = 'identity-check-customer';
+      const db = testEnv.authenticatedContext(uid).firestore();
+      const profile = db.doc('users/' + uid);
+      await assertFails(profile.set({ id: 'another-account', role: 'customer' }));
+      await assertSucceeds(profile.set({ id: uid, uid, role: 'customer', isActive: true }));
+      await assertSucceeds(profile.update({ name: 'Updated name' }));
+      for (const field of ['id', 'uid', 'branch_id', 'parent_admin_id', 'tenantId']) {
+        await assertFails(profile.update({ [field]: 'another-account' }));
+      }
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().doc('users/' + uid).update({ status: 'suspended' });
+      });
+      await assertFails(profile.delete());
+    });
+
     it('super admin can update system settings and app_update', async () => {
       const superDb = testEnv.authenticatedContext(superAdminAuth.uid, superAdminAuth.token).firestore();
       await assertSucceeds(

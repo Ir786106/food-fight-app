@@ -9,6 +9,15 @@ class UserModel {
   static const String roleSuperAdmin = 'super_admin';
   static const String roleRider = 'delivery_rider';
 
+  static bool isProfileActive(Map<String, dynamic> json) {
+    final active = json['isActive'];
+    return (active == null || active == true || active == 1 ||
+            active == '1' || active == 'true') &&
+        json['isBlocked'] != true &&
+        !const {'blocked', 'suspended', 'deactivated', 'inactive'}
+            .contains(json['status']);
+  }
+
   final String id;
   final String name;
   final String email;
@@ -141,12 +150,6 @@ class UserModel {
           .map((entry) => entry.key.toString()).toList();
     }
 
-    // If isActive is missing or null, treat it as true (only explicit false/0 deactivates)
-    final rawActive = json['isActive'];
-    final bool parsedIsActive = (rawActive == null)
-        ? true
-        : (rawActive == true || rawActive == 1 || rawActive == '1' || rawActive == 'true');
-
     final rawRole = json['role']?.toString();
     final parsedRole = rawRole != null && rawRole.trim().isNotEmpty
         ? UserRole.fromString(rawRole).firestoreValue
@@ -158,7 +161,7 @@ class UserModel {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       role: parsedRole,
-      isActive: parsedIsActive,
+      isActive: isProfileActive(json),
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       profileImage: json['profileImage'],

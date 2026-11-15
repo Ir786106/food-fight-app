@@ -85,11 +85,11 @@ class SuperAdminDashboardScreen extends StatelessWidget {
       ),
       body: Builder(
         builder: (context) {
-          if (provider.isLoading && provider.totalOrders == 0) {
-            return const LoadingIndicator(message: 'Compiling platform-wide intelligence...');
+          if (provider.isLoading && provider.metrics.isEmpty) {
+            return const LoadingIndicator(message: 'Loading platform metrics…');
           }
 
-          if (provider.errorMessage != null && provider.totalOrders == 0) {
+          if (provider.errorMessage != null && provider.metrics.isEmpty) {
             return ErrorView(
               message: provider.errorMessage!,
               onRetry: () => provider.loadMetrics(),
@@ -106,6 +106,17 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (provider.errorMessage case final message?)
+                      ListTile(
+                        leading: const Icon(Icons.info_outline),
+                        title: Text(message),
+                        subtitle: const Text('Showing the last loaded metrics.'),
+                        trailing: IconButton(
+                          tooltip: 'Retry metrics',
+                          onPressed: provider.loadMetrics,
+                          icon: const Icon(Icons.refresh),
+                        ),
+                      ),
                     // System Status Banner
                     Container(
                       padding: const EdgeInsets.all(16),

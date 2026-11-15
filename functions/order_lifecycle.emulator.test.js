@@ -109,7 +109,16 @@ test("authorized kitchen, rider, and customer operations share one lifecycle", a
   await call("rider", assigned, { action: "decline" });
   assert.equal((await db.collection("orders").doc(id(assigned)).get()).data().status, "ready");
   await assign(assigned, "rider");
-  await call("rider", assigned, { action: "accept" });
+  await Promise.all([
+    call("rider", assigned, { action: "accept" }),
+    call("rider", assigned, { action: "accept" }),
+  ]);
+  const acceptedOrder = (await db.collection("orders").doc(id(assigned)).get()).data();
+  const acceptedAssignment = (await db.collection("riderAssignments").doc(id(assigned)).get()).data();
+  assert.equal(acceptedOrder.riderId, id("rider"));
+  assert.ok(acceptedOrder.riderAcceptedAt);
+  assert.equal(acceptedAssignment.status, "accepted");
+  assert.equal(acceptedAssignment.riderId, id("rider"));
   await assert.rejects(assign(assigned, "otherRider", id("rider")), { code: "failed-precondition" });
   await transition("rider", assigned, "pickedUp");
   await transition("rider", assigned, "outForDelivery");

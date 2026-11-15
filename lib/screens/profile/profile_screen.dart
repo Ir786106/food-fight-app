@@ -365,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.lock_outline_rounded,
                   title: 'Change Password',
-                  subtitle: 'Send password security update link',
+                  subtitle: 'Update your current password',
                   onTap: () => _showChangePasswordDialog(context),
                 ),
                 Divider(height: 1, color: isDark ? AppColors.darkDivider : AppColors.divider, indent: 56),

@@ -6,6 +6,12 @@ import 'package:food_fight/services/menu_service.dart';
 import 'package:food_fight/core/utils/logger.dart';
 import 'package:food_fight/core/utils/safe_change_notifier.dart';
 
+typedef MenuFetcher = Future<List<MenuItemModel>> Function({
+  String? categoryId,
+  String? branchId,
+  required bool includeLegacy,
+});
+
 /// Provider for managing Menu Items across Customer and Admin panels
 class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
   List<MenuItemModel> _menuItems = [];
@@ -14,6 +20,9 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
   String _selectedCategory = 'All';
   String _searchQuery = '';
   StreamSubscription<List<MenuItemModel>>? _subscription;
+  int _scopeGeneration = 0;
+  int _fetchGeneration = 0;
+  final MenuFetcher _fetchMenu;
 
   List<MenuItemModel> get menuItems => List.unmodifiable(_menuItems);
   List<MenuItemModel> get items => menuItems;
@@ -59,7 +68,8 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
     return items.map((item) => FoodModel.fromMenuItem(item)).toList();
   }
 
-  MenuProvider();
+  MenuProvider({MenuFetcher fetchMenu = MenuService.getMenuItems})
+      : _fetchMenu = fetchMenu;
 
   void init() {
     watchMenuItems();
@@ -75,6 +85,8 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
     bool activeOnly = false,
     String? branchId,
   }) {
+    if (_currentBranchId != branchId) _menuItems = [];
+    final generation = ++_scopeGeneration;
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
@@ -87,14 +99,16 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
       branchId: branchId,
     ).listen(
       (data) {
+        if (generation != _scopeGeneration) return;
         _menuItems = data;
         _isLoading = false;
         _errorMessage = null;
         notifyListeners();
       },
       onError: (e) {
+        if (generation != _scopeGeneration) return;
         _isLoading = false;
-        _errorMessage = 'Failed to load menu items: $e';
+        _errorMessage = 'Unable to load menu items. Please try again.';
         AppLogger.error('MenuProvider watch error: $e', tag: 'MenuProvider');
         notifyListeners();
       },
@@ -102,22 +116,40 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   /// Manual fetch
-  Future<void> fetchMenuItems({String? categoryId, String? branchId}) async {
+  Future<void> fetchMenuItems({
+    String? categoryId,
+    String? branchId,
+    bool includeLegacy = true,
+  }) async {
+    if (_currentBranchId != branchId) {
+      _menuItems = [];
+      _scopeGeneration++;
+      final previous = _subscription;
+      _subscription = null;
+      unawaited(previous?.cancel());
+    }
+    final generation = _scopeGeneration;
+    final request = ++_fetchGeneration;
     _currentBranchId = branchId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _menuItems = await MenuService.getMenuItems(
+      final items = await _fetchMenu(
         categoryId: categoryId,
         branchId: branchId,
+        includeLegacy: includeLegacy,
       );
+      if (generation != _scopeGeneration || request != _fetchGeneration) return;
+      _menuItems = items;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (generation != _scopeGeneration || request != _fetchGeneration) return;
       _isLoading = false;
-      _errorMessage = 'Failed to fetch menu items: $e';
+      _errorMessage = 'Unable to load menu items. Please try again.';
+      AppLogger.error('MenuProvider fetch error: $e', tag: 'MenuProvider');
       notifyListeners();
     }
   }
@@ -209,6 +241,7 @@ class MenuProvider extends ChangeNotifier with SafeChangeNotifier {
 
   @override
   void dispose() {
+    _scopeGeneration++;
     _subscription?.cancel();
     super.dispose();
   }

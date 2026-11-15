@@ -3,6 +3,14 @@
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Older release history is available in Git tags.
 
+## [1.8.5+22] - Unreleased
+
+- Verify account identity and role before restoring privileged sessions.
+- Keep Admin menu refresh scoped to the current branch and display a retry on read failures.
+- Improve Super Admin dashboards, forms and recovery messages, and keep Rider delivery errors on the relevant tabs.
+- Add local authorization, order lifecycle and migration regression coverage.
+- Require verified Android and Windows artifacts with checksums before the release workflow publishes.
+
 ## [1.8.2+19] - 2026-11-11
 
 - Use the supplied transparent Food Fight artwork for the in-app logo, Android launcher and splash, and Windows app and installer icon.

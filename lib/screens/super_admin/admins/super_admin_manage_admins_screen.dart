@@ -86,6 +86,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
           final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
 
           return AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             backgroundColor: SuperAdminTheme.getCardBg(dialogContext),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
@@ -378,7 +379,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                       createdBy: currentUserName,
                       newBranch: branch,
                     );
-                    if (!created) throw StateError(adminAccProv.errorMessage ?? 'Could not create the branch account.');
+                    if (!created) throw StateError(adminAccProv.actionError ?? 'Could not create the branch account.');
 
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
@@ -389,11 +390,16 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                         ),
                       );
                     }
-                  } catch (e) {
+                  } catch (_) {
+                    if (!ctx.mounted) return;
                     setDialogState(() => isSaving = false);
                     if (mounted) {
                       AppSnackbar.showSnackBar(context,
-                        SnackBar(content: Text('Error creating branch: $e'), backgroundColor: AppColors.error),
+                        SnackBar(
+                          content: Text(context.read<AdminAccountProvider>().actionError ??
+                              'Unable to create the branch. Please try again.'),
+                          backgroundColor: AppColors.error,
+                        ),
                       );
                     }
                   }
@@ -432,6 +438,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
           final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
 
           return AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             backgroundColor: SuperAdminTheme.getCardBg(dialogContext),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
@@ -618,11 +625,10 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                         final email = emailCtrl.text.trim();
                         final phone = phoneCtrl.text.trim();
                         final currentUserName = context.read<AuthProvider>().currentUser?.name;
+                        final provider = context.read<AdminAccountProvider>();
 
                         setDialogState(() => isSaving = true);
                         try {
-                          final provider = context.read<AdminAccountProvider>();
-
                           if (admin == null) {
                             final created = await provider.createAdminAccount(
                               AdminAccountModel(
@@ -639,7 +645,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                               ),
                               createdBy: currentUserName,
                             );
-                            if (!created) throw StateError(provider.errorMessage ?? 'Could not create the account.');
+                            if (!created) throw StateError(provider.actionError ?? 'Could not create the account.');
                             if (ctx.mounted) AppSnackbar.showSuccess(ctx, 'Account created. Use Forgot Password to set its password.');
                           } else {
                             final updated = await provider.updateAdminAccount(
@@ -653,15 +659,16 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                               ),
                               updatedBy: currentUserName,
                             );
-                            if (!updated) throw StateError(provider.errorMessage ?? 'Could not update the account.');
+                            if (!updated) throw StateError(provider.actionError ?? 'Could not update the account.');
                           }
 
                           if (ctx.mounted) Navigator.pop(ctx);
-                        } catch (e) {
+                        } catch (_) {
+                          if (!ctx.mounted) return;
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
                             AppSnackbar.showSnackBar(ctx,
-                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                              SnackBar(content: Text(provider.actionError ?? 'Unable to save the account. Please try again.'), backgroundColor: AppColors.error),
                             );
                           }
                         }
@@ -712,7 +719,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     admin.id, 'active', changedBy: currentUserName,
                   );
                   if (mounted && !changed) {
-                    AppSnackbar.showError(context, provider.errorMessage ?? 'Could not change account status.');
+                    AppSnackbar.showError(context, provider.actionError ?? 'Could not change account status.');
                   }
                 },
               ),
@@ -727,7 +734,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     admin.id, 'suspended', changedBy: currentUserName,
                   );
                   if (mounted && !changed) {
-                    AppSnackbar.showError(context, provider.errorMessage ?? 'Could not change account status.');
+                    AppSnackbar.showError(context, provider.actionError ?? 'Could not change account status.');
                   }
                 },
               ),
@@ -742,7 +749,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
                     admin.id, 'deactivated', changedBy: currentUserName,
                   );
                   if (mounted && !changed) {
-                    AppSnackbar.showError(context, provider.errorMessage ?? 'Could not change account status.');
+                    AppSnackbar.showError(context, provider.actionError ?? 'Could not change account status.');
                   }
                 },
               ),
@@ -778,30 +785,17 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
         backgroundColor: SuperAdminTheme.getBackground(context),
       appBar: AppBar(
         title: const Text(
-          'Admin & Staff Management',
+          'Admin & Staff',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: SuperAdminTheme.primary,
         foregroundColor: Colors.white,
         actions: [
-          TextButton.icon(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.white.withValues(alpha: 0.18),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => _openNewBranchDialog(),
-            icon: const Icon(Icons.add_business_rounded, size: 16),
-            label: const Text('Open Branch', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          ),
-          const SizedBox(width: 6),
           IconButton(
-            icon: const Icon(Icons.person_add_rounded),
-            tooltip: 'Add Admin',
-            onPressed: () => _openAdminDialog(),
+            icon: const Icon(Icons.add_business_rounded),
+            tooltip: 'Open Branch',
+            onPressed: _openNewBranchDialog,
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: ResponsiveContainer.content(
@@ -1070,13 +1064,6 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: SuperAdminTheme.primary,
-        foregroundColor: Colors.white,
-        onPressed: () => _openAdminDialog(),
-        icon: const Icon(Icons.person_add),
-        label: const Text('New Admin'),
-      ),
       ),
     );
   }
@@ -1090,7 +1077,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
         selected: isSel,
         selectedColor: SuperAdminTheme.primary,
         labelStyle: TextStyle(
-          color: isSel ? Colors.white : Colors.grey.shade800,
+          color: isSel ? Colors.white : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
         ),
         onSelected: (val) {
@@ -1101,7 +1088,7 @@ class _SuperAdminManageAdminsScreenState extends State<SuperAdminManageAdminsScr
   }
 
   Widget _buildRoleBadge(String role) {
-    Color color = AppColors.darkBrown;
+    Color color = Theme.of(context).colorScheme.onSurfaceVariant;
     if (role == 'super_admin') color = SuperAdminTheme.accentGold;
     if (role == 'staff') color = AppColors.primaryYellow;
 
