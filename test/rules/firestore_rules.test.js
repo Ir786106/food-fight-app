@@ -1,5 +1,9 @@
+const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
+const {
+  collection, getAggregateFromServer, getCountFromServer, query, sum, where,
+} = require('firebase/firestore');
 const {
   initializeTestEnvironment,
   assertFails,
@@ -463,6 +467,49 @@ describe('Food Fight Firestore Security Rules', () => {
     await assertFails(assigned.doc('chats/foreign').update({assignedAdminId: 'assigned'}));
     await assertSucceeds(assigned.doc('chats/foreign/messages/customer')
       .set({senderId: 'assigned', senderRole: 'customer'}));
+  });
+
+  it('authorizes the global and branch inbox queries at their intended scopes', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await db.doc('users/platform').set({role: 'super_admin', branchId: 'a'});
+      await db.doc('users/assigned').set({role: 'admin', branchId: 'a'});
+      await db.doc('chats/own').set({customerId: 'customer', branchId: 'a', lastMessageAt: 1});
+      await db.doc('chats/other').set({customerId: 'customer', branchId: 'b', lastMessageAt: 2});
+      await db.doc('chats/unassigned').set({customerId: 'customer', lastMessageAt: 3});
+    });
+    const platform = testEnv.authenticatedContext('platform').firestore();
+    const staff = testEnv.authenticatedContext('assigned').firestore();
+    const inbox = (db) => db.collection('chats').orderBy('lastMessageAt', 'desc').limit(50);
+
+    const global = await assertSucceeds(inbox(platform).get());
+    assert.deepEqual(global.docs.map((doc) => doc.id), ['unassigned', 'other', 'own']);
+    const branch = await assertSucceeds(inbox(staff).where('branchId', '==', 'a').get());
+    assert.deepEqual(branch.docs.map((doc) => doc.id), ['own']);
+    await assertFails(inbox(staff).get());
+    await assertFails(inbox(staff).where('branchId', '==', 'b').get());
+  });
+
+  it('restricts platform-wide order aggregates to Super Admin', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await db.doc('users/platform').set({role: 'super_admin'});
+      await db.doc('users/manager').set({role: 'admin', branchId: 'a'});
+      await db.doc('orders/one').set({branchId: 'a', status: 'delivered', total: 200});
+      await db.doc('orders/two').set({branchId: 'b', status: 'delivered', total: 300});
+      await db.doc('orders/three').set({branchId: 'b', status: 'cancelled', total: 400});
+    });
+    const platform = testEnv.authenticatedContext('platform').firestore();
+    const manager = testEnv.authenticatedContext('manager').firestore();
+    const delivered = (db) => query(
+      collection(db, 'orders'), where('status', '==', 'delivered'),
+    );
+    const count = await assertSucceeds(getCountFromServer(delivered(platform)));
+    assert.equal(count.data().count, 2);
+    const totals = await assertSucceeds(getAggregateFromServer(delivered(platform), {gmv: sum('total')}));
+    assert.equal(totals.data().gmv, 500);
+    await assertFails(getCountFromServer(delivered(manager)));
+    await assertFails(getAggregateFromServer(delivered(manager), {gmv: sum('total')}));
   });
 
   it('scopes menu-report moderation to status fields and the owning branch', async () => {

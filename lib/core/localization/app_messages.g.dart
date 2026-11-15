@@ -45,6 +45,16 @@ const urduMessages = <String, String>{
   "Check for Updates": "اپ ڈیٹس دیکھیں",
   "Checking order...": "آرڈر کی جانچ ہو رہی ہے…",
   "Checkout": "چیک آؤٹ",
+  "An item in your cart is no longer available. Update your cart.":
+      "آپ کی کارٹ میں ایک آئٹم اب دستیاب نہیں ہے۔ اپنی کارٹ اپ ڈیٹ کریں۔",
+  "Your account does not have permission to place this order.":
+      "آپ کے اکاؤنٹ کو یہ آرڈر دینے کی اجازت نہیں ہے۔",
+  "Unable to reach checkout. Check your connection and retry.":
+      "چیک آؤٹ سروس سے رابطہ نہیں ہو سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+  "Unable to place your order. Please retry.":
+      "آپ کا آرڈر نہیں دیا جا سکا۔ دوبارہ کوشش کریں۔",
+  "Checkout service is unavailable. Your cart is still saved.":
+      "چیک آؤٹ سروس دستیاب نہیں ہے۔ آپ کی کارٹ محفوظ ہے۔",
   "Chefs are cooking fresh meal": "آپ کا کھانا تازہ تیار کیا جا رہا ہے",
   "Clear All": "سب ہٹائیں",
   "Clear all filters": "تمام فلٹر ہٹائیں",

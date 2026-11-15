@@ -118,8 +118,12 @@ class ChatService implements IChatService {
   }) {
     Query<Map<String, dynamic>> query = _chatsRef;
 
-    // Only filter by branch if non-empty, not 'all', and not Super Admin viewing all branches
-    if (branchId.isNotEmpty && branchId != 'all' && !isSuperAdmin) {
+    if (!isSuperAdmin &&
+        (branchId.trim().isEmpty || branchId.trim().toLowerCase() == 'all')) {
+      return Stream.error(
+          StateError('A branch is required for the support inbox.'));
+    }
+    if (!isSuperAdmin) {
       query = query.where('branchId', isEqualTo: branchId);
     }
 

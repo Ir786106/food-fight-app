@@ -1,7 +1,8 @@
 import '../models/user_model.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'trusted_operations.dart';
 import '../models/branch_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:food_fight/models/admin/admin_account_model.dart';
 import 'package:food_fight/models/admin/audit_log_model.dart';
 import 'package:food_fight/models/admin/system_settings_model.dart';
@@ -53,9 +54,8 @@ class SuperAdminService {
         });
   }
 
-  static Future<HttpsCallableResult<dynamic>> _mutate(
-          Map<String, dynamic> input) =>
-      FirebaseFunctions.instance.httpsCallable('mutatePlatform').call(input);
+  static Future<dynamic> _mutate(Map<String, dynamic> input) =>
+      TrustedOperations.call('mutatePlatform', input);
 
   static Future<String> createAdminAccount(AdminAccountModel admin,
       {String? createdBy, BranchModel? newBranch}) async {
@@ -64,7 +64,7 @@ class SuperAdminService {
       ...admin.toJson(),
       if (newBranch != null) 'newBranch': newBranch.toJson(),
     });
-    return result.data['userId'] as String;
+    return result['userId'] as String;
   }
 
   static Future<void> updateAdminAccount(AdminAccountModel admin,
@@ -152,9 +152,56 @@ class SuperAdminService {
   // -------------------------------------------------------------
 
   static Future<Map<String, dynamic>> getPlatformMetrics() async {
-    final result = await FirebaseFunctions.instance
-        .httpsCallable('getPlatformMetrics')
-        .call();
-    return Map<String, dynamic>.from(result.data as Map);
+    final users = _firestore.collection(FirestoreCollections.users);
+    final orders = _firestore.collection(FirestoreCollections.orders);
+    final delivered = orders.where('status', isEqualTo: 'delivered');
+    final queries = {
+      'totalRestaurants':
+          _firestore.collection(FirestoreCollections.restaurants),
+      'totalBranches': _firestore.collection(FirestoreCollections.branches),
+      'totalCustomers': users.where('role', isEqualTo: 'customer'),
+      'totalAdmins': users.where('role', isEqualTo: 'admin'),
+      'totalStaff': users.where('role', whereIn: ['staff', 'sub_admin']),
+      'totalRiders': users.where('role', whereIn: ['rider', 'delivery_rider']),
+      'activeRiders': _firestore
+          .collection(FirestoreCollections.riders)
+          .where('isOnline', whereIn: [true, 1]),
+      'totalOrders': orders,
+      'completedOrders': delivered,
+      'cancelledOrders': orders.where('status', isEqualTo: 'cancelled'),
+    };
+    final totals = await Future.wait(queries.entries.map((entry) async =>
+        MapEntry(entry.key, (await entry.value.count().get()).count ?? 0)));
+    final metrics = <String, dynamic>{...Map.fromEntries(totals)};
+
+    // The native Windows Firestore plugin supports count, but omits sum.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      return metrics;
+    }
+
+    final today = DateTime.now().toUtc();
+    final startOfToday = DateTime.utc(today.year, today.month, today.day);
+    final deliveredGmv = delivered.aggregate(sum('total')).get();
+    final dailySales = Future.wait(List.generate(7, (index) async {
+      final start = startOfToday.subtract(Duration(days: 6 - index));
+      final end = start.add(const Duration(days: 1));
+      final day = await delivered
+          .where('createdAt',
+              isGreaterThanOrEqualTo: start.millisecondsSinceEpoch)
+          .where('createdAt', isLessThan: end.millisecondsSinceEpoch)
+          .orderBy('createdAt', descending: true)
+          .aggregate(sum('total'), count())
+          .get();
+      return {
+        'date': start.millisecondsSinceEpoch,
+        'revenue': day.getSum('total') ?? 0,
+        'ordersCount': day.count ?? 0,
+      };
+    }));
+    final results = await Future.wait<Object>([deliveredGmv, dailySales]);
+    metrics['deliveredGmv'] =
+        (results[0] as AggregateQuerySnapshot).getSum('total') ?? 0;
+    metrics['dailySales'] = results[1];
+    return metrics;
   }
 }

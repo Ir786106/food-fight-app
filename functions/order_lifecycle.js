@@ -24,7 +24,9 @@ function permission(profile, name) {
     Array.isArray(permissions) ? permissions.includes(key) : permissions?.[key] === true);
 }
 
-function orderLifecycle({ db, fieldValue, fail, validId, cents, millis }) {
+function orderLifecycle({
+  db, fieldValue, fail, validId, cents, millis, reconcileTerminalOrderInTransaction,
+}) {
   return async (input, context, system = false) => {
     if (!system && !context.auth) fail("unauthenticated", "Sign in to manage orders.");
     const uid = system ? "dispatch-system" : context.auth.uid;
@@ -235,6 +237,7 @@ function orderLifecycle({ db, fieldValue, fail, validId, cents, millis }) {
         if (current === "delivered" || (!staffAction && !riderAction && !withinWindow)) {
           fail("failed-precondition", "This order can no longer be cancelled.");
         }
+        await reconcileTerminalOrderInTransaction(transaction, orderId, { ...order, status: next });
         if (order.riderId) transaction.set(assignmentRef, { orderId, riderId: order.riderId,
           status: "cancelled", updatedAt: timestamp }, { merge: true });
         return update(next, { cancellationReason: reason, offerExpiresAt: null }, { reason });
@@ -255,6 +258,7 @@ function orderLifecycle({ db, fieldValue, fail, validId, cents, millis }) {
       if (collect && data.codCollected !== true) {
         fail("failed-precondition", "Confirm that you collected the cash payment.");
       }
+      await reconcileTerminalOrderInTransaction(transaction, orderId, { ...order, status: next });
       if (collect) {
         transaction.create(db.collection("codCollections").doc(orderId), {
           orderId, riderId: uid, branchId: order.branchId || "",

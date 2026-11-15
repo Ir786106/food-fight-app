@@ -664,6 +664,7 @@ exports.placeOrder = functions.https.onCall((input, context) => checkout(input, 
 
 const mutateOrder = require("./order_lifecycle").orderLifecycle({
   db, fieldValue: FieldValue, fail, validId, cents, millis,
+  reconcileTerminalOrderInTransaction,
 });
 exports.mutateOrder = functions.https.onCall((data, context) => mutateOrder(data, context));
 
@@ -1190,15 +1191,19 @@ exports.pushInboxNotification = functions.firestore.document('notifications/{id}
   }
 });
 
-exports.reconcileTerminalOrder = functions.runWith({failurePolicy:true}).firestore.document('orders/{orderId}').onUpdate(async (change, context) => {
-  const before = change.before.data(), order = change.after.data();
-  if (before.status === order.status || !['cancelled','delivered'].includes(order.status)) return;
-  const marker = db.collection('orderReconciliations').doc(`${order.status}_${context.params.orderId}`);
-  await db.runTransaction(async t => {
+async function reconcileTerminalOrderInTransaction(t, orderId, order) {
+    const marker = db.collection('orderReconciliations').doc(`${order.status}_${orderId}`);
     if ((await t.get(marker)).exists) return;
     const stocks=[];
     if (order.status === 'cancelled' && order.verifiedByServer) {
-      for (const reservation of order.inventoryReservations || []) {
+      for (const reservation of Array.isArray(order.inventoryReservations) ? order.inventoryReservations : []) {
+        if (!reservation ||
+            typeof reservation.path !== "string" ||
+            !/^(menuItems|menu_items|deals)\/[^/]+$/.test(reservation.path) ||
+            !["stockQuantity", "stock"].includes(reservation.field) ||
+            !Number.isSafeInteger(reservation.quantity) || reservation.quantity < 1) {
+          fail("failed-precondition", "Order inventory needs a support review.");
+        }
         const ref=db.doc(reservation.path), snap=await t.get(ref);
         if (snap.exists) stocks.push({ref,data:snap.data(),...reservation});
       }
@@ -1220,8 +1225,13 @@ exports.reconcileTerminalOrder = functions.runWith({failurePolicy:true}).firesto
     }, { merge: true });
     if(coupon?.exists && order.verifiedByServer) t.update(couponRef,{usageCount:Math.max(0,Number(coupon.data().usageCount || 0)-1)});
     if(rider?.exists) t.update(riderRef,{totalDeliveries:Number(rider.data().totalDeliveries || 0)+1});
-    t.set(marker,{orderId:context.params.orderId,status:order.status,createdAt:FieldValue.serverTimestamp()});
-  });
+    t.set(marker,{orderId,status:order.status,createdAt:FieldValue.serverTimestamp()});
+}
+
+exports.reconcileTerminalOrder = functions.runWith({failurePolicy:true}).firestore.document('orders/{orderId}').onUpdate(async (change, context) => {
+  const before = change.before.data(), order = change.after.data();
+  if (before.status === order.status || !['cancelled','delivered'].includes(order.status)) return;
+  await db.runTransaction(t => reconcileTerminalOrderInTransaction(t, context.params.orderId, order));
 });
 
 exports.submitOrderReview = functions.https.onCall(async (data, context) => {

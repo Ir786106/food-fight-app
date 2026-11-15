@@ -232,9 +232,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             if (n.type == 'chat' && refId != null) {
                               Navigator.pushNamed(
                                   context,
-                                  user?.isAdmin == true
-                                      ? '/admin/chats'
-                                      : '/chat',
+                                  user?.isSuperAdmin == true
+                                      ? '/super-admin/chats'
+                                      : user?.isAdmin == true
+                                          ? '/admin/chats'
+                                          : '/chat',
                                   arguments: {'chatId': refId});
                             } else if (n.type == 'order' && refId != null) {
                               Navigator.pushNamed(

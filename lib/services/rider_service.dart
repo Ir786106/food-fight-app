@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../models/rider_model.dart';
 import '../core/constants/firestore_collections.dart';
 import '../core/utils/logger.dart';
+import 'trusted_operations.dart';
 
 class RiderService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -151,7 +152,7 @@ class RiderService {
     String? riderPhone,
     String? expectedRiderId,
   }) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'assign',
       'orderId': orderId,
       'riderId': riderId,
@@ -163,7 +164,7 @@ class RiderService {
     required String orderId,
     required String expectedRiderId,
   }) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'unassign',
       'orderId': orderId,
       'expectedRiderId': expectedRiderId,
@@ -171,14 +172,14 @@ class RiderService {
   }
 
   static Future<void> acceptDelivery(String orderId) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'accept',
       'orderId': orderId,
     });
   }
 
   static Future<void> declineDelivery(String orderId) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'decline',
       'orderId': orderId,
     });

@@ -38,8 +38,7 @@ class SuperAdminProvider extends ChangeNotifier with SafeChangeNotifier {
   int get totalOrders => _metrics['totalOrders'] as int? ?? 0;
   int get completedOrders => _metrics['completedOrders'] as int? ?? 0;
   int get cancelledOrders => _metrics['cancelledOrders'] as int? ?? 0;
-  double get deliveredGmv =>
-      (_metrics['deliveredGmv'] as num? ?? 0.0).toDouble();
+  double? get deliveredGmv => (_metrics['deliveredGmv'] as num?)?.toDouble();
 
   List<DailySalesStat> get dailySales => [
         for (final day

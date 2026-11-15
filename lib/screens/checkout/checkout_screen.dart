@@ -17,7 +17,6 @@ import '../../widgets/custom_button.dart';
 import '../../models/address_model.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/branch_provider.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -211,10 +210,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } catch (error) {
       if (!mounted) return;
       AppSnackbar.showError(
-          context,
-          error is FirebaseFunctionsException
-              ? error.message ?? 'Unable to place your order. Please retry.'
-              : error.toString().replaceFirst('Bad state: ', ''));
+          context, context.tr(CheckoutService.errorMessage(error)));
     } finally {
       if (mounted) setState(() => _isPlacingOrder = false);
     }

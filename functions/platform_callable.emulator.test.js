@@ -88,6 +88,26 @@ test("production client callable names and payloads work over local HTTP", async
   assert.equal((await call("mutatePlatform", mutation, operator.token)).status, 200);
   assert.equal((await branch.get()).get("status"), "inactive");
 
+  const staff = await signInFixture("admin");
+  const profile = db.doc("users/" + staff.uid);
+  const edit = {
+    action: "updateAccount",
+    targetId: staff.uid,
+    name: "Callable Test Admin",
+    role: "admin",
+    branchId: branch.id,
+    permissions: ["menu", "orders"],
+  };
+  assert.equal(
+    (await call("mutatePlatform", edit, customer.token)).body.error?.status,
+    "PERMISSION_DENIED",
+  );
+  assert.equal((await profile.get()).get("branchId"), undefined);
+  assert.equal((await call("mutatePlatform", edit, operator.token)).status, 200);
+  const updatedStaff = await profile.get();
+  assert.equal(updatedStaff.get("branchId"), branch.id);
+  assert.deepEqual(updatedStaff.get("permissions"), edit.permissions);
+
   await db.doc("users/" + operator.uid).update({ status: "suspended" });
   assert.equal(
     (await call("getPlatformMetrics", {}, operator.token)).body.error?.status,

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: food-fight-staging-api
+    runtime: node
+    plan: free
+    rootDir: functions
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --omit=dev
+    startCommand: node trusted_backend.js
+    healthCheckPath: /health
+    envVars:
+      - key: FOODFIGHT_BACKEND_ENV
+        value: staging
+      - key: GCLOUD_PROJECT
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/firebase-service-account.json

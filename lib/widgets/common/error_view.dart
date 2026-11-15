@@ -58,8 +58,8 @@ class ErrorView extends StatelessWidget {
                 icon: const Icon(Icons.refresh, size: 18),
                 label: Text(context.tr('Try Again')),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.brandYellow,
+                  foregroundColor: AppColors.onYellow,
                   minimumSize: const Size(140, 44),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

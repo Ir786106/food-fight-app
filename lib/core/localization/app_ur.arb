@@ -1,5 +1,10 @@
 {
   "@@locale": "ur",
+  "message_checkout_service_unavailable": "چیک آؤٹ سروس دستیاب نہیں ہے۔ آپ کی کارٹ محفوظ ہے۔",
+  "message_checkout_reach": "چیک آؤٹ سروس سے رابطہ نہیں ہو سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+  "message_checkout_item_missing": "آپ کی کارٹ میں ایک آئٹم اب دستیاب نہیں ہے۔ اپنی کارٹ اپ ڈیٹ کریں۔",
+  "message_checkout_permission": "آپ کے اکاؤنٹ کو یہ آرڈر دینے کی اجازت نہیں ہے۔",
+  "message_checkout_retry": "آپ کا آرڈر نہیں دیا جا سکا۔ دوبارہ کوشش کریں۔",
   "message_restaurant_branches": "ریستوران کی برانچیں",
   "message_create_branch_and_admin": "برانچ اور منتظم بنائیں",
   "message_unable_to_load_restaurant_branches": "ریستوران کی برانچیں لوڈ نہیں ہو سکیں۔",

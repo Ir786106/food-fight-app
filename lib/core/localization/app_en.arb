@@ -1,5 +1,10 @@
 {
   "@@locale": "en",
+  "message_checkout_service_unavailable": "Checkout service is unavailable. Your cart is still saved.",
+  "message_checkout_reach": "Unable to reach checkout. Check your connection and retry.",
+  "message_checkout_item_missing": "An item in your cart is no longer available. Update your cart.",
+  "message_checkout_permission": "Your account does not have permission to place this order.",
+  "message_checkout_retry": "Unable to place your order. Please retry.",
   "message_restaurant_branches": "Restaurant branches",
   "message_create_branch_and_admin": "Create branch and admin",
   "message_unable_to_load_restaurant_branches": "Unable to load restaurant branches.",

@@ -719,6 +719,7 @@ class _SuperAdminManageAdminsScreenState
                             style: const TextStyle(fontSize: 13)),
                         value: hasPerm,
                         activeColor: SuperAdminTheme.primary,
+                        checkColor: Colors.white,
                         onChanged: (checked) {
                           setDialogState(() {
                             if (checked == true) {
@@ -1217,6 +1218,8 @@ class _SuperAdminManageAdminsScreenState
                                                         children: [
                                                           _buildBranchTag(
                                                               admin.branchId,
+                                                              admin.role ==
+                                                                  'super_admin',
                                                               context),
                                                           const SizedBox(
                                                               width: 6),
@@ -1416,16 +1419,17 @@ class _SuperAdminManageAdminsScreenState
     );
   }
 
-  Widget _buildBranchTag(String? branchId, BuildContext context) {
-    if (branchId == null || branchId.isEmpty) {
+  Widget _buildBranchTag(
+      String? branchId, bool isSuperAdmin, BuildContext context) {
+    if (branchId == null || branchId.trim().isEmpty || branchId == 'all') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
         decoration: BoxDecoration(
           color: Colors.grey.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Text('HQ',
-            style: TextStyle(
+        child: Text(isSuperAdmin ? 'HQ' : 'Unassigned',
+            style: const TextStyle(
                 fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey)),
       );
     }

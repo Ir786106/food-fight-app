@@ -176,7 +176,9 @@ class SuperAdminDashboardScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Delivered GMV: Rs. ${provider.deliveredGmv.toStringAsFixed(0)} • Store Open',
+                                    provider.deliveredGmv == null
+                                        ? 'Delivered GMV unavailable on this device'
+                                        : 'Delivered GMV: Rs. ${provider.deliveredGmv!.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       color:
                                           Colors.white.withValues(alpha: 0.8),

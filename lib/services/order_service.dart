@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_fight/models/order_model.dart';
 import 'package:food_fight/core/constants/firestore_collections.dart';
 import 'package:food_fight/core/utils/logger.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'trusted_operations.dart';
 
 /// Keeps Firestore's original cursor, including the document ID tie-breaker.
 class OrderPage {
@@ -233,7 +233,7 @@ class OrderService {
     String? cancellationReason,
     bool codCollected = false,
   }) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'transition',
       'orderId': orderId,
       'status': newStatus.name,
@@ -254,14 +254,14 @@ class OrderService {
   }
 
   static Future<void> dispatchRider(String orderId) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'dispatch',
       'orderId': orderId,
     });
   }
 
   static Future<void> settleCod(String orderId, double amountPkr) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'settle',
       'orderId': orderId,
       'amountPkr': amountPkr,

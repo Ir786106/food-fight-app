@@ -5,7 +5,8 @@ const admin = require("firebase-admin");
 if (!/^127\.0\.0\.1:\d+$/.test(process.env.FIRESTORE_EMULATOR_HOST || "")) {
   throw new Error("Set FIRESTORE_EMULATOR_HOST to the local Firestore emulator.");
 }
-const { quoteOrder, placeOrder, mutateOrder, dispatchReadyOrder, expireRiderOffers } = require("./index");
+const { quoteOrder, placeOrder, mutateOrder, mutatePlatform, dispatchReadyOrder, expireRiderOffers } = require("./index");
+const { createServer } = require("./trusted_backend");
 const db = admin.firestore();
 const functionsHost = process.env.FOODFIGHT_FUNCTIONS_EMULATOR_HOST;
 const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST;
@@ -37,8 +38,8 @@ async function signIn(uid) {
   return body.idToken;
 }
 
-async function invokeHttp(name, data, token) {
-  const response = await fetch("http://" + functionsHost + "/demo-food-fight/us-central1/" + name, {
+async function invokeHttp(base, name, data, token) {
+  const response = await fetch(base + name, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(token && { Authorization: "Bearer " + token }) },
     body: JSON.stringify({ data }),
@@ -47,7 +48,7 @@ async function invokeHttp(name, data, token) {
   const body = await response.json();
   if (!response.ok) {
     throw Object.assign(new Error(body.error?.message || name + " failed"), {
-      code: body.error?.status?.toLowerCase().replaceAll("_", "-"),
+      code: body.error?.code ?? body.error?.status?.toLowerCase().replaceAll("_", "-"),
     });
   }
   return body.result;
@@ -176,7 +177,20 @@ test("expired offers release the order and branch dispatch tries another rider",
   await expireRiderOffers.run({});
   assert.equal((await ref.get()).data().offerExpiresAt, null);
 });
-test("customer quote and COD checkout reach delivery and kitchen settlement", async () => {
+test("trusted HTTP handles checkout, delivery, reconciliation, and admin permissions", async (t) => {
+  assert.match(authHost, /^127\.0\.0\.1:\d+$/);
+  assert.equal(process.env.GCLOUD_PROJECT, "demo-food-fight");
+  let base = "http://" + functionsHost + "/demo-food-fight/us-central1/";
+  if (!functionsHost) {
+    const handlers = { quoteOrder, placeOrder, mutateOrder, mutatePlatform };
+    const server = createServer({
+      handlers: Object.fromEntries(Object.entries(handlers).map(([name, handler]) => [name, handler.run])),
+      verifyToken: (token) => admin.auth().verifyIdToken(token, true),
+    });
+    await new Promise((resolve, reject) => server.once("error", reject).listen(0, "127.0.0.1", resolve));
+    t.after(() => new Promise((resolve) => server.close(resolve)));
+    base = "http://127.0.0.1:" + server.address().port + "/v1/";
+  }
   const branchId = id("release-branch");
   await seed("branches", "release-branch", { status: "active" });
   await seed("deliveryAreas", "release-area", { branchId, deliveryCharge: 25 });
@@ -184,38 +198,34 @@ test("customer quote and COD checkout reach delivery and kitchen settlement", as
   await seed("users", "release-customer", { role: "customer", isActive: true });
   await seed("users", "release-admin", { role: "admin", branchId });
   await seed("users", "release-rider", { role: "rider", branchId });
+  await seed("users", "release-owner", { role: "super_admin", isActive: true });
   await seed("riders", "release-rider", {
     userId: id("release-rider"), branchId, isActive: 1, isOnline: 1,
   });
 
   const tokens = new Map();
-  if (functionsHost) {
-    for (const actor of ["release-customer", "release-admin", "release-rider"]) {
-      tokens.set(actor, await signIn(id(actor)));
-    }
+  for (const actor of ["release-customer", "release-admin", "release-rider", "release-owner"]) {
+    tokens.set(actor, await signIn(id(actor)));
   }
-  const invoke = (name, handler, actor, data) => functionsHost
-    ? invokeHttp(name, data, tokens.get(actor))
-    : handler.run(data, { auth: { uid: id(actor) } });
+  const invoke = (name, actor, data) => invokeHttp(base, name, data, tokens.get(actor));
   const cart = {
     branchId, deliveryAreaId: id("release-area"),
     deliveryAddress: "123 Test Street", customerPhone: "03001234567",
     items: [{ id: id("release-item"), quantity: 1 }],
   };
-  if (functionsHost) {
-    await assert.rejects(invokeHttp("quoteOrder", cart), { code: "unauthenticated" });
-  }
-  const quote = await invoke("quoteOrder", quoteOrder, "release-customer", cart);
+  await assert.rejects(invokeHttp(base, "quoteOrder", cart), { code: "unauthenticated" });
+  await assert.rejects(invokeHttp(base, "quoteOrder", cart, "invalid-token"), { code: "unauthenticated" });
+  const quote = await invoke("quoteOrder", "release-customer", cart);
   assert.equal(quote.data.total, 125.50);
   const checkout = { ...cart, requestId: "release-verification", clientTotal: quote.data.total };
-  const placed = await invoke("placeOrder", placeOrder, "release-customer", checkout);
+  const placed = await invoke("placeOrder", "release-customer", checkout);
   const orderId = placed.orderId;
   const order = db.collection("orders").doc(orderId);
   const receipt = db.collection("codCollections").doc(orderId);
   refs.push(order, receipt, db.collection("riderAssignments").doc(orderId));
-  assert.equal((await invoke("placeOrder", placeOrder, "release-customer", checkout)).orderId, orderId);
+  assert.equal((await invoke("placeOrder", "release-customer", checkout)).orderId, orderId);
   assert.equal((await db.collection("menuItems").doc(id("release-item")).get()).data().stock, 2);
-  const mutate = (actor, data) => invoke("mutateOrder", mutateOrder, actor, { orderId, ...data });
+  const mutate = (actor, data) => invoke("mutateOrder", actor, { orderId, ...data });
   for (const status of ["accepted", "preparing", "ready"]) {
     await mutate("release-admin", { action: "transition", status });
   }
@@ -228,7 +238,29 @@ test("customer quote and COD checkout reach delivery and kitchen settlement", as
     code: "permission-denied",
   });
   await mutate("release-admin", { action: "settle", amountPkr: 125.50 });
-  if (functionsHost) console.log("Verified order lifecycle over authenticated callable HTTP.");
   assert.equal((await order.get()).data().codSettlementStatus, "settled");
   assert.equal((await receipt.get()).data().amountPaisa, 12550);
+  const rider = db.doc("riders/" + id("release-rider"));
+  const deliveredMarker = db.doc("orderReconciliations/delivered_" + orderId);
+  refs.push(deliveredMarker);
+  assert.equal((await rider.get()).get("totalDeliveries"), 1);
+  assert.equal((await deliveredMarker.get()).exists, true);
+
+  const second = await invoke("placeOrder", "release-customer", {
+    ...checkout, requestId: "release-cancellation",
+  });
+  const cancelledId = second.orderId;
+  refs.push(db.doc("orders/" + cancelledId), db.doc("orderReconciliations/cancelled_" + cancelledId));
+  const cancel = { action: "transition", orderId: cancelledId, status: "cancelled", reason: "Test cancellation" };
+  await invoke("mutateOrder", "release-customer", cancel);
+  await invoke("mutateOrder", "release-customer", cancel);
+  assert.equal((await db.doc("menuItems/" + id("release-item")).get()).get("stock"), 2);
+
+  const edit = {
+    action: "updateAccount", targetId: id("release-admin"), name: "Test manager",
+    role: "admin", branchId, permissions: ["orders"],
+  };
+  await assert.rejects(invoke("mutatePlatform", "release-customer", edit), { code: "permission-denied" });
+  await invoke("mutatePlatform", "release-owner", edit);
+  assert.deepEqual((await db.doc("users/" + edit.targetId).get()).get("permissions"), ["orders"]);
 });

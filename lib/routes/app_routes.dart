@@ -163,6 +163,12 @@ class AppRoutes {
     // Requires authenticated user with 'super_admin' clearance exclusively
     '/super-admin/dashboard': (context) =>
         const SuperAdminRouteGuard(child: SuperAdminDashboardScreen()),
+    '/super-admin/chats': (context) =>
+        const SuperAdminRouteGuard(child: AdminChatsScreen(platformWide: true)),
+    '/super-admin/deals': (context) => const SuperAdminRouteGuard(
+        child: ManageDealsScreen(platformWide: true)),
+    '/super-admin/riders': (context) => const SuperAdminRouteGuard(
+        child: ManageRidersScreen(platformWide: true)),
     '/super-admin/users': (context) =>
         const SuperAdminRouteGuard(child: SuperAdminUsersScreen()),
     '/super-admin/branches': (context) =>

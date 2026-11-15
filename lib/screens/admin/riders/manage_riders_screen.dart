@@ -13,9 +13,12 @@ import '../../../widgets/common/empty_state_view.dart';
 import '../../../widgets/common/error_view.dart';
 import '../../../widgets/common/loading_indicator.dart';
 import '../../../widgets/common/responsive_layout.dart';
+import '../../../widgets/super_admin/super_admin_scaffold.dart';
 
 class ManageRidersScreen extends StatefulWidget {
-  const ManageRidersScreen({super.key});
+  const ManageRidersScreen({super.key, this.platformWide = false});
+
+  final bool platformWide;
 
   @override
   State<ManageRidersScreen> createState() => _ManageRidersScreenState();
@@ -31,8 +34,9 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
     super.didChangeDependencies();
     final auth = context.watch<AuthProvider>();
     final branch =
-        auth.isSuperAdmin ? null : auth.currentUser?.branchId?.trim();
-    if (!auth.isSuperAdmin &&
+        widget.platformWide ? null : auth.currentUser?.branchId?.trim();
+    if (widget.platformWide && !auth.isSuperAdmin) return;
+    if (!widget.platformWide &&
         (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
       return;
     }
@@ -289,11 +293,32 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
     );
   }
 
+  Widget _fleetScaffold({
+    required PreferredSizeWidget appBar,
+    required Widget body,
+  }) {
+    final background = AdminTheme.getBackground(context);
+    if (widget.platformWide) {
+      return SuperAdminScaffold(
+        currentRoute: '/super-admin/riders',
+        backgroundColor: background,
+        appBar: appBar,
+        body: body,
+      );
+    }
+    return AdminScaffold(
+      currentRoute: '/admin/riders',
+      backgroundColor: background,
+      appBar: appBar,
+      body: body,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final access = context.watch<AuthProvider>();
     final branch = access.currentUser?.branchId?.trim();
-    if (!access.isSuperAdmin &&
+    if (!widget.platformWide &&
         (branch == null || branch.isEmpty || branch.toLowerCase() == 'all')) {
       return const AdminScaffold(
         currentRoute: '/admin/riders',
@@ -321,12 +346,12 @@ class _ManageRidersScreenState extends State<ManageRidersScreen> {
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         } else {
-          Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+          Navigator.of(context).pushReplacementNamed(widget.platformWide
+              ? '/super-admin/dashboard'
+              : '/admin/dashboard');
         }
       },
-      child: AdminScaffold(
-        currentRoute: '/admin/riders',
-        backgroundColor: AdminTheme.getBackground(context),
+      child: _fleetScaffold(
         appBar: AppBar(
           title: const Text(
             'Delivery Riders Fleet',

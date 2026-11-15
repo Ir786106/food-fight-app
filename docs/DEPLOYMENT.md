@@ -1,16 +1,54 @@
 # Deployment sequence
 
-Use a separate staging Firebase project with seeded test data. Verify Functions runtime compatibility, rules and indexes, then publish checkout callables to staging before testing a client that uses quoteOrder. Verify the staged Android and web targets with the real configured Auth, Maps, FCM, App Check and Supabase services.
+Use a separate staging Firebase project with seeded test data. Verify runtime compatibility, rules and indexes, then make the configured checkout backend available before testing a client that uses quoteOrder. Verify the staged Android and web targets with the real configured Auth, Maps, FCM, App Check and Supabase services.
 
 Production deployment needs explicit authorization and a reviewed rollback and migration plan. Current local changes are a development checkpoint.
 
-Deploy the order index and mutateOrder callable to staging before distributing clients that use the new order workflow. Apply server-only write rules when staging clients have migrated and verify that old clients are retired before any production rollout. Older clients used direct writes to advance orders and will need the new build.
+## Trusted backend with Firebase on the free plan
+
+The Node service in `functions/trusted_backend.js` runs the existing checkout, order lifecycle and Super Admin account handlers. Firebase Auth and Firestore stay in the same project. The service verifies Firebase ID tokens and current account permissions. Order cancellation and delivery reconciliation commit with the order transition, including inventory restoration and rider totals.
+
+1. Run the integration checks against local demo Auth and Firestore.
+
+       firebase emulators:exec --config firebase.demo.json --project demo-food-fight --only auth,firestore "node --test functions/order_lifecycle.emulator.test.js"
+
+2. On a separate staging Firebase project, deploy the reviewed Firestore rules and indexes before connecting the HTTP service. The paired rules must restrict client writes to orders, assignments, protected account fields and private financial collections. Confirm the indexes are ready.
+3. On the external Node host, use `functions` as the service root, `npm ci --omit=dev` as the build command, `node trusted_backend.js` as the start command and `/health` as the startup check. Set `GCLOUD_PROJECT` to the staging ID and provide Application Default Credentials through the host's secret manager, using a dedicated service identity authorized for Firestore and Firebase Auth account management. If the host uses a credential file, set `GOOGLE_APPLICATION_CREDENTIALS` to the mounted secret path. Set `FOODFIGHT_WEB_ORIGINS` to a comma-separated list of exact deployed web origins when serving Flutter Web. Keep credentials on the server.
+4. Build the client with `--dart-define=FOODFIGHT_BACKEND_URL=https://YOUR-VERIFIED-HOST`. Run the checkout, rider, kitchen and Super Admin smoke tests with staging accounts. Verify a retried checkout returns the same order and cancellation restores stock once.
+5. Review the cutover together before configuring production credentials or publishing production rules. Clients built without the URL continue using Firebase callables. Keep older clients in mind when coordinating the rules rollout.
+
+This service handles request-driven operations. Use manual rider assignment for the initial rollout. Scheduled offer expiry, automatic dispatch triggers and background push notifications need separate workers. A free host may sleep between requests.
+
+### Render staging setup
+
+The root `render.yaml` defines a free Node web service with manual deploys. In Render, connect the GitHub review branch that contains the Blueprint. Set the prompted `GCLOUD_PROJECT` to the separate staging ID. In the service's Environment page, mount the staging service account JSON as a secret file named `firebase-service-account.json`, then trigger a manual deploy. Confirm that `/health` serves liveness and use a staging account for the authenticated checks above. The Blueprint's staging process refuses the production Firebase project ID.
+
+### Render production configuration
+
+For the authorized production target, select `render.production.yaml` as the Blueprint path in Render. It pins `food-fight-bd72e`, uses the Free instance plan and keeps deploys manual. Mount the dedicated production service account as the secret file `firebase-service-account.json`. Startup requires the credential's project to match. Keep the endpoint out of distributed clients until the deployed Firestore rules and client compatibility are reviewed together. Keep production rules publication on hold until the coordinated cutover is approved.
+
+Deploy the order index and configure the staging order backend before distributing clients that use the new order workflow. Verify that old clients are retired before applying server-only write rules in production. Older clients used direct writes to advance orders and will need the new build.
 
 ## Staging verification
 
 The configured default project is the production project. Obtain a separate staging project ID and register staging app credentials in an isolated staging checkout. Verify the generated Flutter configuration and Android Firebase registration both point to staging. Install dependencies, analyze the client, and use an explicit staging project ID for all Firebase commands. Verify the Firestore indexes have finished building before testing dispatch. Cloud Scheduler must be available for offer expiry.
 
 Use test accounts for customer, branch manager and two riders. Seed a staging branch, delivery area and menu item. Enable autoDispatchEnabled on that branch. Place a COD order on the customer device, advance it through the kitchen, let the first rider offer expire, and accept on the second rider device. Complete pickup, delivery and cash collection. Confirm cash handover in the kitchen admin screen and check that duplicate confirmation preserves the same settlement. Verify no customer or other branch can perform the staff actions.
+
+### Super Admin desktop smoke test
+
+On the Firebase free plan, the dashboard reads aggregate counts from Firestore under the existing Super Admin rules. The Windows Firestore plugin supports counts only. The web app can show delivered GMV and the seven-day chart, using the checked-in orders index on `status` and `createdAt`. Admin account changes still require the authorized `mutatePlatform` callable.
+
+Run the callable regression against the local emulators before staging.
+
+    firebase emulators:exec --inspect-functions --config firebase.demo.json --project demo-food-fight --only auth,firestore,functions "node --test functions/platform_callable.emulator.test.js"
+
+After the staging Functions deployment, confirm that `firebase functions:list --project STAGING_PROJECT_ID` shows `getPlatformMetrics` and `mutatePlatform` in `us-central1`. Use the staging Windows build and seeded accounts for these checks.
+
+1. Open System Dashboard as Super Admin. Compare the visible totals with the seeded branch metrics.
+2. Assign a staging Branch Admin to a staging branch and change one permission. Reopen the account and verify both changes persisted. Sign in as that Branch Admin and verify their permitted screens and branch.
+3. Open Global Customer Chat. Verify that two seeded branches appear in the all-branches view. Select a conversation, type an unsent reply and switch branches. Verify that the previous conversation and reply are cleared. Check that Branch Admin can only see their assigned branch in Live Chat Support.
+4. Open Platform Deals and Fleet & Riders. Verify the Super Admin sidebar stays visible. Open Branch Deals as Branch Admin and verify the list contains only that branch's deals.
 
 ## Separate Flutter entry points
 

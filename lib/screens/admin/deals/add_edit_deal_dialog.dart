@@ -9,8 +9,9 @@ import '../../../core/constants/app_colors.dart';
 
 class AddEditDealDialog extends StatefulWidget {
   final DealModel? deal;
+  final bool platformWide;
 
-  const AddEditDealDialog({super.key, this.deal});
+  const AddEditDealDialog({super.key, this.deal, this.platformWide = false});
 
   @override
   State<AddEditDealDialog> createState() => _AddEditDealDialogState();
@@ -74,7 +75,13 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.deal != null;
-    final menuItems = context.watch<MenuProvider>().menuItems;
+    final user = context.watch<AuthProvider>().currentUser;
+    final branchId = user?.branchId?.trim();
+    final menuItems = context.watch<MenuProvider>().menuItems.where((item) {
+      final owner = item.branchId;
+      final shared = owner == null || owner.isEmpty;
+      return shared || (!widget.platformWide && owner == branchId);
+    }).toList();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -302,19 +309,19 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                                   horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    color: AppColors.brandYellow, width: 1.2),
+                                    color: colorScheme.outline, width: 1.2),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(Icons.add_rounded,
-                                      size: 18, color: AppColors.brandYellow),
-                                  SizedBox(width: 6),
+                                      size: 18, color: colorScheme.onSurface),
+                                  const SizedBox(width: 6),
                                   Text(
                                     'Add Menu Item to Bundle',
                                     style: TextStyle(
-                                      color: AppColors.brandYellow,
+                                      color: colorScheme.onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12.5,
                                     ),
@@ -467,7 +474,22 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
 
     final dealProvider = context.read<DealProvider>();
     final auth = context.read<AuthProvider>();
-    final branchId = auth.currentUser?.branchId;
+    final user = auth.currentUser;
+    final branchId = widget.platformWide ? 'all' : user?.branchId?.trim();
+    final allowed = user != null &&
+        user.isActive &&
+        user.isAdmin &&
+        (widget.platformWide
+            ? user.isSuperAdmin
+            : (user.can('deals') || user.can('coupons')) &&
+                branchId != null &&
+                branchId.isNotEmpty &&
+                branchId.toLowerCase() != 'all');
+    if (!allowed) {
+      AppSnackbar.showError(
+          context, 'You do not have permission to save this deal.');
+      return;
+    }
 
     setState(() => _isSaving = true);
 
@@ -483,7 +505,9 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
       discountType: 'fixed_price',
       bundleItems: _bundleItems,
       linkedItemIds: _bundleItems.map((b) => b.menuItemId).toList(),
-      branchId: widget.deal?.branchId ?? branchId,
+      branchId: widget.deal == null
+          ? (widget.platformWide ? '' : branchId)
+          : widget.deal!.branchId,
       activeDays: _activeDays,
       isActive: _isActive,
       startDate: _startDate,

@@ -96,10 +96,17 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                                 itemCount: page.users.length,
                                 itemBuilder: (context, index) {
                                   final user = page.users[index];
+                                  final roleLabel = switch (user.role) {
+                                    'super_admin' => 'Super Admin',
+                                    'admin' => 'Branch Admin',
+                                    'delivery_rider' => 'Delivery Rider',
+                                    'customer' => 'Customer',
+                                    _ => user.role,
+                                  };
                                   return ListTile(
                                     title: Text(user.name),
                                     subtitle: Text(
-                                      [user.email, user.role, user.branchId]
+                                      [user.email, roleLabel, user.branchId]
                                           .whereType<String>()
                                           .where((value) => value.isNotEmpty)
                                           .join(' · '),
@@ -115,35 +122,36 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                                 },
                               ),
                       ),
-                      Padding(
-                        padding: DesignSystem.screenPadding,
-                        child: Wrap(
-                          spacing: DesignSystem.space16,
-                          children: [
-                            AppButton(
-                              style: AppButtonStyle.ghost,
-                              label: 'Previous page',
-                              onPressed: _previous.isEmpty
-                                  ? null
-                                  : () => setState(() {
-                                        _after = _previous.removeLast();
-                                        _load();
-                                      }),
-                            ),
-                            AppButton(
-                              style: AppButtonStyle.secondary,
-                              label: 'Next page',
-                              onPressed: !page.hasMore || page.users.isEmpty
-                                  ? null
-                                  : () => setState(() {
-                                        _previous.add(_after);
-                                        _after = page.users.last.id;
-                                        _load();
-                                      }),
-                            ),
-                          ],
+                      if (_previous.isNotEmpty || page.hasMore)
+                        Padding(
+                          padding: DesignSystem.screenPadding,
+                          child: Wrap(
+                            spacing: DesignSystem.space16,
+                            children: [
+                              AppButton(
+                                style: AppButtonStyle.ghost,
+                                label: 'Previous page',
+                                onPressed: _previous.isEmpty
+                                    ? null
+                                    : () => setState(() {
+                                          _after = _previous.removeLast();
+                                          _load();
+                                        }),
+                              ),
+                              AppButton(
+                                style: AppButtonStyle.secondary,
+                                label: 'Next page',
+                                onPressed: !page.hasMore || page.users.isEmpty
+                                    ? null
+                                    : () => setState(() {
+                                          _previous.add(_after);
+                                          _after = page.users.last.id;
+                                          _load();
+                                        }),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   );
                 },

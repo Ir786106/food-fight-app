@@ -123,7 +123,7 @@ class _SuperAdminCollapsibleSidebarState
                   _buildNavItem(
                     title: 'Global Customer Chat',
                     icon: Icons.mark_chat_unread_rounded,
-                    route: '/admin/chats',
+                    route: '/super-admin/chats',
                     badgeCount: unreadChats,
                     badgeColor: AppColors.error,
                     activeBg: activeBg,
@@ -132,14 +132,14 @@ class _SuperAdminCollapsibleSidebarState
                   _buildNavItem(
                     title: 'Platform Deals & Offers',
                     icon: Icons.local_offer_rounded,
-                    route: '/admin/deals',
+                    route: '/super-admin/deals',
                     activeBg: activeBg,
                     activeTextColor: activeTextColor,
                   ),
                   _buildNavItem(
                     title: 'Fleet & Riders Overview',
                     icon: Icons.two_wheeler_rounded,
-                    route: '/admin/riders',
+                    route: '/super-admin/riders',
                     activeBg: activeBg,
                     activeTextColor: activeTextColor,
                   ),

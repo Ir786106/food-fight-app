@@ -171,6 +171,7 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
     bool isSuperAdmin = false,
   }) {
     _chatsSubscription?.cancel();
+    _adminChats = [];
     _isLoadingChats = true;
     _errorMessage = null;
     notifyListenersPostFrame();
@@ -188,13 +189,10 @@ class ChatProvider extends ChangeNotifier with SafeChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
-        if (e.toString().contains('permission-denied')) {
-          _chatsSubscription?.cancel();
-          _chatsSubscription = null;
-          return;
-        }
         _isLoadingChats = false;
-        _errorMessage = 'Failed to load admin chats: $e';
+        _errorMessage = e.toString().contains('permission-denied')
+            ? 'Your account cannot view chats in this inbox.'
+            : 'Unable to load customer chats. Please try again.';
         AppLogger.error('Admin chats stream error: $e', tag: 'ChatProvider');
         notifyListeners();
       },

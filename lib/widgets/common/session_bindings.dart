@@ -97,7 +97,12 @@ class _SessionBindingsState extends State<SessionBindings>
         final orderId =
             data['orderId']?.toString() ?? data['referenceId']?.toString();
         if (chatId != null) {
-          nav.pushNamed(user.isAdmin ? '/admin/chats' : '/chat',
+          nav.pushNamed(
+              user.isSuperAdmin
+                  ? '/super-admin/chats'
+                  : user.isAdmin
+                      ? '/admin/chats'
+                      : '/chat',
               arguments: {'chatId': chatId});
         } else if (orderId != null) {
           nav.pushNamed(

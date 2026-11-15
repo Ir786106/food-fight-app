@@ -2,9 +2,32 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:food_fight/core/errors/platform_operation_error.dart';
+import 'package:food_fight/routes/app_routes.dart';
+import 'package:food_fight/screens/admin/chats/admin_chats_screen.dart';
+import 'package:food_fight/screens/admin/deals/manage_deals_screen.dart';
+import 'package:food_fight/screens/admin/riders/manage_riders_screen.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 
 void main() {
+  testWidgets('platform routes use the Super Admin guard and platform scope',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    final context = tester.element(find.byType(SizedBox).first);
+    Widget guardedChild(String path) =>
+        (AppRoutes.routes[path]!(context) as SuperAdminRouteGuard).child;
+
+    expect(
+        (guardedChild('/super-admin/chats') as AdminChatsScreen).platformWide,
+        isTrue);
+    expect(
+        (guardedChild('/super-admin/deals') as ManageDealsScreen).platformWide,
+        isTrue);
+    expect(
+        (guardedChild('/super-admin/riders') as ManageRidersScreen)
+            .platformWide,
+        isTrue);
+  });
+
   test('callable errors use actionable copy without internal details', () {
     final unavailable = platformOperationError(
       FirebaseFunctionsException(code: 'not-found', message: 'internal stack'),

@@ -7,15 +7,20 @@ import 'package:food_fight/widgets/common/chat_image_view.dart';
 import '../../../models/chat_model.dart';
 import '../../../models/chat_message_model.dart';
 import '../../../models/order_model.dart';
+import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/branch_provider.dart';
 import '../../../providers/chat_provider.dart';
 import '../../../providers/order_provider.dart';
-import '../../../widgets/admin/admin_collapsible_sidebar.dart';
+import '../../../widgets/admin/admin_scaffold.dart';
+import '../../../widgets/super_admin/super_admin_scaffold.dart';
+import '../../../widgets/common/error_view.dart';
 import '../orders/order_detail_modal.dart';
 
 class AdminChatsScreen extends StatefulWidget {
-  const AdminChatsScreen({super.key});
+  const AdminChatsScreen({super.key, this.platformWide = false});
+
+  final bool platformWide;
 
   @override
   State<AdminChatsScreen> createState() => _AdminChatsScreenState();
@@ -94,10 +99,19 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
       _initAdminChatStream();
       final args = ModalRoute.of(context)?.settings.arguments;
       final user = context.read<AuthProvider>().currentUser;
-      if (args is Map && args['chatId'] != null && user != null) {
+      if (args is Map &&
+          args['chatId'] != null &&
+          user != null &&
+          _hasInboxAccess(user)) {
         await _roomProvider!
             .openChatById(args['chatId'].toString(), user.id, user.role);
-        if (mounted) setState(() => _selectedChat = _roomProvider!.activeChat);
+        if (!mounted) return;
+        final chat = _roomProvider!.activeChat;
+        if (chat != null && _chatInScope(chat, user.branchId)) {
+          setState(() => _selectedChat = chat);
+        } else {
+          _roomProvider!.closeActiveChat();
+        }
       }
     });
   }
@@ -117,32 +131,57 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final user = auth.currentUser;
     final chatProv = context.read<ChatProvider>();
 
-    if (user == null) return;
-
-    final isSuper = user.isSuperAdmin ||
-        (user.branchId == null ||
-            user.branchId!.isEmpty ||
-            user.branchId == 'all');
-    final branchId = _selectedBranchFilter ?? (user.branchId ?? '');
+    if (user == null || !_hasInboxAccess(user)) return;
+    final branchId = widget.platformWide
+        ? _selectedBranchFilter ?? ''
+        : user.branchId!.trim();
 
     chatProv.streamAdminChats(
       branchId,
-      isSuperAdmin: isSuper &&
-          (_selectedBranchFilter == null || _selectedBranchFilter!.isEmpty),
+      isSuperAdmin: widget.platformWide && _selectedBranchFilter == null,
     );
   }
 
-  void _selectChat(ChatModel chat) {
-    setState(() => _selectedChat = chat);
+  bool _hasInboxAccess(UserModel user) {
+    if (!user.isActive || !user.isAdmin) return false;
+    if (widget.platformWide) return user.isSuperAdmin;
+    final branchId = user.branchId?.trim();
+    return branchId != null &&
+        branchId.isNotEmpty &&
+        branchId.toLowerCase() != 'all';
+  }
 
+  bool _chatInScope(ChatModel chat, String? branchId) => widget.platformWide
+      ? _selectedBranchFilter == null || chat.branchId == _selectedBranchFilter
+      : chat.branchId == branchId?.trim();
+
+  void _changeBranchFilter(String? branchId) {
+    if (_selectedBranchFilter == branchId) return;
+    _replyCtrl.clear();
+    _roomProvider!.closeActiveChat();
+    setState(() {
+      _selectedChat = null;
+      _selectedBranchFilter = branchId;
+    });
+    _initAdminChatStream();
+  }
+
+  void _selectChat(ChatModel chat) {
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     final chatProv = context.read<ChatProvider>();
+    if (user == null ||
+        !_hasInboxAccess(user) ||
+        !_chatInScope(chat, user.branchId)) {
+      return;
+    }
+    if (_selectedChat?.id != chat.id) _replyCtrl.clear();
+    setState(() => _selectedChat = chat);
 
     chatProv.openExistingChat(
       chat,
-      user?.id ?? '',
-      user?.role ?? 'admin',
+      user.id,
+      user.role,
     );
   }
 
@@ -153,7 +192,13 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     final chatProv = context.read<ChatProvider>();
-    if (user == null) return;
+    if (user == null ||
+        !_hasInboxAccess(user) ||
+        chatProv.activeChat?.id != _selectedChat?.id ||
+        _selectedChat == null ||
+        !_chatInScope(_selectedChat!, user.branchId)) {
+      return;
+    }
 
     if (customText == null) {
       _replyCtrl.clear();
@@ -174,6 +219,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
   }
 
   Future<void> _handleAttachImage() async {
+    final chatId = _selectedChat?.id;
     final image = await pickChatImage(context);
 
     if (image == null || !mounted) return;
@@ -181,7 +227,14 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     final chatProv = context.read<ChatProvider>();
-    if (user == null) return;
+    if (user == null ||
+        !_hasInboxAccess(user) ||
+        chatId == null ||
+        _selectedChat?.id != chatId ||
+        chatProv.activeChat?.id != chatId ||
+        !_chatInScope(_selectedChat!, user.branchId)) {
+      return;
+    }
 
     await chatProv.sendImage(
       image: image,
@@ -290,15 +343,24 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
     final isDark = theme.brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
     final user = auth.currentUser;
-    final isSuper = user?.isSuperAdmin ?? false;
-    final isLarge = MediaQuery.of(context).size.width >= 720;
+    final isSuper = widget.platformWide;
+    final isLarge = MediaQuery.sizeOf(context).width >= 1050;
     final chatProv = context.watch<ChatProvider>();
     _followLatestMessage(chatProv.activeChat?.id, chatProv.activeMessages);
 
-    final filteredChats = _filterChats(chatProv.adminChats);
+    final accessible = user != null && _hasInboxAccess(user);
+    final scopedChats = accessible
+        ? chatProv.adminChats
+            .where((chat) => _chatInScope(chat, user.branchId))
+            .toList()
+        : <ChatModel>[];
+    final filteredChats = _filterChats(scopedChats);
+    final selected = accessible &&
+        _selectedChat != null &&
+        _chatInScope(_selectedChat!, user.branchId);
 
     // If a chat was selected on mobile and user tapped back
-    if (!isLarge && _selectedChat != null) {
+    if (!isLarge && selected) {
       return Scaffold(
         backgroundColor:
             isDark ? AppColors.darkBackground : AppColors.background,
@@ -307,75 +369,87 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
       );
     }
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
-      drawer: const AdminCollapsibleSidebar(currentRoute: '/admin/chats'),
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        title: Text(
-          'Customer Support Chats',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded,
-                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
-            tooltip: 'Refresh Chats',
-            onPressed: () => _initAdminChatStream(),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-          unselectedLabelColor: colorScheme.onSurfaceVariant,
-          indicatorColor: AppColors.brandYellow,
-          indicatorWeight: 3,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: [
-            Tab(
-                text:
-                    'Open (${chatProv.adminChats.where((c) => c.status == 'open').length})'),
-            Tab(
-                text:
-                    'Pending (${chatProv.adminChats.where((c) => c.status == 'pending').length})'),
-            Tab(
-                text:
-                    'Resolved (${chatProv.adminChats.where((c) => c.status == 'resolved').length})'),
-            Tab(text: 'All (${chatProv.adminChats.length})'),
-          ],
+    final background = isDark ? AppColors.darkBackground : AppColors.background;
+    final appBar = AppBar(
+      backgroundColor: colorScheme.surface,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      title: Text(
+        isSuper ? 'Global Customer Chat' : 'Customer Support Chats',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
         ),
       ),
-      body: isLarge
-          ? Row(
-              children: [
-                SizedBox(
-                  width: 380,
-                  child: _buildChatListPane(filteredChats, isSuper),
-                ),
-                VerticalDivider(width: 1, color: colorScheme.outlineVariant),
-                Expanded(
-                  child: _selectedChat != null
-                      ? _buildThreadView(isLarge: true)
-                      : _buildNoChatSelectedPlaceholder(),
-                ),
-              ],
-            )
-          : _buildChatListPane(filteredChats, isSuper),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.refresh_rounded,
+              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+          tooltip: 'Refresh Chats',
+          onPressed: () => _initAdminChatStream(),
+        ),
+      ],
+      bottom: TabBar(
+        controller: _tabController,
+        labelColor: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: AppColors.brandYellow,
+        indicatorWeight: 3,
+        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        tabs: [
+          Tab(
+              text:
+                  'Open (${scopedChats.where((c) => c.status == 'open').length})'),
+          Tab(
+              text:
+                  'Pending (${scopedChats.where((c) => c.status == 'pending').length})'),
+          Tab(
+              text:
+                  'Resolved (${scopedChats.where((c) => c.status == 'resolved').length})'),
+          Tab(text: 'All (${scopedChats.length})'),
+        ],
+      ),
     );
+    final body = !accessible
+        ? ErrorView(
+            message: isSuper
+                ? 'Super Admin access is required.'
+                : 'A branch assignment is required to open support chats.')
+        : isLarge
+            ? Row(
+                children: [
+                  SizedBox(
+                    width: 380,
+                    child: _buildChatListPane(filteredChats, isSuper),
+                  ),
+                  VerticalDivider(width: 1, color: colorScheme.outlineVariant),
+                  Expanded(
+                    child: selected
+                        ? _buildThreadView(isLarge: true)
+                        : _buildNoChatSelectedPlaceholder(),
+                  ),
+                ],
+              )
+            : _buildChatListPane(filteredChats, isSuper);
+    return isSuper
+        ? SuperAdminScaffold(
+            currentRoute: '/super-admin/chats',
+            backgroundColor: background,
+            appBar: appBar,
+            body: body)
+        : AdminScaffold(
+            currentRoute: '/admin/chats',
+            backgroundColor: background,
+            appBar: appBar,
+            body: body);
   }
 
   Widget _buildChatListPane(List<ChatModel> chats, bool isSuper) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final user = context.watch<AuthProvider>().currentUser;
+    final chatProvider = context.watch<ChatProvider>();
     final branchProv = context.watch<BranchProvider>();
 
     return Column(
@@ -418,11 +492,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                   ),
                 ),
               ),
-              if ((isSuper ||
-                      (user?.branchId == null ||
-                          user!.branchId!.isEmpty ||
-                          user.branchId == 'all')) &&
-                  branchProv.branches.isNotEmpty) ...[
+              if (isSuper && branchProv.branches.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -433,10 +503,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                             style: TextStyle(fontSize: 11.5)),
                         selected: _selectedBranchFilter == null ||
                             _selectedBranchFilter!.isEmpty,
-                        onSelected: (_) {
-                          setState(() => _selectedBranchFilter = null);
-                          _initAdminChatStream();
-                        },
+                        onSelected: (_) => _changeBranchFilter(null),
                       ),
                       const SizedBox(width: 6),
                       ...branchProv.branches.map((b) {
@@ -446,11 +513,8 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
                             label: Text(b.name,
                                 style: const TextStyle(fontSize: 11.5)),
                             selected: _selectedBranchFilter == b.id,
-                            onSelected: (sel) {
-                              setState(() =>
-                                  _selectedBranchFilter = sel ? b.id : null);
-                              _initAdminChatStream();
-                            },
+                            onSelected: (selected) =>
+                                _changeBranchFilter(selected ? b.id : null),
                           ),
                         );
                       }),
@@ -465,230 +529,249 @@ class _AdminChatsScreenState extends State<AdminChatsScreen>
 
         // List
         Expanded(
-          child: chats.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.chat_bubble_outline_rounded,
-                          size: 48,
-                          color: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.5)),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No customer chats in this view',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.separated(
-                  itemCount: chats.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, indent: 68),
-                  itemBuilder: (context, index) {
-                    final chat = chats[index];
-                    final isSelected = _selectedChat?.id == chat.id;
-                    final hasUnread = chat.unreadForAdmin > 0;
-                    final timeStr =
-                        DateFormat('h:mm a').format(chat.lastMessageAt);
+          child: chatProvider.isLoadingChats && chats.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : chatProvider.errorMessage != null && chats.isEmpty
+                  ? ErrorView(
+                      message: chatProvider.errorMessage!,
+                      onRetry: _initAdminChatStream)
+                  : chats.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.chat_bubble_outline_rounded,
+                                  size: 48,
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No customer chats in this view',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: chats.length,
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 1, indent: 68),
+                          itemBuilder: (context, index) {
+                            final chat = chats[index];
+                            final isSelected = _selectedChat?.id == chat.id;
+                            final hasUnread = chat.unreadForAdmin > 0;
+                            final timeStr =
+                                DateFormat('h:mm a').format(chat.lastMessageAt);
 
-                    return Material(
-                      color: isSelected
-                          ? (isDark
-                              ? AppColors.darkSurfaceElevated
-                              : AppColors.yellowSoft.withValues(alpha: 0.35))
-                          : Colors.transparent,
-                      child: ListTile(
-                        selected: isSelected,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 4),
-                        leading: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: hasUnread
-                                  ? AppColors.brandYellow
-                                  : (isDark
+                            return Material(
+                              color: isSelected
+                                  ? (isDark
                                       ? AppColors.darkSurfaceElevated
-                                      : AppColors.surfaceMuted),
-                              child: Text(
-                                chat.customerName.isNotEmpty
-                                    ? chat.customerName[0].toUpperCase()
-                                    : 'C',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: hasUnread
-                                      ? AppColors.onYellow
-                                      : (isDark
-                                          ? AppColors.darkTextPrimary
-                                          : AppColors.brandMaroon),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            if (hasUnread)
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.error,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                      minWidth: 16, minHeight: 16),
-                                  child: Text(
-                                    '${chat.unreadForAdmin}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        title: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                chat.customerName,
-                                style: TextStyle(
-                                  fontWeight: hasUnread
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                                  fontSize: 14,
-                                  color: isDark
-                                      ? AppColors.darkTextPrimary
-                                      : AppColors.textPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              timeStr,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: hasUnread
-                                    ? (isDark
-                                        ? AppColors.brandYellow
-                                        : AppColors.brandMaroon)
-                                    : colorScheme.onSurfaceVariant,
-                                fontWeight: hasUnread
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 3),
-                            Text(
-                              chat.lastMessage.isNotEmpty
-                                  ? chat.lastMessage
-                                  : 'Chat started',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: hasUnread
-                                    ? (isDark
-                                        ? AppColors.darkTextPrimary
-                                        : AppColors.textPrimary)
-                                    : colorScheme.onSurfaceVariant,
-                                fontWeight: hasUnread
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                if (chat.orderId != null &&
-                                    chat.orderId!.isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.darkYellowSoft
-                                          : AppColors.yellowSoft,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '#${chat.orderNumber ?? chat.orderId!.substring(0, 6)}',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark
-                                            ? AppColors.brandYellow
-                                            : AppColors.brandMaroon,
+                                      : AppColors.yellowSoft
+                                          .withValues(alpha: 0.35))
+                                  : Colors.transparent,
+                              child: ListTile(
+                                selected: isSelected,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 4),
+                                leading: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 22,
+                                      backgroundColor: hasUnread
+                                          ? AppColors.brandYellow
+                                          : (isDark
+                                              ? AppColors.darkSurfaceElevated
+                                              : AppColors.surfaceMuted),
+                                      child: Text(
+                                        chat.customerName.isNotEmpty
+                                            ? chat.customerName[0].toUpperCase()
+                                            : 'C',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: hasUnread
+                                              ? AppColors.onYellow
+                                              : (isDark
+                                                  ? AppColors.darkTextPrimary
+                                                  : AppColors.brandMaroon),
+                                          fontSize: 16,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: chat.status == 'resolved'
-                                        ? AppColors.successSoft
-                                        : (chat.status == 'pending'
-                                            ? AppColors.warningSoft
-                                            : AppColors.infoSoft),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    chat.status.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: chat.status == 'resolved'
-                                          ? AppColors.success
-                                          : (chat.status == 'pending'
-                                              ? AppColors.warning
-                                              : AppColors.info),
-                                    ),
-                                  ),
+                                    if (hasUnread)
+                                      Positioned(
+                                        top: -2,
+                                        right: -2,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.error,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                              minWidth: 16, minHeight: 16),
+                                          child: Text(
+                                            '${chat.unreadForAdmin}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                                if (isSuper)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? Colors.white12
-                                          : Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(4),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        chat.customerName,
+                                        style: TextStyle(
+                                          fontWeight: hasUnread
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? AppColors.darkTextPrimary
+                                              : AppColors.textPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                    child: Text(
-                                      chat.branchId,
+                                    Text(
+                                      timeStr,
                                       style: TextStyle(
-                                          fontSize: 9.5,
-                                          color: colorScheme.onSurfaceVariant),
+                                        fontSize: 11,
+                                        color: hasUnread
+                                            ? (isDark
+                                                ? AppColors.brandYellow
+                                                : AppColors.brandMaroon)
+                                            : colorScheme.onSurfaceVariant,
+                                        fontWeight: hasUnread
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
                                     ),
-                                  ),
-                              ],
-                            ),
-                          ],
+                                  ],
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      chat.lastMessage.isNotEmpty
+                                          ? chat.lastMessage
+                                          : 'Chat started',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: hasUnread
+                                            ? (isDark
+                                                ? AppColors.darkTextPrimary
+                                                : AppColors.textPrimary)
+                                            : colorScheme.onSurfaceVariant,
+                                        fontWeight: hasUnread
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (chat.orderId != null &&
+                                            chat.orderId!.isNotEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? AppColors.darkYellowSoft
+                                                  : AppColors.yellowSoft,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              '#${chat.orderNumber ?? chat.orderId!.substring(0, 6)}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark
+                                                    ? AppColors.brandYellow
+                                                    : AppColors.brandMaroon,
+                                              ),
+                                            ),
+                                          ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: chat.status == 'resolved'
+                                                ? AppColors.successSoft
+                                                : (chat.status == 'pending'
+                                                    ? AppColors.warningSoft
+                                                    : AppColors.infoSoft),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            chat.status.toUpperCase(),
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: chat.status == 'resolved'
+                                                  ? AppColors.success
+                                                  : (chat.status == 'pending'
+                                                      ? AppColors.warning
+                                                      : AppColors.info),
+                                            ),
+                                          ),
+                                        ),
+                                        if (isSuper)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 5, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? Colors.white12
+                                                  : Colors.grey.shade200,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              chat.branchId.isEmpty
+                                                  ? 'Unassigned'
+                                                  : branchProv.branches
+                                                          .where((branch) =>
+                                                              branch.id ==
+                                                              chat.branchId)
+                                                          .firstOrNull
+                                                          ?.name ??
+                                                      chat.branchId,
+                                              style: TextStyle(
+                                                  fontSize: 9.5,
+                                                  color: colorScheme
+                                                      .onSurfaceVariant),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                onTap: () => _selectChat(chat),
+                              ),
+                            );
+                          },
                         ),
-                        onTap: () => _selectChat(chat),
-                      ),
-                    );
-                  },
-                ),
         ),
       ],
     );
