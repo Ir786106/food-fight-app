@@ -10,9 +10,13 @@ const statuses = {
   "deadline-exceeded": 504,
 };
 
-function createServer({ handlers, verifyToken, allowedOrigins = [] }) {
+function createServer({
+  handlers, verifyToken, allowedOrigins = [], requestLimit = 120, now = Date.now,
+}) {
   const paths = new Map(operations.map((name) => [`/v1/${name}`, handlers[name]]));
   const origins = new Set(allowedOrigins);
+  let activeMinute = -1;
+  const requestsByUser = new Map();
   return http.createServer({ requestTimeout: 30000 }, async (req, res) => {
     const reply = (status, data) => {
       res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
@@ -47,6 +51,18 @@ function createServer({ handlers, verifyToken, allowedOrigins = [] }) {
         throw new HttpsError("unauthenticated", "Sign in again to continue.");
       }
       if (!token?.uid) throw new HttpsError("unauthenticated", "Sign in to continue.");
+      const timestamp = now();
+      const minute = Math.floor(timestamp / 60000);
+      if (minute !== activeMinute) {
+        requestsByUser.clear();
+        activeMinute = minute;
+      }
+      const count = requestsByUser.get(token.uid) ?? 0;
+      if (count >= requestLimit || (count === 0 && requestsByUser.size >= 10000)) {
+        res.setHeader("Retry-After", Math.ceil((60000 - timestamp % 60000) / 1000));
+        throw new HttpsError("resource-exhausted", "Too many requests. Wait and try again.");
+      }
+      requestsByUser.set(token.uid, count + 1);
       if (req.headers["content-type"]?.split(";")[0] !== "application/json") {
         throw new HttpsError("invalid-argument", "Expected JSON.");
       }

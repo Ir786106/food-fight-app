@@ -75,7 +75,7 @@ jobs:
         run: npm ci --prefix functions
 
       - name: Run backend unit tests
-        run: node --test functions/checkout.test.js functions/platform_administration.test.js functions/signed_image_upload.test.js functions/audit_account_profiles.test.js functions/migrate_verified_super_admin.test.js functions/recover_verified_super_admin.test.js
+        run: npm test --prefix functions
 
       - name: Run Firestore Rules Tests in Emulator
         run: firebase emulators:exec --config firebase.demo.json --project demo-food-fight --only firestore "npm --prefix test/rules test"
