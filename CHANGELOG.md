@@ -3,6 +3,13 @@
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Older release history is available in Git tags.
 
+## [1.8.6+23] - Unreleased
+
+- Connect Android and Windows candidates to the configured trusted HTTPS backend.
+- Display actionable Super Admin account save failures inside the edit dialog.
+- Limit authenticated backend requests and preserve checkout retry safety.
+- Keep checkout on Cash on Delivery while provider-managed card capture is unavailable.
+
 ## [1.8.5+22] - Unreleased
 
 - Verify account identity and role before restoring privileged sessions.

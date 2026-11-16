@@ -1,6 +1,7 @@
 param(
     [ValidateSet('Android', 'Windows')] [string]$Target = 'Android',
     [string]$InnoCompiler,
+    [string]$BackendUrl = $env:FOODFIGHT_BACKEND_URL,
     [switch]$AppBundle
 )
 $ErrorActionPreference = 'Stop'
@@ -10,12 +11,16 @@ try {
     if (!$version) { throw 'Missing release version in pubspec.yaml.' }
     $name = $version.Matches[0].Groups[1].Value
     $build = $version.Matches[0].Groups[2].Value
+    if ($BackendUrl -notmatch '^https://[A-Za-z0-9.-]+(:[0-9]+)?/?$') {
+        throw 'Pass the verified Food Fight HTTPS origin with -BackendUrl.'
+    }
+    $backendDefine = "--dart-define=FOODFIGHT_BACKEND_URL=$BackendUrl"
     if ($Target -eq 'Android') {
         if (!(Test-Path -LiteralPath 'android/key.properties') -or
             !(Test-Path -LiteralPath 'android/app/google-services.json')) {
             throw 'Android signing or Firebase configuration is missing.'
         }
-        flutter build apk --release --target-platform android-arm,android-arm64 --build-name $name --build-number $build
+        flutter build apk --release --target-platform android-arm,android-arm64 --build-name $name --build-number $build $backendDefine
         if ($LASTEXITCODE -ne 0) { throw 'Android APK build failed.' }
         $output = 'build/release-candidate'
         New-Item -ItemType Directory -Force -Path $output | Out-Null
@@ -24,11 +29,11 @@ try {
         $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $apk).Hash.ToLowerInvariant()
         "$digest  $(Split-Path -Leaf $apk)" | Set-Content -Encoding ascii -LiteralPath "$apk.sha256"
         if ($AppBundle) {
-            flutter build appbundle --release --build-name $name --build-number $build
+            flutter build appbundle --release --build-name $name --build-number $build $backendDefine
             if ($LASTEXITCODE -ne 0) { throw 'Android App Bundle build failed.' }
         }
     } else {
-        flutter build windows --release --build-name $name --build-number $build
+        flutter build windows --release --build-name $name --build-number $build $backendDefine
         if ($LASTEXITCODE -ne 0) { throw 'Windows build failed.' }
         if (!$InnoCompiler) {
             $InnoCompiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
