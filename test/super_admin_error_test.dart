@@ -1,15 +1,30 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:food_fight/core/errors/platform_operation_error.dart';
 import 'package:food_fight/routes/app_routes.dart';
 import 'package:food_fight/screens/admin/chats/admin_chats_screen.dart';
 import 'package:food_fight/screens/admin/deals/manage_deals_screen.dart';
 import 'package:food_fight/screens/admin/riders/manage_riders_screen.dart';
+import 'package:food_fight/services/trusted_operations.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 
 void main() {
+  test('Windows without a backend reports it before calling Firebase',
+      () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await expectLater(
+      TrustedOperations.call('mutatePlatform', const {}),
+      throwsA(isA<FirebaseFunctionsException>().having(
+        (error) => adminAccountUpdateError(error),
+        'user message',
+        contains('Windows build has no Food Fight backend configured'),
+      )),
+    );
+  });
   test('admin updates distinguish missing transport and a missing branch', () {
     expect(
         adminAccountUpdateError(MissingPluginException()), contains('backend'));

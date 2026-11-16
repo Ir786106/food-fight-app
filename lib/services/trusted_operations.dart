@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class TrustedOperations {
   static const _backendUrl = String.fromEnvironment('FOODFIGHT_BACKEND_URL');
@@ -14,6 +15,12 @@ class TrustedOperations {
   static Future<dynamic> call(
       String operation, Map<String, dynamic> data) async {
     if (_backendUrl.isEmpty) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+        throw FirebaseFunctionsException(
+          code: 'backend-not-configured',
+          message: 'Windows requires a configured Food Fight HTTPS backend.',
+        );
+      }
       final result =
           await FirebaseFunctions.instance.httpsCallable(operation).call(data);
       return result.data;

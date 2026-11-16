@@ -24,6 +24,8 @@ String adminAccountUpdateError(Object error) {
           'This legacy profile has no Auth login. Provision a new account first.'
         ):
         return 'This staff profile has no Firebase sign-in account. Ask support to verify its identity.';
+      case ('backend-not-configured', _):
+        return 'This Windows build has no Food Fight backend configured. Use a build connected to the live backend.';
       case ('not-found', _):
         return unavailable;
       case ('resource-exhausted', _):
@@ -40,6 +42,8 @@ String platformOperationError(Object error, {required String fallback}) {
   }
   if (error is FirebaseException) {
     return switch (error.code) {
+      'backend-not-configured' =>
+        'This build is missing the Food Fight backend configuration.',
       'permission-denied' =>
         'Your account does not have permission for this action.',
       'unauthenticated' => 'Your session has expired. Sign in and try again.',
