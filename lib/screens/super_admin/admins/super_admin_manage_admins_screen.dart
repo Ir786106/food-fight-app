@@ -528,6 +528,7 @@ class _SuperAdminManageAdminsScreenState
           .map((value) => value == 'delivery' ? 'delivery_areas' : value),
     );
     bool isSaving = false;
+    String? saveError;
 
     showDialog(
       context: context,
@@ -542,15 +543,37 @@ class _SuperAdminManageAdminsScreenState
             backgroundColor: SuperAdminTheme.getCardBg(dialogContext),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              admin == null
-                  ? 'Create Admin / Staff Account'
-                  : 'Edit Account & Permissions',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: SuperAdminTheme.getTextDark(dialogContext),
-              ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  admin == null
+                      ? 'Create Admin / Staff Account'
+                      : 'Edit Account & Permissions',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: SuperAdminTheme.getTextDark(dialogContext),
+                  ),
+                ),
+                if (saveError case final error?)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        error,
+                        style: Theme.of(dialogContext)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                              color: Theme.of(dialogContext).colorScheme.error,
+                            ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             content: SingleChildScrollView(
               child: Form(
@@ -772,7 +795,10 @@ class _SuperAdminManageAdminsScreenState
                             context.read<AuthProvider>().currentUser?.name;
                         final provider = context.read<AdminAccountProvider>();
 
-                        setDialogState(() => isSaving = true);
+                        setDialogState(() {
+                          isSaving = true;
+                          saveError = null;
+                        });
                         try {
                           if (admin == null) {
                             final created = await provider.createAdminAccount(
@@ -823,16 +849,11 @@ class _SuperAdminManageAdminsScreenState
                           if (ctx.mounted) Navigator.pop(ctx);
                         } catch (_) {
                           if (!ctx.mounted) return;
-                          setDialogState(() => isSaving = false);
-                          if (ctx.mounted) {
-                            AppSnackbar.showSnackBar(
-                              ctx,
-                              SnackBar(
-                                  content: Text(provider.actionError ??
-                                      'Unable to save the account. Please try again.'),
-                                  backgroundColor: AppColors.error),
-                            );
-                          }
+                          setDialogState(() {
+                            isSaving = false;
+                            saveError = provider.actionError ??
+                                'Unable to save the account. Please try again.';
+                          });
                         }
                       },
                 child: isSaving

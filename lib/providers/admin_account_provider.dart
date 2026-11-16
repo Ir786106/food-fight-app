@@ -127,8 +127,7 @@ class AdminAccountProvider extends ChangeNotifier with SafeChangeNotifier {
       await SuperAdminService.updateAdminAccount(admin, updatedBy: updatedBy);
       return true;
     } catch (e) {
-      _actionError = platformOperationError(e,
-          fallback: 'Unable to update the admin account. Please try again.');
+      _actionError = adminAccountUpdateError(e);
       AppLogger.error('AdminAccountProvider update error: $e',
           tag: 'AdminAccountProvider');
       notifyListeners();

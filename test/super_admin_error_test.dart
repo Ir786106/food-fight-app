@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:food_fight/core/errors/platform_operation_error.dart';
 import 'package:food_fight/routes/app_routes.dart';
@@ -9,6 +10,24 @@ import 'package:food_fight/screens/admin/riders/manage_riders_screen.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
 
 void main() {
+  test('admin updates distinguish missing transport and a missing branch', () {
+    expect(
+        adminAccountUpdateError(MissingPluginException()), contains('backend'));
+    expect(
+      adminAccountUpdateError(FirebaseFunctionsException(
+        code: 'not-found',
+        message: 'The selected branch no longer exists.',
+      )),
+      contains('select another branch'),
+    );
+    expect(
+      adminAccountUpdateError(FirebaseFunctionsException(
+        code: 'not-found',
+        message: 'NOT_FOUND',
+      )),
+      contains('backend'),
+    );
+  });
   testWidgets('platform routes use the Super Admin guard and platform scope',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
