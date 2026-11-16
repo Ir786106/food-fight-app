@@ -53,7 +53,9 @@ Future<void> runFoodFight({AppEdition edition = AppEdition.combined}) async {
   AppLogger.info('[PERF] main() started (+0ms)', tag: 'Startup');
 
   WidgetsFlutterBinding.ensureInitialized();
-  AppLogger.info('[PERF] WidgetsFlutterBinding initialized (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+  AppLogger.info(
+      '[PERF] WidgetsFlutterBinding initialized (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)',
+      tag: 'Startup');
 
   if (LocalDemo.enabled) {
     await LocalDemo.connect();
@@ -62,7 +64,9 @@ Future<void> runFoodFight({AppEdition edition = AppEdition.combined}) async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
-      AppLogger.info('[PERF] Firebase.initializeApp finished (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+      AppLogger.info(
+          '[PERF] Firebase.initializeApp finished (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)',
+          tag: 'Startup');
     } catch (e) {
       AppLogger.warn('Firebase initialization notice: $e', tag: 'Startup');
     }
@@ -70,14 +74,17 @@ Future<void> runFoodFight({AppEdition edition = AppEdition.combined}) async {
 
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemeMode();
-  AppLogger.info('[PERF] ThemeProvider loaded (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+  AppLogger.info(
+      '[PERF] ThemeProvider loaded (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)',
+      tag: 'Startup');
 
   // Trigger non-blocking background bootstrap concurrently with first frame
   if (!LocalDemo.enabled) unawaited(AppBootstrap.startBackgroundBootstrap());
 
   final language = AppLanguage();
   await language.load();
-  runApp(FoodFightApp(themeProvider: themeProvider, language: language, edition: edition));
+  runApp(FoodFightApp(
+      themeProvider: themeProvider, language: language, edition: edition));
 }
 
 class FoodFightApp extends StatelessWidget {
@@ -88,117 +95,108 @@ class FoodFightApp extends StatelessWidget {
   final AppEdition edition;
 
   const FoodFightApp({
-    super.key, this.themeProvider, this.language,
+    super.key,
+    this.themeProvider,
+    this.language,
     this.edition = AppEdition.combined,
   });
 
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLogger.info('[PERF] First Flutter frame rendered (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)', tag: 'Startup');
+      AppLogger.info(
+          '[PERF] First Flutter frame rendered (+${AppStartupMetrics.startupStopwatch.elapsedMilliseconds}ms)',
+          tag: 'Startup');
     });
     final effectiveTheme = themeProvider ?? ThemeProvider();
 
-    return ChangeNotifierProvider(create: (_) => AuthProvider(edition: edition),
-      child: Consumer<AuthProvider>(builder: (context, auth, _) => MultiProvider(
-      key: ValueKey(auth.currentUser?.id ?? 'guest'),
-      providers: [
-
-        ChangeNotifierProvider(create: (_) => CartProvider()),
-
-        ChangeNotifierProvider(create: (_) => CategoryProvider()),
-
-        ChangeNotifierProvider(create: (_) => MenuProvider()),
-
-        ChangeNotifierProvider(create: (_) => OrderProvider()),
-
-        ChangeNotifierProvider(create: (_) => CouponProvider()),
-
-        ChangeNotifierProvider(create: (_) => CustomerProvider()),
-
-        ChangeNotifierProvider(create: (_) => DeliveryAreaProvider()),
-
-        ChangeNotifierProvider(create: (_) => ReportProvider()),
-
-        ChangeNotifierProvider(create: (_) => AdminDashboardProvider()),
-
-        ChangeNotifierProvider(create: (_) => SuperAdminProvider()),
-
-        ChangeNotifierProvider(create: (_) => AdminAccountProvider()),
-
-        ChangeNotifierProvider(create: (_) => AuditLogProvider()),
-
-        ChangeNotifierProvider(create: (_) => PaymentMethodProvider()),
-
-        ChangeNotifierProvider(create: (_) => RiderProvider()),
-
-        ChangeNotifierProvider(create: (_) => AddressProvider()),
-
-        ChangeNotifierProvider(create: (_) => NotificationProvider()),
-
-        ChangeNotifierProvider(create: (_) => RestaurantProvider()),
-
-        ChangeNotifierProvider(create: (_) => BranchProvider()),
-
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-
-        ChangeNotifierProvider(create: (_) => DealProvider()),
-
-        ChangeNotifierProvider(create: (_) => LoyaltyProvider()),
-
-        ChangeNotifierProvider(create: (_) => ReviewProvider()),
-
-        ChangeNotifierProvider(create: (_) => OptionTemplateProvider()),
-        
-        ChangeNotifierProvider(create: (_) => AppUpdateProvider()),
-        
-        ChangeNotifierProvider.value(value: effectiveTheme),
-        if (language != null) ChangeNotifierProvider.value(value: language!),
-      ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
-          return MaterialApp(
-            navigatorKey: navigatorKeyForSession(auth.currentUser?.id),
-            title: edition == AppEdition.combined ? AppConstants.appName : edition.title,
-            locale: context.watch<AppLanguage?>()?.locale ?? AppLanguage.english,
-            supportedLocales: AppLanguage.supportedLocales,
-            localizationsDelegates: GlobalMaterialLocalizations.delegates,
-            debugShowCheckedModeBanner: false,
-
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-
-            initialRoute: '/splash',
-
-            builder: (context, child) {
-              final mediaQuery = MediaQuery.of(context);
-              final clampedScaler = mediaQuery.textScaler.clamp(
-                minScaleFactor: 0.85,
-                maxScaleFactor: 1.4,
-              );
-              return MediaQuery(
-                data: mediaQuery.copyWith(textScaler: clampedScaler),
-                child: SessionBindings(
-                  child: Padding(
-                    // Firebase Auth's web emulator notice is outside Flutter.
-                    padding: const EdgeInsets.only(
-                      bottom: LocalDemo.enabled ? 40 : 0,
-                    ),
-                    child: child ?? const SizedBox.shrink(),
+    return ChangeNotifierProvider(
+        create: (_) => AuthProvider(edition: edition),
+        child: Consumer<AuthProvider>(
+            builder: (context, auth, _) => MultiProvider(
+                  key: ValueKey(auth.currentUser?.id ?? 'guest'),
+                  providers: [
+                    ChangeNotifierProvider(create: (_) => CartProvider()),
+                    ChangeNotifierProvider(create: (_) => CategoryProvider()),
+                    ChangeNotifierProvider(create: (_) => MenuProvider()),
+                    ChangeNotifierProvider(create: (_) => OrderProvider()),
+                    ChangeNotifierProvider(create: (_) => CouponProvider()),
+                    ChangeNotifierProvider(create: (_) => CustomerProvider()),
+                    ChangeNotifierProvider(
+                        create: (_) => DeliveryAreaProvider()),
+                    ChangeNotifierProvider(create: (_) => ReportProvider()),
+                    ChangeNotifierProvider(
+                        create: (_) => AdminDashboardProvider()),
+                    ChangeNotifierProvider(create: (_) => SuperAdminProvider()),
+                    ChangeNotifierProvider(
+                        create: (_) => AdminAccountProvider()),
+                    ChangeNotifierProvider(create: (_) => AuditLogProvider()),
+                    ChangeNotifierProvider(
+                        create: (_) => PaymentMethodProvider()),
+                    ChangeNotifierProvider(create: (_) => RiderProvider()),
+                    ChangeNotifierProvider(create: (_) => AddressProvider()),
+                    ChangeNotifierProvider(
+                        create: (_) => NotificationProvider()),
+                    ChangeNotifierProvider(create: (_) => RestaurantProvider()),
+                    ChangeNotifierProvider(create: (_) => BranchProvider()),
+                    ChangeNotifierProvider(create: (_) => ChatProvider()),
+                    ChangeNotifierProvider(create: (_) => DealProvider()),
+                    ChangeNotifierProvider(create: (_) => LoyaltyProvider()),
+                    ChangeNotifierProvider(create: (_) => ReviewProvider()),
+                    ChangeNotifierProvider(
+                        create: (_) => OptionTemplateProvider()),
+                    ChangeNotifierProvider(create: (_) => AppUpdateProvider()),
+                    ChangeNotifierProvider.value(value: effectiveTheme),
+                    if (language != null)
+                      ChangeNotifierProvider.value(value: language!),
+                  ],
+                  child: Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, _) {
+                      return MaterialApp(
+                        navigatorKey:
+                            navigatorKeyForSession(auth.currentUser?.id),
+                        title: edition == AppEdition.combined
+                            ? AppConstants.appName
+                            : edition.title,
+                        locale: context.watch<AppLanguage?>()?.locale ??
+                            AppLanguage.english,
+                        supportedLocales: AppLanguage.supportedLocales,
+                        localizationsDelegates:
+                            GlobalMaterialLocalizations.delegates,
+                        debugShowCheckedModeBanner: false,
+                        theme: AppTheme.lightTheme,
+                        darkTheme: AppTheme.darkTheme,
+                        themeMode: themeProvider.themeMode,
+                        initialRoute: '/splash',
+                        builder: (context, child) {
+                          final mediaQuery = MediaQuery.of(context);
+                          final clampedScaler = mediaQuery.textScaler.clamp(
+                            minScaleFactor: 0.85,
+                            maxScaleFactor: 1.4,
+                          );
+                          return MediaQuery(
+                            data:
+                                mediaQuery.copyWith(textScaler: clampedScaler),
+                            child: SessionBindings(
+                              child: Padding(
+                                // Firebase Auth's web emulator notice is outside Flutter.
+                                padding: const EdgeInsets.only(
+                                  bottom: LocalDemo.enabled ? 40 : 0,
+                                ),
+                                child: child ?? const SizedBox.shrink(),
+                              ),
+                            ),
+                          );
+                        },
+                        routes: AppRoutes.routesFor(edition),
+                        onUnknownRoute: (settings) => MaterialPageRoute(
+                          settings: settings,
+                          builder: (context) =>
+                              NotFoundScreen(routeName: settings.name),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              );
-            },
-
-            routes: AppRoutes.routesFor(edition),
-            onUnknownRoute: (settings) => MaterialPageRoute(
-              settings: settings,
-              builder: (context) => NotFoundScreen(routeName: settings.name),
-            ),
-          );
-        },
-      ),
-    )));
+                )));
   }
 }

@@ -23,7 +23,8 @@ class DealBundleItem {
 
   factory DealBundleItem.fromJson(Map<String, dynamic> json) {
     return DealBundleItem(
-      menuItemId: json['menuItemId']?.toString() ?? json['itemId']?.toString() ?? '',
+      menuItemId:
+          json['menuItemId']?.toString() ?? json['itemId']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       quantity: SafeConvert.toInt(json['quantity'], 1),
       size: json['size']?.toString(),
@@ -79,7 +80,9 @@ class DealModel {
     final now = DateTime.now();
     if (startDate != null && now.isBefore(startDate!)) return false;
     if (endDate != null && now.isAfter(endDate!)) return false;
-    if (activeDays.isNotEmpty && !activeDays.contains(now.weekday)) return false;
+    if (activeDays.isNotEmpty && !activeDays.contains(now.weekday)) {
+      return false;
+    }
     return true;
   }
 
@@ -122,12 +125,15 @@ class DealModel {
 
     List<String> parsedLinked = [];
     if (json['linkedItemIds'] is List) {
-      parsedLinked = (json['linkedItemIds'] as List).map((e) => e.toString()).toList();
+      parsedLinked =
+          (json['linkedItemIds'] as List).map((e) => e.toString()).toList();
     }
 
     List<int> parsedDays = const [1, 2, 3, 4, 5, 6, 7];
     if (json['activeDays'] is List) {
-      parsedDays = (json['activeDays'] as List).map((e) => SafeConvert.toInt(e, 1)).toList();
+      parsedDays = (json['activeDays'] as List)
+          .map((e) => SafeConvert.toInt(e, 1))
+          .toList();
     }
 
     return DealModel(
@@ -136,7 +142,8 @@ class DealModel {
       description: json['description']?.toString() ?? '',
       imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString(),
       dealPrice: SafeConvert.toDouble(json['dealPrice'] ?? json['price']),
-      originalPrice: SafeConvert.toDouble(json['originalPrice'] ?? json['original_price']),
+      originalPrice:
+          SafeConvert.toDouble(json['originalPrice'] ?? json['original_price']),
       discountPercentage: json['discountPercentage'] != null
           ? SafeConvert.toDouble(json['discountPercentage'])
           : null,
@@ -144,10 +151,16 @@ class DealModel {
       linkedItemIds: parsedLinked,
       bundleItems: parsedBundle,
       branchId: json['branchId']?.toString(),
-      startDate: json['startDate'] != null ? SafeConvert.toDateTime(json['startDate']) : null,
-      endDate: json['endDate'] != null ? SafeConvert.toDateTime(json['endDate']) : null,
+      startDate: json['startDate'] != null
+          ? SafeConvert.toDateTime(json['startDate'])
+          : null,
+      endDate: json['endDate'] != null
+          ? SafeConvert.toDateTime(json['endDate'])
+          : null,
       activeDays: parsedDays,
-      isActive: json['isActive'] == 1 || json['isActive'] == true || json['isActive'] == null,
+      isActive: json['isActive'] == 1 ||
+          json['isActive'] == true ||
+          json['isActive'] == null,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );

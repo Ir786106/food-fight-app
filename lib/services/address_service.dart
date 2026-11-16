@@ -37,18 +37,37 @@ class AddressService {
     });
   }
 
-
   static Future<AddressModel> addAddress(AddressModel address) async {
-    final saved = address.copyWith(id: _addressCol().doc().id, createdAt: DateTime.now(), updatedAt: DateTime.now());
+    final saved = address.copyWith(
+        id: _addressCol().doc().id,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now());
     await _write(saved);
     return saved;
   }
-  static Future<void> updateAddress(AddressModel address) => _write(address.copyWith(updatedAt: DateTime.now()));
-  static Future<void> _write(AddressModel address) => DefaultSelectionService.write(
-    userId: address.userId, collection: _addressCol(), pointer: 'defaultAddressId',
-    id: address.id, data: address.toJson(), select: address.isDefault);
-  static Future<void> deleteAddress(String userId, String addressId) => DefaultSelectionService.write(
-    userId: userId, collection: _addressCol(), pointer: 'defaultAddressId', id: addressId, delete: true);
-  static Future<void> setDefaultAddress(String userId, String addressId) => DefaultSelectionService.write(
-    userId: userId, collection: _addressCol(), pointer: 'defaultAddressId', id: addressId, select: true);
+
+  static Future<void> updateAddress(AddressModel address) =>
+      _write(address.copyWith(updatedAt: DateTime.now()));
+  static Future<void> _write(AddressModel address) =>
+      DefaultSelectionService.write(
+          userId: address.userId,
+          collection: _addressCol(),
+          pointer: 'defaultAddressId',
+          id: address.id,
+          data: address.toJson(),
+          select: address.isDefault);
+  static Future<void> deleteAddress(String userId, String addressId) =>
+      DefaultSelectionService.write(
+          userId: userId,
+          collection: _addressCol(),
+          pointer: 'defaultAddressId',
+          id: addressId,
+          delete: true);
+  static Future<void> setDefaultAddress(String userId, String addressId) =>
+      DefaultSelectionService.write(
+          userId: userId,
+          collection: _addressCol(),
+          pointer: 'defaultAddressId',
+          id: addressId,
+          select: true);
 }

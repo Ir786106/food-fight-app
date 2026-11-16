@@ -101,7 +101,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         deliveryTimeMinutes: 25,
         deliveryFee: 150,
         imageEmoji: '',
-        address: currentBranch.address.isNotEmpty ? currentBranch.address : '${currentBranch.city} Branch',
+        address: currentBranch.address.isNotEmpty
+            ? currentBranch.address
+            : '${currentBranch.city} Branch',
       );
     }
 
@@ -122,7 +124,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.storefront_outlined, size: 64, color: AppColors.textMuted),
+                const Icon(Icons.storefront_outlined,
+                    size: 64, color: AppColors.textMuted),
                 const SizedBox(height: 16),
                 const Text(
                   'Branch Not Found',
@@ -140,7 +143,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.brandYellow,
                     foregroundColor: AppColors.brandMaroon,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('Go Back'),
@@ -208,11 +212,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     ],
                   ),
                   child: IconButton(
-                    icon: Icon(Icons.share_outlined, color: colorScheme.onSurface, size: 20),
+                    icon: Icon(Icons.share_outlined,
+                        color: colorScheme.onSurface, size: 20),
                     onPressed: () {
-                      AppSnackbar.showSnackBar(context,
+                      AppSnackbar.showSnackBar(
+                        context,
                         SnackBar(
-                          content: Text('Sharing "${activeRestaurant.name}" with friends!'),
+                          content: Text(
+                              'Sharing "${activeRestaurant.name}" with friends!'),
                           duration: const Duration(seconds: 1),
                         ),
                       );
@@ -234,13 +241,18 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                   ),
                   child: IconButton(
                     icon: Icon(
-                      _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      color: _isFavorite ? AppColors.primary : colorScheme.onSurface,
+                      _isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: _isFavorite
+                          ? AppColors.primary
+                          : colorScheme.onSurface,
                       size: 20,
                     ),
                     onPressed: () {
                       setState(() => _isFavorite = !_isFavorite);
-                      AppSnackbar.showSnackBar(context,
+                      AppSnackbar.showSnackBar(
+                        context,
                         SnackBar(
                           content: Text(
                             _isFavorite
@@ -270,7 +282,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                         ),
                       ),
                       alignment: Alignment.center,
-                      child: Text(restaurant.imageEmoji, style: const TextStyle(fontSize: 88)),
+                      child: Text(restaurant.imageEmoji,
+                          style: const TextStyle(fontSize: 88)),
                     ),
                     Positioned.fill(
                       child: DecoratedBox(
@@ -278,7 +291,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                           gradient: LinearGradient(
                             colors: [
                               Colors.transparent,
-                              theme.scaffoldBackgroundColor.withValues(alpha: 0.9),
+                              theme.scaffoldBackgroundColor
+                                  .withValues(alpha: 0.9),
                             ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
@@ -321,7 +335,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     // Badges: Rating, Delivery time, Delivery fee
                     Row(
                       children: [
-                        _infoChip(Icons.star_rounded, '${restaurant.rating}', AppColors.accent),
+                        _infoChip(Icons.star_rounded, '${restaurant.rating}',
+                            AppColors.accent),
                         const SizedBox(width: 10),
                         _infoChip(
                           Icons.access_time_rounded,
@@ -343,7 +358,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     // Address
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                        Icon(Icons.location_on_outlined,
+                            size: 16, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -384,8 +400,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                         ),
                         labelColor: Colors.white,
                         unselectedLabelColor: colorScheme.onSurfaceVariant,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                        labelStyle: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13),
+                        unselectedLabelStyle: const TextStyle(
+                            fontWeight: FontWeight.w500, fontSize: 13),
                         tabs: const [
                           Tab(text: 'Menu'),
                           Tab(text: 'Reviews'),
@@ -405,7 +423,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.all(32),
-                    child: LoadingIndicator(message: 'Loading delicious menu...'),
+                    child:
+                        LoadingIndicator(message: 'Loading delicious menu...'),
                   ),
                 )
               else if (menuProvider.errorMessage != null && activeItems.isEmpty)
@@ -425,13 +444,15 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     child: EmptyStateView(
                       icon: Icons.fastfood_rounded,
                       title: 'No Dishes Available',
-                      description: 'Please check back soon for delicious new additions!',
+                      description:
+                          'Please check back soon for delicious new additions!',
                     ),
                   ),
                 )
               else
                 SliverPadding(
-                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 0),
+                  padding:
+                      AppInsets.scrollPadding(context, horizontal: 20, top: 0),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -533,7 +554,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       children: List.generate(
                         5,
                         (i) => Icon(
-                          i < displayRating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                          i < displayRating.round()
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
                           color: AppColors.accent,
                           size: 18,
                         ),
@@ -542,7 +565,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     const SizedBox(height: 4),
                     Text(
                       '$totalCount Verified Reviews',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ],
                 ),
@@ -550,14 +574,20 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () => _showWriteReviewDialog(context, restaurant),
-                  icon: const Icon(Icons.rate_review_outlined, color: Colors.white, size: 18),
+                  icon: const Icon(Icons.rate_review_outlined,
+                      color: Colors.white, size: 18),
                   label: const Text(
                     'Write Review',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13),
                   ),
                 ),
               ],
@@ -566,7 +596,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
           const SizedBox(height: 18),
           const Text(
             'Customer Experiences',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
           ),
           const SizedBox(height: 12),
           if (reviews.isEmpty)
@@ -575,7 +606,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
               child: EmptyStateView(
                 icon: Icons.rate_review_outlined,
                 title: 'No Reviews Yet',
-                description: 'Be the first to share your experience with ${restaurant.name}!',
+                description:
+                    'Be the first to share your experience with ${restaurant.name}!',
               ),
             )
           else
@@ -587,7 +619,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -596,12 +629,18 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          (r.userName != null && r.userName!.isNotEmpty) ? r.userName! : 'Customer',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
+                          (r.userName != null && r.userName!.isNotEmpty)
+                              ? r.userName!
+                              : 'Customer',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: Colors.white),
                         ),
                         Text(
                           dateStr,
-                          style: const TextStyle(color: Colors.white38, fontSize: 11),
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 11),
                         ),
                       ],
                     ),
@@ -612,7 +651,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                           children: List.generate(
                             5,
                             (i) => Icon(
-                              i < r.rating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                              i < r.rating.round()
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
                               color: AppColors.accent,
                               size: 14,
                             ),
@@ -620,14 +661,18 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'Verified Order',
-                            style: TextStyle(color: AppColors.primary, fontSize: 10.5, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -636,7 +681,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       const SizedBox(height: 8),
                       Text(
                         r.comment,
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            height: 1.4),
                       ),
                     ],
                   ],
@@ -674,7 +722,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 22),
+                  child: const Icon(Icons.location_on_rounded,
+                      color: AppColors.primary, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -683,23 +732,30 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     children: [
                       const Text(
                         'Kitchen Location',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.white),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         restaurant.address,
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12.5),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.copy_rounded, color: Colors.white60, size: 18),
+                  icon: const Icon(Icons.copy_rounded,
+                      color: Colors.white60, size: 18),
                   tooltip: 'Copy Address',
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: restaurant.address));
-                    AppSnackbar.showSnackBar(context,
-                      const SnackBar(content: Text('Kitchen address copied to clipboard')),
+                    AppSnackbar.showSnackBar(
+                      context,
+                      const SnackBar(
+                          content: Text('Kitchen address copied to clipboard')),
                     );
                   },
                 ),
@@ -724,7 +780,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     color: AppColors.success.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.access_time_rounded, color: AppColors.success, size: 22),
+                  child: const Icon(Icons.access_time_rounded,
+                      color: AppColors.success, size: 22),
                 ),
                 const SizedBox(width: 14),
                 const Expanded(
@@ -733,25 +790,33 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     children: [
                       Text(
                         'Operating Hours',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.white),
                       ),
                       SizedBox(height: 3),
                       Text(
                         'Monday – Sunday • 11:00 AM – 11:30 PM',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                        style: TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12.5),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.success.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
                     'OPEN NOW',
-                    style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 10),
+                    style: TextStyle(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10),
                   ),
                 ),
               ],
@@ -765,7 +830,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+              border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.border),
             ),
             child: Row(
               children: [
@@ -775,7 +841,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     color: AppColors.yellowSoft,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.phone_in_talk_rounded, color: AppColors.brandMaroon, size: 22),
+                  child: const Icon(Icons.phone_in_talk_rounded,
+                      color: AppColors.brandMaroon, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -784,18 +851,24 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     children: [
                       Text(
                         'Kitchen Hotline',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: colorScheme.onSurface),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         '+92 300 8765432',
-                        style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
+                        style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12.5),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.phone_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+                  icon: Icon(Icons.phone_rounded,
+                      color: colorScheme.onSurfaceVariant, size: 20),
                   tooltip: 'Call Kitchen',
                   onPressed: () async {
                     final uri = Uri(scheme: 'tel', path: '+923008765432');
@@ -803,15 +876,20 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri);
                       } else {
-                        await Clipboard.setData(const ClipboardData(text: '+923008765432'));
+                        await Clipboard.setData(
+                            const ClipboardData(text: '+923008765432'));
                         if (context.mounted) {
-                          AppSnackbar.showSnackBar(context,
-                            const SnackBar(content: Text('Hotline phone copied to clipboard')),
+                          AppSnackbar.showSnackBar(
+                            context,
+                            const SnackBar(
+                                content:
+                                    Text('Hotline phone copied to clipboard')),
                           );
                         }
                       }
                     } catch (_) {
-                      await Clipboard.setData(const ClipboardData(text: '+923008765432'));
+                      await Clipboard.setData(
+                          const ClipboardData(text: '+923008765432'));
                     }
                   },
                 ),
@@ -826,7 +904,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+              border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.border),
             ),
             child: Row(
               children: [
@@ -836,7 +915,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     color: AppColors.warningSoft,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.verified_user_rounded, color: AppColors.warning, size: 22),
+                  child: const Icon(Icons.verified_user_rounded,
+                      color: AppColors.warning, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -845,12 +925,17 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     children: [
                       Text(
                         'Food Hygiene & Safety Verified',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: colorScheme.onSurface),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         '100% Halal Certified • Grade A Kitchen Safety Protocol',
-                        style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
+                        style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12.5),
                       ),
                     ],
                   ),
@@ -863,7 +948,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
     );
   }
 
-  void _showWriteReviewDialog(BuildContext context, RestaurantModel restaurant) {
+  void _showWriteReviewDialog(
+      BuildContext context, RestaurantModel restaurant) {
     double selectedRating = 5.0;
     final nameCtrl = TextEditingController();
     final commentCtrl = TextEditingController();
@@ -878,10 +964,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
         builder: (dialogCtx, setDialogState) {
           return AlertDialog(
             backgroundColor: colorScheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               'Review ${restaurant.name}',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colorScheme.onSurface),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  color: colorScheme.onSurface),
             ),
             content: SingleChildScrollView(
               child: Form(
@@ -895,12 +985,15 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                         final star = idx + 1;
                         return IconButton(
                           icon: Icon(
-                            star <= selectedRating ? Icons.star_rounded : Icons.star_border_rounded,
+                            star <= selectedRating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
                             color: AppColors.mustard,
                             size: 32,
                           ),
                           onPressed: () {
-                            setDialogState(() => selectedRating = star.toDouble());
+                            setDialogState(
+                                () => selectedRating = star.toDouble());
                           },
                         );
                       }),
@@ -908,29 +1001,43 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: nameCtrl,
-                      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                      style:
+                          TextStyle(color: colorScheme.onSurface, fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Your Name',
-                        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                        labelStyle:
+                            TextStyle(color: colorScheme.onSurfaceVariant),
                         filled: true,
-                        fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? AppColors.darkSurfaceElevated
+                            : AppColors.surfaceMuted,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your name' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Please enter your name'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: commentCtrl,
                       maxLines: 3,
-                      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                      style:
+                          TextStyle(color: colorScheme.onSurface, fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Your Experience',
-                        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                        labelStyle:
+                            TextStyle(color: colorScheme.onSurfaceVariant),
                         filled: true,
-                        fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? AppColors.darkSurfaceElevated
+                            : AppColors.surfaceMuted,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Please share your review' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Please share your review'
+                          : null,
                     ),
                   ],
                 ),
@@ -939,7 +1046,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                child: Text('Cancel',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -966,15 +1074,20 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen>
                     );
                     context.read<ReviewProvider>().submitReview(review);
                     Navigator.pop(ctx);
-                    AppSnackbar.showSnackBar(context,
+                    AppSnackbar.showSnackBar(
+                      context,
                       SnackBar(
-                        content: Text('Thank you! Your review for ${restaurant.name} has been published ⭐️'),
+                        content: Text(
+                            'Thank you! Your review for ${restaurant.name} has been published ⭐️'),
                         backgroundColor: AppColors.brandMaroon,
                       ),
                     );
                   }
                 },
-                child: const Text('Submit Review', style: TextStyle(color: AppColors.brandMaroon, fontWeight: FontWeight.bold)),
+                child: const Text('Submit Review',
+                    style: TextStyle(
+                        color: AppColors.brandMaroon,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           );

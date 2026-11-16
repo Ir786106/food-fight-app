@@ -10,7 +10,8 @@ class AuditLogProvider extends ChangeNotifier with SafeChangeNotifier {
   List<AuditLogModel> _logs = [];
   bool _isLoading = false;
   String? _errorMessage;
-  String _entityFilter = 'all'; // 'all', 'order', 'menu', 'category', 'coupon', 'admin', 'system'
+  String _entityFilter =
+      'all'; // 'all', 'order', 'menu', 'category', 'coupon', 'admin', 'system'
   String _searchQuery = '';
   StreamSubscription<List<AuditLogModel>>? _subscription;
 
@@ -60,30 +61,6 @@ class AuditLogProvider extends ChangeNotifier with SafeChangeNotifier {
   void setSearchQuery(String query) {
     _searchQuery = query;
     watchLogs();
-  }
-
-  /// Record action directly
-  Future<void> recordLog({
-    required String action,
-    required String actorName,
-    required String actorEmail,
-    required String actorRole,
-    required String targetEntity,
-    required String targetId,
-    required String description,
-    Map<String, dynamic>? metadata,
-  }) async {
-    await SuperAdminService.recordAuditLog(AuditLogModel(
-      id: '',
-      action: action,
-      actorName: actorName,
-      actorEmail: actorEmail,
-      actorRole: actorRole,
-      targetEntity: targetEntity,
-      targetId: targetId,
-      description: description,
-      metadata: metadata,
-    ));
   }
 
   @override

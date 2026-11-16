@@ -64,22 +64,28 @@ class FoodDetailVariantSelector extends StatelessWidget {
           spacing: 10,
           runSpacing: 10,
           children: variants.map((variant) {
-            final isSelected = selectedVariant?.label.toLowerCase() == variant.label.toLowerCase();
+            final isSelected = selectedVariant?.label.toLowerCase() ==
+                variant.label.toLowerCase();
             return InkWell(
               key: ValueKey('variant_${variant.label}'),
               onTap: () => onVariantChanged(variant),
               borderRadius: BorderRadius.circular(16),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                      : (isDark ? AppColors.darkSurface : AppColors.surfaceMuted),
+                      : (isDark
+                          ? AppColors.darkSurface
+                          : AppColors.surfaceMuted),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
-                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                        ? (isDark
+                            ? AppColors.brandYellow
+                            : AppColors.brandMaroon)
                         : (isDark ? AppColors.darkBorder : AppColors.border),
                     width: isSelected ? 1.8 : 1.0,
                   ),
@@ -94,7 +100,9 @@ class FoodDetailVariantSelector extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                         color: isSelected
                             ? (isDark ? AppColors.brandMaroon : Colors.white)
-                            : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                            : (isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -104,8 +112,12 @@ class FoodDetailVariantSelector extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: isSelected
-                            ? (isDark ? AppColors.brandMaroon : AppColors.brandYellow)
-                            : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                            ? (isDark
+                                ? AppColors.brandMaroon
+                                : AppColors.brandYellow)
+                            : (isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.textSecondary),
                       ),
                     ),
                   ],

@@ -6,7 +6,7 @@ import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/providers/delivery_area_provider.dart';
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/core/theme/admin_theme.dart';
-import 'package:food_fight/widgets/admin/admin_drawer.dart';
+import 'package:food_fight/widgets/admin/admin_scaffold.dart';
 import 'package:food_fight/widgets/common/loading_indicator.dart';
 import 'package:food_fight/widgets/common/empty_state_view.dart';
 import 'package:food_fight/widgets/common/error_view.dart';
@@ -17,7 +17,8 @@ class ManageDeliveryAreasScreen extends StatefulWidget {
   const ManageDeliveryAreasScreen({super.key});
 
   @override
-  State<ManageDeliveryAreasScreen> createState() => _ManageDeliveryAreasScreenState();
+  State<ManageDeliveryAreasScreen> createState() =>
+      _ManageDeliveryAreasScreenState();
 }
 
 class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
@@ -62,7 +63,8 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
 
           return AlertDialog(
             backgroundColor: AdminTheme.getCardBg(dialogContext),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               area == null ? 'Add Delivery Zone' : 'Edit Delivery Zone',
               style: TextStyle(
@@ -78,26 +80,34 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                   children: [
                     TextFormField(
                       controller: nameCtrl,
-                      validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Zone name'),
+                      validator: (val) => ValidatorUtils.validateRequired(val,
+                          fieldName: 'Zone name'),
                       decoration: InputDecoration(
                         labelText: 'Area / Zone Name *',
                         hintText: 'e.g. DHA Phase 5, Gulberg, Blue Area',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: chargeCtrl,
                       keyboardType: TextInputType.number,
-                      validator: (val) => ValidatorUtils.validateRequired(val, fieldName: 'Delivery charge'),
+                      validator: (val) => ValidatorUtils.validateRequired(val,
+                          fieldName: 'Delivery charge'),
                       decoration: InputDecoration(
                         labelText: 'Delivery Charge (Rs.) *',
                         hintText: '150',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -107,8 +117,11 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                         labelText: 'Description / Estimated Time (optional)',
                         hintText: 'Estimated 30-45 mins delivery',
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ],
@@ -124,8 +137,10 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AdminTheme.primaryBlue,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
                 onPressed: isSaving
                     ? null
@@ -133,12 +148,16 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                         if (!formKey.currentState!.validate()) return;
 
                         final name = nameCtrl.text.trim();
-                        final charge = double.tryParse(chargeCtrl.text.trim()) ?? 0.0;
+                        final charge =
+                            double.tryParse(chargeCtrl.text.trim()) ?? 0.0;
 
                         setDialogState(() => isSaving = true);
                         try {
                           final provider = context.read<DeliveryAreaProvider>();
-                          final currentBranchId = context.read<AuthProvider>().currentUser?.branchId;
+                          final currentBranchId = context
+                              .read<AuthProvider>()
+                              .currentUser
+                              ?.branchId;
 
                           if (area == null) {
                             await provider.createArea(DeliveryAreaModel(
@@ -168,8 +187,11 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                         } catch (e) {
                           setDialogState(() => isSaving = false);
                           if (ctx.mounted) {
-                            AppSnackbar.showSnackBar(ctx,
-                              SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                            AppSnackbar.showSnackBar(
+                              ctx,
+                              SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: AppColors.error),
                             );
                           }
                         }
@@ -178,7 +200,8 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : Text(area == null ? 'Create Zone' : 'Save Changes'),
               ),
@@ -196,19 +219,25 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
         backgroundColor: AdminTheme.getCardBg(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Delivery Zone'),
-        content: Text('Are you sure you want to remove the delivery zone "${area.name}"?'),
+        content: Text(
+            'Are you sure you want to remove the delivery zone "${area.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
-              final success = await context.read<DeliveryAreaProvider>().deleteArea(area.id);
+              final success = await context
+                  .read<DeliveryAreaProvider>()
+                  .deleteArea(area.id);
               if (mounted && success) {
-                AppSnackbar.showSnackBar(context,
+                AppSnackbar.showSnackBar(
+                  context,
                   SnackBar(content: Text('Zone "${area.name}" deleted')),
                 );
               }
@@ -227,11 +256,12 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
     final textDark = AdminTheme.getTextDark(context);
     final textMuted = AdminTheme.getTextMuted(context);
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: '/admin/delivery-areas',
       backgroundColor: AdminTheme.getBackground(context),
-      drawer: const AdminDrawer(currentRoute: '/admin/delivery-areas'),
       appBar: AppBar(
-        title: const Text('Delivery Zones & Charges', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Delivery Zones & Charges',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -245,7 +275,8 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
       body: Consumer<DeliveryAreaProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.areas.isEmpty) {
-            return const LoadingIndicator(message: 'Loading delivery coverage zones...');
+            return const LoadingIndicator(
+                message: 'Loading delivery coverage zones...');
           }
 
           if (provider.errorMessage != null && provider.areas.isEmpty) {
@@ -289,11 +320,14 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                 : null,
                             filled: true,
                             fillColor: cardBg,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: isDark ? Colors.white12 : Colors.grey.shade300,
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.grey.shade300,
                               ),
                             ),
                           ),
@@ -304,12 +338,15 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AdminTheme.primaryBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () => _openAreaDialog(),
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add Zone', style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: const Text('Add Zone',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -320,35 +357,52 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                   child: filteredAreas.isEmpty
                       ? EmptyStateView(
                           icon: Icons.map_rounded,
-                          title: provider.areas.isEmpty ? 'No Delivery Zones Configured' : 'No Matching Zones',
+                          title: provider.areas.isEmpty
+                              ? 'No Delivery Zones Configured'
+                              : 'No Matching Zones',
                           description: provider.areas.isEmpty
                               ? 'Add service zones with customized delivery charges.'
                               : 'Try searching with another keyword.',
-                          buttonText: provider.areas.isEmpty ? 'Add Zone' : null,
-                          onButtonPressed: provider.areas.isEmpty ? () => _openAreaDialog() : null,
+                          buttonText:
+                              provider.areas.isEmpty ? 'Add Zone' : null,
+                          onButtonPressed: provider.areas.isEmpty
+                              ? () => _openAreaDialog()
+                              : null,
                         )
                       : RefreshIndicator(
                           onRefresh: () => provider.fetchAreas(),
                           child: ListView.separated(
                             padding: const EdgeInsets.all(16),
                             itemCount: filteredAreas.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 10),
                             itemBuilder: (context, index) {
                               final area = filteredAreas[index];
+                              final editable = context
+                                      .read<AuthProvider>()
+                                      .currentUser
+                                      ?.canEditBranchRecord(area.branchId) ==
+                                  true;
 
                               return Material(
                                 color: cardBg,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   side: BorderSide(
-                                    color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.shade200,
                                   ),
                                 ),
                                 child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
                                   leading: CircleAvatar(
-                                    backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.1),
-                                    child: const Icon(Icons.location_on_rounded, color: AdminTheme.primaryBlue, size: 22),
+                                    backgroundColor: AdminTheme.primaryBlue
+                                        .withValues(alpha: 0.1),
+                                    child: const Icon(Icons.location_on_rounded,
+                                        color: AdminTheme.primaryBlue,
+                                        size: 22),
                                   ),
                                   title: Text(
                                     area.name,
@@ -366,18 +420,25 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                         : 'Standard Fee: Rs. ${area.deliveryCharge.toStringAsFixed(0)}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(color: textMuted, fontSize: 12.5),
+                                    style: TextStyle(
+                                        color: textMuted, fontSize: 12.5),
                                   ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Switch(
                                         value: area.isActive,
-                                        activeThumbColor: AdminTheme.primaryBlue,
-                                        onChanged: (val) => provider.toggleActive(area.id, area.isActive),
+                                        activeThumbColor:
+                                            AdminTheme.primaryBlue,
+                                        onChanged: editable
+                                            ? (val) => provider.toggleActive(
+                                                area.id, area.isActive)
+                                            : null,
                                       ),
                                       PopupMenuButton<String>(
-                                        icon: Icon(Icons.more_vert_rounded, color: textMuted),
+                                        enabled: editable,
+                                        icon: Icon(Icons.more_vert_rounded,
+                                            color: textMuted),
                                         onSelected: (val) {
                                           if (val == 'edit') {
                                             _openAreaDialog(area: area);
@@ -390,7 +451,9 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                             value: 'edit',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit_rounded, size: 18, color: AppColors.darkBrown),
+                                                Icon(Icons.edit_rounded,
+                                                    size: 18,
+                                                    color: AppColors.darkBrown),
                                                 SizedBox(width: 8),
                                                 Text('Edit'),
                                               ],
@@ -400,9 +463,14 @@ class _ManageDeliveryAreasScreenState extends State<ManageDeliveryAreasScreen> {
                                             value: 'delete',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
+                                                Icon(Icons.delete_rounded,
+                                                    size: 18,
+                                                    color: AppColors.error),
                                                 SizedBox(width: 8),
-                                                Text('Delete', style: TextStyle(color: AppColors.error)),
+                                                Text('Delete',
+                                                    style: TextStyle(
+                                                        color:
+                                                            AppColors.error)),
                                               ],
                                             ),
                                           ),

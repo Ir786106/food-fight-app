@@ -16,10 +16,8 @@ enum UserRole {
     final raw = value.toString().trim();
     if (raw.isEmpty) return UserRole.customer;
 
-    final normalized = raw
-        .toLowerCase()
-        .replaceAll('-', '_')
-        .replaceAll(' ', '_');
+    final normalized =
+        raw.toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
 
     switch (normalized) {
       case 'superadmin':

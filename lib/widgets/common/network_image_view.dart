@@ -86,10 +86,16 @@ class _NetworkImageViewState extends State<NetworkImageView> {
 
   @override
   Widget build(BuildContext context) {
-    final safeWidth = (widget.width != null && widget.width! > 0 && !widget.width!.isNaN && !widget.width!.isInfinite)
+    final safeWidth = (widget.width != null &&
+            widget.width! > 0 &&
+            !widget.width!.isNaN &&
+            !widget.width!.isInfinite)
         ? widget.width
         : null;
-    final safeHeight = (widget.height != null && widget.height! > 0 && !widget.height!.isNaN && !widget.height!.isInfinite)
+    final safeHeight = (widget.height != null &&
+            widget.height! > 0 &&
+            !widget.height!.isNaN &&
+            !widget.height!.isInfinite)
         ? widget.height
         : null;
 
@@ -106,14 +112,18 @@ class _NetworkImageViewState extends State<NetworkImageView> {
         width: safeWidth,
         height: safeHeight,
         fit: widget.fit,
-        errorBuilder: (_, __, ___) => _buildNoImageSet(context, safeWidth, safeHeight),
+        errorBuilder: (_, __, ___) =>
+            _buildNoImageSet(context, safeWidth, safeHeight),
       );
     }
     // 3. Network URL
     else {
       final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
-      final int? memWidth = safeWidth != null ? (safeWidth * dpr).round().clamp(48, 1080) : null;
-      final int? memHeight = safeHeight != null ? (safeHeight * dpr).round().clamp(48, 1080) : null;
+      final int? memWidth =
+          safeWidth != null ? (safeWidth * dpr).round().clamp(48, 1080) : null;
+      final int? memHeight = safeHeight != null
+          ? (safeHeight * dpr).round().clamp(48, 1080)
+          : null;
 
       content = CachedNetworkImage(
         key: ValueKey('${_resolvedUrl}_retry_$_retryAttempt'),
@@ -131,7 +141,8 @@ class _NetworkImageViewState extends State<NetworkImageView> {
           borderRadius: widget.borderRadius,
         ),
         errorWidget: (context, url, error) {
-          AppLogger.warn('Image failed to load: $url (error: $error)', tag: 'NetworkImageView');
+          AppLogger.warn('Image failed to load: $url (error: $error)',
+              tag: 'NetworkImageView');
           return _buildFailedToLoad(context, safeWidth, safeHeight);
         },
       );
@@ -148,18 +159,25 @@ class _NetworkImageViewState extends State<NetworkImageView> {
   }
 
   /// Visually distinct state: No image set by admin/restaurant
-  Widget _buildNoImageSet(BuildContext context, double? safeWidth, double? safeHeight) {
+  Widget _buildNoImageSet(
+      BuildContext context, double? safeWidth, double? safeHeight) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final size = (safeHeight != null && safeHeight > 0) ? (safeHeight * 0.40).clamp(16.0, 56.0) : 24.0;
+    final size = (safeHeight != null && safeHeight > 0)
+        ? (safeHeight * 0.40).clamp(16.0, 56.0)
+        : 24.0;
 
     return Container(
       width: safeWidth,
       height: safeHeight,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceElevated : AppColors.brandYellow.withValues(alpha: 0.12),
+        color: isDark
+            ? AppColors.darkSurfaceElevated
+            : AppColors.brandYellow.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(widget.borderRadius),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder.withValues(alpha: 0.3) : AppColors.brandYellow.withValues(alpha: 0.25),
+          color: isDark
+              ? AppColors.darkBorder.withValues(alpha: 0.3)
+              : AppColors.brandYellow.withValues(alpha: 0.25),
           width: 0.8,
         ),
       ),
@@ -176,9 +194,12 @@ class _NetworkImageViewState extends State<NetworkImageView> {
   }
 
   /// Visually distinct state: Failed to load over network, with retry capability
-  Widget _buildFailedToLoad(BuildContext context, double? safeWidth, double? safeHeight) {
+  Widget _buildFailedToLoad(
+      BuildContext context, double? safeWidth, double? safeHeight) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconSize = (safeHeight != null && safeHeight > 0) ? (safeHeight * 0.30).clamp(14.0, 32.0) : 18.0;
+    final iconSize = (safeHeight != null && safeHeight > 0)
+        ? (safeHeight * 0.30).clamp(14.0, 32.0)
+        : 18.0;
 
     return Container(
       width: safeWidth,
@@ -212,7 +233,9 @@ class _NetworkImageViewState extends State<NetworkImageView> {
                   children: [
                     Icon(
                       Icons.refresh_rounded,
-                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                      color: isDark
+                          ? AppColors.brandYellow
+                          : AppColors.brandMaroon,
                       size: iconSize,
                     ),
                     if (safeHeight != null && safeHeight > 70) ...[
@@ -222,7 +245,9 @@ class _NetworkImageViewState extends State<NetworkImageView> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],

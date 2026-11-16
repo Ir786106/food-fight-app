@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/localization/app_language.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/super_admin_provider.dart';
@@ -21,10 +22,12 @@ class SuperAdminCollapsibleSidebar extends StatefulWidget {
   });
 
   @override
-  State<SuperAdminCollapsibleSidebar> createState() => _SuperAdminCollapsibleSidebarState();
+  State<SuperAdminCollapsibleSidebar> createState() =>
+      _SuperAdminCollapsibleSidebarState();
 }
 
-class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSidebar> {
+class _SuperAdminCollapsibleSidebarState
+    extends State<SuperAdminCollapsibleSidebar> {
   late bool _isCollapsed;
 
   @override
@@ -49,7 +52,8 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
     final superProvider = context.watch<SuperAdminProvider>();
     final unreadChats = context.watch<ChatProvider>().totalAdminUnread;
 
-    final sidebarBg = isDark ? const Color(0xFF13151A) : const Color(0xFF181B22);
+    final sidebarBg =
+        isDark ? const Color(0xFF13151A) : const Color(0xFF181B22);
     const activeBg = AppColors.brandYellow;
     const activeTextColor = AppColors.onYellow;
     final width = _isCollapsed ? 72.0 : 260.0;
@@ -79,7 +83,8 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
             // Scrollable Navigation
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 children: [
                   _buildSectionTitle('CORE PLATFORM'),
                   _buildNavItem(
@@ -90,7 +95,7 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                     activeTextColor: activeTextColor,
                   ),
                   _buildNavItem(
-                    title: '5 Restaurant Branches',
+                    title: 'Restaurant Branches',
                     icon: Icons.store_mall_directory_rounded,
                     route: '/super-admin/branches',
                     badgeCount: superProvider.totalBranches,
@@ -107,12 +112,18 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                     activeBg: activeBg,
                     activeTextColor: activeTextColor,
                   ),
-
+                  _buildNavItem(
+                    title: 'User Directory',
+                    icon: Icons.people_outline,
+                    route: '/super-admin/users',
+                    activeBg: activeBg,
+                    activeTextColor: activeTextColor,
+                  ),
                   _buildSectionTitle('PLATFORM OPS'),
                   _buildNavItem(
                     title: 'Global Customer Chat',
                     icon: Icons.mark_chat_unread_rounded,
-                    route: '/admin/chats',
+                    route: '/super-admin/chats',
                     badgeCount: unreadChats,
                     badgeColor: AppColors.error,
                     activeBg: activeBg,
@@ -121,25 +132,17 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                   _buildNavItem(
                     title: 'Platform Deals & Offers',
                     icon: Icons.local_offer_rounded,
-                    route: '/admin/deals',
+                    route: '/super-admin/deals',
                     activeBg: activeBg,
                     activeTextColor: activeTextColor,
                   ),
                   _buildNavItem(
                     title: 'Fleet & Riders Overview',
                     icon: Icons.two_wheeler_rounded,
-                    route: '/admin/riders',
+                    route: '/super-admin/riders',
                     activeBg: activeBg,
                     activeTextColor: activeTextColor,
                   ),
-                  _buildNavItem(
-                    title: 'Rider Console View',
-                    icon: Icons.delivery_dining_rounded,
-                    route: '/rider/dashboard',
-                    activeBg: activeBg,
-                    activeTextColor: activeTextColor,
-                  ),
-
                   _buildSectionTitle('GOVERNANCE & AUDIT'),
                   _buildNavItem(
                     title: 'Security Audit Logs',
@@ -176,7 +179,7 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
         alignment: Alignment.center,
         child: IconButton(
           icon: const Icon(Icons.menu_open_rounded, color: Colors.white),
-          tooltip: 'Expand Sidebar',
+          tooltip: context.tr('Expand Sidebar'),
           onPressed: _toggleSidebar,
         ),
       );
@@ -225,8 +228,9 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white70, size: 20),
-            tooltip: 'Collapse Sidebar',
+            icon:
+                const Icon(Icons.menu_rounded, color: Colors.white70, size: 20),
+            tooltip: context.tr('Collapse Sidebar'),
             onPressed: _toggleSidebar,
           ),
         ],
@@ -238,14 +242,15 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
     if (_isCollapsed) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 6),
-        child: Divider(color: Colors.white10, thickness: 1, indent: 16, endIndent: 16),
+        child: Divider(
+            color: Colors.white10, thickness: 1, indent: 16, endIndent: 16),
       );
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 12, top: 14, bottom: 6),
+      padding: const EdgeInsetsDirectional.only(start: 12, top: 14, bottom: 6),
       child: Text(
-        title,
+        context.tr(title),
         style: const TextStyle(
           color: Colors.white38,
           fontSize: 10,
@@ -288,8 +293,9 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
-            mainAxisAlignment:
-                _isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: _isCollapsed
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               Stack(
                 clipBehavior: Clip.none,
@@ -325,11 +331,12 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    title,
+                    context.tr(title),
                     style: TextStyle(
                       color: isSelected ? activeTextColor : Colors.white,
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -337,7 +344,8 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                 ),
                 if (badgeCount != null && badgeCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Colors.black.withValues(alpha: 0.25)
@@ -364,7 +372,7 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Tooltip(
-          message: title,
+          message: context.tr(title),
           preferBelow: false,
           child: content,
         ),
@@ -392,13 +400,15 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
                 color: Colors.white70,
                 size: 20,
               ),
-              tooltip: isDark ? 'Switch to Light' : 'Switch to Dark',
+              tooltip:
+                  context.tr(isDark ? 'Switch to Light' : 'Switch to Dark'),
               onPressed: () => themeProvider.toggleTheme(),
             ),
             const SizedBox(height: 6),
             IconButton(
-              icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
-              tooltip: 'Sign Out',
+              icon: const Icon(Icons.logout_rounded,
+                  color: AppColors.error, size: 20),
+              tooltip: context.tr('Sign Out'),
               onPressed: () => _confirmSignOut(context),
             ),
           ],
@@ -455,12 +465,13 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
               color: Colors.white70,
               size: 18,
             ),
-            tooltip: 'Toggle Theme',
+            tooltip: context.tr('Toggle Theme'),
             onPressed: () => themeProvider.toggleTheme(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 18),
-            tooltip: 'Log out',
+            icon: const Icon(Icons.logout_rounded,
+                color: AppColors.error, size: 18),
+            tooltip: context.tr('Sign Out'),
             onPressed: () => _confirmSignOut(context),
           ),
         ],
@@ -474,12 +485,13 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
     final confirm = await showDialog<bool>(
       context: ctx,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Confirm Sign Out'),
-        content: const Text('Are you sure you want to exit the Super Admin HQ?'),
+        title: Text(context.tr('Confirm Sign Out')),
+        content: Text(
+            context.tr('Are you sure you want to exit the Super Admin HQ?')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -487,7 +499,7 @@ class _SuperAdminCollapsibleSidebarState extends State<SuperAdminCollapsibleSide
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Sign Out'),
+            child: Text(context.tr('Sign Out')),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:food_fight/core/errors/app_exception.dart';
@@ -5,9 +6,75 @@ import 'package:food_fight/core/utils/validator_utils.dart';
 import 'package:food_fight/models/menu_item_model.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/providers/auth_provider.dart';
+import 'package:food_fight/services/firebase/firebase_auth_service.dart';
 import 'package:food_fight/widgets/common/network_image_view.dart';
 
 void main() {
+  test('Firebase transport reset becomes a network retry message', () {
+    final error = FirebaseAuthService.authError(FirebaseAuthException(
+      code: 'internal-error',
+      message: 'I/O error during system call, Connection reset by peer',
+    ));
+    expect(error.code, 'network-request-failed');
+    expect(
+        error.message, 'Network error. Please check your internet connection');
+  });
+
+  group('Authoritative session profile', () {
+    test('rejects conflicting persisted Super Admin identity fields', () {
+      for (final field in ['id', 'uid']) {
+        expect(
+          () => FirebaseAuthService.validateSessionProfile(
+            {'role': 'super_admin', field: 'another-account'},
+            expectedUid: 'platform-owner',
+          ),
+          throwsA(isA<AppException>().having(
+            (e) => e.code,
+            'code',
+            'profile-uid-mismatch',
+          )),
+        );
+      }
+      final legacy = FirebaseAuthService.validateSessionProfile(
+        {'role': 'super_admin', 'isActive': 1},
+        expectedUid: 'platform-owner',
+      );
+      expect(legacy.id, 'platform-owner');
+    });
+
+    test(
+        'accepts a canonical Super Admin without a branch and numeric activity',
+        () {
+      final user = FirebaseAuthService.validateSessionProfile({
+        'id': 'platform-owner',
+        'role': 'super_admin',
+        'isActive': 1,
+        'status': 'active',
+      });
+      expect(user.isSuperAdmin, isTrue);
+      expect(user.branchId, isNull);
+    });
+
+    test('distinguishes legacy role, unsupported role, and blocked profiles',
+        () {
+      for (final (role, status, expected) in [
+        ('super admin', 'active', 'profile-role-migration-required'),
+        ('unknown-role', 'active', 'profile-role-invalid'),
+        ('super_admin', 'suspended', 'profile-disabled'),
+        ('delivery_rider', 'inactive', 'profile-disabled'),
+      ]) {
+        expect(
+          () => FirebaseAuthService.validateSessionProfile({
+            'role': role,
+            'isActive': true,
+            'status': status,
+          }),
+          throwsA(isA<AppException>().having((e) => e.code, 'code', expected)),
+        );
+      }
+    });
+  });
+
   group('AuthProvider Error Parsing Tests', () {
     test('Translates permission-denied to clear user message', () {
       final msg = AuthProvider.parseError('permission-denied');
@@ -16,26 +83,31 @@ void main() {
 
     test('Translates network-request-failed to internet guidance', () {
       final msg = AuthProvider.parseError('network-request-failed');
-      expect(msg, 'Network connection failed. Please check your internet connection.');
+      expect(msg,
+          'Network connection failed. Please check your internet connection.');
     });
 
     test('Translates timeout to 20-second timeout message', () {
       final msg = AuthProvider.parseError('timeout');
-      expect(msg, 'Request timed out after 20 seconds. Please check your internet connection.');
+      expect(msg,
+          'Request timed out after 20 seconds. Please check your internet connection.');
     });
 
     test('Translates user-disabled to account disabled message', () {
       final msg = AuthProvider.parseError('user-disabled');
-      expect(msg, 'This user account has been disabled. Please contact support.');
+      expect(
+          msg, 'This user account has been disabled. Please contact support.');
     });
 
     test('Translates typeerror to clean data parsing message', () {
-      final msg = AuthProvider.parseError('typeerror: type int is not a subtype of double');
+      final msg = AuthProvider.parseError(
+          'typeerror: type int is not a subtype of double');
       expect(msg, 'Data parsing error occurred. Please contact support.');
     });
 
     test('Unwraps AppException cleanly', () {
-      final appEx = AppException(message: 'Custom business logic error message');
+      final appEx =
+          AppException(message: 'Custom business logic error message');
       final msg = AuthProvider.parseError(appEx);
       expect(msg, 'Custom business logic error message');
     });
@@ -59,7 +131,8 @@ void main() {
       expect(ValidatorUtils.isValidPhone(''), isFalse);
       expect(ValidatorUtils.isValidPhone('12345'), isFalse);
       expect(ValidatorUtils.isValidPhone('0211234567'), isFalse); // Landline
-      expect(ValidatorUtils.isValidPhone('+12345678901'), isFalse); // Non-Pakistani
+      expect(ValidatorUtils.isValidPhone('+12345678901'),
+          isFalse); // Non-Pakistani
       expect(ValidatorUtils.isValidPhone('abcdefghijk'), isFalse);
 
       // validatePhone method output
@@ -81,7 +154,8 @@ void main() {
   });
 
   group('Model Parsing & Null Safety Tests', () {
-    test('MenuItemModel handles int/double/string price conversions gracefully', () {
+    test('MenuItemModel handles int/double/string price conversions gracefully',
+        () {
       final map = {
         'id': 'burger_001',
         'name': 'Gourmet Crunch Burger',
@@ -124,7 +198,8 @@ void main() {
   });
 
   group('NetworkImageView Fallback Widget Tests', () {
-    testWidgets('Renders neutral branded fallback icon when imageUrl is null', (tester) async {
+    testWidgets('Renders neutral branded fallback icon when imageUrl is null',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -141,7 +216,9 @@ void main() {
       expect(find.byIcon(Icons.fastfood_rounded), findsOneWidget);
     });
 
-    testWidgets('Renders fallback icon when fallbackEmoji is empty and imageUrl is empty string', (tester) async {
+    testWidgets(
+        'Renders fallback icon when fallbackEmoji is empty and imageUrl is empty string',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(

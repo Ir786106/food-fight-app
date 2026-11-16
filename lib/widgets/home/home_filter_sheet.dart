@@ -118,13 +118,15 @@ class _HomeFilterSheetState extends State<HomeFilterSheet> {
                 backgroundColor: AppColors.brandYellow,
                 foregroundColor: AppColors.brandMaroon,
                 minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: () {
                 widget.onApply(_filterOnlyVeg, _filterOnlySpicy, _sortBy);
                 Navigator.pop(context);
               },
-              child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.w800)),
+              child: const Text('Apply Filters',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
             ),
           ],
         ),

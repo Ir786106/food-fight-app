@@ -42,7 +42,9 @@ class NotFoundScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -53,7 +55,9 @@ class NotFoundScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -61,19 +65,24 @@ class NotFoundScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.brandYellow,
                   foregroundColor: AppColors.onYellow,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onYellow),
+                icon: const Icon(Icons.arrow_back_rounded,
+                    color: AppColors.onYellow),
                 label: const Text(
                   'Go Back',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onYellow),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: AppColors.onYellow),
                 ),
                 onPressed: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
                   } else {
-                    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
+                    Navigator.of(context, rootNavigator: true)
+                        .pushNamedAndRemoveUntil('/home', (r) => false);
                   }
                 },
               ),

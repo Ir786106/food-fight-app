@@ -7,10 +7,14 @@ import '../../../providers/deal_provider.dart';
 import '../../../providers/menu_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/admin/admin_scaffold.dart';
+import '../../../widgets/super_admin/super_admin_scaffold.dart';
+import '../../../widgets/common/error_view.dart';
 import 'add_edit_deal_dialog.dart';
 
 class ManageDealsScreen extends StatefulWidget {
-  const ManageDealsScreen({super.key});
+  const ManageDealsScreen({super.key, this.platformWide = false});
+
+  final bool platformWide;
 
   @override
   State<ManageDealsScreen> createState() => _ManageDealsScreenState();
@@ -21,11 +25,26 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final auth = context.read<AuthProvider>();
-      final branchId = auth.currentUser?.branchId;
+      final branchId = _managementBranch(auth);
+      if (branchId == null) return;
       context.read<DealProvider>().watchDeals(branchId: branchId);
       context.read<MenuProvider>().watchMenuItems(branchId: branchId);
     });
+  }
+
+  String? _managementBranch(AuthProvider auth) {
+    final user = auth.currentUser;
+    if (user == null || !user.isActive || !user.isAdmin) return null;
+    if (widget.platformWide) return user.isSuperAdmin ? 'all' : null;
+    if (!(user.can('deals') || user.can('coupons'))) return null;
+    final branchId = user.branchId?.trim();
+    return branchId == null ||
+            branchId.isEmpty ||
+            branchId.toLowerCase() == 'all'
+        ? null
+        : branchId;
   }
 
   @override
@@ -34,40 +53,67 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final deals = dealProvider.deals;
+    final branchId = _managementBranch(context.watch<AuthProvider>());
+    final deals = dealProvider.deals
+        .where((deal) => widget.platformWide
+            ? (deal.branchId == null ||
+                deal.branchId!.isEmpty ||
+                deal.branchId == 'all')
+            : deal.branchId == branchId)
+        .toList();
+    final title = widget.platformWide
+        ? 'Platform Deals & Offers'
+        : 'Branch Deals & Combos';
 
-    return AdminScaffold(
-      currentRoute: '/admin/deals',
+    final appBar = AppBar(
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Branch Deals & Combos', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh Deals',
-            onPressed: () {
-              final branchId = context.read<AuthProvider>().currentUser?.branchId;
-              dealProvider.watchDeals(branchId: branchId);
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.brandYellow,
-        foregroundColor: AppColors.onYellow,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Create Deal', style: TextStyle(fontWeight: FontWeight.bold)),
-        onPressed: () => _openAddEditDialog(context),
-      ),
-      body: dealProvider.isLoading && deals.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : deals.isEmpty
-              ? _buildEmptyState(context)
-              : _buildDealsList(context, deals, isDark, colorScheme),
+      elevation: 0,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh_rounded),
+          tooltip: 'Refresh Deals',
+          onPressed: branchId == null ? null : dealProvider.refreshDeals,
+        ),
+        const SizedBox(width: 8),
+      ],
     );
+    final fab = branchId != null && deals.isNotEmpty
+        ? FloatingActionButton.extended(
+            backgroundColor: AppColors.brandYellow,
+            foregroundColor: AppColors.onYellow,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Create Deal',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () => _openAddEditDialog(context),
+          )
+        : null;
+    final body = branchId == null
+        ? const ErrorView(
+            message:
+                'An authorized branch assignment is required to manage deals.')
+        : dealProvider.isLoading && deals.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : dealProvider.loadError != null
+                ? ErrorView(
+                    message: dealProvider.loadError!,
+                    onRetry: dealProvider.refreshDeals)
+                : deals.isEmpty
+                    ? _buildEmptyState(context)
+                    : _buildDealsList(context, deals, isDark, colorScheme);
+    return widget.platformWide
+        ? SuperAdminScaffold(
+            currentRoute: '/super-admin/deals',
+            backgroundColor: colorScheme.surface,
+            appBar: appBar,
+            body: body,
+            floatingActionButton: fab)
+        : AdminScaffold(
+            currentRoute: '/admin/deals',
+            backgroundColor: colorScheme.surface,
+            appBar: appBar,
+            body: body,
+            floatingActionButton: fab);
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -95,21 +141,28 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Create special combos, meal platters, or percentage discounts for your branch.\nThey will show up automatically on customer apps.',
+            Text(
+              widget.platformWide
+                  ? 'Create offers available to every branch.'
+                  : 'Create offers for this branch.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 13.5),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13.5),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brandYellow,
                 foregroundColor: AppColors.onYellow,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Create First Deal', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: const Text('Create First Deal',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               onPressed: () => _openAddEditDialog(context),
             ),
           ],
@@ -154,6 +207,11 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
   ) {
     final dealProvider = context.read<DealProvider>();
     final isValid = deal.isValidNow;
+    final editable = context
+            .read<AuthProvider>()
+            .currentUser
+            ?.canEditBranchRecord(deal.branchId) ==
+        true;
 
     return Container(
       decoration: BoxDecoration(
@@ -182,7 +240,8 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: isValid
                         ? AppColors.success.withValues(alpha: 0.15)
@@ -193,7 +252,9 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isValid ? Icons.check_circle_rounded : Icons.pause_circle_rounded,
+                        isValid
+                            ? Icons.check_circle_rounded
+                            : Icons.pause_circle_rounded,
                         size: 13,
                         color: isValid ? AppColors.success : Colors.grey,
                       ),
@@ -212,7 +273,8 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                 if (deal.branchId != null) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.brandYellow.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
@@ -231,9 +293,12 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                 Switch(
                   value: deal.isActive,
                   activeThumbColor: AppColors.brandYellow,
-                  onChanged: (val) => dealProvider.toggleStatus(deal.id, val),
+                  onChanged: editable
+                      ? (val) => dealProvider.toggleStatus(deal.id, val)
+                      : null,
                 ),
                 PopupMenuButton<String>(
+                  enabled: editable,
                   icon: const Icon(Icons.more_vert_rounded, size: 20),
                   onSelected: (val) {
                     if (val == 'edit') {
@@ -257,9 +322,11 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete_rounded, size: 18, color: AppColors.error),
+                          Icon(Icons.delete_rounded,
+                              size: 18, color: AppColors.error),
                           SizedBox(width: 8),
-                          Text('Delete Deal', style: TextStyle(color: AppColors.error)),
+                          Text('Delete Deal',
+                              style: TextStyle(color: AppColors.error)),
                         ],
                       ),
                     ),
@@ -302,14 +369,16 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                       runSpacing: 4,
                       children: deal.bundleItems.take(3).map((item) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             '${item.quantity}x ${item.name}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 11, fontWeight: FontWeight.w600),
                           ),
                         );
                       }).toList(),
@@ -339,7 +408,8 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.brandYellow.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
@@ -370,7 +440,8 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AddEditDealDialog(deal: deal),
+      builder: (ctx) =>
+          AddEditDealDialog(deal: deal, platformWide: widget.platformWide),
     );
   }
 
@@ -380,7 +451,8 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
       context: ctx,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Delete Deal'),
-        content: Text('Are you sure you want to permanently remove "${deal.title}"?'),
+        content: Text(
+            'Are you sure you want to permanently remove "${deal.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
@@ -398,7 +470,8 @@ class _ManageDealsScreenState extends State<ManageDealsScreen> {
     if (confirm == true) {
       await provider.deleteDeal(deal.id);
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(content: Text('Deal "${deal.title}" deleted')),
         );
       }

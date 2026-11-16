@@ -12,7 +12,8 @@ abstract class IDeliveryAreaService {
   Future<DeliveryAreaModel?> getDeliveryAreaByName(String name);
 
   /// Get delivery areas by restaurant
-  Future<List<DeliveryAreaModel>> getDeliveryAreasByRestaurant(String restaurantId);
+  Future<List<DeliveryAreaModel>> getDeliveryAreasByRestaurant(
+      String restaurantId);
 
   /// Create delivery area
   Future<DeliveryAreaModel?> createDeliveryArea(DeliveryAreaModel area);

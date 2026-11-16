@@ -20,7 +20,8 @@ class SystemSettingsModel {
   final bool smsNotificationsEnabled;
   final int welcomeTokens;
   final int loyaltyEarnRate; // Spend amount per token earned (e.g. 100 Rs)
-  final double loyaltyRedeemRate; // Currency value per token redeemed (e.g. 1.0 Rs)
+  final double
+      loyaltyRedeemRate; // Currency value per token redeemed (e.g. 1.0 Rs)
   final int minTokensToRedeem;
   final DateTime updatedAt;
 
@@ -78,17 +79,22 @@ class SystemSettingsModel {
       contactEmail: contactEmail ?? this.contactEmail,
       contactPhone: contactPhone ?? this.contactPhone,
       supportWhatsApp: supportWhatsApp ?? this.supportWhatsApp,
-      defaultDeliveryCharge: defaultDeliveryCharge ?? this.defaultDeliveryCharge,
-      freeDeliveryThreshold: freeDeliveryThreshold ?? this.freeDeliveryThreshold,
+      defaultDeliveryCharge:
+          defaultDeliveryCharge ?? this.defaultDeliveryCharge,
+      freeDeliveryThreshold:
+          freeDeliveryThreshold ?? this.freeDeliveryThreshold,
       orderCancellationWindowMinutes:
           orderCancellationWindowMinutes ?? this.orderCancellationWindowMinutes,
       isStoreOpen: isStoreOpen ?? this.isStoreOpen,
       maintenanceMode: maintenanceMode ?? this.maintenanceMode,
       allowCashOnDelivery: allowCashOnDelivery ?? this.allowCashOnDelivery,
       allowOnlinePayment: allowOnlinePayment ?? this.allowOnlinePayment,
-      pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
-      emailNotificationsEnabled: emailNotificationsEnabled ?? this.emailNotificationsEnabled,
-      smsNotificationsEnabled: smsNotificationsEnabled ?? this.smsNotificationsEnabled,
+      pushNotificationsEnabled:
+          pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      emailNotificationsEnabled:
+          emailNotificationsEnabled ?? this.emailNotificationsEnabled,
+      smsNotificationsEnabled:
+          smsNotificationsEnabled ?? this.smsNotificationsEnabled,
       welcomeTokens: welcomeTokens ?? this.welcomeTokens,
       loyaltyEarnRate: loyaltyEarnRate ?? this.loyaltyEarnRate,
       loyaltyRedeemRate: loyaltyRedeemRate ?? this.loyaltyRedeemRate,
@@ -124,24 +130,32 @@ class SystemSettingsModel {
   }
 
   factory SystemSettingsModel.fromJson(Map<String, dynamic> json) {
+    bool flag(String key, bool fallback) => switch (json[key]) {
+          true || 1 || '1' || 'true' => true,
+          false || 0 || '0' || 'false' => false,
+          _ => fallback,
+        };
     return SystemSettingsModel(
       id: json['id']?.toString() ?? 'global_settings',
       appName: json['appName']?.toString() ?? 'Food Fight',
-      restaurantName: json['restaurantName']?.toString() ?? 'Food Fight Restaurant HQ',
+      restaurantName:
+          json['restaurantName']?.toString() ?? 'Food Fight Restaurant HQ',
       contactEmail: json['contactEmail']?.toString() ?? '',
       contactPhone: json['contactPhone']?.toString() ?? '',
       supportWhatsApp: json['supportWhatsApp']?.toString() ?? '',
-      defaultDeliveryCharge: SafeConvert.toDouble(json['defaultDeliveryCharge'], 150.0),
-      freeDeliveryThreshold: SafeConvert.toDouble(json['freeDeliveryThreshold'], 2500.0),
+      defaultDeliveryCharge:
+          SafeConvert.toDouble(json['defaultDeliveryCharge'], 150.0),
+      freeDeliveryThreshold:
+          SafeConvert.toDouble(json['freeDeliveryThreshold'], 2500.0),
       orderCancellationWindowMinutes:
           SafeConvert.toInt(json['orderCancellationWindowMinutes'], 10),
-      isStoreOpen: json['isStoreOpen'] ?? true,
-      maintenanceMode: json['maintenanceMode'] ?? false,
-      allowCashOnDelivery: json['allowCashOnDelivery'] ?? true,
-      allowOnlinePayment: json['allowOnlinePayment'] ?? true,
-      pushNotificationsEnabled: json['pushNotificationsEnabled'] ?? true,
-      emailNotificationsEnabled: json['emailNotificationsEnabled'] ?? true,
-      smsNotificationsEnabled: json['smsNotificationsEnabled'] ?? true,
+      isStoreOpen: flag('isStoreOpen', true),
+      maintenanceMode: flag('maintenanceMode', false),
+      allowCashOnDelivery: flag('allowCashOnDelivery', true),
+      allowOnlinePayment: flag('allowOnlinePayment', true),
+      pushNotificationsEnabled: flag('pushNotificationsEnabled', true),
+      emailNotificationsEnabled: flag('emailNotificationsEnabled', true),
+      smsNotificationsEnabled: flag('smsNotificationsEnabled', true),
       welcomeTokens: SafeConvert.toInt(json['welcomeTokens'], 50),
       loyaltyEarnRate: SafeConvert.toInt(json['loyaltyEarnRate'], 100),
       loyaltyRedeemRate: SafeConvert.toDouble(json['loyaltyRedeemRate'], 1.0),

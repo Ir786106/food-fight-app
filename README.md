@@ -84,6 +84,10 @@ flowchart TD
 
 </details>
 
+Flutter keeps Provider and ChangeNotifier for session and feature state. Named routes in `lib/routes` apply role guards. New feature code can live under `lib/features/<role>`, with reusable UI under `lib/core/design_system` and shared data access under `lib/shared/repositories`. Existing screens, models, providers, and services retain their paths as features migrate. The menu-report route is an example of a feature module using a shared repository.
+
+Firebase Auth identifies accounts, Firestore stores business data, and Cloud Functions validate privileged operations. Firebase Messaging delivers push alerts. The signed Supabase upload path is for images. Existing Firebase Storage media URLs remain readable. See the [environment setup guide](docs/ENVIRONMENT_SETUP.md) and [example settings](.env.example) for client configuration. Keep the Supabase service-role credential in the Cloud Functions secret store.
+
 ## How an order moves
 
 1. **Choose a branch and build the cart.** The customer selects a delivery area and adds dishes, variants, and add-ons.
@@ -101,6 +105,7 @@ Checkout currently supports Cash on Delivery. Maps, SMS sign-in, Google sign-in,
 | [Flutter entry](lib/main.dart) · [Customer](lib/main_customer.dart) · [Rider](lib/main_rider.dart) · [Admin](lib/main_admin.dart) | Shared startup and role-specific app editions |
 | [Backend functions](functions/index.js) · [Order lifecycle](functions/order_lifecycle.js) | Checkout, provisioning, order mutations, dispatch, notifications, and settlement |
 | [Firestore rules](firestore.rules) · [Storage rules](storage.rules) · [Indexes](firestore.indexes.json) | Client access controls and query indexes |
+| [Staging verification](docs/STAGING_VERIFICATION.md) · [Release preparation](docs/RELEASE_PREPARATION.md) | Tenant backfill, access checks, builds and release gates |
 | [Data contracts](docs/DATABASE.md) · [API guide](docs/API.md) | Document shapes, collections, and callable interfaces |
 
 </details>
@@ -133,6 +138,7 @@ Open a second terminal in the repository directory.
 $env:GCLOUD_PROJECT = 'demo-food-fight'
 $env:FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9187'
 $env:FIRESTORE_EMULATOR_HOST = '127.0.0.1:8687'
+$env:FOOD_FIGHT_DEMO_PASSWORD = Read-Host -MaskInput 'Set an emulator-only password (12+ characters)'
 node functions/seed_local_demo.js
 
 flutter run -d chrome --web-hostname 127.0.0.1 --web-port 8101 -t lib/main_customer.dart --dart-define=FOODFIGHT_LOCAL_DEMO=true
@@ -143,10 +149,35 @@ flutter run -d chrome --web-hostname 127.0.0.1 --web-port 8101 -t lib/main_custo
 | Customer | `demo-customer@example.test` | `lib/main_customer.dart` | `8101` |
 | Kitchen admin | `demo-admin@example.test` | `lib/main_admin.dart` | `8103` |
 | Rider | `demo-rider@example.test` | `lib/main_rider.dart` | `8102` |
+| Super Admin | `demo-super-admin@example.test` | `lib/main_admin.dart` | `8103` |
 
-All three emulator-only accounts use `FoodFight-Demo-123`. Use the corresponding entry point and port when launching each role.
+All four emulator-only accounts use `the value of FOOD_FIGHT_DEMO_PASSWORD`. Use the corresponding entry point and port when launching each role.
 
 </details>
+
+## Role QA checklist
+
+Use separate test accounts in the local demo or staging. Exercise a narrow phone layout and a desktop layout, light and dark themes, and large text. Check Urdu direction and translated labels where supported.
+
+| Role | Manual checks |
+| :--- | :--- |
+| Customer | Select a branch, customize two identical dishes with different instructions, apply a coupon, confirm the COD quote, track the order, reorder, and submit a menu report. Change the default address and verify another account cannot access it. |
+| Rider | Go online, accept an offer before expiry, complete pickup and COD handover, and check the Completed tab. Reopen the app mid-delivery and test GPS denial. Verify a rider cannot view another rider's private profile. |
+| Branch admin and staff | Compare two branch accounts. Refresh Orders, assign an in-branch rider, settle COD, apply a menu availability change, and export a report. Verify a limited staff account cannot mutate another branch's promotions or read private customer records. Resolve a menu issue report from your branch. |
+| Super Admin | Provision a staff login, complete password setup, suspend and reactivate it, and verify the audit trail. Suspend a branch, confirm that new checkout is denied, then reactivate it. Check the user directory filters and branch preview. |
+
+### Rules and rollout checks
+
+- Verify that privileged Auth UIDs have matching active Firestore user profiles before enabling the updated rules.
+- Add the declared indexes before releasing clients that use the menu-report and customer-review queries. Review legacy branch-owned records with missing scope and assign a branch only when ownership is known. Shared catalog records remain readable and require Super Admin to edit.
+- Deploy Functions, Firestore rules, and client updates together in staging. Run role QA and replay the [emulator tests](docs/TESTING.md) before promotion.
+- Deploy the rider earnings index before publishing the client. Older active orders without `status` need a verified status backfill to appear outside the recent history window. Older delivered orders without a Firestore timestamp in `updatedAt` need a verified timestamp backfill to count toward earnings.
+- Platform restaurant catalog writes require Super Admin access. Populate the catalog through an authorized seed or import. Existing restaurant documents and public reads are preserved.
+- The delivery waitlist component reports write failures. It remains unused in the app and requires a secured backend before activation.
+- The Admin customer directory derives branch scope from the signed-in staff profile. It shows up to 100 branch-registered customers and customers found in the latest 300 branch orders. Pull to refresh for current results. Branch account restrictions apply to new checkouts at that branch. Platform account blocks remain global.
+- Deploy the customer management and checkout Functions before shipping the updated Admin client. Coordinate the rules cutover with the Admin client rollout. Older Admin clients lose their direct customer-directory access when the new rules take effect. Existing customer documents and orders are retained, and historical platform blocks keep applying until reviewed by a Super Admin.
+- Remaining architecture work includes broader Urdu coverage and completing tenant isolation for other legacy collections.
+- Staff access to chats, menu reports, rider assignments, audit logs, and review moderation requires a concrete matching branch. Review records with an empty branch or `all` in staging and backfill only where ownership is known. Customer-owned chats remain accessible to their owners.
 
 ## Developer guides
 

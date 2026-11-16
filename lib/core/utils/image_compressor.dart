@@ -17,7 +17,9 @@ class ImageCompressor {
 
       final decoded = img.decodeImage(inputBytes);
       if (decoded == null) {
-        AppLogger.warn('Could not decode image for compression, returning original bytes', tag: 'ImageCompressor');
+        AppLogger.warn(
+            'Could not decode image for compression, returning original bytes',
+            tag: 'ImageCompressor');
         return inputBytes;
       }
 
@@ -41,7 +43,8 @@ class ImageCompressor {
       );
       return Uint8List.fromList(compressedJpg);
     } catch (e) {
-      AppLogger.error('Image compression failed: $e, falling back to original', tag: 'ImageCompressor');
+      AppLogger.error('Image compression failed: $e, falling back to original',
+          tag: 'ImageCompressor');
       return inputBytes;
     }
   }

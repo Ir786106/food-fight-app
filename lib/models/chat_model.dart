@@ -46,7 +46,8 @@ class ChatModel {
   bool get isOpen => status == 'open';
   bool get isPending => status == 'pending';
   bool get isResolved => status == 'resolved';
-  bool get isOrderChat => type == 'order' && orderId != null && orderId!.isNotEmpty;
+  bool get isOrderChat =>
+      type == 'order' && orderId != null && orderId!.isNotEmpty;
 
   ChatModel copyWith({
     String? id,

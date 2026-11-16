@@ -12,7 +12,6 @@ import '../profile/profile_screen.dart';
 import '../../routes/app_routes.dart';
 import '../common/not_found_screen.dart';
 
-
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
@@ -184,7 +183,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       children: tabViews,
                     ),
                   ),
-                  if (screenWidth >= 1280 && _currentIndex == 0 && shouldShowNav)
+                  if (screenWidth >= 1280 &&
+                      _currentIndex == 0 &&
+                      shouldShowNav)
                     DesktopCartPanel(onOpenCart: _openCart),
                 ],
               )

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_language.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
@@ -20,7 +21,8 @@ class AdminCollapsibleSidebar extends StatefulWidget {
   });
 
   @override
-  State<AdminCollapsibleSidebar> createState() => _AdminCollapsibleSidebarState();
+  State<AdminCollapsibleSidebar> createState() =>
+      _AdminCollapsibleSidebarState();
 }
 
 class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
@@ -47,7 +49,8 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
     final unreadChats = context.watch<ChatProvider>().totalAdminUnread;
     final pendingOrders = context.watch<OrderProvider>().activeOrdersCount;
 
-    final sidebarBg = isDark ? const Color(0xFF16181D) : const Color(0xFF1E222B);
+    final sidebarBg =
+        isDark ? const Color(0xFF16181D) : const Color(0xFF1E222B);
     const textColor = Colors.white;
     final subtextColor = Colors.white.withValues(alpha: 0.65);
     const activeBg = AppColors.brandYellow;
@@ -80,7 +83,8 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
             // Navigation Menu (Scrollable)
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 children: [
                   // OVERVIEW
                   _buildSectionTitle('OVERVIEW'),
@@ -93,7 +97,9 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   ),
 
                   // ORDERS & LIVE OPS
-                  if (user == null || user.can('orders') || user.can('chats')) ...[
+                  if (user == null ||
+                      user.can('orders') ||
+                      user.can('chats')) ...[
                     _buildSectionTitle('OPERATIONS'),
                     if (user == null || user.can('orders'))
                       _buildNavItem(
@@ -118,7 +124,10 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   ],
 
                   // MENU, DEALS & TEMPLATES
-                  if (user == null || user.can('menu') || user.can('categories') || user.can('coupons')) ...[
+                  if (user == null ||
+                      user.can('menu') ||
+                      user.can('categories') ||
+                      user.can('coupons')) ...[
                     _buildSectionTitle('MENU & OFFERS'),
                     if (user == null || user.can('menu'))
                       _buildNavItem(
@@ -147,7 +156,9 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   ],
 
                   // CUSTOMERS, LOYALTY & REVIEWS
-                  if (user == null || user.can('customers') || user.can('reports')) ...[
+                  if (user == null ||
+                      user.can('customers') ||
+                      user.can('reports')) ...[
                     _buildSectionTitle('CUSTOMERS & FEEDBACK'),
                     if (user == null || user.can('customers'))
                       _buildNavItem(
@@ -167,7 +178,9 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   ],
 
                   // FLEET & LOGISTICS
-                  if (user == null || user.can('delivery_areas') || user.can('riders')) ...[
+                  if (user == null ||
+                      user.can('delivery_areas') ||
+                      user.can('riders')) ...[
                     _buildSectionTitle('DELIVERY FLEET'),
                     if (user == null || user.can('riders')) ...[
                       _buildNavItem(
@@ -195,8 +208,21 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                       ),
                   ],
 
+                  if (user != null &&
+                      !user.isSubAdmin &&
+                      user.branchId?.isNotEmpty == true)
+                    _buildNavItem(
+                      title: 'Restaurant Settings',
+                      icon: Icons.settings_outlined,
+                      route: '/admin/settings',
+                      activeBg: activeBg,
+                      activeTextColor: activeTextColor,
+                    ),
+
                   // REPORTS & STAFF
-                  if (user == null || user.can('reports') || !user.isSubAdmin) ...[
+                  if (user == null ||
+                      user.can('reports') ||
+                      !user.isSubAdmin) ...[
                     _buildSectionTitle('INSIGHTS & STAFF'),
                     if (user == null || user.can('reports'))
                       _buildNavItem(
@@ -236,7 +262,7 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
         alignment: Alignment.center,
         child: IconButton(
           icon: const Icon(Icons.menu_open_rounded, color: Colors.white),
-          tooltip: 'Expand Sidebar',
+          tooltip: context.tr('Expand Sidebar'),
           onPressed: _toggleSidebar,
         ),
       );
@@ -272,7 +298,9 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   ),
                 ),
                 Text(
-                  branchId != null && branchId.isNotEmpty ? 'Branch: $branchId' : 'Management Portal',
+                  branchId != null && branchId.isNotEmpty
+                      ? 'Branch: $branchId'
+                      : 'Management Portal',
                   style: TextStyle(
                     color: subtextColor,
                     fontSize: 11,
@@ -285,8 +313,9 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white70, size: 20),
-            tooltip: 'Collapse Sidebar',
+            icon:
+                const Icon(Icons.menu_rounded, color: Colors.white70, size: 20),
+            tooltip: context.tr('Collapse Sidebar'),
             onPressed: _toggleSidebar,
           ),
         ],
@@ -298,14 +327,15 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
     if (_isCollapsed) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 6),
-        child: Divider(color: Colors.white10, thickness: 1, indent: 16, endIndent: 16),
+        child: Divider(
+            color: Colors.white10, thickness: 1, indent: 16, endIndent: 16),
       );
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 12, top: 14, bottom: 6),
+      padding: const EdgeInsetsDirectional.only(start: 12, top: 14, bottom: 6),
       child: Text(
-        title,
+        context.tr(title),
         style: const TextStyle(
           color: Colors.white38,
           fontSize: 10,
@@ -348,8 +378,9 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
-            mainAxisAlignment:
-                _isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: _isCollapsed
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               Stack(
                 clipBehavior: Clip.none,
@@ -385,11 +416,12 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    title,
+                    context.tr(title),
                     style: TextStyle(
                       color: isSelected ? activeTextColor : Colors.white,
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -397,7 +429,8 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                 ),
                 if (badgeCount != null && badgeCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Colors.black.withValues(alpha: 0.25)
@@ -424,7 +457,7 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Tooltip(
-          message: title,
+          message: context.tr(title),
           preferBelow: false,
           child: content,
         ),
@@ -437,7 +470,8 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
     );
   }
 
-  Widget _buildFooter(BuildContext context, dynamic user, Color textColor, Color subtextColor) {
+  Widget _buildFooter(
+      BuildContext context, dynamic user, Color textColor, Color subtextColor) {
     final themeProvider = context.watch<ThemeProvider>();
     final isDark = themeProvider.isDarkMode;
 
@@ -452,13 +486,15 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                 color: Colors.white70,
                 size: 20,
               ),
-              tooltip: isDark ? 'Switch to Light' : 'Switch to Dark',
+              tooltip:
+                  context.tr(isDark ? 'Switch to Light' : 'Switch to Dark'),
               onPressed: () => themeProvider.toggleTheme(),
             ),
             const SizedBox(height: 6),
             IconButton(
-              icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
-              tooltip: 'Sign Out',
+              icon: const Icon(Icons.logout_rounded,
+                  color: AppColors.error, size: 20),
+              tooltip: context.tr('Sign Out'),
               onPressed: () => _confirmSignOut(context),
             ),
           ],
@@ -517,12 +553,13 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
                   color: Colors.white70,
                   size: 18,
                 ),
-                tooltip: 'Toggle Theme',
+                tooltip: context.tr('Toggle Theme'),
                 onPressed: () => themeProvider.toggleTheme(),
               ),
               IconButton(
-                icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 18),
-                tooltip: 'Log out',
+                icon: const Icon(Icons.logout_rounded,
+                    color: AppColors.error, size: 18),
+                tooltip: context.tr('Sign Out'),
                 onPressed: () => _confirmSignOut(context),
               ),
             ],
@@ -538,12 +575,13 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
     final confirm = await showDialog<bool>(
       context: ctx,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Confirm Sign Out'),
-        content: const Text('Are you sure you want to end your administrative session?'),
+        title: Text(dialogCtx.tr('Confirm Sign Out')),
+        content: Text(dialogCtx
+            .tr('Are you sure you want to end your administrative session?')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(dialogCtx.tr('Cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -551,7 +589,7 @@ class _AdminCollapsibleSidebarState extends State<AdminCollapsibleSidebar> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Sign Out'),
+            child: Text(dialogCtx.tr('Sign Out')),
           ),
         ],
       ),

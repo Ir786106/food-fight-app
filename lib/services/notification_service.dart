@@ -45,7 +45,8 @@ class NotificationService implements INotificationService {
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
     } catch (e) {
-      AppLogger.error('Failed to get notifications: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to get notifications: $e',
+          tag: 'NotificationService');
       return [];
     }
   }
@@ -65,7 +66,8 @@ class NotificationService implements INotificationService {
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
     } catch (e) {
-      AppLogger.error('Failed to get unread notifications: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to get unread notifications: $e',
+          tag: 'NotificationService');
       return [];
     }
   }
@@ -79,22 +81,27 @@ class NotificationService implements INotificationService {
       data['id'] = doc.id;
       return NotificationModel.fromJson(data);
     } catch (e) {
-      AppLogger.error('Failed to get notification: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to get notification: $e',
+          tag: 'NotificationService');
       return null;
     }
   }
 
   @override
-  Future<NotificationModel?> createNotification(NotificationModel notification) async {
+  Future<NotificationModel?> createNotification(
+      NotificationModel notification) async {
     try {
       final docRef = _col().doc();
       final data = notification.toJson();
       data['id'] = docRef.id;
       await docRef.set(data);
-      AppLogger.info('Created notification ${docRef.id} for user ${notification.userId}', tag: 'NotificationService');
+      AppLogger.info(
+          'Created notification ${docRef.id} for user ${notification.userId}',
+          tag: 'NotificationService');
       return notification.copyWith(isRead: notification.isRead);
     } catch (e) {
-      AppLogger.error('Failed to create notification: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to create notification: $e',
+          tag: 'NotificationService');
       return null;
     }
   }
@@ -103,9 +110,11 @@ class NotificationService implements INotificationService {
   Future<void> markAsRead(String notificationId) async {
     try {
       await _col().doc(notificationId).update({'isRead': 1});
-      AppLogger.info('Marked notification $notificationId as read', tag: 'NotificationService');
+      AppLogger.info('Marked notification $notificationId as read',
+          tag: 'NotificationService');
     } catch (e) {
-      AppLogger.error('Failed to mark notification as read: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to mark notification as read: $e',
+          tag: 'NotificationService');
       rethrow;
     }
   }
@@ -120,12 +129,16 @@ class NotificationService implements INotificationService {
 
       for (var offset = 0; offset < unread.docs.length; offset += 400) {
         final batch = _firestore.batch();
-        for (final doc in unread.docs.skip(offset).take(400)) { batch.update(doc.reference, {'isRead': 1}); }
+        for (final doc in unread.docs.skip(offset).take(400)) {
+          batch.update(doc.reference, {'isRead': 1});
+        }
         await batch.commit();
       }
-      AppLogger.info('Marked all notifications as read for $userId', tag: 'NotificationService');
+      AppLogger.info('Marked all notifications as read for $userId',
+          tag: 'NotificationService');
     } catch (e) {
-      AppLogger.error('Failed to mark all as read: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to mark all as read: $e',
+          tag: 'NotificationService');
       rethrow;
     }
   }
@@ -134,9 +147,11 @@ class NotificationService implements INotificationService {
   Future<void> deleteNotification(String notificationId) async {
     try {
       await _col().doc(notificationId).delete();
-      AppLogger.info('Deleted notification $notificationId', tag: 'NotificationService');
+      AppLogger.info('Deleted notification $notificationId',
+          tag: 'NotificationService');
     } catch (e) {
-      AppLogger.error('Failed to delete notification: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to delete notification: $e',
+          tag: 'NotificationService');
       rethrow;
     }
   }
@@ -147,12 +162,16 @@ class NotificationService implements INotificationService {
       final docs = await _col().where('userId', isEqualTo: userId).get();
       for (var offset = 0; offset < docs.docs.length; offset += 400) {
         final batch = _firestore.batch();
-        for (final doc in docs.docs.skip(offset).take(400)) { batch.delete(doc.reference); }
+        for (final doc in docs.docs.skip(offset).take(400)) {
+          batch.delete(doc.reference);
+        }
         await batch.commit();
       }
-      AppLogger.info('Deleted all notifications for $userId', tag: 'NotificationService');
+      AppLogger.info('Deleted all notifications for $userId',
+          tag: 'NotificationService');
     } catch (e) {
-      AppLogger.error('Failed to delete all notifications: $e', tag: 'NotificationService');
+      AppLogger.error('Failed to delete all notifications: $e',
+          tag: 'NotificationService');
       rethrow;
     }
   }
@@ -164,7 +183,8 @@ class NotificationService implements INotificationService {
     String status,
   ) async {
     final title = 'Order Update: ${_formatStatus(status)}';
-    final message = 'Your order #${orderId.length > 8 ? orderId.substring(0, 8) : orderId} is now ${_formatStatus(status).toLowerCase()}.';
+    final message =
+        'Your order #${orderId.length > 8 ? orderId.substring(0, 8) : orderId} is now ${_formatStatus(status).toLowerCase()}.';
 
     final notification = NotificationModel(
       id: '',

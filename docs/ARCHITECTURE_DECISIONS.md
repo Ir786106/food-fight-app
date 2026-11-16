@@ -6,3 +6,5 @@
 - Use one pricing routine for quote and commit. Keep the placement idempotency contract and revalidate at commit time. Offer only COD at checkout until a provider is verified.
 - The master prompt resolves the PRD open question in favor of a multi-restaurant marketplace and specifies manual and nearest-available rider assignment. Adaptive location cadence supersedes the reference API's fixed interval.
 - Prefer server-authorized, scoped Supabase uploads. The legacy direct upload path requires a coordinated application and bucket-policy migration.
+- Backfill verified legacy ownership additively before enforcing any future tenant boundary. Keep branch financial documents private and require public/private parity before removing old public fields. Keep the tenant and financial operations separate.
+- Keep English and Urdu catalogs in ARB. The generated Dart lookup preserves existing callers while remaining UI strings are moved to the catalogs.

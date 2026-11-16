@@ -39,7 +39,8 @@ class ApiClient {
   Dio get dio => _dio!;
 
   // GET request
-  Future<dynamic> get(String url, {Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> get(String url,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio!.get(url, queryParameters: queryParameters);
       return _handleResponse(response);
@@ -49,7 +50,8 @@ class ApiClient {
   }
 
   // POST request
-  Future<dynamic> post(String url, dynamic data, {Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> post(String url, dynamic data,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio!.post(
         url,
@@ -63,7 +65,8 @@ class ApiClient {
   }
 
   // PUT request
-  Future<dynamic> put(String url, dynamic data, {Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> put(String url, dynamic data,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio!.put(
         url,
@@ -77,9 +80,11 @@ class ApiClient {
   }
 
   // DELETE request
-  Future<dynamic> delete(String url, {Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> delete(String url,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await _dio!.delete(url, queryParameters: queryParameters);
+      final response =
+          await _dio!.delete(url, queryParameters: queryParameters);
       return _handleResponse(response);
     } on DioException catch (e) {
       throw Exception('Network error: ${e.message}');

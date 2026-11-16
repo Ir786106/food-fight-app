@@ -22,12 +22,18 @@ enum AppEdition {
   bool allowsRoute(String route) {
     if (this == AppEdition.combined) return true;
     if (const {
-      '/splash', '/login', '/forgot-password', '/reset-password',
-      '/notifications', '/settings', '/edit-profile',
+      '/splash',
+      '/login',
+      '/forgot-password',
+      '/reset-password',
+      '/notifications',
+      '/settings',
+      '/edit-profile',
     }.contains(route)) {
       return true;
     }
-    final adminRoute = route.startsWith('/admin/') || route.startsWith('/super-admin/');
+    final adminRoute =
+        route.startsWith('/admin/') || route.startsWith('/super-admin/');
     final riderRoute = route == '/rider' || route.startsWith('/rider/');
     return switch (this) {
       AppEdition.admin => adminRoute,

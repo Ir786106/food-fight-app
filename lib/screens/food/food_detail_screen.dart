@@ -1,3 +1,4 @@
+import '../../core/localization/app_language.dart';
 import '../../widgets/menu/report_dish_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +25,8 @@ class FoodDetailScreen extends StatefulWidget {
   State<FoodDetailScreen> createState() => _FoodDetailScreenState();
 }
 
-class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerProviderStateMixin {
+class _FoodDetailScreenState extends State<FoodDetailScreen>
+    with SingleTickerProviderStateMixin {
   int _quantity = 1;
   final _noteController = TextEditingController();
   MenuVariant? _selectedVariant;
@@ -117,13 +119,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                           height: 280,
                           color: Colors.white,
                           alignment: Alignment.center,
-                          child: Text(food.imageEmoji, style: const TextStyle(fontSize: 120)),
+                          child: Text(food.imageEmoji,
+                              style: const TextStyle(fontSize: 120)),
                         ),
                 ),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+              icon: const Icon(Icons.close_rounded,
+                  color: Colors.white, size: 28),
               onPressed: () => Navigator.pop(ctx),
             ),
           ],
@@ -163,15 +167,18 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     } on MissingPluginException catch (error) {
       AppLogger.error('Dish sharing is unavailable: $error', tag: 'FoodDetail');
       if (mounted) {
-        AppSnackbar.showError(context, 'Sharing is unavailable on this device.');
+        AppSnackbar.showError(
+            context, 'Sharing is unavailable on this device.');
       }
     }
   }
 
   Future<void> _reportDish(FoodModel food) async {
-    final sent = await showDialog<bool>(context: context,
-      builder: (_) => ReportDishDialog(food: food));
-    if (mounted && sent == true) AppSnackbar.showSuccess(context, 'Report sent to the restaurant.');
+    final sent = await showDialog<bool>(
+        context: context, builder: (_) => ReportDishDialog(food: food));
+    if (mounted && sent == true) {
+      AppSnackbar.showSuccess(context, 'Report sent to the restaurant.');
+    }
   }
 
   void _handleAddToCart(FoodModel food, CartProvider cart, double totalPrice) {
@@ -196,7 +203,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius16)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radius16)),
           title: const Text('Start New Order?'),
           content: const Text(
             'Your cart contains items from a different branch. Adding this item will start a fresh cart for this branch.',
@@ -280,7 +288,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.fastfood_outlined, size: 64, color: AppColors.textMuted),
+                const Icon(Icons.fastfood_outlined,
+                    size: 64, color: AppColors.textMuted),
                 const SizedBox(height: 16),
                 const Text(
                   'Dish Not Found',
@@ -298,7 +307,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.brandYellow,
                     foregroundColor: AppColors.brandMaroon,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('Go Back'),
@@ -333,8 +343,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
       _initialized = true;
     }
 
-    final double basePrice = _selectedVariant != null ? _selectedVariant!.finalPrice : food.price;
-    final double addonsTotal = _selectedAddons.fold(0.0, (sum, a) => sum + a.price);
+    final double basePrice =
+        _selectedVariant != null ? _selectedVariant!.finalPrice : food.price;
+    final double addonsTotal =
+        _selectedAddons.fold(0.0, (sum, a) => sum + a.price);
     final double unitPrice = basePrice + addonsTotal;
     final double totalPrice = unitPrice * _quantity;
 
@@ -352,7 +364,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+                color:
+                    isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isDark ? AppColors.darkBorder : AppColors.border,
@@ -379,7 +392,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           ),
         ),
         title: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: (context.screenWidth - 150).clamp(100.0, 600.0)),
+          constraints: BoxConstraints(
+              maxWidth: (context.screenWidth - 150).clamp(100.0, 600.0)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -425,7 +439,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceElevated : Colors.white,
+                      color:
+                          isDark ? AppColors.darkSurfaceElevated : Colors.white,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isDark ? AppColors.darkBorder : AppColors.border,
@@ -433,7 +448,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                          color: Colors.black
+                              .withValues(alpha: isDark ? 0.2 : 0.05),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -442,7 +458,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: Icon(
-                        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        isFav
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
                         color: isFav ? AppColors.tomato : colorScheme.onSurface,
                         size: 20,
                       ),
@@ -479,8 +497,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               ),
               child: PopupMenuButton<String>(
                 padding: EdgeInsets.zero,
-                icon: Icon(Icons.more_vert_rounded, color: colorScheme.onSurface, size: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radius14)),
+                icon: Icon(Icons.more_vert_rounded,
+                    color: colorScheme.onSurface, size: 20),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimens.radius14)),
                 onSelected: (val) {
                   if (val == 'share') _shareDish(foodItem);
                   if (val == 'report') _reportDish(foodItem);
@@ -500,9 +520,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                     value: 'report',
                     child: Row(
                       children: [
-                        Icon(Icons.flag_outlined, size: 18, color: AppColors.error),
+                        Icon(Icons.flag_outlined,
+                            size: 18, color: AppColors.error),
                         SizedBox(width: 10),
-                        Text('Report Issue', style: TextStyle(color: AppColors.error)),
+                        Text('Report Issue',
+                            style: TextStyle(color: AppColors.error)),
                       ],
                     ),
                   ),
@@ -532,14 +554,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(26),
-                        color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                        color: isDark
+                            ? AppColors.darkSurfaceElevated
+                            : AppColors.surfaceMuted,
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.yellowSoft,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.yellowSoft,
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                            color: Colors.black
+                                .withValues(alpha: isDark ? 0.45 : 0.08),
                             blurRadius: 28,
                             spreadRadius: 2,
                             offset: const Offset(0, 10),
@@ -548,20 +575,21 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: food.imageUrl != null && food.imageUrl!.isNotEmpty
-                            ? NetworkImageView(
-                                imageUrl: food.imageUrl,
-                                width: 220,
-                                height: 220,
-                                fit: BoxFit.cover,
-                                fallbackEmoji: food.imageEmoji,
-                              )
-                            : Center(
-                                child: Text(
-                                  food.imageEmoji,
-                                  style: const TextStyle(fontSize: 100),
-                                ),
-                              ),
+                        child:
+                            food.imageUrl != null && food.imageUrl!.isNotEmpty
+                                ? NetworkImageView(
+                                    imageUrl: food.imageUrl,
+                                    width: 220,
+                                    height: 220,
+                                    fit: BoxFit.cover,
+                                    fallbackEmoji: food.imageEmoji,
+                                  )
+                                : Center(
+                                    child: Text(
+                                      food.imageEmoji,
+                                      style: const TextStyle(fontSize: 100),
+                                    ),
+                                  ),
                       ),
                     ),
                   ),
@@ -573,16 +601,20 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      if ((_selectedVariant?.description?.trim().isNotEmpty ?? false) ||
+                      if ((_selectedVariant?.description?.trim().isNotEmpty ??
+                              false) ||
                           food.description.trim().isNotEmpty)
                         Text(
-                          _selectedVariant?.description?.trim().isNotEmpty == true
+                          _selectedVariant?.description?.trim().isNotEmpty ==
+                                  true
                               ? _selectedVariant!.description!.trim()
                               : food.description.trim(),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -595,693 +627,764 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
           );
 
           final detailsCard = Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title + Live Unit Price
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title + Live Unit Price
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        food.name,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.3,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
                         child: Text(
-                          food.name,
+                          'Rs. ${unitPrice.toStringAsFixed(0)}',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 23,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: -0.3,
-                            color: colorScheme.onSurface,
+                            color: isDark
+                                ? AppColors.brandYellow
+                                : AppColors.brandMaroon,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Rs. ${unitPrice.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 23,
-                              fontWeight: FontWeight.w900,
-                              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
-                  // Rating + Time + Spicy Badges
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (itemReviews.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.brandYellow.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(AppDimens.radius8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.star_rounded, size: 16, color: AppColors.onYellowDark),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${actualRating.toStringAsFixed(1)} (${itemReviews.length})',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.onYellowDark,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                // Rating + Time + Spicy Badges
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (itemReviews.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
-                          borderRadius: BorderRadius.circular(AppDimens.radius8),
-                          border: Border.all(
-                            color: isDark ? AppColors.darkBorder : AppColors.border,
-                          ),
+                          color: AppColors.brandYellow.withValues(alpha: 0.22),
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radius8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.access_time_rounded, size: 15, color: colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 5),
+                            const Icon(Icons.star_rounded,
+                                size: 16, color: AppColors.onYellowDark),
+                            const SizedBox(width: 4),
                             Text(
-                              '${food.prepTimeMinutes} mins',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
+                              '${actualRating.toStringAsFixed(1)} (${itemReviews.length})',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.onYellowDark,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      if (food.isSpicy)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.error.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(AppDimens.radius8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('🌶️', style: TextStyle(fontSize: 12)),
-                              SizedBox(width: 4),
-                              Text(
-                                'Spicy',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            ],
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceElevated
+                            : colorScheme.surface,
+                        borderRadius: BorderRadius.circular(AppDimens.radius8),
+                        border: Border.all(
+                          color:
+                              isDark ? AppColors.darkBorder : AppColors.border,
                         ),
-                    ],
-                  ),
-
-                  // 1-5 Interactive Spice Level Selector
-                  if (food.isSpicy) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Spice Intensity',
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.access_time_rounded,
+                              size: 15, color: colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${food.prepTimeMinutes} mins',
                             style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
                               color: colorScheme.onSurface,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              _spiceName(_spiceLevel),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: List.generate(5, (idx) {
-                        final lvl = idx + 1;
-                        final isSelected = _spiceLevel == lvl;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _spiceLevel = lvl);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.error.withValues(alpha: 0.18)
-                                    : (isDark ? AppColors.darkSurfaceElevated : Colors.grey.shade100),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.error
-                                      : (isDark ? Colors.white10 : Colors.grey.shade300),
-                                  width: isSelected ? 1.8 : 1,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    lvl == 5 ? '💀' : (lvl >= 4 ? '🔥' : '🌶️'),
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'L$lvl',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? AppColors.error : colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  // S / M / L Rounded-Square Selector (Ref A)
-                  if (food.hasVariants) ...[
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+                    if (food.isSpicy)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.15),
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radius8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
+                            Text('🌶️', style: TextStyle(fontSize: 12)),
+                            SizedBox(width: 4),
                             Text(
-                              'Size / Portion',
+                              'Spicy',
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: AppColors.errorSoft,
-                                borderRadius: BorderRadius.circular(AppDimens.radius8),
-                                border: Border.all(
-                                  color: AppColors.error.withValues(alpha: 0.35),
-                                ),
-                              ),
-                              child: const Text(
-                                'Required',
-                                style: TextStyle(
-                                  color: AppColors.error,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.error,
                               ),
                             ),
                           ],
                         ),
-                        if (_selectedVariant != null)
-                          Text(
-                            _selectedVariant!.label,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 10,
-                      children: food.variants!.map((v) {
-                        final isSelected = _selectedVariant?.label == v.label;
-                        final shortCode = _getShortVariantLabel(v.label);
-
-                        return GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedVariant = v);
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.brandYellow
-                                  : (isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted),
-                              borderRadius: BorderRadius.circular(AppDimens.radius16),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.brandYellow
-                                    : (isDark ? AppColors.darkBorder : AppColors.border),
-                                width: isSelected ? 2 : 1,
-                              ),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.brandYellow.withValues(alpha: 0.35),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    shortCode,
-                                    style: TextStyle(
-                                      fontSize: shortCode.length <= 2 ? 15 : 12,
-                                      fontWeight: FontWeight.w900,
-                                      height: 1.1,
-                                      color: isSelected ? AppColors.brandMaroon : AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'Rs.${v.finalPrice.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.1,
-                                      color: isSelected
-                                          ? AppColors.brandMaroon
-                                          : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
+                      ),
                   ],
+                ),
 
-                  // Quantity Stepper (− 1 +) with Yellow Plus (Ref A)
+                // 1-5 Interactive Spice Level Selector
+                if (food.isSpicy) ...[
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
-                          'Quantity',
+                          'Spice Intensity',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
-                          borderRadius: BorderRadius.circular(AppDimens.radius16),
-                          border: Border.all(
-                            color: isDark ? AppColors.darkBorder : AppColors.border,
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _spiceName(_spiceLevel),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.error,
+                            ),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              onTap: _quantity > 1
-                                  ? () {
-                                      HapticFeedback.selectionClick();
-                                      setState(() => _quantity--);
-                                    }
-                                  : null,
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: isDark ? AppColors.darkSurface : colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(AppDimens.radius12),
-                                ),
-                                child: Icon(
-                                  Icons.remove,
-                                  size: 18,
-                                  color: _quantity > 1
-                                      ? colorScheme.onSurface
-                                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                '$_quantity',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                setState(() => _quantity++);
-                              },
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: AppColors.brandYellow,
-                                  borderRadius: BorderRadius.circular(AppDimens.radius12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.brandYellow.withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.add,
-                                  size: 18,
-                                  color: AppColors.onYellowDark,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 22),
-
-                  // Segmented Tabs (Overview / Options / Reviews)
-                  Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
-                      borderRadius: BorderRadius.circular(AppDimens.radius14),
-                      border: Border.all(
-                        color: isDark ? AppColors.darkBorder : AppColors.border,
-                      ),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      dividerColor: Colors.transparent,
-                      indicator: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(AppDimens.radius12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: colorScheme.onSurfaceVariant,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-                      tabs: const [
-                        Tab(text: 'Overview'),
-                        Tab(text: 'Options'),
-                        Tab(text: 'Reviews'),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Tab Contents
-                  if (_tabController.index == 0) ...[
-                    // Tab 0: Overview
-                    Text(
-                      'About this dish',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      food.description,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 14,
-                        height: 1.55,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                  ] else if (_tabController.index == 1) ...[
-                    // Tab 1: Options & Add-ons
-                    if (food.hasAddons) ...[
-                      Row(
-                        children: [
-                          Text(
-                            'Additional Options',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'Optional Add-ons',
-                              style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ...food.addons!.map((addon) {
-                        final isSelected = _selectedAddons.contains(addon);
-                        return GestureDetector(
+                  const SizedBox(height: 10),
+                  Row(
+                    children: List.generate(5, (idx) {
+                      final lvl = idx + 1;
+                      final isSelected = _spiceLevel == lvl;
+                      return Expanded(
+                        child: GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            setState(() {
-                              if (isSelected) {
-                                _selectedAddons.remove(addon);
-                              } else {
-                                _selectedAddons.add(addon);
-                              }
-                            });
+                            setState(() => _spiceLevel = lvl);
                           },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.primary.withValues(alpha: 0.1)
-                                  : (isDark ? AppColors.darkSurfaceElevated : colorScheme.surface),
-                              borderRadius: BorderRadius.circular(AppDimens.radius16),
+                                  ? AppColors.error.withValues(alpha: 0.18)
+                                  : (isDark
+                                      ? AppColors.darkSurfaceElevated
+                                      : Colors.grey.shade100),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.primary
-                                    : (isDark ? AppColors.darkBorder : AppColors.border),
+                                    ? AppColors.error
+                                    : (isDark
+                                        ? Colors.white10
+                                        : Colors.grey.shade300),
                                 width: isSelected ? 1.8 : 1,
                               ),
                             ),
-                            child: Row(
+                            child: Column(
                               children: [
-                                Container(
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.brandYellow : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: isSelected ? AppColors.brandYellow : (isDark ? AppColors.darkBorder : AppColors.border),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: isSelected ? const Icon(Icons.check, size: 16, color: AppColors.onYellow) : null,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    addon.name,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
                                 Text(
-                                  '+ Rs. ${addon.price.toStringAsFixed(0)}',
+                                  lvl == 5 ? '💀' : (lvl >= 4 ? '🔥' : '🌶️'),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'L$lvl',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? AppColors.brandYellow : AppColors.amberDark,
-                                    fontSize: 13.5,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? AppColors.error
+                                        : colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      }),
-                      const SizedBox(height: 16),
-                    ],
-
-                    Text(
-                      'Special Instructions',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _noteController,
-                      maxLines: 2,
-                      maxLength: 200,
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Extra sauce, no spicy seasoning...',
-                        filled: true,
-                        fillColor: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
-                        hintStyle: TextStyle(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                          fontSize: 13.5,
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppDimens.radius14),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.border,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    // Tab 2: Reviews
-                    _buildDishReviews(food, colorScheme, isDark),
-                  ],
+                      );
+                    }),
+                  ),
+                ],
 
-                  // Related Items Strip: "You may also like" (Ref A)
-                  Builder(
-                    builder: (context) {
-                      MenuProvider? menuProv;
-                      try {
-                        menuProv = Provider.of<MenuProvider>(context);
-                      } catch (_) {
-                        menuProv = null;
-                      }
-                      if (menuProv == null) return const SizedBox.shrink();
+                const SizedBox(height: 20),
 
-                      final relatedItems = menuProv.activeItems
-                          .where((item) => item.id != foodItem.id)
-                          .map((item) => FoodModel.fromMenuItem(item, categoryName: item.categoryId))
-                          .take(5)
-                          .toList();
-
-                      if (relatedItems.isEmpty) return const SizedBox.shrink();
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // S / M / L Rounded-Square Selector (Ref A)
+                if (food.hasVariants) ...[
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          const SizedBox(height: 24),
                           Text(
-                            'You may also like',
+                            'Size / Portion',
                             style: TextStyle(
-                              fontSize: 17,
+                              fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            height: 285,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: relatedItems.length,
-                              itemBuilder: (context, idx) {
-                                final item = relatedItems[idx];
-                                return ProductCard(
-                                  food: item,
-                                  heroTag: 'rel-${item.id}',
-                                  width: 160,
-                                  onTap: () => Navigator.of(context).pushReplacementNamed(
-                                    '/food-detail',
-                                    arguments: item,
-                                  ),
-                                );
-                              },
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorSoft,
+                              borderRadius:
+                                  BorderRadius.circular(AppDimens.radius8),
+                              border: Border.all(
+                                color: AppColors.error.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: const Text(
+                              'Required',
+                              style: TextStyle(
+                                color: AppColors.error,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ],
-                      );
-                    },
+                      ),
+                      if (_selectedVariant != null)
+                        Text(
+                          _selectedVariant!.label,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 10,
+                    children: food.variants!.map((v) {
+                      final isSelected = _selectedVariant?.label == v.label;
+                      final shortCode = _getShortVariantLabel(v.label);
 
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedVariant = v);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          constraints:
+                              const BoxConstraints(minWidth: 56, minHeight: 56),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.brandYellow
+                                : (isDark
+                                    ? AppColors.darkSurfaceElevated
+                                    : AppColors.surfaceMuted),
+                            borderRadius:
+                                BorderRadius.circular(AppDimens.radius16),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.brandYellow
+                                  : (isDark
+                                      ? AppColors.darkBorder
+                                      : AppColors.border),
+                              width: isSelected ? 2 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.brandYellow
+                                          .withValues(alpha: 0.35),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  shortCode,
+                                  style: TextStyle(
+                                    fontSize: shortCode.length <= 2 ? 15 : 12,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                    color: isSelected
+                                        ? AppColors.brandMaroon
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Rs.${v.finalPrice.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.1,
+                                    color: isSelected
+                                        ? AppColors.brandMaroon
+                                        : (isDark
+                                            ? AppColors.darkTextMuted
+                                            : AppColors.textMuted),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
                 ],
-              ),
-            );
+
+                // Quantity Stepper (− 1 +) with Yellow Plus (Ref A)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Quantity',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceElevated
+                            : colorScheme.surface,
+                        borderRadius: BorderRadius.circular(AppDimens.radius16),
+                        border: Border.all(
+                          color:
+                              isDark ? AppColors.darkBorder : AppColors.border,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black
+                                .withValues(alpha: isDark ? 0.2 : 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: _quantity > 1
+                                ? () {
+                                    HapticFeedback.selectionClick();
+                                    setState(() => _quantity--);
+                                  }
+                                : null,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkSurface
+                                    : colorScheme.surfaceContainerHighest,
+                                borderRadius:
+                                    BorderRadius.circular(AppDimens.radius12),
+                              ),
+                              child: Icon(
+                                Icons.remove,
+                                size: 18,
+                                color: _quantity > 1
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              '$_quantity',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _quantity++);
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: AppColors.brandYellow,
+                                borderRadius:
+                                    BorderRadius.circular(AppDimens.radius12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.brandYellow
+                                        .withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                size: 18,
+                                color: AppColors.onYellowDark,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+
+                // Segmented Tabs (Overview / Options / Reviews)
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceElevated
+                        : colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppDimens.radius14),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.border,
+                    ),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    indicator: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: colorScheme.onSurfaceVariant,
+                    labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13),
+                    unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 13),
+                    tabs: const [
+                      Tab(text: 'Overview'),
+                      Tab(text: 'Options'),
+                      Tab(text: 'Reviews'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Tab Contents
+                if (_tabController.index == 0) ...[
+                  // Tab 0: Overview
+                  Text(
+                    'About this dish',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    food.description,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                      height: 1.55,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ] else if (_tabController.index == 1) ...[
+                  // Tab 1: Options & Add-ons
+                  if (food.hasAddons) ...[
+                    Row(
+                      children: [
+                        Text(
+                          'Additional Options',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Optional Add-ons',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ...food.addons!.map((addon) {
+                      final isSelected = _selectedAddons.contains(addon);
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            if (isSelected) {
+                              _selectedAddons.remove(addon);
+                            } else {
+                              _selectedAddons.add(addon);
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.1)
+                                : (isDark
+                                    ? AppColors.darkSurfaceElevated
+                                    : colorScheme.surface),
+                            borderRadius:
+                                BorderRadius.circular(AppDimens.radius16),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : (isDark
+                                      ? AppColors.darkBorder
+                                      : AppColors.border),
+                              width: isSelected ? 1.8 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.brandYellow
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.brandYellow
+                                        : (isDark
+                                            ? AppColors.darkBorder
+                                            : AppColors.border),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.check,
+                                        size: 16, color: AppColors.onYellow)
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  addon.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '+ Rs. ${addon.price.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? AppColors.brandYellow
+                                      : AppColors.amberDark,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                  ],
+
+                  Text(
+                    context.tr('Special Instructions'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _noteController,
+                    maxLines: 2,
+                    maxLength: 200,
+                    decoration: InputDecoration(
+                      labelText: context.tr('Special Instructions'),
+                      hintText:
+                          context.tr('e.g. Extra sauce, no spicy seasoning...'),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkSurfaceElevated
+                          : colorScheme.surface,
+                      hintStyle: TextStyle(
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontSize: 13.5,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radius14),
+                        borderSide: BorderSide(
+                          color:
+                              isDark ? AppColors.darkBorder : AppColors.border,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  // Tab 2: Reviews
+                  _buildDishReviews(food, colorScheme, isDark),
+                ],
+
+                // Related Items Strip: "You may also like" (Ref A)
+                Builder(
+                  builder: (context) {
+                    MenuProvider? menuProv;
+                    try {
+                      menuProv = Provider.of<MenuProvider>(context);
+                    } catch (_) {
+                      menuProv = null;
+                    }
+                    if (menuProv == null) return const SizedBox.shrink();
+
+                    final relatedItems = menuProv.activeItems
+                        .where((item) => item.id != foodItem.id)
+                        .map((item) => FoodModel.fromMenuItem(item,
+                            categoryName: item.categoryId))
+                        .take(5)
+                        .toList();
+
+                    if (relatedItems.isEmpty) return const SizedBox.shrink();
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        Text(
+                          'You may also like',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 285,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: relatedItems.length,
+                            itemBuilder: (context, idx) {
+                              final item = relatedItems[idx];
+                              return ProductCard(
+                                food: item,
+                                heroTag: 'rel-${item.id}',
+                                width: 160,
+                                onTap: () =>
+                                    Navigator.of(context).pushReplacementNamed(
+                                  '/food-detail',
+                                  arguments: item,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
 
           return AdaptiveLayout(
             compact: (context, constraints, sizeClass) => SingleChildScrollView(
@@ -1302,7 +1405,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1100),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1325,7 +1429,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
 
       // Sticky Bottom MaroonDeep Pill "Add to cart · Rs X" CTA with yellow bag square (Ref A)
       bottomNavigationBar: SafeArea(
-                top: false,
+        top: false,
         child: Center(
           heightFactor: 1.0,
           child: ConstrainedBox(
@@ -1335,7 +1439,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: foodItem.isAvailable ? () => _handleAddToCart(foodItem, cart, totalPrice) : null,
+                  onTap: foodItem.isAvailable
+                      ? () => _handleAddToCart(foodItem, cart, totalPrice)
+                      : null,
                   borderRadius: BorderRadius.circular(28),
                   child: Container(
                     height: 56,
@@ -1401,14 +1507,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildDishReviews(FoodModel food, ColorScheme colorScheme, bool isDark) {
+  Widget _buildDishReviews(
+      FoodModel food, ColorScheme colorScheme, bool isDark) {
     final reviewProv = context.watch<ReviewProvider>();
     final reviews = reviewProv.itemReviews
         .where((review) => review.itemId == food.id && !review.isHidden)
         .toList();
     final avgRating = reviews.isEmpty
         ? 0.0
-        : reviews.fold(0.0, (sum, review) => sum + review.rating) / reviews.length;
+        : reviews.fold(0.0, (sum, review) => sum + review.rating) /
+            reviews.length;
     final totalCount = reviews.length;
 
     return Column(
@@ -1416,90 +1524,106 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
       children: [
         if (reviews.isNotEmpty)
           Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppDimens.radius16),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.border,
-            ),
-          ),
-          child: Row(
-            children: [
-              Text(
-                avgRating.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color:
+                  isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
+              borderRadius: BorderRadius.circular(AppDimens.radius16),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.border,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: List.generate(
-                        5,
-                        (i) => Icon(
-                          i < avgRating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: AppColors.accent,
-                          size: 18,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  avgRating.toStringAsFixed(1),
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: List.generate(
+                          5,
+                          (i) => Icon(
+                            i < avgRating.round()
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            color: AppColors.accent,
+                            size: 18,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      totalCount == 0
-                          ? 'No reviews yet • Be the first to rate after ordering!'
-                          : 'Based on $totalCount verified customer review${totalCount > 1 ? 's' : ''}',
-                      style: TextStyle(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                        fontSize: 12,
+                      const SizedBox(height: 4),
+                      Text(
+                        totalCount == 0
+                            ? 'No reviews yet • Be the first to rate after ordering!'
+                            : 'Based on $totalCount verified customer review${totalCount > 1 ? 's' : ''}',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         if (reviews.isNotEmpty) const SizedBox(height: 16),
         if (reviews.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
+              color:
+                  isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
               borderRadius: BorderRadius.circular(AppDimens.radius16),
-              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+              border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.border),
             ),
             child: Column(
               children: [
-                Icon(Icons.rate_review_outlined, size: 40, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
+                Icon(Icons.rate_review_outlined,
+                    size: 40,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
                 const SizedBox(height: 10),
                 Text(
                   'No Reviews Written Yet',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: colorScheme.onSurface),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: colorScheme.onSurface),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Reviews appear here once customers order and review this dish.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12.5, color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
           )
         else
-          ...reviews.map((rev) => _buildRealReviewTile(rev, colorScheme, isDark)),
+          ...reviews
+              .map((rev) => _buildRealReviewTile(rev, colorScheme, isDark)),
       ],
     );
   }
 
-  Widget _buildRealReviewTile(ReviewModel rev, ColorScheme colorScheme, bool isDark) {
-    final dateStr = '${rev.createdAt.day}/${rev.createdAt.month}/${rev.createdAt.year}';
+  Widget _buildRealReviewTile(
+      ReviewModel rev, ColorScheme colorScheme, bool isDark) {
+    final dateStr =
+        '${rev.createdAt.day}/${rev.createdAt.month}/${rev.createdAt.year}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1507,7 +1631,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceElevated : colorScheme.surface,
         borderRadius: BorderRadius.circular(AppDimens.radius14),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+        border:
+            Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1522,17 +1647,27 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       radius: 14,
                       backgroundColor: AppColors.brandYellow,
                       child: Text(
-                        (rev.userName != null && rev.userName!.isNotEmpty) ? rev.userName![0].toUpperCase() : 'U',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandMaroon, fontSize: 12),
+                        (rev.userName != null && rev.userName!.isNotEmpty)
+                            ? rev.userName![0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.brandMaroon,
+                            fontSize: 12),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        (rev.userName != null && rev.userName!.isNotEmpty) ? rev.userName! : 'Verified Foodie',
+                        (rev.userName != null && rev.userName!.isNotEmpty)
+                            ? rev.userName!
+                            : 'Verified Foodie',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: colorScheme.onSurface),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                            color: colorScheme.onSurface),
                       ),
                     ),
                   ],
@@ -1541,7 +1676,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               const SizedBox(width: 8),
               Text(
                 dateStr,
-                style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 11, color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -1551,7 +1687,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               ...List.generate(
                 5,
                 (i) => Icon(
-                  i < rev.rating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
+                  i < rev.rating.round()
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
                   color: AppColors.mustard,
                   size: 15,
                 ),
@@ -1559,13 +1697,18 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               const SizedBox(width: 6),
               Text(
                 rev.rating.toStringAsFixed(1),
-                style: const TextStyle(color: AppColors.mustard, fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(
+                    color: AppColors.mustard,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12),
               ),
             ],
           ),
           if (rev.comment.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(rev.comment, style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant)),
+            Text(rev.comment,
+                style: TextStyle(
+                    fontSize: 12.5, color: colorScheme.onSurfaceVariant)),
           ],
           if (rev.adminReply != null && rev.adminReply!.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -1574,12 +1717,14 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
               decoration: BoxDecoration(
                 color: AppColors.brandYellow.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: AppColors.brandYellow.withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.reply_rounded, size: 16, color: AppColors.brandMaroon),
+                  const Icon(Icons.reply_rounded,
+                      size: 16, color: AppColors.brandMaroon),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -1587,12 +1732,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> with SingleTickerPr
                       children: [
                         const Text(
                           'Restaurant Response',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: AppColors.brandMaroon),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11.5,
+                              color: AppColors.brandMaroon),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           rev.adminReply!,
-                          style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
+                          style: TextStyle(
+                              fontSize: 12, color: colorScheme.onSurface),
                         ),
                       ],
                     ),

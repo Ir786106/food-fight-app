@@ -60,7 +60,8 @@ class FavoritesScreen extends StatelessWidget {
                             color: AppColors.primary.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.favorite_border_rounded, size: 72, color: AppColors.primary),
+                          child: const Icon(Icons.favorite_border_rounded,
+                              size: 72, color: AppColors.primary),
                         ),
                         const SizedBox(height: 20),
                         Text(
@@ -90,7 +91,9 @@ class FavoritesScreen extends StatelessWidget {
                               if (Navigator.of(context).canPop()) {
                                 Navigator.of(context).pop();
                               } else {
-                                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (r) => false);
+                                Navigator.of(context, rootNavigator: true)
+                                    .pushNamedAndRemoveUntil(
+                                        '/home', (r) => false);
                               }
                             },
                             child: const Text('Discover Food'),
@@ -101,7 +104,8 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                 )
               : ListView.builder(
-                  padding: AppInsets.scrollPadding(context, horizontal: 20, top: 16),
+                  padding:
+                      AppInsets.scrollPadding(context, horizontal: 20, top: 16),
                   itemCount: favorites.length,
                   itemBuilder: (context, index) {
                     final food = favorites[index];

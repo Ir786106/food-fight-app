@@ -9,13 +9,20 @@ import 'package:food_fight/core/errors/app_exception.dart';
 /// Firebase Storage implementation of IImageStorageService.
 /// Accessible in Pakistan without ISP/DNS domain blocking.
 class FirebaseImageStorageService implements IImageStorageService {
-  static final FirebaseImageStorageService _instance = FirebaseImageStorageService._internal();
+  static final FirebaseImageStorageService _instance =
+      FirebaseImageStorageService._internal();
   FirebaseImageStorageService._internal();
   factory FirebaseImageStorageService() => _instance;
 
   FirebaseStorage get _storage => FirebaseStorage.instance;
 
-  static const List<String> supportedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+  static const List<String> supportedExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'gif'
+  ];
 
   /// Resolve MIME content-type based on file extension
   static String getMimeType(String extension) {
@@ -129,10 +136,13 @@ class FirebaseImageStorageService implements IImageStorageService {
 
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      AppLogger.info('Uploaded image successfully to Firebase Storage: $fullPath', tag: 'FirebaseStorage');
+      AppLogger.info(
+          'Uploaded image successfully to Firebase Storage: $fullPath',
+          tag: 'FirebaseStorage');
       return downloadUrl;
     } catch (e, stackTrace) {
-      AppLogger.error('Firebase Storage upload failed: $e\n$stackTrace', tag: 'FirebaseStorage');
+      AppLogger.error('Firebase Storage upload failed: $e\n$stackTrace',
+          tag: 'FirebaseStorage');
       // Friendly, non-technical error message for UI
       throw StorageException(
         message: 'No connection. Please check your internet and try again.',
@@ -163,7 +173,8 @@ class FirebaseImageStorageService implements IImageStorageService {
       final ref = _storage.ref().child(clean);
       return await ref.getDownloadURL();
     } catch (e) {
-      AppLogger.warn('Could not get download URL for Firebase path "$path": $e', tag: 'FirebaseStorage');
+      AppLogger.warn('Could not get download URL for Firebase path "$path": $e',
+          tag: 'FirebaseStorage');
       return path;
     }
   }
@@ -176,7 +187,8 @@ class FirebaseImageStorageService implements IImageStorageService {
       final data = await ref.getData(10 * 1024 * 1024); // max 10MB
       return data ?? Uint8List(0);
     } catch (e) {
-      AppLogger.error('Failed to download image from Firebase: $e', tag: 'FirebaseStorage');
+      AppLogger.error('Failed to download image from Firebase: $e',
+          tag: 'FirebaseStorage');
       return Uint8List(0);
     }
   }
@@ -189,17 +201,20 @@ class FirebaseImageStorageService implements IImageStorageService {
         try {
           final ref = _storage.refFromURL(path);
           await ref.delete();
-          AppLogger.info('Deleted image from Firebase: $path', tag: 'FirebaseStorage');
+          AppLogger.info('Deleted image from Firebase: $path',
+              tag: 'FirebaseStorage');
         } catch (e) {
           AppLogger.warn('Could not delete by URL: $e', tag: 'FirebaseStorage');
         }
       } else {
         final clean = _normalizePath(path);
         await _storage.ref().child(clean).delete();
-        AppLogger.info('Deleted image from Firebase: $clean', tag: 'FirebaseStorage');
+        AppLogger.info('Deleted image from Firebase: $clean',
+            tag: 'FirebaseStorage');
       }
     } catch (e) {
-      AppLogger.warn('Delete failed in Firebase Storage: $e', tag: 'FirebaseStorage');
+      AppLogger.warn('Delete failed in Firebase Storage: $e',
+          tag: 'FirebaseStorage');
     }
   }
 
@@ -243,10 +258,13 @@ class FirebaseImageStorageService implements IImageStorageService {
     );
     final normalized = _normalizePath(path);
     final fileName = 'thumb_${_generateFileName(normalized, image.name)}';
-    final fullPath = normalized.endsWith('/') ? '$normalized$fileName' : '$normalized/$fileName';
+    final fullPath = normalized.endsWith('/')
+        ? '$normalized$fileName'
+        : '$normalized/$fileName';
 
     final ref = _storage.ref().child(fullPath);
-    final snapshot = await ref.putData(thumbBytes, SettableMetadata(contentType: 'image/jpeg'));
+    final snapshot = await ref.putData(
+        thumbBytes, SettableMetadata(contentType: 'image/jpeg'));
     return await snapshot.ref.getDownloadURL();
   }
 }

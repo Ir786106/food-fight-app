@@ -193,7 +193,12 @@ void main() {
       expect(cart.itemCount, equals(0));
 
       // Tap disabled button
-      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Unavailable')).onPressed, isNull);
+      expect(
+          tester
+              .widget<FilledButton>(
+                  find.widgetWithText(FilledButton, 'Unavailable'))
+              .onPressed,
+          isNull);
 
       // Cart count remains 0
       expect(cart.itemCount, equals(0));

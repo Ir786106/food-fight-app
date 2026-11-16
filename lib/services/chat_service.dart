@@ -61,16 +61,17 @@ class ChatService implements IChatService {
   static List<ChatMessageModel> mergeMessages(
     Iterable<ChatMessageModel> existing,
     Iterable<ChatMessageModel> incoming,
-  ) => sortMessagesOldestFirst({
-    for (final message in existing) message.id: message,
-    for (final message in incoming) message.id: message,
-  }.values);
+  ) =>
+      sortMessagesOldestFirst({
+        for (final message in existing) message.id: message,
+        for (final message in incoming) message.id: message,
+      }.values);
 
   String createMessageId(String chatId) => _messagesRef(chatId).doc().id;
 
   Stream<ChatModel?> watchChat(String chatId) =>
-      _chatsRef.doc(chatId).snapshots().map((doc) =>
-          doc.exists ? ChatModel.fromJson(doc.data()!, doc.id) : null);
+      _chatsRef.doc(chatId).snapshots().map(
+          (doc) => doc.exists ? ChatModel.fromJson(doc.data()!, doc.id) : null);
 
   Future<ChatModel?> getChat(String chatId) async {
     final doc = await _chatsRef.doc(chatId).get();
@@ -117,8 +118,12 @@ class ChatService implements IChatService {
   }) {
     Query<Map<String, dynamic>> query = _chatsRef;
 
-    // Only filter by branch if non-empty, not 'all', and not Super Admin viewing all branches
-    if (branchId.isNotEmpty && branchId != 'all' && !isSuperAdmin) {
+    if (!isSuperAdmin &&
+        (branchId.trim().isEmpty || branchId.trim().toLowerCase() == 'all')) {
+      return Stream.error(
+          StateError('A branch is required for the support inbox.'));
+    }
+    if (!isSuperAdmin) {
       query = query.where('branchId', isEqualTo: branchId);
     }
 
@@ -148,10 +153,10 @@ class ChatService implements IChatService {
         .limit(limit)
         .snapshots()
         .map((snapshot) => sortMessagesOldestFirst(
-        snapshot.docs.map(
-          (doc) => ChatMessageModel.fromJson(doc.data(), doc.id),
-        ),
-      ));
+              snapshot.docs.map(
+                (doc) => ChatMessageModel.fromJson(doc.data(), doc.id),
+              ),
+            ));
   }
 
   Future<ChatMessagePage> getMessagesBefore(
@@ -161,7 +166,8 @@ class ChatService implements IChatService {
   }) async {
     final cursor = await _messagesRef(chatId).doc(beforeMessageId).get();
     if (!cursor.exists) {
-      throw StateError('The message used to load earlier messages was removed.');
+      throw StateError(
+          'The message used to load earlier messages was removed.');
     }
     final snapshot = await _messagesRef(chatId)
         .orderBy('createdAt', descending: true)
@@ -171,8 +177,8 @@ class ChatService implements IChatService {
         .get();
     return ChatMessagePage(
       messages: sortMessagesOldestFirst(snapshot.docs.take(limit).map(
-        (doc) => ChatMessageModel.fromJson(doc.data(), doc.id),
-      )),
+            (doc) => ChatMessageModel.fromJson(doc.data(), doc.id),
+          )),
       hasMore: snapshot.docs.length > limit,
     );
   }
@@ -262,31 +268,31 @@ class ChatService implements IChatService {
       final chat = await transaction.get(chatRef);
       if (!chat.exists) throw StateError('This conversation is unavailable.');
       transaction.set(messageRef, {
-      'id': messageRef.id,
-      'senderId': senderId,
-      'senderRole': senderRole,
-      'senderName': senderName,
-      'text': cleanText,
-      'type': type,
-      if (imageUrl != null) 'imageUrl': imageUrl,
-      'createdAt': FieldValue.serverTimestamp(),
-      'readBy': [senderId],
-    });
+        'id': messageRef.id,
+        'senderId': senderId,
+        'senderRole': senderRole,
+        'senderName': senderName,
+        'text': cleanText,
+        'type': type,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+        'readBy': [senderId],
+      });
 
-    // 2. Atomically update parent chat
-    final chatUpdates = <String, dynamic>{
-      'lastMessage': summary,
-      'lastMessageAt': FieldValue.serverTimestamp(),
-      'lastSenderRole': senderRole,
-      'status': 'open', // Reopens if it was resolved
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
+      // 2. Atomically update parent chat
+      final chatUpdates = <String, dynamic>{
+        'lastMessage': summary,
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'lastSenderRole': senderRole,
+        'status': 'open', // Reopens if it was resolved
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
 
-    if (isCustomer) {
-      chatUpdates['unreadForAdmin'] = FieldValue.increment(1);
-    } else {
-      chatUpdates['unreadForCustomer'] = FieldValue.increment(1);
-    }
+      if (isCustomer) {
+        chatUpdates['unreadForAdmin'] = FieldValue.increment(1);
+      } else {
+        chatUpdates['unreadForCustomer'] = FieldValue.increment(1);
+      }
 
       transaction.update(chatRef, chatUpdates);
     });
@@ -299,8 +305,12 @@ class ChatService implements IChatService {
       {Iterable<String>? messageIds}) async {
     final ids = messageIds?.toSet().toList() ??
         (await _messagesRef(chatId)
-          .orderBy('createdAt', descending: true).limit(50).get())
-          .docs.map((doc) => doc.id).toList();
+                .orderBy('createdAt', descending: true)
+                .limit(50)
+                .get())
+            .docs
+            .map((doc) => doc.id)
+            .toList();
     final chatRef = _chatsRef.doc(chatId);
     final isCustomer = userRole == 'customer';
     final counter = isCustomer ? 'unreadForCustomer' : 'unreadForAdmin';
@@ -373,7 +383,8 @@ class ChatService implements IChatService {
     void Function(double)? onProgress,
   }) async {
     if (chatId == null || chatId.isEmpty || chatId.contains('/')) {
-      throw ArgumentError('A conversation is required to upload an attachment.');
+      throw ArgumentError(
+          'A conversation is required to upload an attachment.');
     }
     if (imageFileOrBytes is! XFile) {
       throw ArgumentError('Select an image from your camera or gallery.');

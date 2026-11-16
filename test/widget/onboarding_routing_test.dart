@@ -7,13 +7,17 @@ import 'package:food_fight/screens/onboarding/onboarding_screen.dart';
 
 void main() {
   for (final viewport in [const Size(320, 640), const Size(1440, 800)]) {
-    testWidgets('onboarding controls fit and Skip opens login at ${viewport.width}px', (tester) async {
+    testWidgets(
+        'onboarding controls fit and Skip opens login at ${viewport.width}px',
+        (tester) async {
       await tester.binding.setSurfaceSize(viewport);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(MaterialApp(
         home: const OnboardingScreen(),
-        routes: {'/login': (_) => const Scaffold(body: Text('Login destination'))},
+        routes: {
+          '/login': (_) => const Scaffold(body: Text('Login destination'))
+        },
       ));
       await tester.pumpAndSettle();
 
@@ -31,7 +35,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Login destination'), findsOneWidget);
       final preferences = await SharedPreferences.getInstance();
-      expect(preferences.getBool(AppConstants.storageOnboardingCompleted), isTrue);
+      expect(
+          preferences.getBool(AppConstants.storageOnboardingCompleted), isTrue);
     });
   }
 
@@ -39,16 +44,20 @@ void main() {
     test('First launch: onboarding flag is false by default', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
-      final completed = prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
-      expect(completed, isFalse, reason: 'Fresh install should show onboarding');
+      final completed =
+          prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
+      expect(completed, isFalse,
+          reason: 'Fresh install should show onboarding');
     });
 
     test('After onboarding: flag is set to true', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(AppConstants.storageOnboardingCompleted, true);
-      final completed = prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
-      expect(completed, isTrue, reason: 'Returning user should skip onboarding');
+      final completed =
+          prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
+      expect(completed, isTrue,
+          reason: 'Returning user should skip onboarding');
     });
 
     test('Replay intro: flag resets to false', () async {
@@ -58,12 +67,15 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       // Simulate "Replay intro" action
       await prefs.setBool(AppConstants.storageOnboardingCompleted, false);
-      final completed = prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
-      expect(completed, isFalse, reason: 'Replay intro should reset onboarding flag');
+      final completed =
+          prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
+      expect(completed, isFalse,
+          reason: 'Replay intro should reset onboarding flag');
     });
 
     test('Onboarding storage key matches expected constant', () {
-      expect(AppConstants.storageOnboardingCompleted, 'ff_onboarding_completed');
+      expect(
+          AppConstants.storageOnboardingCompleted, 'ff_onboarding_completed');
     });
   });
 
@@ -88,10 +100,15 @@ void main() {
       return rBuild > lBuild;
     }
 
-    test('1.8.0 is newer than 1.7.0', () => expect(isNewer('1.8.0', '1.7.0', 1, 7), isTrue));
-    test('1.7.0+9 is newer than 1.7.0+8', () => expect(isNewer('1.7.0', '1.7.0', 9, 8), isTrue));
-    test('1.7.0+8 is not newer than 1.7.0+8', () => expect(isNewer('1.7.0', '1.7.0', 8, 8), isFalse));
-    test('1.6.0 is not newer than 1.7.0', () => expect(isNewer('1.6.0', '1.7.0', 99, 1), isFalse));
-    test('2.0.0 is newer than 1.99.99', () => expect(isNewer('2.0.0', '1.99.99', 1, 1), isTrue));
+    test('1.8.0 is newer than 1.7.0',
+        () => expect(isNewer('1.8.0', '1.7.0', 1, 7), isTrue));
+    test('1.7.0+9 is newer than 1.7.0+8',
+        () => expect(isNewer('1.7.0', '1.7.0', 9, 8), isTrue));
+    test('1.7.0+8 is not newer than 1.7.0+8',
+        () => expect(isNewer('1.7.0', '1.7.0', 8, 8), isFalse));
+    test('1.6.0 is not newer than 1.7.0',
+        () => expect(isNewer('1.6.0', '1.7.0', 99, 1), isFalse));
+    test('2.0.0 is newer than 1.99.99',
+        () => expect(isNewer('2.0.0', '1.99.99', 1, 1), isTrue));
   });
 }

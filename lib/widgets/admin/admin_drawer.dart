@@ -84,7 +84,8 @@ class AdminDrawer extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.22),
                                 borderRadius: BorderRadius.circular(6),
@@ -92,7 +93,9 @@ class AdminDrawer extends StatelessWidget {
                               child: Text(
                                 user?.isSuperAdmin == true
                                     ? 'SUPER ADMIN'
-                                    : (user?.isSubAdmin == true ? 'SUB-ADMIN' : 'BRANCH ADMIN'),
+                                    : (user?.isSubAdmin == true
+                                        ? 'SUB-ADMIN'
+                                        : 'BRANCH ADMIN'),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 9.5,
@@ -101,12 +104,14 @@ class AdminDrawer extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            if (user?.branchId != null && user!.branchId!.isNotEmpty) ...[
+                            if (user?.branchId != null &&
+                                user!.branchId!.isNotEmpty) ...[
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   user.branchId!,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 10),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -115,7 +120,8 @@ class AdminDrawer extends StatelessWidget {
                               const Expanded(
                                 child: Text(
                                   'HQ (All)',
-                                  style: TextStyle(color: Colors.white70, fontSize: 10),
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 10),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -144,7 +150,10 @@ class AdminDrawer extends StatelessWidget {
                   ),
 
                   // MENU MANAGEMENT (guarded)
-                  if (user == null || user.can('menu') || user.can('categories') || user.can('coupons')) ...[
+                  if (user == null ||
+                      user.can('menu') ||
+                      user.can('categories') ||
+                      user.can('coupons')) ...[
                     _buildSectionHeader('MENU MANAGEMENT', colorScheme),
                     if (user == null || user.can('menu')) ...[
                       _buildItem(
@@ -177,7 +186,9 @@ class AdminDrawer extends StatelessWidget {
                   ],
 
                   // ORDER MANAGEMENT (guarded)
-                  if (user == null || user.can('orders') || user.can('chats')) ...[
+                  if (user == null ||
+                      user.can('orders') ||
+                      user.can('chats')) ...[
                     _buildSectionHeader('ORDER MANAGEMENT', colorScheme),
                     if (user == null || user.can('orders'))
                       _buildItem(
@@ -192,7 +203,8 @@ class AdminDrawer extends StatelessWidget {
                         title: 'Customer Chats',
                         icon: Icons.chat_rounded,
                         route: '/admin/chats',
-                        badgeCount: context.watch<ChatProvider>().totalAdminUnread,
+                        badgeCount:
+                            context.watch<ChatProvider>().totalAdminUnread,
                       ),
                   ],
 
@@ -208,7 +220,9 @@ class AdminDrawer extends StatelessWidget {
                   ],
 
                   // DELIVERY & RIDERS (guarded)
-                  if (user == null || user.can('delivery_areas') || user.can('riders')) ...[
+                  if (user == null ||
+                      user.can('delivery_areas') ||
+                      user.can('riders')) ...[
                     _buildSectionHeader('DELIVERY & RIDERS', colorScheme),
                     if (user == null || user.can('delivery_areas'))
                       _buildItem(
@@ -252,11 +266,14 @@ class AdminDrawer extends StatelessWidget {
                   // PREFERENCES & NAVIGATION
                   _buildSectionHeader('PREFERENCES', colorScheme),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                        color: colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -265,7 +282,9 @@ class AdminDrawer extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                isDark
+                                    ? Icons.dark_mode_rounded
+                                    : Icons.light_mode_rounded,
                                 size: 16,
                                 color: colorScheme.onSurfaceVariant,
                               ),
@@ -288,17 +307,20 @@ class AdminDrawer extends StatelessWidget {
                                 ButtonSegment(
                                   value: ThemeMode.light,
                                   icon: Icon(Icons.wb_sunny_outlined, size: 14),
-                                  label: Text('Light', style: TextStyle(fontSize: 11)),
+                                  label: Text('Light',
+                                      style: TextStyle(fontSize: 11)),
                                 ),
                                 ButtonSegment(
                                   value: ThemeMode.system,
                                   icon: Icon(Icons.auto_mode_rounded, size: 14),
-                                  label: Text('Auto', style: TextStyle(fontSize: 11)),
+                                  label: Text('Auto',
+                                      style: TextStyle(fontSize: 11)),
                                 ),
                                 ButtonSegment(
                                   value: ThemeMode.dark,
                                   icon: Icon(Icons.nightlight_round, size: 14),
-                                  label: Text('Dark', style: TextStyle(fontSize: 11)),
+                                  label: Text('Dark',
+                                      style: TextStyle(fontSize: 11)),
                                 ),
                               ],
                               selected: {themeProvider.themeMode},
@@ -318,12 +340,12 @@ class AdminDrawer extends StatelessWidget {
 
                   if (auth.edition == AppEdition.combined)
                     _buildItem(
-                    context,
-                    title: 'Preview Customer App',
-                    icon: Icons.preview_rounded,
-                    route: '/home',
-                    color: AppColors.primaryYellow,
-                  ),
+                      context,
+                      title: 'Preview Customer App',
+                      icon: Icons.preview_rounded,
+                      route: '/home',
+                      color: AppColors.primaryYellow,
+                    ),
                 ],
               ),
             ),
@@ -333,21 +355,29 @@ class AdminDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Material(
                 color: AppColors.error.withValues(alpha: 0.08),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   dense: true,
-                  leading: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+                  leading: const Icon(Icons.logout_rounded,
+                      color: AppColors.error, size: 20),
                   title: const Text(
                     'Sign Out',
-                    style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 13.5),
+                    style: TextStyle(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5),
                   ),
                   onTap: () async {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold)),
-                        content: const Text('Are you sure you want to sign out of the Admin Portal?'),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        title: const Text('Sign Out',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        content: const Text(
+                            'Are you sure you want to sign out of the Admin Portal?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -368,7 +398,8 @@ class AdminDrawer extends StatelessWidget {
                       Navigator.pop(context);
                       await auth.signOut();
                       if (context.mounted) {
-                        Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false);
+                        Navigator.of(context)
+                            .pushNamedAndRemoveUntil('/login', (r) => false);
                       }
                     }
                   },
@@ -426,7 +457,8 @@ class AdminDrawer extends StatelessWidget {
           ),
           trailing: badgeCount != null && badgeCount > 0
               ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.brandYellow,
                     borderRadius: BorderRadius.circular(10),
@@ -447,7 +479,9 @@ class AdminDrawer extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: isSelected
-                  ? (Theme.of(context).brightness == Brightness.dark ? AppColors.brandYellow : AppColors.brandMaroon)
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandYellow
+                      : AppColors.brandMaroon)
                   : (color ?? colorScheme.onSurface),
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
               fontSize: 13.5,
@@ -457,7 +491,8 @@ class AdminDrawer extends StatelessWidget {
             Navigator.pop(context);
             if (!isSelected) {
               if (route == '/admin/dashboard') {
-                Navigator.of(context).pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/admin/dashboard', (r) => false);
               } else if (route == '/home') {
                 Navigator.of(context).pushNamed('/home');
               } else {

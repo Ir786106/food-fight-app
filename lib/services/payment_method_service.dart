@@ -26,15 +26,33 @@ class PaymentMethodService {
     });
   }
 
-
   static Future<void> addPaymentMethod(PaymentMethodModel method) async {
-    if (!['jazzcash', 'easypaisa'].contains(method.type)) throw StateError('Only wallet references can be saved.');
-    final id = method.id.isEmpty ? _userMethods(method.userId).doc().id : method.id;
-    await DefaultSelectionService.write(userId: method.userId, collection: _userMethods(method.userId),
-      pointer: 'defaultPaymentMethodId', id: id, data: {...method.toJson(), 'id': id}, select: method.isDefault);
+    if (!['jazzcash', 'easypaisa'].contains(method.type)) {
+      throw StateError('Only wallet references can be saved.');
+    }
+    final id =
+        method.id.isEmpty ? _userMethods(method.userId).doc().id : method.id;
+    await DefaultSelectionService.write(
+        userId: method.userId,
+        collection: _userMethods(method.userId),
+        pointer: 'defaultPaymentMethodId',
+        id: id,
+        data: {...method.toJson(), 'id': id},
+        select: method.isDefault);
   }
-  static Future<void> deletePaymentMethod(String userId, String methodId) => DefaultSelectionService.write(
-    userId: userId, collection: _userMethods(userId), pointer: 'defaultPaymentMethodId', id: methodId, delete: true);
-  static Future<void> setDefaultMethod(String userId, String methodId) => DefaultSelectionService.write(
-    userId: userId, collection: _userMethods(userId), pointer: 'defaultPaymentMethodId', id: methodId, select: true);
+
+  static Future<void> deletePaymentMethod(String userId, String methodId) =>
+      DefaultSelectionService.write(
+          userId: userId,
+          collection: _userMethods(userId),
+          pointer: 'defaultPaymentMethodId',
+          id: methodId,
+          delete: true);
+  static Future<void> setDefaultMethod(String userId, String methodId) =>
+      DefaultSelectionService.write(
+          userId: userId,
+          collection: _userMethods(userId),
+          pointer: 'defaultPaymentMethodId',
+          id: methodId,
+          select: true);
 }

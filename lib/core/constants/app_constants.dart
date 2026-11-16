@@ -4,8 +4,10 @@ class AppConstants {
   static const String appName = 'Food Fight';
   static const String appVersion = '1.0.0';
   static const String appTagline = 'Hungry? Let\'s battle it out.';
-  static const String logoPath = 'assets/images/branding/food_fight_logo_icon.png';
-  static const String logoIconPath = 'assets/images/branding/food_fight_logo_icon.png';
+  static const String logoPath =
+      'assets/images/branding/food_fight_logo_icon.png';
+  static const String logoIconPath =
+      'assets/images/branding/food_fight_logo_icon.png';
 
   // API Settings
   static const int apiTimeoutSeconds = 30;

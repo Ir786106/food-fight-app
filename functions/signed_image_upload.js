@@ -1,3 +1,4 @@
+const { isActiveProfile } = require("./account_status");
 const { randomUUID } = require("node:crypto");
 
 const bucket = "food-images";
@@ -21,8 +22,7 @@ function signedImageUpload({ db, fail, validId, request = fetch, config }) {
     const now = Date.now();
     const scope = await db.runTransaction(async (transaction) => {
       const profile = (await transaction.get(db.collection("users").doc(uid))).data();
-      if (!profile || profile.isBlocked === true || profile.status === "blocked" ||
-          (profile.isActive != null && ![true, 1, "true", "1"].includes(profile.isActive))) {
+      if (!isActiveProfile(profile, uid)) {
         fail("permission-denied", "This account cannot upload images.");
       }
       let owner = uid;

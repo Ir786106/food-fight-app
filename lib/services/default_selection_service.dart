@@ -14,7 +14,9 @@ class DefaultSelectionService {
   }) async {
     final db = FirebaseFirestore.instance;
     final owner = db.collection('users').doc(userId);
-    final legacy = await collection.where('userId', isEqualTo: userId).get();
+    final legacy = await collection
+        .where('userId', isEqualTo: userId)
+        .where('isDefault', whereIn: [1, true]).get();
     await db.runTransaction((tx) async {
       final user = await tx.get(owner);
       final target = collection.doc(id);
@@ -22,9 +24,12 @@ class DefaultSelectionService {
       if (current.exists && (current.data() as Map)['userId'] != userId) {
         throw StateError('This entry belongs to another account.');
       }
-      if (data == null && !current.exists) throw StateError('Entry no longer exists.');
+      if (data == null && !current.exists) {
+        throw StateError('Entry no longer exists.');
+      }
       final oldId = user.data()?[pointer] as String?;
-      final oldRef = oldId == null || oldId.isEmpty ? null : collection.doc(oldId);
+      final oldRef =
+          oldId == null || oldId.isEmpty ? null : collection.doc(oldId);
       final old = oldRef == null ? null : await tx.get(oldRef);
       final shouldSelect = select || (oldId == id && !delete);
       // Read every legacy default before any write. Clean up old installations.
@@ -37,7 +42,9 @@ class DefaultSelectionService {
         }
       }
       if (shouldSelect) {
-        if (old?.exists == true && oldId != id) tx.update(oldRef!, {'isDefault': 0});
+        if (old?.exists == true && oldId != id) {
+          tx.update(oldRef!, {'isDefault': 0});
+        }
         for (final entry in oldDefaults) {
           if (entry.exists && (entry.data() as Map)['userId'] == userId) {
             tx.update(entry.reference, {'isDefault': 0});

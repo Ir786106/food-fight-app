@@ -107,7 +107,9 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E2430) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6)),
+          border: Border.all(
+              color: colorScheme.outlineVariant
+                  .withValues(alpha: isDark ? 0.3 : 0.6)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
@@ -125,7 +127,8 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
                 color: AppColors.primary.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.location_off_rounded, color: AppColors.primary, size: 28),
+              child: const Icon(Icons.location_off_rounded,
+                  color: AppColors.primary, size: 28),
             ),
             const SizedBox(height: 12),
             Text(
@@ -158,7 +161,8 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
       height: widget.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
@@ -218,7 +222,8 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
                     'api': '1',
                     'query': '${rider.latitude},${rider.longitude}',
                   });
-                  if (await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                  if (await launchUrl(url,
+                      mode: LaunchMode.externalApplication)) {
                     return;
                   }
                   if (!context.mounted) return;
@@ -235,13 +240,15 @@ class _LiveTrackingMapWidgetState extends State<LiveTrackingMapWidget> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: (isDark ? const Color(0xFF13171E) : Colors.white)
                       .withValues(alpha: 0.94),
                   border: Border(
                     top: BorderSide(
-                        color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                        color:
+                            colorScheme.outlineVariant.withValues(alpha: 0.5)),
                   ),
                 ),
                 child: Row(

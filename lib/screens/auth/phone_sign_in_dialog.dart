@@ -13,7 +13,8 @@ import '../../providers/auth_provider.dart';
 class PhoneSignInDialog extends StatefulWidget {
   const PhoneSignInDialog({super.key});
 
-  static bool get isSupported => kIsWeb ||
+  static bool get isSupported =>
+      kIsWeb ||
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
 
@@ -57,7 +58,8 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
         _confirm = result.confirm;
       } else {
         final challenge = Completer<Future<UserCredential> Function(String)>();
-        unawaited(auth.verifyPhoneNumber(
+        unawaited(auth
+            .verifyPhoneNumber(
           phoneNumber: phone,
           verificationCompleted: (credential) {
             if (challenge.isCompleted) return;
@@ -70,14 +72,17 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
           codeSent: (id, _) {
             if (challenge.isCompleted) return;
             challenge.complete((code) => auth.signInWithCredential(
-                PhoneAuthProvider.credential(verificationId: id, smsCode: code)));
+                PhoneAuthProvider.credential(
+                    verificationId: id, smsCode: code)));
           },
           codeAutoRetrievalTimeout: (id) {
             if (challenge.isCompleted) return;
             challenge.complete((code) => auth.signInWithCredential(
-                PhoneAuthProvider.credential(verificationId: id, smsCode: code)));
+                PhoneAuthProvider.credential(
+                    verificationId: id, smsCode: code)));
           },
-        ).catchError((Object error, StackTrace stack) {
+        )
+            .catchError((Object error, StackTrace stack) {
           if (!challenge.isCompleted) challenge.completeError(error, stack);
         }));
         _confirm = await challenge.future.timeout(const Duration(seconds: 70));
@@ -85,7 +90,8 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
       if (mounted) _input.clear();
     } on FirebaseAuthException catch (error) {
       _error = switch (error.code) {
-        'too-many-requests' => 'Too many requests. Please wait before trying again.',
+        'too-many-requests' =>
+          'Too many requests. Please wait before trying again.',
         'operation-not-allowed' => 'Phone sign-in is unavailable.',
         _ => 'Could not send a code. Check the number and try again.',
       };
@@ -94,7 +100,9 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-    if (mounted && autoVerified && _confirm != null) await _verify(automatic: true);
+    if (mounted && autoVerified && _confirm != null) {
+      await _verify(automatic: true);
+    }
   }
 
   Future<void> _verify({bool automatic = false}) async {
@@ -123,7 +131,9 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
     return PopScope(
       canPop: !_busy,
       child: AlertDialog(
-        title: Text(sent ? context.tr('Verify your phone') : context.tr('Continue with phone')),
+        title: Text(sent
+            ? context.tr('Verify your phone')
+            : context.tr('Continue with phone')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -131,16 +141,28 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
             children: [
               Text(sent
                   ? context.tr('Enter the code sent by SMS.')
-                  : context.tr('Firebase will use your number to verify your sign-in and prevent abuse.')),
+                  : context.tr(
+                      'Firebase will use your number to verify your sign-in and prevent abuse.')),
               const SizedBox(height: 12),
               TextField(
                 controller: _input,
                 enabled: !_busy,
                 keyboardType: sent ? TextInputType.number : TextInputType.phone,
-                autofillHints: [sent ? AutofillHints.oneTimeCode : AutofillHints.telephoneNumber],
-                inputFormatters: sent ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)] : null,
+                autofillHints: [
+                  sent
+                      ? AutofillHints.oneTimeCode
+                      : AutofillHints.telephoneNumber
+                ],
+                inputFormatters: sent
+                    ? [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(6)
+                      ]
+                    : null,
                 decoration: InputDecoration(
-                  labelText: sent ? context.tr('SMS code') : context.tr('Mobile number'),
+                  labelText: sent
+                      ? context.tr('SMS code')
+                      : context.tr('Mobile number'),
                   hintText: sent ? null : '03XX XXXXXXX',
                   errorText: _error == null ? null : context.tr(_error!),
                 ),
@@ -156,15 +178,21 @@ class _PhoneSignInDialogState extends State<PhoneSignInDialog> {
           ),
           if (sent)
             TextButton(
-              onPressed: _busy ? null : () => setState(() {
-                _confirm = null;
-                if (mounted) _input.clear();
-                _error = null;
-              }),
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                        _confirm = null;
+                        if (mounted) _input.clear();
+                        _error = null;
+                      }),
               child: Text(context.tr('Request new code')),
             ),
           FilledButton(
-            onPressed: _busy ? null : sent ? () => _verify() : _send,
+            onPressed: _busy
+                ? null
+                : sent
+                    ? () => _verify()
+                    : _send,
             child: Text(sent ? context.tr('Verify') : context.tr('Send code')),
           ),
         ],

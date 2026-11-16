@@ -15,10 +15,14 @@ void main() {
   setUpAll(() async {
     final artifacts = File(Platform.resolvedExecutable).parent.parent.parent;
     final fonts = Directory('${artifacts.path}/material_fonts');
-    for (final entry in {'Roboto': 'roboto-regular.ttf', 'MaterialIcons': 'materialicons-regular.otf'}.entries) {
+    for (final entry in {
+      'Roboto': 'roboto-regular.ttf',
+      'MaterialIcons': 'materialicons-regular.otf'
+    }.entries) {
       final file = File('${fonts.path}/${entry.value}');
       if (await file.exists()) {
-        final loader = FontLoader(entry.key)..addFont(file.readAsBytes().then(ByteData.sublistView));
+        final loader = FontLoader(entry.key)
+          ..addFont(file.readAsBytes().then(ByteData.sublistView));
         await loader.load();
       }
     }
@@ -33,7 +37,8 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
         final capture = GlobalKey();
         await tester.pumpWidget(MaterialApp(
-            theme: ThemeData(fontFamily: 'Roboto',
+            theme: ThemeData(
+                fontFamily: 'Roboto',
                 brightness: dark ? Brightness.dark : Brightness.light,
                 colorSchemeSeed: AppColors.brandMaroon,
                 useMaterial3: true),
@@ -75,11 +80,15 @@ void main() {
         expect(find.byType(FloatingNavBar), findsOneWidget);
         if (inset == 48) {
           await tester.runAsync(() async {
-            final boundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+            final boundary = capture.currentContext!.findRenderObject()!
+                as RenderRepaintBoundary;
             final image = await boundary.toImage(pixelRatio: 1);
-            final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+            final bytes =
+                await image.toByteData(format: ui.ImageByteFormat.png);
             await Directory('artifacts/phase-a').create(recursive: true);
-            await File('artifacts/phase-a/${dark ? 'dark' : 'light'}-360x640.png').writeAsBytes(bytes!.buffer.asUint8List());
+            await File(
+                    'artifacts/phase-a/${dark ? 'dark' : 'light'}-360x640.png')
+                .writeAsBytes(bytes!.buffer.asUint8List());
             image.dispose();
           });
         }

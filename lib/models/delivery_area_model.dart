@@ -38,8 +38,12 @@ class DeliveryAreaModel {
     return DeliveryAreaModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      deliveryCharge: SafeConvert.toDouble(json['deliveryCharge'] ?? json['delivery_fee'] ?? json['deliveryFee']),
-      isActive: json['isActive'] == 1 || json['isActive'] == true || json['isActive'] == null,
+      deliveryCharge: SafeConvert.toDouble(json['deliveryCharge'] ??
+          json['delivery_fee'] ??
+          json['deliveryFee']),
+      isActive: json['isActive'] == 1 ||
+          json['isActive'] == true ||
+          json['isActive'] == null,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
       description: json['description']?.toString(),
@@ -50,7 +54,9 @@ class DeliveryAreaModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DeliveryAreaModel && runtimeType == other.runtimeType && id == other.id;
+      other is DeliveryAreaModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;

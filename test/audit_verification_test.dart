@@ -7,7 +7,8 @@ import 'package:food_fight/models/menu_item_model.dart';
 
 void main() {
   group('Audit Verification: Order Status & Serialization', () {
-    test('OrderStatus parses camelCase and space-separated values accurately', () {
+    test('OrderStatus parses camelCase and space-separated values accurately',
+        () {
       final jsonPickedUp = {
         'id': 'ord_1',
         'orderNumber': 'FF-1001',
@@ -42,7 +43,9 @@ void main() {
       expect(orderSpaced.status, OrderStatus.outForDelivery);
     });
 
-    test('All OrderStatus enum values have non-empty displayNames and match statusLabels', () {
+    test(
+        'All OrderStatus enum values have non-empty displayNames and match statusLabels',
+        () {
       for (final status in OrderStatus.values) {
         expect(status.displayName.isNotEmpty, isTrue);
         final order = OrderModel(
@@ -65,7 +68,9 @@ void main() {
   });
 
   group('Audit Verification: DeliveryAreaModel Equality for Dropdowns', () {
-    test('Two DeliveryArea instances with matching id are equal and have same hashCode', () {
+    test(
+        'Two DeliveryArea instances with matching id are equal and have same hashCode',
+        () {
       final area1 = DeliveryAreaModel(
         id: 'area_1',
         name: 'Model Town',
@@ -99,7 +104,8 @@ void main() {
     });
   });
 
-  group('Audit Verification: AdminAccountModel isActive and status Consistency', () {
+  group('Audit Verification: AdminAccountModel isActive and status Consistency',
+      () {
     test('AdminAccountModel.toJson emits isActive 1 when active', () {
       final admin = AdminAccountModel(
         id: 'adm_1',
@@ -115,7 +121,9 @@ void main() {
       expect(json['isActive'], 1);
     });
 
-    test('AdminAccountModel.toJson emits isActive 0 when suspended or deactivated', () {
+    test(
+        'AdminAccountModel.toJson emits isActive 0 when suspended or deactivated',
+        () {
       final adminSuspended = AdminAccountModel(
         id: 'adm_2',
         name: 'Suspended Staff',
@@ -139,7 +147,9 @@ void main() {
       expect(adminDeactivated.toJson()['isActive'], 0);
     });
 
-    test('AdminAccountModel.fromJson handles both integer 1/0 and boolean true/false', () {
+    test(
+        'AdminAccountModel.fromJson handles both integer 1/0 and boolean true/false',
+        () {
       final jsonWithInt = {
         'id': 'adm_4',
         'name': 'Test',
@@ -197,7 +207,8 @@ void main() {
       final activeCategories = categories.where((c) => c.isActive).toList();
 
       expect(activeCategories.length, 2);
-      expect(activeCategories.map((c) => c.id), containsAll(['cat_1', 'cat_3']));
+      expect(
+          activeCategories.map((c) => c.id), containsAll(['cat_1', 'cat_3']));
     });
 
     test('MenuItemModel correctly parses both int 1 and boolean true', () {

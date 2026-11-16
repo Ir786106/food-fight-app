@@ -105,7 +105,8 @@ class BranchModel {
   }
 
   factory BranchModel.fromJson(Map<String, dynamic> json) {
-    final rawRadius = json['deliveryRadiusKm'] ?? json['deliveryRadius'] ?? json['radiusKm'];
+    final rawRadius =
+        json['deliveryRadiusKm'] ?? json['deliveryRadius'] ?? json['radiusKm'];
     final parsedRadius = SafeConvert.toDouble(rawRadius, 10.0);
 
     return BranchModel(
@@ -116,13 +117,18 @@ class BranchModel {
       phone: (json['phone'] ?? '').toString(),
       status: (json['status'] ?? 'active').toString(),
       revenue: SafeConvert.toDouble(json['revenue']),
-      orderCount: SafeConvert.toInt(json['orderCount'] ?? json['ordersCount'], 0),
+      orderCount:
+          SafeConvert.toInt(json['orderCount'] ?? json['ordersCount'], 0),
       expenses: SafeConvert.toDouble(json['expenses']),
       rating: SafeConvert.toDouble(json['rating'], 0.0),
       imageUrl: json['imageUrl']?.toString(),
       openingHours: (json['openingHours'] ?? '11:00 AM – 02:00 AM').toString(),
-      latitude: json['latitude'] != null ? SafeConvert.toDouble(json['latitude']) : null,
-      longitude: json['longitude'] != null ? SafeConvert.toDouble(json['longitude']) : null,
+      latitude: json['latitude'] != null
+          ? SafeConvert.toDouble(json['latitude'])
+          : null,
+      longitude: json['longitude'] != null
+          ? SafeConvert.toDouble(json['longitude'])
+          : null,
       deliveryRadiusKm: parsedRadius > 0 ? parsedRadius : 10.0,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),

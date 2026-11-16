@@ -135,8 +135,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     final bgColor = isDark ? const Color(0xFF140C0B) : const Color(0xFFFAF7F2);
     final cardBg = isDark ? const Color(0xFF1E1211) : Colors.white;
-    final primaryTextColor = isDark ? const Color(0xFFF7EFE6) : const Color(0xFF2A1415);
-    final secondaryTextColor = isDark ? const Color(0xFFBCA9A3) : const Color(0xFF6B5B58);
+    final primaryTextColor =
+        isDark ? const Color(0xFFF7EFE6) : const Color(0xFF2A1415);
+    final secondaryTextColor =
+        isDark ? const Color(0xFFBCA9A3) : const Color(0xFF6B5B58);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -150,7 +152,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     // Top Header: Logo + Skip Button
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
                       child: Row(
                         children: [
                           Container(
@@ -161,7 +164,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.brandYellow.withValues(alpha: 0.35),
+                                  color: AppColors.brandYellow
+                                      .withValues(alpha: 0.35),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -200,7 +204,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 onPressed: _completeOnboarding,
                                 style: TextButton.styleFrom(
                                   foregroundColor: secondaryTextColor,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 6),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
@@ -225,38 +230,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: PageView.builder(
                         controller: _pageController,
                         itemCount: _pages.length,
-                        onPageChanged: (idx) => setState(() => _currentIndex = idx),
+                        onPageChanged: (idx) =>
+                            setState(() => _currentIndex = idx),
                         itemBuilder: (context, index) {
                           final item = _pages[index];
                           final isPermissionPage = item.isPermissionPrimer;
 
                           // Image sizing that stays responsive across orientations
                           final maxImgHeight = isLandscape
-                              ? (constraints.maxHeight * 0.42).clamp(120.0, 220.0)
-                              : (constraints.maxHeight * 0.44).clamp(180.0, 340.0);
+                              ? (constraints.maxHeight * 0.42)
+                                  .clamp(120.0, 220.0)
+                              : (constraints.maxHeight * 0.44)
+                                  .clamp(180.0, 340.0);
 
                           return SingleChildScrollView(
                             physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 8),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const SizedBox(height: 10),
                                 // Badge
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: AppColors.brandYellow.withValues(alpha: 0.18),
+                                    color: AppColors.brandYellow
+                                        .withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: AppColors.brandYellow.withValues(alpha: 0.5),
+                                      color: AppColors.brandYellow
+                                          .withValues(alpha: 0.5),
                                       width: 1.2,
                                     ),
                                   ),
                                   child: Text(
                                     item.badge,
                                     style: TextStyle(
-                                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                      color: isDark
+                                          ? AppColors.brandYellow
+                                          : AppColors.brandMaroon,
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 0.8,
@@ -268,12 +282,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 // Hero Illustration
                                 Container(
                                   height: maxImgHeight,
-                                  constraints: const BoxConstraints(maxWidth: 380),
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 380),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(28),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                                        color: Colors.black.withValues(
+                                            alpha: isDark ? 0.45 : 0.08),
                                         blurRadius: 24,
                                         offset: const Offset(0, 10),
                                       ),
@@ -284,18 +300,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     child: EntranceMotion(
                                       key: ValueKey(index == _currentIndex),
                                       child: Image.asset(
-                                      item.imagePath,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        color: cardBg,
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.fastfood_rounded,
-                                            size: 72,
-                                            color: AppColors.brandYellow,
+                                        item.imagePath,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: cardBg,
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.fastfood_rounded,
+                                              size: 72,
+                                              color: AppColors.brandYellow,
+                                            ),
                                           ),
                                         ),
-                                      ),
                                       ),
                                     ),
                                   ),
@@ -318,7 +334,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                                 // Subtitle
                                 ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 440),
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 440),
                                   child: Text(
                                     item.subtitle,
                                     textAlign: TextAlign.center,
@@ -338,7 +355,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       _buildPermissionChip(
-                                        icon: Icons.notifications_active_rounded,
+                                        icon:
+                                            Icons.notifications_active_rounded,
                                         label: 'Hot Order Alerts',
                                         isDark: isDark,
                                       ),
@@ -361,12 +379,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                     // Bottom Bar: Dots Indicator + Action Buttons
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
                       decoration: BoxDecoration(
                         color: bgColor,
                         border: Border(
                           top: BorderSide(
-                            color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                            color: isDark
+                                ? Colors.white10
+                                : Colors.black.withValues(alpha: 0.05),
                             width: 1,
                           ),
                         ),
@@ -382,13 +403,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeOutCubic,
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
                                 height: 7,
                                 width: isSelected ? 26 : 7,
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? AppColors.brandYellow
-                                      : (isDark ? Colors.white24 : AppColors.brandMaroon.withValues(alpha: 0.2)),
+                                      : (isDark
+                                          ? Colors.white24
+                                          : AppColors.brandMaroon
+                                              .withValues(alpha: 0.2)),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               );
@@ -403,14 +428,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               children: [
                                 Expanded(
                                   child: OutlinedButton(
-                                    key: const ValueKey('onboarding_not_now_button'),
-                                    onPressed: _isRequestingPermissions ? null : _completeOnboarding,
+                                    key: const ValueKey(
+                                        'onboarding_not_now_button'),
+                                    onPressed: _isRequestingPermissions
+                                        ? null
+                                        : _completeOnboarding,
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: secondaryTextColor,
                                       side: BorderSide(
-                                        color: isDark ? Colors.white24 : AppColors.brandMaroon.withValues(alpha: 0.3),
+                                        color: isDark
+                                            ? Colors.white24
+                                            : AppColors.brandMaroon
+                                                .withValues(alpha: 0.3),
                                       ),
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -428,13 +460,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 Expanded(
                                   flex: 2,
                                   child: ElevatedButton(
-                                    key: const ValueKey('onboarding_get_started_button'),
-                                    onPressed: _isRequestingPermissions ? null : _handlePermissionRequest,
+                                    key: const ValueKey(
+                                        'onboarding_get_started_button'),
+                                    onPressed: _isRequestingPermissions
+                                        ? null
+                                        : _handlePermissionRequest,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.brandYellow,
                                       foregroundColor: AppColors.brandMaroon,
                                       elevation: 2,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -445,11 +481,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             width: 20,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2.2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandMaroon),
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      AppColors.brandMaroon),
                                             ),
                                           )
                                         : const Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Flexible(
                                                 child: Text(
@@ -462,7 +501,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                                 ),
                                               ),
                                               SizedBox(width: 6),
-                                              Icon(Icons.arrow_forward_rounded, size: 18),
+                                              Icon(Icons.arrow_forward_rounded,
+                                                  size: 18),
                                             ],
                                           ),
                                   ),
@@ -480,7 +520,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   backgroundColor: AppColors.brandYellow,
                                   foregroundColor: AppColors.brandMaroon,
                                   elevation: 2,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
@@ -526,13 +567,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         color: isDark ? const Color(0xFF261817) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? Colors.white12 : AppColors.brandMaroon.withValues(alpha: 0.12),
+          color: isDark
+              ? Colors.white12
+              : AppColors.brandMaroon.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
+          Icon(icon,
+              size: 18,
+              color: isDark ? AppColors.brandYellow : AppColors.brandMaroon),
           const SizedBox(width: 6),
           Text(
             label,

@@ -18,12 +18,14 @@ class CategoryProvider extends ChangeNotifier with SafeChangeNotifier {
     }
     return List.unmodifiable(_categories);
   }
+
   List<CategoryModel> get activeCategories {
     if (_categories.isEmpty && !_isLoading && _subscription == null) {
       watchCategories();
     }
     return List.unmodifiable(_categories.where((c) => c.isActive).toList());
   }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -58,7 +60,8 @@ class CategoryProvider extends ChangeNotifier with SafeChangeNotifier {
       onError: (e) {
         _isLoading = false;
         _errorMessage = 'Failed to load categories: $e';
-        AppLogger.error('CategoryProvider watch error: $e', tag: 'CategoryProvider');
+        AppLogger.error('CategoryProvider watch error: $e',
+            tag: 'CategoryProvider');
         notifyListeners();
       },
     );

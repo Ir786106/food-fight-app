@@ -91,10 +91,12 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   double get couponDiscount => _couponDiscount;
   bool get isFreeDelivery => _isFreeDelivery;
   String? get couponError => _couponError;
-  String? get branchId => _branchId ?? (_items.isNotEmpty ? _items.first.food.branchId : null);
+  String? get branchId =>
+      _branchId ?? (_items.isNotEmpty ? _items.first.food.branchId : null);
   int get tokensToRedeem => _tokensToRedeem;
   double get tokenValue => _tokenValue;
-  double get loyaltyDiscount => (_tokensToRedeem * _tokenValue).clamp(0.0, subtotal);
+  double get loyaltyDiscount =>
+      (_tokensToRedeem * _tokenValue).clamp(0.0, subtotal);
 
   void setTokensToRedeem(int count, {double tokenValue = 1.0}) {
     if (!tokenValue.isFinite || tokenValue <= 0) {
@@ -117,7 +119,11 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   }
 
   bool isDifferentBranch(String? incomingBranchId) {
-    if (_items.isEmpty || incomingBranchId == null || incomingBranchId.isEmpty) return false;
+    if (_items.isEmpty ||
+        incomingBranchId == null ||
+        incomingBranchId.isEmpty) {
+      return false;
+    }
     final current = branchId;
     return current != null && current.isNotEmpty && current != incomingBranchId;
   }
@@ -149,8 +155,7 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
 
   int get itemCount => _items.fold(0, (sum, item) => sum + item.quantity);
 
-  double get subtotal =>
-      _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  double get subtotal => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
   double get deliveryFee {
     if (_items.isEmpty) return 0.0;
@@ -210,7 +215,17 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
   int getQuantity(String foodId) {
     final item = _items.firstWhere(
       (i) => i.food.id == foodId,
-      orElse: () => CartItemModel(food: FoodModel(id: '', name: '', description: '', price: 0, category: '', rating: 0, prepTimeMinutes: 0, restaurantId: ''), quantity: 0),
+      orElse: () => CartItemModel(
+          food: FoodModel(
+              id: '',
+              name: '',
+              description: '',
+              price: 0,
+              category: '',
+              rating: 0,
+              prepTimeMinutes: 0,
+              restaurantId: ''),
+          quantity: 0),
     );
     return item.quantity;
   }
@@ -235,7 +250,9 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
 
     // Resolve variant if not explicitly provided
     final variant = selectedVariant ??
-        (selectedSize != null && food.variants != null && food.variants!.isNotEmpty
+        (selectedSize != null &&
+                food.variants != null &&
+                food.variants!.isNotEmpty
             ? food.variants!.firstWhere(
                 (v) => v.label.toLowerCase() == selectedSize.toLowerCase(),
                 orElse: () => food.variants!.first,
@@ -248,10 +265,12 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       note: note,
       selectedSize: selectedSize ?? variant?.label,
       selectedVariant: variant,
-      selectedAddons: selectedAddons != null ? List<MenuAddon>.from(selectedAddons) : [],
+      selectedAddons:
+          selectedAddons != null ? List<MenuAddon>.from(selectedAddons) : [],
     );
 
-    final existingIndex = _items.indexWhere((i) => i.lineKey == candidate.lineKey);
+    final existingIndex =
+        _items.indexWhere((i) => i.lineKey == candidate.lineKey);
 
     if (existingIndex != -1) {
       _items[existingIndex].quantity += quantity;
@@ -297,13 +316,16 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     notifyListeners();
   }
 
-  void incrementQuantity(String foodId, {String? selectedSize, String? lineKey}) {
+  void incrementQuantity(String foodId,
+      {String? selectedSize, String? lineKey}) {
     if (lineKey != null) {
       incrementLine(lineKey);
       return;
     }
     final index = _items.indexWhere(
-      (i) => i.food.id == foodId && (selectedSize == null || i.selectedSize == selectedSize),
+      (i) =>
+          i.food.id == foodId &&
+          (selectedSize == null || i.selectedSize == selectedSize),
     );
     if (index != -1) {
       _items[index].quantity++;
@@ -313,13 +335,16 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     }
   }
 
-  void decrementQuantity(String foodId, {String? selectedSize, String? lineKey}) {
+  void decrementQuantity(String foodId,
+      {String? selectedSize, String? lineKey}) {
     if (lineKey != null) {
       decrementLine(lineKey);
       return;
     }
     final index = _items.indexWhere(
-      (i) => i.food.id == foodId && (selectedSize == null || i.selectedSize == selectedSize),
+      (i) =>
+          i.food.id == foodId &&
+          (selectedSize == null || i.selectedSize == selectedSize),
     );
     if (index != -1) {
       if (_items[index].quantity > 1) {
@@ -339,7 +364,9 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       return;
     }
     _items.removeWhere(
-      (i) => i.food.id == foodId && (selectedSize == null || i.selectedSize == selectedSize),
+      (i) =>
+          i.food.id == foodId &&
+          (selectedSize == null || i.selectedSize == selectedSize),
     );
     _recalculateCoupon();
     _saveCartToPrefs();
@@ -372,7 +399,8 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       return false;
     }
 
-    final result = await CouponService.validateCoupon(code, subtotal, branchId: branchId);
+    final result =
+        await CouponService.validateCoupon(code, subtotal, branchId: branchId);
     if (!result.isValid) {
       _couponError = result.errorMessage ?? 'Invalid coupon code';
       _appliedCoupon = null;
@@ -406,7 +434,8 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
       } else {
         if (_appliedCoupon!.type == 'percentage') {
           double disc = (subtotal * _appliedCoupon!.value) / 100.0;
-          if (_appliedCoupon!.maximumDiscount != null && _appliedCoupon!.maximumDiscount! > 0) {
+          if (_appliedCoupon!.maximumDiscount != null &&
+              _appliedCoupon!.maximumDiscount! > 0) {
             if (disc > _appliedCoupon!.maximumDiscount!) {
               disc = _appliedCoupon!.maximumDiscount!;
             }
@@ -416,7 +445,9 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
           _isFreeDelivery = true;
           _couponDiscount = 0.0;
         } else {
-          _couponDiscount = _appliedCoupon!.value > subtotal ? subtotal : _appliedCoupon!.value;
+          _couponDiscount = _appliedCoupon!.value > subtotal
+              ? subtotal
+              : _appliedCoupon!.value;
         }
       }
     }
@@ -436,7 +467,8 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     Future<bool> Function(double total)? confirmQuote,
   }) async {
     final effectiveBranchId = branchId ?? this.branchId;
-    final effectiveDiscount = loyaltyDiscount > 0 ? loyaltyDiscount : _couponDiscount;
+    final effectiveDiscount =
+        loyaltyDiscount > 0 ? loyaltyDiscount : _couponDiscount;
 
     final order = OrderModel(
       id: '',
@@ -466,26 +498,41 @@ class CartProvider extends ChangeNotifier with SafeChangeNotifier {
     }
     try {
       final savedOrder = await CheckoutService.place(order,
-        deliveryAreaId: _selectedArea!.id,
-        couponId: _tokensToRedeem > 0 ? null : _appliedCoupon?.id,
-        addressId: addressId,
-        confirmQuote: confirmQuote);
+          deliveryAreaId: _selectedArea!.id,
+          couponId: _tokensToRedeem > 0 ? null : _appliedCoupon?.id,
+          addressId: addressId,
+          confirmQuote: confirmQuote);
       clearCart();
       await _saveCartToPrefs();
       await CheckoutService.complete();
       return savedOrder;
     } on FirebaseFunctionsException catch (error) {
       final details = error.details;
-      if (details is Map && details['reason'] == 'price-changed' && details['order'] is Map) {
+      if (details is Map &&
+          details['reason'] == 'price-changed' &&
+          details['order'] is Map) {
         await CheckoutService.complete();
-        final updated = OrderModel.fromJson(jsonDecode(jsonEncode(details['order'])) as Map<String, dynamic>);
-        _items..clear()..addAll(updated.items);
-        _tokenValue = (details['tokenValue'] as num?)?.toDouble() ?? _tokenValue;
+        final updated = OrderModel.fromJson(
+            jsonDecode(jsonEncode(details['order'])) as Map<String, dynamic>);
+        _items
+          ..clear()
+          ..addAll(updated.items);
+        _tokenValue =
+            (details['tokenValue'] as num?)?.toDouble() ?? _tokenValue;
         final area = _selectedArea;
-        if (area != null) { _selectedArea = DeliveryAreaModel(id: area.id, name: area.name,
-          deliveryCharge: updated.deliveryCharge, isActive: area.isActive, createdAt: area.createdAt,
-          updatedAt: DateTime.now(), description: area.description, branchId: area.branchId); }
-        _couponDiscount = (updated.discount - updated.tokensDiscount).clamp(0.0, updated.subtotal);
+        if (area != null) {
+          _selectedArea = DeliveryAreaModel(
+              id: area.id,
+              name: area.name,
+              deliveryCharge: updated.deliveryCharge,
+              isActive: area.isActive,
+              createdAt: area.createdAt,
+              updatedAt: DateTime.now(),
+              description: area.description,
+              branchId: area.branchId);
+        }
+        _couponDiscount = (updated.discount - updated.tokensDiscount)
+            .clamp(0.0, updated.subtotal);
         await _saveCartToPrefs();
         notifyListeners();
       }

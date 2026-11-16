@@ -1,6 +1,7 @@
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/localization/app_language.dart';
+import '../../services/delivery_area_service.dart';
 import '../../theme/app_theme.dart';
 import '../../core/utils/logger.dart';
 
@@ -18,7 +19,7 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
   });
 
   void _showNotifyMeDialog(BuildContext context) {
-    final phoneCtrl = TextEditingController();
+    String contact = '';
     bool isSubmitting = false;
 
     showDialog(
@@ -29,12 +30,16 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
 
           return AlertDialog(
             backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Row(
               children: [
-                Icon(Icons.notifications_active_rounded, color: AppColors.brandMaroon),
+                Icon(Icons.notifications_active_rounded,
+                    color: AppColors.brandMaroon),
                 SizedBox(width: 8),
-                Text('Get Notified!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Get Notified!',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
             content: Column(
@@ -45,17 +50,20 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                   'We are rapidly expanding! Leave your contact number and we will notify you the moment Food Fight starts delivering in your zone.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: phoneCtrl,
+                  onChanged: (value) => contact = value.trim(),
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     labelText: 'Mobile Number or Email',
                     hintText: '0300 1234567',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ],
@@ -69,35 +77,47 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.brandYellow,
                   foregroundColor: AppColors.brandMaroon,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                        final val = phoneCtrl.text.trim();
-                        if (val.isEmpty) return;
+                        if (contact.isEmpty) return;
                         setDialogState(() => isSubmitting = true);
                         try {
-                          await FirebaseFirestore.instance.collection('branch_waitlist').add({
-                            'contact': val,
-                            'createdAt': FieldValue.serverTimestamp(),
-                            'nearestBranch': nearestBranchName ?? '',
-                            'distanceKm': distanceKm ?? 0.0,
-                          });
-                        } catch (e) {
-                          AppLogger.warn('Waitlist submission notice: $e', tag: 'Waitlist');
+                          await DeliveryAreaService
+                              .requestAvailabilityNotification(
+                            contact: contact,
+                            nearestBranchName: nearestBranchName,
+                            distanceKm: distanceKm,
+                          );
+                        } catch (_) {
+                          AppLogger.warn('Waitlist submission failed',
+                              tag: 'Waitlist');
+                          if (dialogCtx.mounted) {
+                            setDialogState(() => isSubmitting = false);
+                            AppSnackbar.showError(
+                                dialogCtx,
+                                dialogCtx.tr(
+                                    'Unable to join the waitlist. Please try again.'));
+                          }
+                          return;
                         }
                         if (ctx.mounted) Navigator.of(ctx).pop();
                         if (context.mounted) {
-                          AppSnackbar.showSnackBar(context,
+                          AppSnackbar.showSnackBar(
+                            context,
                             const SnackBar(
-                              content: Text('Thank you! You are on our VIP launch list! 🎉'),
+                              content: Text(
+                                  'Thank you! You are on our VIP launch list! 🎉'),
                               backgroundColor: AppColors.success,
                             ),
                           );
                         }
                       },
-                child: const Text('Notify Me', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Notify Me',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -108,7 +128,8 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final distanceText = distanceKm != null ? '${distanceKm!.toStringAsFixed(1)} km away' : '';
+    final distanceText =
+        distanceKm != null ? '${distanceKm!.toStringAsFixed(1)} km away' : '';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -134,7 +155,8 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
               color: Color(0xFFEA580C),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.location_off_rounded, color: Colors.white, size: 18),
+            child: const Icon(Icons.location_off_rounded,
+                color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -166,7 +188,8 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                     InkWell(
                       onTap: () => _showNotifyMeDialog(context),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEA580C),
                           borderRadius: BorderRadius.circular(8),
@@ -186,7 +209,8 @@ class OutOfDeliveryAreaBanner extends StatelessWidget {
                       InkWell(
                         onTap: onSwitchCity,
                         child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                           child: Text(
                             'Change City',
                             style: TextStyle(

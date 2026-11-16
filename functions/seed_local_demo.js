@@ -7,11 +7,15 @@ if (process.env.GCLOUD_PROJECT !== projectId ||
   throw new Error("Use firebase.demo.json with --project demo-food-fight before seeding.");
 }
 
+const password = process.env.FOOD_FIGHT_DEMO_PASSWORD;
+if (!password || password.length < 12) {
+  throw new Error("Set FOOD_FIGHT_DEMO_PASSWORD to an emulator-only password of at least 12 characters.");
+}
 const app = admin.initializeApp({ projectId });
 const db = admin.firestore();
-const password = "FoodFight-Demo-123";
 const branchId = "demo-kitchen";
 const accounts = [
+  { uid: "demo-super-admin", role: "super_admin", name: "Demo Platform Admin" },
   { uid: "demo-customer", role: "customer", name: "Demo Customer" },
   { uid: "demo-admin", role: "admin", name: "Demo Kitchen Manager", branchId },
   { uid: "demo-rider", role: "rider", name: "Demo Rider", branchId },

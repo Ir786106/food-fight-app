@@ -1,6 +1,8 @@
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/app_language.dart';
+import '../../models/order_model.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -76,18 +78,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(context.tr('Notifications'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
           if (notifications.isNotEmpty && notifProvider.unreadCount > 0)
             IconButton(
-              icon: const Icon(Icons.done_all_rounded, color: AppColors.brandMaroon),
+              icon: const Icon(Icons.done_all_rounded,
+                  color: AppColors.brandMaroon),
               tooltip: 'Mark All as Read',
               onPressed: () async {
                 if (userId.isNotEmpty) {
                   await notifProvider.markAllAsRead(userId);
                   if (context.mounted) {
-                    AppSnackbar.showSnackBar(context,
-                      const SnackBar(content: Text('All notifications marked as read')),
+                    AppSnackbar.showSnackBar(
+                      context,
+                      const SnackBar(
+                          content: Text('All notifications marked as read')),
                     );
                   }
                 }
@@ -103,18 +109,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       backgroundColor: colorScheme.surface,
-                      title: Text('Clear All Notifications?', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                      content: Text('Are you sure you want to remove all notifications?',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                      title: Text('Clear All Notifications?',
+                          style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.bold)),
+                      content: Text(
+                          'Are you sure you want to remove all notifications?',
+                          style:
+                              TextStyle(color: colorScheme.onSurfaceVariant)),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
-                          child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                          child: Text('Cancel',
+                              style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant)),
                         ),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error),
                           onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Clear All', style: TextStyle(color: Colors.white)),
+                          child: const Text('Clear All',
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -130,9 +145,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   value: 'clear_all',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_sweep_outlined, color: AppColors.error, size: 20),
+                      Icon(Icons.delete_sweep_outlined,
+                          color: AppColors.error, size: 20),
                       SizedBox(width: 8),
-                      Text('Clear All', style: TextStyle(color: AppColors.error)),
+                      Text('Clear All',
+                          style: TextStyle(color: AppColors.error)),
                     ],
                   ),
                 ),
@@ -142,7 +159,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: SafeArea(
         child: isLoading && notifications.isEmpty
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primary))
             : notifications.isEmpty
                 ? Center(
                     child: Padding(
@@ -156,18 +174,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               color: AppColors.primary.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.notifications_off_outlined, size: 52, color: AppColors.primary),
+                            child: const Icon(Icons.notifications_off_outlined,
+                                size: 52, color: AppColors.primary),
                           ),
                           const SizedBox(height: 18),
                           const Text(
                             'No Notifications Yet',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
                           ),
                           const SizedBox(height: 8),
                           const Text(
                             'You will receive updates here about your orders, exclusive battle discounts, and delivery alerts.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            style: TextStyle(
+                                color: AppColors.textSecondary, fontSize: 13),
                           ),
                         ],
                       ),
@@ -192,7 +215,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             color: AppColors.error.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Icon(Icons.delete_outline, color: Colors.white),
+                          child: const Icon(Icons.delete_outline,
+                              color: Colors.white),
                         ),
                         onDismissed: (_) {
                           notifProvider.deleteNotification(n.id);
@@ -203,11 +227,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               notifProvider.markAsRead(n.id);
                             }
                             final refId = n.referenceId;
-                            final user = context.read<AuthProvider>().currentUser;
+                            final user =
+                                context.read<AuthProvider>().currentUser;
                             if (n.type == 'chat' && refId != null) {
-                              Navigator.pushNamed(context, user?.isAdmin == true ? '/admin/chats' : '/chat', arguments: {'chatId': refId});
+                              Navigator.pushNamed(
+                                  context,
+                                  user?.isSuperAdmin == true
+                                      ? '/super-admin/chats'
+                                      : user?.isAdmin == true
+                                          ? '/admin/chats'
+                                          : '/chat',
+                                  arguments: {'chatId': refId});
                             } else if (n.type == 'order' && refId != null) {
-                              Navigator.pushNamed(context, user?.isRider == true ? '/rider' : user?.isAdmin == true ? '/admin/orders' : '/order-tracking', arguments: refId);
+                              Navigator.pushNamed(
+                                  context,
+                                  user?.isRider == true
+                                      ? '/rider'
+                                      : user?.isAdmin == true
+                                          ? '/admin/orders'
+                                          : '/order-tracking',
+                                  arguments: refId);
                             }
                           },
                           child: Container(
@@ -218,11 +257,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               border: Border.all(
                                 color: !n.isRead
                                     ? AppColors.brandYellow
-                                    : (isDark ? AppColors.darkBorder : AppColors.border),
+                                    : (isDark
+                                        ? AppColors.darkBorder
+                                        : AppColors.border),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                                  color: Colors.black
+                                      .withValues(alpha: isDark ? 0.25 : 0.04),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -243,18 +285,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              n.title,
+                                              switch (n.messageKey) {
+                                                'orderPlaced' =>
+                                                  context.tr('Order placed'),
+                                                'orderStatus' =>
+                                                  context.tr('Order update'),
+                                                _ => n.title,
+                                              },
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 14,
-                                                color: n.isRead ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                                                color: n.isRead
+                                                    ? colorScheme
+                                                        .onSurfaceVariant
+                                                    : colorScheme.onSurface,
                                               ),
                                             ),
                                           ),
@@ -271,11 +324,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        n.message,
+                                        switch (n.messageKey) {
+                                          'orderPlaced'
+                                              when n.orderNumber != null =>
+                                            context
+                                                .tr(
+                                                    'Order {order} has been sent to the kitchen.')
+                                                .replaceFirst(
+                                                    '{order}', n.orderNumber!),
+                                          'orderStatus'
+                                              when n.orderNumber != null &&
+                                                  n.orderStatus != null =>
+                                            context
+                                                .tr('Order {order}: {status}')
+                                                .replaceFirst(
+                                                    '{order}', n.orderNumber!)
+                                                .replaceFirst(
+                                                    '{status}',
+                                                    context.tr(
+                                                        OrderStatus.fromString(
+                                                                n.orderStatus!)
+                                                            .displayName)),
+                                          _ => n.message,
+                                        },
                                         style: TextStyle(
                                           fontSize: 12.5,
                                           color: n.isRead
-                                              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
+                                              ? colorScheme.onSurfaceVariant
+                                                  .withValues(alpha: 0.7)
                                               : colorScheme.onSurfaceVariant,
                                           height: 1.4,
                                         ),
@@ -285,7 +361,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         _formatTime(n.createdAt),
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                          color: colorScheme.onSurfaceVariant
+                                              .withValues(alpha: 0.5),
                                         ),
                                       ),
                                     ],

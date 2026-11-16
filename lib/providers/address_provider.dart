@@ -17,12 +17,16 @@ class AddressProvider extends ChangeNotifier with SafeChangeNotifier {
 
   AddressModel? get defaultAddress {
     final matches = _addresses.where((a) => a.isDefault);
-    return matches.isNotEmpty ? matches.first : (_addresses.isNotEmpty ? _addresses.first : null);
+    return matches.isNotEmpty
+        ? matches.first
+        : (_addresses.isNotEmpty ? _addresses.first : null);
   }
 
   void watchAddresses(String userId) {
     if (userId.isEmpty) {
-      _sub?.cancel(); _sub = null; _currentUserId = null;
+      _sub?.cancel();
+      _sub = null;
+      _currentUserId = null;
       _addresses = [];
       _isLoading = false;
       notifyListenersPostFrame();

@@ -21,13 +21,18 @@ void main() {
       restaurantId: 'rest-1',
       isAvailable: true,
       variants: [
-        const MenuVariant(label: 'Small', price: 600, description: '6 inch personal size'),
-        const MenuVariant(label: 'Medium', price: 1100, description: '10 inch sharing size'),
-        const MenuVariant(label: 'Large', price: 1600, description: '14 inch family size'),
+        const MenuVariant(
+            label: 'Small', price: 600, description: '6 inch personal size'),
+        const MenuVariant(
+            label: 'Medium', price: 1100, description: '10 inch sharing size'),
+        const MenuVariant(
+            label: 'Large', price: 1600, description: '14 inch family size'),
       ],
     );
 
-    testWidgets('Selecting sizes updates the live unit price and bottom CTA price', (tester) async {
+    testWidgets(
+        'Selecting sizes updates the live unit price and bottom CTA price',
+        (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -39,7 +44,8 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<CartProvider>.value(value: cart),
-            ChangeNotifierProvider<ReviewProvider>.value(value: ReviewProvider()),
+            ChangeNotifierProvider<ReviewProvider>.value(
+                value: ReviewProvider()),
           ],
           child: MaterialApp(
             onGenerateRoute: (settings) {
@@ -76,7 +82,8 @@ void main() {
       expect(find.text('Add to cart · Rs. 1600'), findsOneWidget);
     });
 
-    testWidgets('Quantity stepper updates bottom CTA price dynamically', (tester) async {
+    testWidgets('Quantity stepper updates bottom CTA price dynamically',
+        (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -88,7 +95,8 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<CartProvider>.value(value: cart),
-            ChangeNotifierProvider<ReviewProvider>.value(value: ReviewProvider()),
+            ChangeNotifierProvider<ReviewProvider>.value(
+                value: ReviewProvider()),
           ],
           child: MaterialApp(
             onGenerateRoute: (settings) {
@@ -130,7 +138,8 @@ void main() {
       expect(find.text('Add to cart · Rs. 1200'), findsOneWidget);
     });
 
-    testWidgets('Tapping bottom CTA adds item to cart and dismisses screen', (tester) async {
+    testWidgets('Tapping bottom CTA adds item to cart and dismisses screen',
+        (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -142,7 +151,8 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider<CartProvider>.value(value: cart),
-            ChangeNotifierProvider<ReviewProvider>.value(value: ReviewProvider()),
+            ChangeNotifierProvider<ReviewProvider>.value(
+                value: ReviewProvider()),
           ],
           child: MaterialApp(
             home: Builder(

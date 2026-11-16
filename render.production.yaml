@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: food-fight-api
+    runtime: node
+    plan: free
+    rootDir: functions
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --omit=dev
+    startCommand: node trusted_backend.js
+    healthCheckPath: /health
+    envVars:
+      - key: FOODFIGHT_BACKEND_ENV
+        value: production
+      - key: GCLOUD_PROJECT
+        value: food-fight-bd72e
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/firebase-service-account.json

@@ -69,14 +69,18 @@ class FoodDetailAddonsSelector extends StatelessWidget {
                 activeColor: AppColors.brandYellow,
                 checkColor: AppColors.brandMaroon,
                 dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
                 title: Text(
                   addon.name,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
                 secondary: Text(
@@ -85,8 +89,12 @@ class FoodDetailAddonsSelector extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: isSelected
-                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
-                        : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                        ? (isDark
+                            ? AppColors.brandYellow
+                            : AppColors.brandMaroon)
+                        : (isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary),
                   ),
                 ),
                 onChanged: (_) => onToggleAddon(addon),

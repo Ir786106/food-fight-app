@@ -8,7 +8,8 @@ class AdminAccountModel {
   final String phone;
   final String role; // 'admin', 'staff', 'super_admin'
   final String status; // 'active', 'suspended', 'deactivated'
-  final List<String> permissions; // e.g., 'manage_menu', 'manage_orders', 'view_reports', 'manage_coupons'
+  final List<String>
+      permissions; // e.g., 'manage_menu', 'manage_orders', 'view_reports', 'manage_coupons'
   final String? restaurantId;
   final String? branchId;
   final String? parentAdminId;
@@ -30,14 +31,23 @@ class AdminAccountModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.lastLoginAt,
-  })  : permissions = permissions ?? const ['manage_menu', 'manage_orders', 'manage_coupons', 'view_reports'],
+  })  : permissions = permissions ??
+            const [
+              'manage_menu',
+              'manage_orders',
+              'manage_coupons',
+              'view_reports'
+            ],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
   bool get isActive => status == 'active';
   bool get isSuspended => status == 'suspended';
   bool get isDeactivated => status == 'deactivated';
-  bool get isSubAdmin => parentAdminId != null && parentAdminId!.isNotEmpty;
+  bool get isSubAdmin =>
+      role == 'staff' ||
+      role == 'sub_admin' ||
+      (parentAdminId?.isNotEmpty ?? false);
 
   AdminAccountModel copyWith({
     String? id,
@@ -86,28 +96,36 @@ class AdminAccountModel {
       if (parentAdminId != null) 'parentAdminId': parentAdminId,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
-      if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.millisecondsSinceEpoch,
+      if (lastLoginAt != null)
+        'lastLoginAt': lastLoginAt!.millisecondsSinceEpoch,
     };
   }
 
   factory AdminAccountModel.fromJson(Map<String, dynamic> json) {
     List<String> perms = [];
     if (json['permissions'] is List) {
-      perms = List<String>.from(json['permissions']);
+      perms = (json['permissions'] as List).whereType<String>().toList();
     } else if (json['permissions'] is Map) {
       final map = json['permissions'] as Map;
-      perms = map.entries.where((e) => e.value == true).map((e) => e.key.toString()).toList();
+      perms = map.entries
+          .where((e) => e.value == true)
+          .map((e) => e.key.toString())
+          .toList();
     }
 
     return AdminAccountModel(
-      id: json['id'] ?? json['uid'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      role: json['role'] ?? 'admin',
-      status: json['status'] ?? (json['isActive'] == 1 || json['isActive'] == true ? 'active' : 'suspended'),
+      id: (json['id'] ?? json['uid'] ?? '').toString(),
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'admin',
+      status: json['status']?.toString() ??
+          (json['isBlocked'] == true ||
+                  ![null, true, 1, '1', 'true'].contains(json['isActive'])
+              ? 'suspended'
+              : 'active'),
       permissions: perms,
-      restaurantId: json['restaurantId'] ?? 'food_fight_hq',
+      restaurantId: json['restaurantId']?.toString() ?? 'food_fight_hq',
       branchId: json['branchId']?.toString(),
       parentAdminId: json['parentAdminId']?.toString(),
       createdAt: SafeConvert.toDateTime(json['createdAt']),

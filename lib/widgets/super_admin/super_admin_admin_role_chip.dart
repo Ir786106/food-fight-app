@@ -30,7 +30,8 @@ class SuperAdminAdminRoleChip extends StatelessWidget {
     } else {
       bg = AppColors.yellowSoft;
       fg = AppColors.brandMaroon;
-      label = branchName != null ? 'BRANCH ADMIN ($branchName)' : 'BRANCH ADMIN';
+      label =
+          branchName != null ? 'BRANCH ADMIN ($branchName)' : 'BRANCH ADMIN';
     }
 
     return Container(

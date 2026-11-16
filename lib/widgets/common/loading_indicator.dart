@@ -25,7 +25,9 @@ class LoadingIndicator extends StatelessWidget {
             Text(
               message!,
               style: TextStyle(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -57,7 +59,9 @@ class SkeletonBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBorder.withValues(alpha: 0.6) : Colors.grey.shade200,
+        color: isDark
+            ? AppColors.darkBorder.withValues(alpha: 0.6)
+            : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );

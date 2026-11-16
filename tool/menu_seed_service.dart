@@ -198,7 +198,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Vegi Lovers Pizza',
-          description: 'Onion + Bell Pepper + Tomato + Mushroom + Sweet Corn + Black Olives',
+          description:
+              'Onion + Bell Pepper + Tomato + Mushroom + Sweet Corn + Black Olives',
           price: 399,
           categoryId: categoryNameToId['regular pizza'] ?? '',
           variants: regularPizzaVariants,
@@ -238,7 +239,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Bone Fire Pizza',
-          description: 'Creamy Base & Grilled Chicken + Mushroom + Jalapeno with Fiery Sauce',
+          description:
+              'Creamy Base & Grilled Chicken + Mushroom + Jalapeno with Fiery Sauce',
           price: 999,
           categoryId: categoryNameToId['most recommended'] ?? '',
           variants: mostRecommendedVariants,
@@ -275,7 +277,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Crown Crust Pizza',
-          description: 'Lots of Cheese & Chicken + Onion + Black Olive + Sweet Corn in a Crown Crust',
+          description:
+              'Lots of Cheese & Chicken + Onion + Black Olive + Sweet Corn in a Crown Crust',
           price: 999,
           categoryId: categoryNameToId['most recommended'] ?? '',
           variants: mostRecommendedVariants,
@@ -289,7 +292,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Chicken Seekh Kabab Stuffed Crust',
-          description: 'Seekh kabab chunks rolled inside a cheese stuffed crust',
+          description:
+              'Seekh kabab chunks rolled inside a cheese stuffed crust',
           price: 1199,
           categoryId: categoryNameToId['stuffed crust'] ?? '',
           variants: stuffedCrustVariants,
@@ -327,7 +331,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Golden Crispy Broast',
-          description: 'Deep-fried golden crunchy broast served with golden fries, fresh bun and dip',
+          description:
+              'Deep-fried golden crunchy broast served with golden fries, fresh bun and dip',
           price: 399,
           categoryId: categoryNameToId['broast'] ?? '',
           variants: broastVariants,
@@ -344,7 +349,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Spicy Masala Broast',
-          description: 'Spicy seasoned broast served with golden fries, fresh bun and fiery dip',
+          description:
+              'Spicy seasoned broast served with golden fries, fresh bun and fiery dip',
           price: 399,
           categoryId: categoryNameToId['broast'] ?? '',
           variants: broastVariants,
@@ -362,7 +368,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Crispy Fried Chicken Pieces',
-          description: 'Secret spice coated tender bone-in chicken fried to crunchy perfection',
+          description:
+              'Secret spice coated tender bone-in chicken fried to crunchy perfection',
           price: 399,
           categoryId: categoryNameToId['crispy fried chicken'] ?? '',
           variants: friedChickenVariants,
@@ -392,7 +399,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Oven Baked Hot Wings',
-          description: 'Juicy oven baked chicken wings glazed in barbecue glaze',
+          description:
+              'Juicy oven baked chicken wings glazed in barbecue glaze',
           price: 299,
           categoryId: categoryNameToId['special hot wings'] ?? '',
           variants: wingsVariants,
@@ -431,7 +439,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Zinger Burger with Fries',
-          description: 'Signature crispy whole breast zinger fillet with lettuce and mayo',
+          description:
+              'Signature crispy whole breast zinger fillet with lettuce and mayo',
           price: 349,
           categoryId: categoryNameToId['burger with fries'] ?? '',
           addons: burgerAddons,
@@ -443,7 +452,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Patty Burger',
-          description: 'Classic chicken patty with house sauce, onions and cucumber',
+          description:
+              'Classic chicken patty with house sauce, onions and cucumber',
           price: 249,
           categoryId: categoryNameToId['burger with fries'] ?? '',
           addons: burgerAddons,
@@ -454,7 +464,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Grill Burger with Fries',
-          description: 'Tender chargrilled chicken breast fillet with smoky sauce',
+          description:
+              'Tender chargrilled chicken breast fillet with smoky sauce',
           price: 399,
           categoryId: categoryNameToId['burger with fries'] ?? '',
           addons: burgerAddons,
@@ -465,7 +476,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Mighty Burger with Fries',
-          description: 'Double crunchy zinger fillet stacked with double cheese',
+          description:
+              'Double crunchy zinger fillet stacked with double cheese',
           price: 499,
           categoryId: categoryNameToId['burger with fries'] ?? '',
           addons: burgerAddons,
@@ -489,7 +501,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Crispy Wrap',
-          description: 'Crunchy chicken tenders wrapped in fresh tortilla with garlic sauce',
+          description:
+              'Crunchy chicken tenders wrapped in fresh tortilla with garlic sauce',
           price: 499,
           categoryId: categoryNameToId['wraps & pratha roll'] ?? '',
           addons: burgerAddons,
@@ -500,7 +513,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Grill Chicken Wrap',
-          description: 'Chargrilled chicken strips wrapped with fresh salad and spicy mayo',
+          description:
+              'Chargrilled chicken strips wrapped with fresh salad and spicy mayo',
           price: 499,
           categoryId: categoryNameToId['wraps & pratha roll'] ?? '',
           addons: burgerAddons,
@@ -524,7 +538,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Chicken Shawarma',
-          description: 'Authentic spiced chicken shawarma with pickled cucumber and tahini mayo',
+          description:
+              'Authentic spiced chicken shawarma with pickled cucumber and tahini mayo',
           price: 249,
           categoryId: categoryNameToId['shawarma & platter'] ?? '',
           addons: burgerAddons,
@@ -546,7 +561,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Platter Shawarma',
-          description: 'Open shawarma platter served with pita bread, fries and house salad',
+          description:
+              'Open shawarma platter served with pita bread, fries and house salad',
           price: 449,
           categoryId: categoryNameToId['shawarma & platter'] ?? '',
           prepTimeMinutes: 15,
@@ -571,7 +587,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Masala Fries',
-          description: 'Crispy fries tossed in signature chatpata Food Fight masala',
+          description:
+              'Crispy fries tossed in signature chatpata Food Fight masala',
           price: 180,
           categoryId: categoryNameToId['fries'] ?? '',
           variants: friesVariants,
@@ -602,7 +619,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Regular Platter',
-          description: '2 Pcs Bihari Roll + 6 Pcs Oven Baked Wings + Regular Fries + Spicy Dip',
+          description:
+              '2 Pcs Bihari Roll + 6 Pcs Oven Baked Wings + Regular Fries + Spicy Dip',
           price: 449,
           categoryId: categoryNameToId['platters'] ?? '',
           prepTimeMinutes: 20,
@@ -612,7 +630,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Large Platter',
-          description: '4 Pcs Bihari Roll + 12 Pcs Oven Baked Wings + Large Fries + 2 Pcs Spicy Dip',
+          description:
+              '4 Pcs Bihari Roll + 12 Pcs Oven Baked Wings + Large Fries + 2 Pcs Spicy Dip',
           price: 849,
           categoryId: categoryNameToId['platters'] ?? '',
           prepTimeMinutes: 25,
@@ -663,7 +682,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Deal 1: Zinger Combo',
-          description: '1 Zinger Burger + 1 Regular Fries + 1 Regular Drink (250ml)',
+          description:
+              '1 Zinger Burger + 1 Regular Fries + 1 Regular Drink (250ml)',
           price: 499,
           discount: 10,
           finalPrice: 449,
@@ -676,7 +696,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Deal 2: Pizza & Wings Combo',
-          description: '1 Small Pizza + 3 Pcs Hot Wings + 1 Regular Drink (250ml)',
+          description:
+              '1 Small Pizza + 3 Pcs Hot Wings + 1 Regular Drink (250ml)',
           price: 599,
           categoryId: categoryNameToId['deals & combos'] ?? '',
           prepTimeMinutes: 18,
@@ -687,7 +708,8 @@ class MenuSeedService {
         MenuItemModel(
           id: '',
           name: 'Family Feast Mega Deal',
-          description: '1 Large Pizza + 2 Zinger Burgers + 6 Pcs Hot Wings + 1.5L Drink',
+          description:
+              '1 Large Pizza + 2 Zinger Burgers + 6 Pcs Hot Wings + 1.5L Drink',
           price: 2199,
           discount: 15,
           finalPrice: 1869,
@@ -702,7 +724,9 @@ class MenuSeedService {
       // 3. Check existing items by name to prevent duplicating if already seeded
       final existingItemsSnapshot = await _menuCollection.get();
       final Set<String> existingNames = existingItemsSnapshot.docs
-          .map((d) => ((d.data() as Map<String, dynamic>)['name'] ?? '').toString().toLowerCase())
+          .map((d) => ((d.data() as Map<String, dynamic>)['name'] ?? '')
+              .toString()
+              .toLowerCase())
           .toSet();
 
       for (var item in seedItems) {
@@ -710,8 +734,10 @@ class MenuSeedService {
           final docRef = _menuCollection.doc();
           final data = item.toJson();
           data['id'] = docRef.id;
-          if (data['imageUrl'] == null || (data['imageUrl'] as String).isEmpty) {
-            data['imageUrl'] = 'assets/images/branding/food_fight_logo_icon.png';
+          if (data['imageUrl'] == null ||
+              (data['imageUrl'] as String).isEmpty) {
+            data['imageUrl'] =
+                'assets/images/branding/food_fight_logo_icon.png';
           }
           await docRef.set(data);
           itemsCreated++;

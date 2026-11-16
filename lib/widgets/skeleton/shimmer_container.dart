@@ -26,24 +26,26 @@ class ShimmerContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
 
-    final baseColor = isDark ? const Color(0xFF1E293B) : Colors.grey.shade300;
-    final highlightColor = isDark ? const Color(0xFF334155) : Colors.grey.shade100;
+    final baseColor = colors.surfaceContainerHighest;
+    final highlightColor = colors.surfaceContainerLow;
 
+    final placeholder = Container(
+      width: width,
+      height: height,
+      decoration: shapeBorder != null
+          ? ShapeDecoration(shape: shapeBorder!, color: baseColor)
+          : BoxDecoration(
+              color: baseColor,
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+    );
+    if (MediaQuery.disableAnimationsOf(context)) return placeholder;
     return Shimmer.fromColors(
       baseColor: baseColor,
       highlightColor: highlightColor,
-      child: Container(
-        width: width,
-        height: height,
-        decoration: shapeBorder != null
-            ? ShapeDecoration(shape: shapeBorder!, color: baseColor)
-            : BoxDecoration(
-                color: baseColor,
-                borderRadius: BorderRadius.circular(borderRadius),
-              ),
-      ),
+      child: placeholder,
     );
   }
 }

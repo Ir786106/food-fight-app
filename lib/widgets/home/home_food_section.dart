@@ -46,7 +46,9 @@ class HomeFoodSection extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.brandMaroon,
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -56,7 +58,9 @@ class HomeFoodSection extends StatelessWidget {
                       subtitle!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textSecondary,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],

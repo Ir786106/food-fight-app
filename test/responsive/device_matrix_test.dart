@@ -1,6 +1,8 @@
 import 'package:food_fight/models/rider_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import 'package:food_fight/models/food_model.dart';
@@ -12,6 +14,7 @@ import 'package:food_fight/models/payment_method_model.dart';
 import 'package:food_fight/models/address_model.dart';
 import 'package:food_fight/models/delivery_area_model.dart';
 import 'package:food_fight/models/review_model.dart';
+import 'package:food_fight/models/user_model.dart';
 
 import 'package:food_fight/providers/auth_provider.dart';
 import 'package:food_fight/providers/cart_provider.dart';
@@ -44,7 +47,8 @@ class StubChatProvider extends ChangeNotifier implements ChatProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class StubRestaurantProvider extends ChangeNotifier implements RestaurantProvider {
+class StubRestaurantProvider extends ChangeNotifier
+    implements RestaurantProvider {
   @override
   List<RestaurantModel> get restaurants => [];
   @override
@@ -104,7 +108,8 @@ class StubReviewProvider extends ChangeNotifier implements ReviewProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class StubPaymentMethodProvider extends ChangeNotifier implements PaymentMethodProvider {
+class StubPaymentMethodProvider extends ChangeNotifier
+    implements PaymentMethodProvider {
   @override
   List<PaymentMethodModel> get methods => [];
   @override
@@ -126,7 +131,8 @@ class StubAddressProvider extends ChangeNotifier implements AddressProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class StubDeliveryAreaProvider extends ChangeNotifier implements DeliveryAreaProvider {
+class StubDeliveryAreaProvider extends ChangeNotifier
+    implements DeliveryAreaProvider {
   @override
   List<DeliveryAreaModel> get areas => [];
   @override
@@ -148,7 +154,18 @@ class StubCouponProvider extends ChangeNotifier implements CouponProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class StubRiderProvider extends ChangeNotifier implements RiderProvider {
+class StubRiderProvider extends RiderProvider {
+  StubRiderProvider({String? deliveryError}) {
+    this.deliveryError = deliveryError;
+  }
+
+  @override
+  List<OrderModel> get earningsOrders => [];
+  @override
+  bool get earningsLoading => false;
+  @override
+  bool get earningsUnavailable => false;
+
   @override
   bool get isOnline => false;
   @override
@@ -164,6 +181,36 @@ class StubRiderProvider extends ChangeNotifier implements RiderProvider {
   bool get isLoading => false;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _TrackingRiderProvider extends StubRiderProvider {
+  @override
+  bool get isOnline => true;
+
+  @override
+  List<OrderModel> get assignedDeliveries => [
+        OrderModel.fromJson({
+          'id': 'gps-order',
+          'status': 'pickedUp',
+          'riderId': 'gps-rider',
+        }),
+      ];
+
+  @override
+  void watchRiderDeliveries(String riderId, {String? riderPhone}) {
+    notifyListeners();
+  }
+}
+
+class _TrackingAuthProvider extends AuthProvider {
+  @override
+  final currentUser = UserModel(
+    id: 'gps-rider',
+    name: 'Test Rider',
+    email: '',
+    phone: '',
+    role: 'rider',
+  );
 }
 
 void main() {
@@ -191,15 +238,20 @@ void main() {
   final testFood = FoodModel(
     id: 'food_1',
     name: 'Special Double Patty Burger With Cheese',
-    description: 'Juicy double beef patty layered with melted cheddar cheese and homemade secret sauce on a toasted brioche bun.',
+    description:
+        'Juicy double beef patty layered with melted cheddar cheese and homemade secret sauce on a toasted brioche bun.',
     price: 850,
     category: 'Burgers',
     rating: 4.8,
     prepTimeMinutes: 15,
     restaurantId: 'rest_1',
     variants: [
-      const MenuVariant(label: 'Regular', price: 850, description: 'Single meal portion'),
-      const MenuVariant(label: 'Large Combo', price: 1250, description: 'With fries and drink'),
+      const MenuVariant(
+          label: 'Regular', price: 850, description: 'Single meal portion'),
+      const MenuVariant(
+          label: 'Large Combo',
+          price: 1250,
+          description: 'With fries and drink'),
     ],
   );
 
@@ -210,6 +262,8 @@ void main() {
     RouteSettings? settings,
     Brightness brightness = Brightness.light,
     double bottomInset = 0,
+    RiderProvider? riderProvider,
+    AuthProvider? authProvider,
   }) {
     final cart = CartProvider();
     cart.addToCart(testFood);
@@ -218,22 +272,36 @@ void main() {
       providers: [
         ChangeNotifierProvider<ThemeProvider>.value(value: ThemeProvider()),
         ChangeNotifierProvider<CartProvider>.value(value: cart),
-        ChangeNotifierProvider<ReviewProvider>.value(value: StubReviewProvider()),
-        ChangeNotifierProvider<AuthProvider>.value(value: AuthProvider()),
+        ChangeNotifierProvider<ReviewProvider>.value(
+            value: StubReviewProvider()),
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: authProvider ?? AuthProvider(),
+        ),
         ChangeNotifierProvider<OrderProvider>.value(value: OrderProvider()),
         ChangeNotifierProvider<ChatProvider>.value(value: StubChatProvider()),
         ChangeNotifierProvider<LoyaltyProvider>.value(value: LoyaltyProvider()),
-        ChangeNotifierProvider<DeliveryAreaProvider>.value(value: StubDeliveryAreaProvider()),
-        ChangeNotifierProvider<PaymentMethodProvider>.value(value: StubPaymentMethodProvider()),
-        ChangeNotifierProvider<AddressProvider>.value(value: StubAddressProvider()),
-        ChangeNotifierProvider<RestaurantProvider>.value(value: StubRestaurantProvider()),
-        ChangeNotifierProvider<BranchProvider>.value(value: StubBranchProvider()),
-        ChangeNotifierProvider<CouponProvider>.value(value: StubCouponProvider()),
-        ChangeNotifierProvider<RiderProvider>.value(value: StubRiderProvider()),
+        ChangeNotifierProvider<DeliveryAreaProvider>.value(
+            value: StubDeliveryAreaProvider()),
+        ChangeNotifierProvider<PaymentMethodProvider>.value(
+            value: StubPaymentMethodProvider()),
+        ChangeNotifierProvider<AddressProvider>.value(
+            value: StubAddressProvider()),
+        ChangeNotifierProvider<RestaurantProvider>.value(
+            value: StubRestaurantProvider()),
+        ChangeNotifierProvider<BranchProvider>.value(
+            value: StubBranchProvider()),
+        ChangeNotifierProvider<CouponProvider>.value(
+            value: StubCouponProvider()),
+        ChangeNotifierProvider<RiderProvider>.value(
+          value: riderProvider ?? StubRiderProvider(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(brightness: brightness, useMaterial3: true, colorSchemeSeed: const Color(0xFF800020)),
+        theme: ThemeData(
+            brightness: brightness,
+            useMaterial3: true,
+            colorSchemeSeed: const Color(0xFF800020)),
         builder: (context, materialChild) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
@@ -255,10 +323,90 @@ void main() {
     );
   }
 
-  group('Full Device Matrix Verification (10 Sizes x 3 Text Scales = Zero Overflows)', () {
+  testWidgets('delivery errors stay on rider delivery tabs', (tester) async {
+    const message = 'Delivery requests are temporarily unavailable';
+    await tester.pumpWidget(createTestApp(
+      child: const RiderDashboardScreen(),
+      size: const Size(390, 844),
+      textScale: 1,
+      riderProvider: StubRiderProvider(deliveryError: message),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text(message), findsOneWidget);
+
+    for (final label in ['Earnings', 'Profile']) {
+      await tester.tap(find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text(label),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text(message), findsNothing);
+    }
+  });
+
+  testWidgets('rider GPS retry shows actionable and sanitized errors',
+      (tester) async {
+    const channel = MethodChannel('flutter.baseflow.com/geolocator');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    var locationEnabled = false;
+    var platformFailure = false;
+    var permissionRequests = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'isLocationServiceEnabled':
+          if (platformFailure) {
+            throw PlatformException(
+                code: 'test_error', message: 'native detail');
+          }
+          return locationEnabled;
+        case 'checkPermission':
+          return LocationPermission.denied.index;
+        case 'requestPermission':
+          permissionRequests++;
+          return LocationPermission.deniedForever.index;
+        default:
+          throw MissingPluginException(call.method);
+      }
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(createTestApp(
+      child: const RiderDashboardScreen(),
+      size: const Size(390, 844),
+      textScale: 1,
+      riderProvider: _TrackingRiderProvider(),
+      authProvider: _TrackingAuthProvider(),
+    ));
+    await tester.pumpAndSettle();
+    expect(
+        find.text('Turn on device location to share your delivery position.'),
+        findsOneWidget);
+    expect(permissionRequests, 0);
+
+    locationEnabled = true;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Allow location access to share your delivery position.'),
+        findsOneWidget);
+    expect(permissionRequests, 1);
+
+    platformFailure = true;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Location updates stopped. Check GPS and retry.'),
+        findsOneWidget);
+    expect(find.textContaining('native detail'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  group(
+      'Full Device Matrix Verification (10 Sizes x 3 Text Scales = Zero Overflows)',
+      () {
     for (final (label, size) in deviceMatrix) {
       for (final scale in textScales) {
-        testWidgets('FoodDetailScreen renders with zero overflow on $label @ ${scale}x scale', (tester) async {
+        testWidgets(
+            'FoodDetailScreen renders with zero overflow on $label @ ${scale}x scale',
+            (tester) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1.0;
           addTearDown(tester.view.resetPhysicalSize);
@@ -274,10 +422,13 @@ void main() {
           );
 
           expect(tester.takeException(), isNull,
-              reason: 'Overflow or crash on FoodDetailScreen at $label @ ${scale}x');
+              reason:
+                  'Overflow or crash on FoodDetailScreen at $label @ ${scale}x');
         });
 
-        testWidgets('CartScreen renders with zero overflow on $label @ ${scale}x scale', (tester) async {
+        testWidgets(
+            'CartScreen renders with zero overflow on $label @ ${scale}x scale',
+            (tester) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1.0;
           addTearDown(tester.view.resetPhysicalSize);
@@ -296,7 +447,9 @@ void main() {
               reason: 'Overflow or crash on CartScreen at $label @ ${scale}x');
         });
 
-        testWidgets('CheckoutScreen renders with zero overflow on $label @ ${scale}x scale', (tester) async {
+        testWidgets(
+            'CheckoutScreen renders with zero overflow on $label @ ${scale}x scale',
+            (tester) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1.0;
           addTearDown(tester.view.resetPhysicalSize);
@@ -312,10 +465,13 @@ void main() {
           await tester.pump();
 
           expect(tester.takeException(), isNull,
-              reason: 'Overflow or crash on CheckoutScreen at $label @ ${scale}x');
+              reason:
+                  'Overflow or crash on CheckoutScreen at $label @ ${scale}x');
         });
 
-        testWidgets('OrderHistoryScreen renders with zero overflow on $label @ ${scale}x scale', (tester) async {
+        testWidgets(
+            'OrderHistoryScreen renders with zero overflow on $label @ ${scale}x scale',
+            (tester) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1.0;
           addTearDown(tester.view.resetPhysicalSize);
@@ -331,10 +487,13 @@ void main() {
           await tester.pump();
 
           expect(tester.takeException(), isNull,
-              reason: 'Overflow or crash on OrderHistoryScreen at $label @ ${scale}x');
+              reason:
+                  'Overflow or crash on OrderHistoryScreen at $label @ ${scale}x');
         });
 
-        testWidgets('RiderDashboardScreen renders with zero overflow on $label @ ${scale}x scale', (tester) async {
+        testWidgets(
+            'RiderDashboardScreen renders with zero overflow on $label @ ${scale}x scale',
+            (tester) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1.0;
           addTearDown(tester.view.resetPhysicalSize);
@@ -350,26 +509,43 @@ void main() {
           await tester.pump();
 
           expect(tester.takeException(), isNull,
-              reason: 'Overflow or crash on RiderDashboardScreen at $label @ ${scale}x');
+              reason:
+                  'Overflow or crash on RiderDashboardScreen at $label @ ${scale}x');
         });
       }
     }
   });
   for (final brightness in Brightness.values) {
-    for (final bottom in [24.0,48.0]) {
-      for (final size in [const Size(360,640),const Size(411,891),const Size(840,1180)]) {
-        testWidgets('Checkout and cart at $size $brightness with $bottom Android inset', (tester) async {
-          tester.view.physicalSize=size; tester.view.devicePixelRatio=1;
-          addTearDown(tester.view.resetPhysicalSize); addTearDown(tester.view.resetDevicePixelRatio);
-          for (final screen in [const CheckoutScreen(),const CartScreen(),const RiderDashboardScreen()]) {
-            await tester.pumpWidget(createTestApp(child:screen,size:size,textScale:1.3,brightness:brightness,bottomInset:bottom));
+    for (final bottom in [24.0, 48.0]) {
+      for (final size in [
+        const Size(360, 640),
+        const Size(411, 891),
+        const Size(840, 1180)
+      ]) {
+        testWidgets(
+            'Checkout and cart at $size $brightness with $bottom Android inset',
+            (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          for (final screen in [
+            const CheckoutScreen(),
+            const CartScreen(),
+            const RiderDashboardScreen()
+          ]) {
+            await tester.pumpWidget(createTestApp(
+                child: screen,
+                size: size,
+                textScale: 1.3,
+                brightness: brightness,
+                bottomInset: bottom));
             await tester.pump();
-            expect(tester.takeException(),isNull);
+            expect(tester.takeException(), isNull);
             await tester.pumpWidget(const SizedBox.shrink());
           }
         });
       }
     }
   }
-
 }

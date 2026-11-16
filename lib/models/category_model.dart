@@ -54,7 +54,8 @@ class CategoryModel {
       isActive: json['isActive'] == 1 || json['isActive'] == true,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
-      restaurantId: json['restaurantId']?.toString() ?? json['restaurant_id']?.toString(),
+      restaurantId:
+          json['restaurantId']?.toString() ?? json['restaurant_id']?.toString(),
       branchId: json['branchId']?.toString() ?? json['branch_id']?.toString(),
     );
   }

@@ -15,31 +15,51 @@ class DealProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _error;
   StreamSubscription<List<DealModel>>? _subscription;
   String? _currentBranchId;
+  bool _activeOnly = false;
+  String? _loadError;
 
   List<DealModel> get deals => _deals;
   List<DealModel> get activeDeals => _deals.where((d) => d.isValidNow).toList();
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String? get loadError => _loadError;
+
+  void refreshDeals() {
+    _subscription?.cancel();
+    _subscription = null;
+    watchDeals(branchId: _currentBranchId, activeOnly: _activeOnly);
+  }
 
   /// Start watching deals for a specific branch (or all if null)
   void watchDeals({String? branchId, bool activeOnly = false}) {
-    if (_currentBranchId == branchId && _subscription != null) return;
+    if (_currentBranchId == branchId &&
+        _activeOnly == activeOnly &&
+        _subscription != null) {
+      return;
+    }
+    _deals = [];
     _currentBranchId = branchId;
+    _activeOnly = activeOnly;
     _isLoading = true;
     _error = null;
+    _loadError = null;
     notifyListenersPostFrame();
 
     _subscription?.cancel();
-    _subscription = _dealService.streamDeals(branchId: branchId, activeOnly: activeOnly).listen(
+    _subscription = _dealService
+        .streamDeals(branchId: branchId, activeOnly: activeOnly)
+        .listen(
       (data) {
         _deals = data;
         _isLoading = false;
         _error = null;
+        _loadError = null;
         notifyListenersPostFrame();
       },
       onError: (err) {
         _isLoading = false;
         _error = err.toString();
+        _loadError = 'Unable to load deals. Please try again.';
         notifyListenersPostFrame();
       },
     );

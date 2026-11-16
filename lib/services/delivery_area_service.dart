@@ -8,6 +8,19 @@ class DeliveryAreaService {
   static final CollectionReference _collection =
       FirebaseFirestore.instance.collection(FirestoreCollections.deliveryAreas);
 
+  static Future<void> requestAvailabilityNotification({
+    required String contact,
+    String? nearestBranchName,
+    double? distanceKm,
+  }) async {
+    await FirebaseFirestore.instance.collection('branch_waitlist').add({
+      'contact': contact,
+      'createdAt': FieldValue.serverTimestamp(),
+      'nearestBranch': nearestBranchName ?? '',
+      'distanceKm': distanceKm ?? 0.0,
+    });
+  }
+
   /// Watch delivery areas
   static Stream<List<DeliveryAreaModel>> watchDeliveryAreas({
     bool activeOnly = false,
@@ -22,7 +35,9 @@ class DeliveryAreaService {
         return DeliveryAreaModel.fromJson(data);
       }).toList();
       if (branchId != null && branchId.isNotEmpty) {
-        items = items.where((a) => a.branchId == null || a.branchId == branchId).toList();
+        items = items
+            .where((a) => a.branchId == null || a.branchId == branchId)
+            .toList();
       }
       if (activeOnly) {
         return items.where((a) => a.isActive).toList();
@@ -44,14 +59,17 @@ class DeliveryAreaService {
         return DeliveryAreaModel.fromJson(data);
       }).toList();
       if (branchId != null && branchId.isNotEmpty) {
-        items = items.where((a) => a.branchId == null || a.branchId == branchId).toList();
+        items = items
+            .where((a) => a.branchId == null || a.branchId == branchId)
+            .toList();
       }
       if (activeOnly) {
         return items.where((a) => a.isActive).toList();
       }
       return items;
     } catch (e) {
-      AppLogger.error('Error fetching delivery areas: $e', tag: 'DeliveryAreaService');
+      AppLogger.error('Error fetching delivery areas: $e',
+          tag: 'DeliveryAreaService');
       return [];
     }
   }
@@ -62,14 +80,16 @@ class DeliveryAreaService {
     final data = area.toJson();
     data['id'] = docRef.id;
     await docRef.set(data);
-    AppLogger.info('Created delivery area: ${area.name}', tag: 'DeliveryAreaService');
+    AppLogger.info('Created delivery area: ${area.name}',
+        tag: 'DeliveryAreaService');
     return docRef.id;
   }
 
   /// Update delivery area
   static Future<void> updateDeliveryArea(DeliveryAreaModel area) async {
     await _collection.doc(area.id).update(area.toJson());
-    AppLogger.info('Updated delivery area: ${area.id}', tag: 'DeliveryAreaService');
+    AppLogger.info('Updated delivery area: ${area.id}',
+        tag: 'DeliveryAreaService');
   }
 
   /// Delete delivery area

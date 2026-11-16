@@ -30,7 +30,8 @@ class HomeCategoryTabs extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 20),
         itemBuilder: (context, index) {
           final category = categories[index];
-          final isSelected = category.toLowerCase() == selectedCategory.toLowerCase();
+          final isSelected =
+              category.toLowerCase() == selectedCategory.toLowerCase();
 
           return GestureDetector(
             onTap: () => onSelectCategory(category),
@@ -45,8 +46,12 @@ class HomeCategoryTabs extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                     color: isSelected
-                        ? (isDark ? AppColors.darkTextPrimary : AppColors.brandMaroon)
-                        : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+                        ? (isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.brandMaroon)
+                        : (isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted),
                   ),
                 ),
 
@@ -59,7 +64,8 @@ class HomeCategoryTabs extends StatelessWidget {
                   width: isSelected ? 24 : 0,
                   height: 3.5,
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.brandYellow : Colors.transparent,
+                    color:
+                        isSelected ? AppColors.brandYellow : Colors.transparent,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

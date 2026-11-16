@@ -7,7 +7,8 @@ import '../../core/utils/logger.dart';
 
 /// Interactive Map Pin Picker Dialog for setting branch coordinates
 class LocationPickerMapDialog extends StatefulWidget {
-  static bool get isSupported => !kIsWeb &&
+  static bool get isSupported =>
+      !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
 
@@ -40,7 +41,8 @@ class LocationPickerMapDialog extends StatefulWidget {
   }
 
   @override
-  State<LocationPickerMapDialog> createState() => _LocationPickerMapDialogState();
+  State<LocationPickerMapDialog> createState() =>
+      _LocationPickerMapDialogState();
 }
 
 class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
@@ -61,7 +63,8 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.whileInUse || perm == LocationPermission.always) {
+      if (perm == LocationPermission.whileInUse ||
+          perm == LocationPermission.always) {
         final pos = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
@@ -71,7 +74,8 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
         if (!mounted) return;
         final newCenter = LatLng(pos.latitude, pos.longitude);
         setState(() => _currentCenter = newCenter);
-        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(newCenter, 15));
+        _mapController
+            ?.animateCamera(CameraUpdate.newLatLngZoom(newCenter, 15));
       }
     } catch (e) {
       AppLogger.warn('Could not locate user: $e', tag: 'MapPicker');
@@ -123,22 +127,27 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
                 left: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 8),
                     ],
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.touch_app_rounded, color: AppColors.brandMaroon, size: 20),
+                      const Icon(Icons.touch_app_rounded,
+                          color: AppColors.brandMaroon, size: 20),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
                           'Drag map to position pin on branch location',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 12.5, fontWeight: FontWeight.bold),
                         ),
                       ),
                       IconButton(
@@ -164,7 +173,8 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brandMaroon),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.brandMaroon),
                         )
                       : const Icon(Icons.my_location_rounded),
                 ),
@@ -180,12 +190,14 @@ class _LocationPickerMapDialogState extends State<LocationPickerMapDialog> {
                     backgroundColor: AppColors.brandYellow,
                     foregroundColor: AppColors.brandMaroon,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   icon: const Icon(Icons.check_circle_rounded),
                   label: Text(
                     'Confirm Location (${_currentCenter.latitude.toStringAsFixed(4)}, ${_currentCenter.longitude.toStringAsFixed(4)})',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                   onPressed: () => Navigator.pop(context, _currentCenter),
                 ),

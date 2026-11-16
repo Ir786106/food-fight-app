@@ -5,7 +5,8 @@ import 'package:food_fight/models/chat_message_model.dart';
 
 void main() {
   group('Chat Widget Component Tests', () {
-    testWidgets('Quick reply chips render and are tappable', (WidgetTester tester) async {
+    testWidgets('Quick reply chips render and are tappable',
+        (WidgetTester tester) async {
       String? tappedReply;
       final quickReplies = [
         'Where is my order?',
@@ -52,7 +53,8 @@ void main() {
       expect(tappedReply, equals('Where is my order?'));
     });
 
-    testWidgets('Chat message bubble colors match brand design guidelines', (WidgetTester tester) async {
+    testWidgets('Chat message bubble colors match brand design guidelines',
+        (WidgetTester tester) async {
       final customerMsg = ChatMessageModel(
         id: 'msg-1',
         senderId: 'cust-1',
@@ -112,16 +114,19 @@ void main() {
       expect(find.text('Hello support!'), findsOneWidget);
       expect(find.text('Hello! How can we help?'), findsOneWidget);
 
-      final customerContainer = tester.widget<Container>(find.byKey(const Key('customer-bubble')));
+      final customerContainer =
+          tester.widget<Container>(find.byKey(const Key('customer-bubble')));
       final customerDecoration = customerContainer.decoration as BoxDecoration;
       expect(customerDecoration.color, equals(AppColors.brandYellow));
 
-      final adminContainer = tester.widget<Container>(find.byKey(const Key('admin-bubble')));
+      final adminContainer =
+          tester.widget<Container>(find.byKey(const Key('admin-bubble')));
       final adminDecoration = adminContainer.decoration as BoxDecoration;
       expect(adminDecoration.color, equals(Colors.white));
     });
 
-    testWidgets('Resolved banner displays and shows Reopen action', (WidgetTester tester) async {
+    testWidgets('Resolved banner displays and shows Reopen action',
+        (WidgetTester tester) async {
       bool reopened = false;
 
       await tester.pumpWidget(
@@ -132,17 +137,22 @@ void main() {
               color: AppColors.successSoft,
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
+                  const Icon(Icons.check_circle_rounded,
+                      color: AppColors.success, size: 20),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'This conversation was marked as resolved.',
-                      style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13),
                     ),
                   ),
                   TextButton(
                     onPressed: () => reopened = true,
-                    child: const Text('Reopen', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('Reopen',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -151,7 +161,8 @@ void main() {
         ),
       );
 
-      expect(find.text('This conversation was marked as resolved.'), findsOneWidget);
+      expect(find.text('This conversation was marked as resolved.'),
+          findsOneWidget);
       expect(find.text('Reopen'), findsOneWidget);
 
       await tester.tap(find.text('Reopen'));
@@ -159,7 +170,8 @@ void main() {
       expect(reopened, isTrue);
     });
 
-    testWidgets('Order context card displays order details', (WidgetTester tester) async {
+    testWidgets('Order context card displays order details',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -168,15 +180,23 @@ void main() {
               decoration: BoxDecoration(
                 color: AppColors.yellowTint,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.5)),
+                border: Border.all(
+                    color: AppColors.brandYellow.withValues(alpha: 0.5)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.receipt_long_rounded, color: AppColors.brandMaroon),
+                  Icon(Icons.receipt_long_rounded,
+                      color: AppColors.brandMaroon),
                   SizedBox(width: 10),
-                  Text('Order #FF-1002', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandMaroon)),
+                  Text('Order #FF-1002',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.brandMaroon)),
                   Spacer(),
-                  Text('Rs. 1,450', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.brandMaroon)),
+                  Text('Rs. 1,450',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.brandMaroon)),
                 ],
               ),
             ),

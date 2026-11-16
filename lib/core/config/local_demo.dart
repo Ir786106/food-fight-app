@@ -27,7 +27,8 @@ class LocalDemo {
     }
 
     await FirebaseAuth.instance.useAuthEmulator(host, 9187);
-    FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: false);
+    FirebaseFirestore.instance.settings =
+        const Settings(persistenceEnabled: false);
     FirebaseFirestore.instance.useFirestoreEmulator(host, 8687);
     FirebaseFunctions.instance.useFunctionsEmulator(host, 5687);
     await FirebaseStorage.instance.useStorageEmulator(host, 9287);

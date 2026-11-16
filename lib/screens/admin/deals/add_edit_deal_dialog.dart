@@ -9,8 +9,9 @@ import '../../../core/constants/app_colors.dart';
 
 class AddEditDealDialog extends StatefulWidget {
   final DealModel? deal;
+  final bool platformWide;
 
-  const AddEditDealDialog({super.key, this.deal});
+  const AddEditDealDialog({super.key, this.deal, this.platformWide = false});
 
   @override
   State<AddEditDealDialog> createState() => _AddEditDealDialogState();
@@ -30,7 +31,15 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
   List<DealBundleItem> _bundleItems = [];
   bool _isSaving = false;
 
-  final List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  final List<String> _dayNames = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun'
+  ];
 
   @override
   void initState() {
@@ -38,14 +47,19 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
     final d = widget.deal;
     _titleCtrl = TextEditingController(text: d?.title ?? '');
     _descCtrl = TextEditingController(text: d?.description ?? '');
-    _dealPriceCtrl = TextEditingController(text: d != null ? d.dealPrice.toStringAsFixed(0) : '');
+    _dealPriceCtrl = TextEditingController(
+        text: d != null ? d.dealPrice.toStringAsFixed(0) : '');
     _origPriceCtrl = TextEditingController(
-        text: d != null && d.originalPrice > 0 ? d.originalPrice.toStringAsFixed(0) : '');
+        text: d != null && d.originalPrice > 0
+            ? d.originalPrice.toStringAsFixed(0)
+            : '');
 
     _isActive = d?.isActive ?? true;
     _startDate = d?.startDate;
     _endDate = d?.endDate;
-    _activeDays = d?.activeDays != null ? List.from(d!.activeDays) : [1, 2, 3, 4, 5, 6, 7];
+    _activeDays = d?.activeDays != null
+        ? List.from(d!.activeDays)
+        : [1, 2, 3, 4, 5, 6, 7];
     _bundleItems = d?.bundleItems != null ? List.from(d!.bundleItems) : [];
   }
 
@@ -61,7 +75,13 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.deal != null;
-    final menuItems = context.watch<MenuProvider>().menuItems;
+    final user = context.watch<AuthProvider>().currentUser;
+    final branchId = user?.branchId?.trim();
+    final menuItems = context.watch<MenuProvider>().menuItems.where((item) {
+      final owner = item.branchId;
+      final shared = owner == null || owner.isEmpty;
+      return shared || (!widget.platformWide && owner == branchId);
+    }).toList();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -85,7 +105,8 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                         color: AppColors.brandYellow.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.local_offer_rounded, color: AppColors.brandYellow),
+                      child: const Icon(Icons.local_offer_rounded,
+                          color: AppColors.brandYellow),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -94,11 +115,13 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                         children: [
                           Text(
                             isEdit ? 'Edit Branch Deal' : 'Create New Deal',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const Text(
                             'Configured promotions update customer home and menus instantly.',
-                            style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                            style:
+                                TextStyle(fontSize: 11.5, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -125,11 +148,13 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                           decoration: InputDecoration(
                             labelText: 'Deal Title *',
                             hintText: 'e.g. Twin Pizza Feast Deal',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             prefixIcon: const Icon(Icons.title_rounded),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Please enter a title'
+                              : null,
                         ),
                         const SizedBox(height: 14),
 
@@ -139,12 +164,15 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                           maxLines: 2,
                           decoration: InputDecoration(
                             labelText: 'Description *',
-                            hintText: 'e.g. 2 Large Pizzas + 1.5L Soft Drink + Dip Sauces',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            hintText:
+                                'e.g. 2 Large Pizzas + 1.5L Soft Drink + Dip Sauces',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             prefixIcon: const Icon(Icons.description_rounded),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Please enter a description' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Please enter a description'
+                              : null,
                         ),
                         const SizedBox(height: 14),
 
@@ -158,14 +186,19 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                                 decoration: InputDecoration(
                                   labelText: 'Deal Price (Rs.) *',
                                   hintText: '1999',
-                                  border:
-                                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  prefixIcon: const Icon(Icons.attach_money_rounded),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  prefixIcon:
+                                      const Icon(Icons.attach_money_rounded),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.trim().isEmpty) return 'Enter deal price';
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Enter deal price';
+                                  }
                                   final num = double.tryParse(v);
-                                  if (num == null || num <= 0) return 'Invalid price';
+                                  if (num == null || num <= 0) {
+                                    return 'Invalid price';
+                                  }
                                   return null;
                                 },
                               ),
@@ -178,9 +211,10 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                                 decoration: InputDecoration(
                                   labelText: 'Original Price (Rs.)',
                                   hintText: '2600',
-                                  border:
-                                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  prefixIcon: const Icon(Icons.money_off_rounded),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  prefixIcon:
+                                      const Icon(Icons.money_off_rounded),
                                 ),
                               ),
                             ),
@@ -191,7 +225,8 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                         // Bundle Items Selection
                         const Text(
                           'Bundle Items (What is included)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const SizedBox(height: 8),
 
@@ -201,7 +236,8 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                             final item = entry.value;
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(10),
@@ -213,11 +249,14 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                                   Expanded(
                                     child: Text(
                                       '${item.quantity}x ${item.name}',
-                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.remove_circle_outline, size: 20),
+                                    icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                        size: 20),
                                     onPressed: () {
                                       setState(() {
                                         if (item.quantity > 1) {
@@ -234,9 +273,11 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                                     },
                                   ),
                                   Text('${item.quantity}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   IconButton(
-                                    icon: const Icon(Icons.add_circle_outline, size: 20),
+                                    icon: const Icon(Icons.add_circle_outline,
+                                        size: 20),
                                     onPressed: () {
                                       setState(() {
                                         _bundleItems[idx] = DealBundleItem(
@@ -251,7 +292,8 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                                   IconButton(
                                     icon: const Icon(Icons.delete_outline,
                                         size: 20, color: AppColors.error),
-                                    onPressed: () => setState(() => _bundleItems.removeAt(idx)),
+                                    onPressed: () => setState(
+                                        () => _bundleItems.removeAt(idx)),
                                   ),
                                 ],
                               ),
@@ -263,20 +305,23 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                           PopupMenuButton<String>(
                             tooltip: 'Add item from menu',
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.brandYellow, width: 1.2),
+                                border: Border.all(
+                                    color: colorScheme.outline, width: 1.2),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.add_rounded, size: 18, color: AppColors.brandYellow),
-                                  SizedBox(width: 6),
+                                  Icon(Icons.add_rounded,
+                                      size: 18, color: colorScheme.onSurface),
+                                  const SizedBox(width: 6),
                                   Text(
                                     'Add Menu Item to Bundle',
                                     style: TextStyle(
-                                      color: AppColors.brandYellow,
+                                      color: colorScheme.onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12.5,
                                     ),
@@ -293,9 +338,10 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                               }).toList();
                             },
                             onSelected: (itemId) {
-                              final match = menuItems.firstWhere((m) => m.id == itemId);
-                              final existingIdx =
-                                  _bundleItems.indexWhere((b) => b.menuItemId == itemId);
+                              final match =
+                                  menuItems.firstWhere((m) => m.id == itemId);
+                              final existingIdx = _bundleItems
+                                  .indexWhere((b) => b.menuItemId == itemId);
                               setState(() {
                                 if (existingIdx >= 0) {
                                   final old = _bundleItems[existingIdx];
@@ -321,7 +367,8 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                         // Active Days of the week
                         const Text(
                           'Active Days',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -335,8 +382,12 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                               selectedColor: AppColors.brandYellow,
                               checkmarkColor: AppColors.onYellow,
                               labelStyle: TextStyle(
-                                color: isSelected ? AppColors.onYellow : colorScheme.onSurface,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: isSelected
+                                    ? AppColors.onYellow
+                                    : colorScheme.onSurface,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                                 fontSize: 12,
                               ),
                               onSelected: (sel) {
@@ -360,8 +411,10 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           title: const Text('Active Immediately',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          subtitle: const Text('Deal will appear live to customers',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: const Text(
+                              'Deal will appear live to customers',
                               style: TextStyle(fontSize: 12)),
                           value: _isActive,
                           activeThumbColor: AppColors.brandYellow,
@@ -388,8 +441,10 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.brandYellow,
                         foregroundColor: AppColors.onYellow,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
                       ),
                       onPressed: _isSaving ? null : _saveDeal,
                       child: _isSaving
@@ -400,7 +455,8 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
                             )
                           : Text(
                               isEdit ? 'Save Changes' : 'Create Deal',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                     ),
                   ],
@@ -418,7 +474,22 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
 
     final dealProvider = context.read<DealProvider>();
     final auth = context.read<AuthProvider>();
-    final branchId = auth.currentUser?.branchId;
+    final user = auth.currentUser;
+    final branchId = widget.platformWide ? 'all' : user?.branchId?.trim();
+    final allowed = user != null &&
+        user.isActive &&
+        user.isAdmin &&
+        (widget.platformWide
+            ? user.isSuperAdmin
+            : (user.can('deals') || user.can('coupons')) &&
+                branchId != null &&
+                branchId.isNotEmpty &&
+                branchId.toLowerCase() != 'all');
+    if (!allowed) {
+      AppSnackbar.showError(
+          context, 'You do not have permission to save this deal.');
+      return;
+    }
 
     setState(() => _isSaving = true);
 
@@ -434,7 +505,9 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
       discountType: 'fixed_price',
       bundleItems: _bundleItems,
       linkedItemIds: _bundleItems.map((b) => b.menuItemId).toList(),
-      branchId: widget.deal?.branchId ?? branchId,
+      branchId: widget.deal == null
+          ? (widget.platformWide ? '' : branchId)
+          : widget.deal!.branchId,
       activeDays: _activeDays,
       isActive: _isActive,
       startDate: _startDate,
@@ -454,16 +527,20 @@ class _AddEditDealDialogState extends State<AddEditDealDialog> {
       setState(() => _isSaving = false);
       if (ok) {
         Navigator.pop(context);
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text(
-              widget.deal == null ? 'Deal created successfully!' : 'Deal updated successfully!',
+              widget.deal == null
+                  ? 'Deal created successfully!'
+                  : 'Deal updated successfully!',
             ),
             backgroundColor: AppColors.success,
           ),
         );
       } else {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text(dealProvider.error ?? 'Failed to save deal'),
             backgroundColor: AppColors.error,

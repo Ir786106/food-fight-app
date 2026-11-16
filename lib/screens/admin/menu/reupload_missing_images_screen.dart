@@ -1,9 +1,8 @@
 import 'package:food_fight/core/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../services/menu_service.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/firestore_collections.dart';
 import '../../../core/constants/image_storage.dart';
 import '../../../core/theme/admin_theme.dart';
 import '../../../core/utils/logger.dart';
@@ -23,10 +22,12 @@ class ReuploadMissingImagesScreen extends StatefulWidget {
   const ReuploadMissingImagesScreen({super.key});
 
   @override
-  State<ReuploadMissingImagesScreen> createState() => _ReuploadMissingImagesScreenState();
+  State<ReuploadMissingImagesScreen> createState() =>
+      _ReuploadMissingImagesScreenState();
 }
 
-class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScreen> {
+class _ReuploadMissingImagesScreenState
+    extends State<ReuploadMissingImagesScreen> {
   ImageIssueType _filter = ImageIssueType.all;
   final Map<String, bool> _uploadingItemIds = {};
   final Map<String, double> _uploadProgress = {};
@@ -48,7 +49,7 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
 
   Future<void> _uploadForItem(MenuItemModel item) async {
     final img = await AppImageStorageService.pickImage();
-    if (img == null) return;
+    if (img == null || !mounted) return;
 
     setState(() {
       _uploadingItemIds[item.id] = true;
@@ -65,18 +66,11 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
         },
       );
 
-      // Persist directly into Firestore
-      await FirebaseFirestore.instance
-          .collection(FirestoreCollections.menuItems)
-          .doc(item.id)
-          .update({
-        'imageUrl': newUrl,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await MenuService.updateImages({item.id}, newUrl);
 
       if (mounted) {
-        context.read<MenuProvider>().watchMenuItems();
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text('Successfully updated image for "${item.name}"!'),
             backgroundColor: AppColors.success,
@@ -84,11 +78,14 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
         );
       }
     } catch (e, stack) {
-      AppLogger.error('Failed to upload image for ${item.id}: $e\n$stack', tag: 'ReuploadTool');
+      AppLogger.error('Failed to upload image for ${item.id}: $e\n$stack',
+          tag: 'ReuploadTool');
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
-            content: const Text('No connection. Please check your internet and try again.'),
+            content: const Text(
+                'No connection. Please check your internet and try again.'),
             backgroundColor: AppColors.error,
             action: SnackBarAction(
               label: 'Retry',
@@ -111,15 +108,10 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
   Future<void> _assignDefaultBrandedLogo(MenuItemModel item) async {
     const brandedAsset = 'assets/images/branding/food_fight_logo_icon.png';
     try {
-      await FirebaseFirestore.instance
-          .collection(FirestoreCollections.menuItems)
-          .doc(item.id)
-          .update({
-        'imageUrl': brandedAsset,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await MenuService.updateImages({item.id}, brandedAsset);
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text('Set branded default icon for "${item.name}"'),
             backgroundColor: AppColors.success,
@@ -133,6 +125,11 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
 
   Future<void> _batchFixAllMissing(List<MenuItemModel> missingItems) async {
     if (missingItems.isEmpty) return;
+    if (missingItems.length > 500) {
+      AppSnackbar.showInfo(
+          context, 'Batch image repair supports up to 500 items.');
+      return;
+    }
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -142,9 +139,13 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
           'This will set a high-resolution branded Food Fight emblem for all ${missingItems.length} items without an image so no item shows empty in the customer panel.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AdminTheme.primaryBlue, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AdminTheme.primaryBlue,
+                foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Batch Apply'),
           ),
@@ -155,21 +156,14 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
     if (confirm != true || !mounted) return;
 
     setState(() => _isBatchProcessing = true);
-    int count = 0;
+    final ids = missingItems.map((item) => item.id).toSet();
+    final count = ids.length;
     try {
-      final batch = FirebaseFirestore.instance.batch();
-      for (final item in missingItems) {
-        final docRef = FirebaseFirestore.instance.collection(FirestoreCollections.menuItems).doc(item.id);
-        batch.update(docRef, {
-          'imageUrl': 'assets/images/branding/food_fight_logo_icon.png',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        count++;
-      }
-      await batch.commit();
-
+      await MenuService.updateImages(
+          ids, 'assets/images/branding/food_fight_logo_icon.png');
       if (mounted) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text('Updated $count menu items with branded emblem!'),
             backgroundColor: AppColors.success,
@@ -211,17 +205,25 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
     return Scaffold(
       backgroundColor: AdminTheme.getBackground(context),
       appBar: AppBar(
-        title: const Text('Product Images Audit & Fix', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: const Text('Product Images Audit & Fix',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         backgroundColor: AdminTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
           if (missingCount > 0)
             IconButton(
               icon: _isBatchProcessing
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
                   : const Icon(Icons.auto_fix_high_rounded),
               tooltip: 'Batch Assign Branded Emblem to Missing',
-              onPressed: _isBatchProcessing ? null : () => _batchFixAllMissing(allItems.where(_isItemMissing).toList()),
+              onPressed: _isBatchProcessing
+                  ? null
+                  : () => _batchFixAllMissing(
+                      allItems.where(_isItemMissing).toList()),
             ),
         ],
       ),
@@ -233,13 +235,17 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
             color: AdminTheme.getCardBg(context),
             child: Row(
               children: [
-                _buildMetricCard(context, 'Total', allItems.length.toString(), Colors.blueGrey),
+                _buildMetricCard(context, 'Total', allItems.length.toString(),
+                    Colors.blueGrey),
                 const SizedBox(width: 8),
-                _buildMetricCard(context, 'Missing', missingCount.toString(), AppColors.warning),
+                _buildMetricCard(context, 'Missing', missingCount.toString(),
+                    AppColors.warning),
                 const SizedBox(width: 8),
-                _buildMetricCard(context, 'Supabase (Old)', unreachableCount.toString(), AppColors.error),
+                _buildMetricCard(context, 'Supabase (Old)',
+                    unreachableCount.toString(), AppColors.error),
                 const SizedBox(width: 8),
-                _buildMetricCard(context, 'Valid', validCount.toString(), AppColors.success),
+                _buildMetricCard(
+                    context, 'Valid', validCount.toString(), AppColors.success),
               ],
             ),
           ),
@@ -251,13 +257,17 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildFilterChip('All (${allItems.length})', ImageIssueType.all),
+                  _buildFilterChip(
+                      'All (${allItems.length})', ImageIssueType.all),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Missing Only ($missingCount)', ImageIssueType.missingOnly),
+                  _buildFilterChip('Missing Only ($missingCount)',
+                      ImageIssueType.missingOnly),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Supabase Only ($unreachableCount)', ImageIssueType.unreachableOnly),
+                  _buildFilterChip('Supabase Only ($unreachableCount)',
+                      ImageIssueType.unreachableOnly),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Valid Only ($validCount)', ImageIssueType.validOnly),
+                  _buildFilterChip(
+                      'Valid Only ($validCount)', ImageIssueType.validOnly),
                 ],
               ),
             ),
@@ -271,7 +281,8 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                     ? Center(
                         child: Text(
                           'No items matching filter',
-                          style: TextStyle(color: AdminTheme.getTextMuted(context)),
+                          style: TextStyle(
+                              color: AdminTheme.getTextMuted(context)),
                         ),
                       )
                     : ListView.separated(
@@ -282,7 +293,8 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                           final item = displayedItems[i];
                           final isMissing = _isItemMissing(item);
                           final isUnreachable = _isItemUnreachable(item);
-                          final isUploading = _uploadingItemIds[item.id] == true;
+                          final isUploading =
+                              _uploadingItemIds[item.id] == true;
                           final progress = _uploadProgress[item.id] ?? 0.0;
 
                           return Container(
@@ -311,13 +323,18 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                                             fit: StackFit.expand,
                                             children: [
                                               CircularProgressIndicator(
-                                                value: progress > 0 ? progress : null,
+                                                value: progress > 0
+                                                    ? progress
+                                                    : null,
                                                 color: AdminTheme.primaryBlue,
                                               ),
                                               Center(
                                                 child: Text(
                                                   '${(progress * 100).toInt()}%',
-                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                  style: const TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold),
                                                 ),
                                               ),
                                             ],
@@ -334,14 +351,16 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                                 // Item Info & Status
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.name,
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,
-                                          color: AdminTheme.getTextDark(context),
+                                          color:
+                                              AdminTheme.getTextDark(context),
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -350,14 +369,21 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                                       Row(
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
                                               color: isMissing
-                                                  ? AppColors.warning.withValues(alpha: 0.15)
+                                                  ? AppColors.warning
+                                                      .withValues(alpha: 0.15)
                                                   : isUnreachable
-                                                      ? AppColors.error.withValues(alpha: 0.15)
-                                                      : AppColors.success.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(4),
+                                                      ? AppColors.error
+                                                          .withValues(
+                                                              alpha: 0.15)
+                                                      : AppColors.success
+                                                          .withValues(
+                                                              alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                             ),
                                             child: Text(
                                               isMissing
@@ -381,7 +407,8 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                                             'Rs. ${item.price.toStringAsFixed(0)}',
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: AdminTheme.getTextMuted(context),
+                                              color: AdminTheme.getTextMuted(
+                                                  context),
                                             ),
                                           ),
                                         ],
@@ -394,20 +421,33 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.image_outlined, size: 20),
+                                      icon: const Icon(Icons.image_outlined,
+                                          size: 20),
                                       tooltip: 'Assign Default Logo',
-                                      onPressed: isUploading ? null : () => _assignDefaultBrandedLogo(item),
+                                      onPressed: isUploading
+                                          ? null
+                                          : () =>
+                                              _assignDefaultBrandedLogo(item),
                                     ),
                                     ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AdminTheme.primaryBlue,
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 8),
+                                        textStyle: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                      icon: const Icon(Icons.upload_file_rounded, size: 16),
-                                      label: Text(isUploading ? 'Uploading...' : 'Upload'),
-                                      onPressed: isUploading ? null : () => _uploadForItem(item),
+                                      icon: const Icon(
+                                          Icons.upload_file_rounded,
+                                          size: 16),
+                                      label: Text(isUploading
+                                          ? 'Uploading...'
+                                          : 'Upload'),
+                                      onPressed: isUploading
+                                          ? null
+                                          : () => _uploadForItem(item),
                                     ),
                                   ],
                                 ),
@@ -422,7 +462,8 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
     );
   }
 
-  Widget _buildMetricCard(BuildContext context, String title, String value, Color color) {
+  Widget _buildMetricCard(
+      BuildContext context, String title, String value, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
@@ -433,9 +474,14 @@ class _ReuploadMissingImagesScreenState extends State<ReuploadMissingImagesScree
         ),
         child: Column(
           children: [
-            Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+            Text(value,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 16, color: color)),
             const SizedBox(height: 2),
-            Text(title, style: TextStyle(fontSize: 10, color: AdminTheme.getTextMuted(context)), maxLines: 1),
+            Text(title,
+                style: TextStyle(
+                    fontSize: 10, color: AdminTheme.getTextMuted(context)),
+                maxLines: 1),
           ],
         ),
       ),

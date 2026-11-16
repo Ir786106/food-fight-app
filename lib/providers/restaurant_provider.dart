@@ -16,6 +16,7 @@ class RestaurantProvider extends ChangeNotifier with SafeChangeNotifier {
     }
     return List.unmodifiable(_restaurants);
   }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool _initialized = false;
@@ -28,13 +29,9 @@ class RestaurantProvider extends ChangeNotifier with SafeChangeNotifier {
     _init();
   }
 
-  Future<void> _init() async {
+  void _init() {
     _isLoading = true;
     notifyListenersPostFrame();
-
-    try {
-      await RestaurantService.ensureSeeded();
-    } catch (_) {}
 
     _sub = RestaurantService.watchRestaurants().listen(
       (list) {

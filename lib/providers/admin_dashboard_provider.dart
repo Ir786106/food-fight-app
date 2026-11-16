@@ -1,304 +1,203 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:food_fight/models/order_model.dart';
-import 'package:food_fight/models/menu_item_model.dart';
-import 'package:food_fight/core/constants/firestore_collections.dart';
-import 'package:food_fight/core/utils/logger.dart';
-import 'package:food_fight/core/utils/safe_change_notifier.dart';
+import 'package:flutter/material.dart';
 
-/// Provider for real-time Admin Dashboard KPIs, stats, and quick overview
+import '../core/constants/firestore_collections.dart';
+import '../core/utils/logger.dart';
+import '../core/utils/safe_change_notifier.dart';
+import '../models/menu_item_model.dart';
+import '../models/order_model.dart';
+import '../models/report_model.dart';
+import '../services/order_service.dart';
+
 class AdminDashboardProvider extends ChangeNotifier with SafeChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static const orderSampleLimit = 200;
 
-  bool _isLoading = false;
-  String? _errorMessage;
+  StreamSubscription<List<OrderModel>>? _ordersSubscription;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _ridersSubscription;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _popularItemsSubscription;
 
-  // Sales metrics
-  double _todaySales = 0.0;
-  double _weeklySales = 0.0;
-  double _monthlySales = 0.0;
-
-  // Order counts
-  int _todayOrdersCount = 0;
-  int _pendingOrdersCount = 0;
-  int _preparingOrdersCount = 0;
-  int _readyOrdersCount = 0;
-  int _outForDeliveryOrdersCount = 0;
-  int _completedOrdersCount = 0;
-  int _cancelledOrdersCount = 0;
-
-  // Operational metrics
-  int _activeRidersCount = 0;
-  int _newCustomersCount = 0;
-
-  // Lists
+  bool isLoading = false;
+  String? errorMessage;
+  String? currentBranchId;
+  double todaySales = 0;
+  double weeklySales = 0;
+  double monthlySales = 0;
+  double? averageDeliveryMinutes;
+  int todayOrdersCount = 0;
+  int activeRidersCount = 0;
+  int newCustomersCount = 0;
   List<OrderModel> _recentOrders = [];
   List<MenuItemModel> _popularItems = [];
-
-  StreamSubscription<QuerySnapshot>? _ordersSubscription;
-  StreamSubscription<QuerySnapshot>? _ridersSubscription;
-  StreamSubscription<QuerySnapshot>? _customersSubscription;
-  StreamSubscription<QuerySnapshot>? _popularItemsSubscription;
-
-  // Getters
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
-
-  double get todaySales => _todaySales;
-  double get weeklySales => _weeklySales;
-  double get monthlySales => _monthlySales;
-
-  int get todayOrdersCount => _todayOrdersCount;
-  int get pendingOrdersCount => _pendingOrdersCount;
-  int get preparingOrdersCount => _preparingOrdersCount;
-  int get readyOrdersCount => _readyOrdersCount;
-  int get outForDeliveryOrdersCount => _outForDeliveryOrdersCount;
-  int get completedOrdersCount => _completedOrdersCount;
-  int get cancelledOrdersCount => _cancelledOrdersCount;
-
-  int get activeRidersCount => _activeRidersCount;
-  int get newCustomersCount => _newCustomersCount;
+  List<DailySalesStat> _dailySales = [];
+  List<MapEntry<String, int>> _topSellers = [];
+  final _counts = <OrderStatus, int>{};
 
   List<OrderModel> get recentOrders => List.unmodifiable(_recentOrders);
   List<MenuItemModel> get popularItems => List.unmodifiable(_popularItems);
+  List<DailySalesStat> get dailySales => List.unmodifiable(_dailySales);
+  List<MapEntry<String, int>> get topSellers => List.unmodifiable(_topSellers);
 
-  String? _currentBranchId;
-  String? get currentBranchId => _currentBranchId;
+  int _count(OrderStatus status) => _counts[status] ?? 0;
+  int get pendingOrdersCount =>
+      _count(OrderStatus.pending) + _count(OrderStatus.accepted);
+  int get preparingOrdersCount => _count(OrderStatus.preparing);
+  int get readyOrdersCount => _count(OrderStatus.ready);
+  int get outForDeliveryOrdersCount =>
+      _count(OrderStatus.assigned) +
+      _count(OrderStatus.pickedUp) +
+      _count(OrderStatus.outForDelivery);
+  int get completedOrdersCount => _count(OrderStatus.delivered);
+  int get cancelledOrdersCount => _count(OrderStatus.cancelled);
 
-  AdminDashboardProvider();
+  void init() => watchDashboardData();
 
-  void init() {
-    watchDashboardData();
-  }
+  Future<void> refresh() async => watchDashboardData(branchId: currentBranchId);
 
-  Future<void> refresh() async {
-    watchDashboardData(branchId: _currentBranchId);
-  }
-
-  /// Watch live dashboard data across Firestore collections, optionally scoped by branchId
   void watchDashboardData({String? branchId}) {
-    _currentBranchId = branchId;
-    _isLoading = true;
-    _errorMessage = null;
+    cancelSubscriptions();
+    if (currentBranchId != branchId) {
+      _processOrders(const []);
+      activeRidersCount = 0;
+      _popularItems = [];
+    }
+    currentBranchId = branchId;
+    isLoading = true;
+    errorMessage = null;
     notifyListenersPostFrame();
 
-    // 1. Listen to orders for sales & status counts
-    _ordersSubscription?.cancel();
-    _ordersSubscription = _firestore
-        .collection(FirestoreCollections.orders)
-        .orderBy('createdAt', descending: true)
-        .limit(200)
+    Query<Map<String, dynamic>> scoped(String path) {
+      final collection = FirebaseFirestore.instance.collection(path);
+      return branchId == null
+          ? collection
+          : collection.where('branchId', isEqualTo: branchId);
+    }
+
+    _ordersSubscription = OrderService.watchAllOrders(
+      branchId: branchId,
+      limit: orderSampleLimit,
+    ).listen((orders) {
+      _processOrders(orders);
+      isLoading = false;
+      errorMessage = null;
+      notifyListeners();
+    }, onError: (Object error) {
+      isLoading = false;
+      errorMessage = 'Unable to load order metrics for this branch.';
+      AppLogger.error('Dashboard order query failed: $error',
+          tag: 'AdminDashboardProvider');
+      notifyListeners();
+    });
+
+    _ridersSubscription = scoped(FirestoreCollections.riders)
+        .where('isOnline', whereIn: [true, 1])
+        .limit(orderSampleLimit)
         .snapshots()
-        .listen(
-      (snapshot) {
-        final docs = (_currentBranchId != null && _currentBranchId!.isNotEmpty)
-            ? snapshot.docs.where((d) {
-                final bId = d.data()['branchId']?.toString();
-                return bId == null || bId == _currentBranchId;
-              }).toList()
-            : snapshot.docs;
-        _processOrders(docs);
-        _isLoading = false;
-        notifyListeners();
-      },
-      onError: (e) {
-        if (e.toString().contains('permission-denied')) {
-          cancelSubscriptions();
-          return;
-        }
-        _isLoading = false;
-        _errorMessage = 'Failed to load order metrics: $e';
-        AppLogger.error('Dashboard orders watch error: $e', tag: 'AdminDashboardProvider');
-        notifyListeners();
-      },
-    );
+        .listen((snapshot) {
+          activeRidersCount = snapshot.docs.where((doc) {
+            final active = doc.data()['isActive'];
+            return active == null || active == true || active == 1;
+          }).length;
+          notifyListeners();
+        }, onError: (Object error) {
+          AppLogger.error('Dashboard rider query failed: $error',
+              tag: 'AdminDashboardProvider');
+        });
 
-    // 2. Watch active riders
-    _ridersSubscription?.cancel();
-    _ridersSubscription = _firestore
-        .collection(FirestoreCollections.riders)
+    _popularItemsSubscription = scoped(FirestoreCollections.menuItems)
+        .where('isActive', whereIn: [true, 1])
+        .limit(orderSampleLimit)
         .snapshots()
-        .listen(
-      (snapshot) {
-        _activeRidersCount = snapshot.docs.where((d) {
-          final data = d.data();
-          final isOnline = data['isOnline'] == true || data['isOnline'] == 1;
-          final isAvailable = data['isAvailable'] == true || data['isAvailable'] == 1;
-          return isOnline || isAvailable;
-        }).length;
-        notifyListeners();
-      },
-      onError: (e) {
-        if (e.toString().contains('permission-denied')) {
-          _ridersSubscription?.cancel();
-          return;
-        }
-        _errorMessage = 'Failed to load riders count: $e';
-        AppLogger.error('Dashboard riders watch error: $e', tag: 'AdminDashboardProvider');
-        notifyListeners();
-      },
-    );
-
-    // 3. Watch customers count
-    _customersSubscription?.cancel();
-    _customersSubscription = _firestore
-        .collection(FirestoreCollections.users)
-        .where('role', isEqualTo: 'customer')
-        .snapshots()
-        .listen(
-      (snapshot) {
-        final now = DateTime.now();
-        final thirtyDaysAgo = now.subtract(const Duration(days: 30)).millisecondsSinceEpoch;
-        _newCustomersCount = snapshot.docs.where((d) {
-          final data = d.data();
-          final createdAt = data['createdAt'] as int? ?? 0;
-          return createdAt >= thirtyDaysAgo;
-        }).length;
-        if (_newCustomersCount == 0) {
-          _newCustomersCount = snapshot.docs.length;
-        }
-        notifyListeners();
-      },
-      onError: (e) {
-        if (e.toString().contains('permission-denied')) {
-          _customersSubscription?.cancel();
-          return;
-        }
-        _errorMessage = 'Failed to load customer count: $e';
-        AppLogger.error('Dashboard customers watch error: $e', tag: 'AdminDashboardProvider');
-        notifyListeners();
-      },
-    );
-
-    // 4. Watch popular menu items
-    _popularItemsSubscription?.cancel();
-    _popularItemsSubscription = _firestore
-        .collection(FirestoreCollections.menuItems)
-        .where('isActive', isEqualTo: 1)
-        .snapshots()
-        .listen(
-      (snapshot) {
-        var items = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return MenuItemModel.fromJson(data);
-        }).toList();
-
-        if (_currentBranchId != null && _currentBranchId!.isNotEmpty) {
-          items = items.where((i) => i.branchId == null || i.branchId == _currentBranchId).toList();
-        }
-
-        final popular = items.where((i) => i.isPopular).toList();
-        if (popular.isNotEmpty) {
-          _popularItems = popular;
-        } else {
-          items.sort((a, b) => b.rating.compareTo(a.rating));
-          _popularItems = items.take(5).toList();
-        }
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = 'Failed to load popular items: $e';
-        AppLogger.error('Dashboard popular items watch error: $e', tag: 'AdminDashboardProvider');
-        notifyListeners();
-      },
-    );
+        .listen((snapshot) {
+          final items = snapshot.docs
+              .map((doc) =>
+                  MenuItemModel.fromJson({...doc.data(), 'id': doc.id}))
+              .toList()
+            ..sort((a, b) => b.rating.compareTo(a.rating));
+          final featured = items.where((item) => item.isPopular);
+          _popularItems =
+              (featured.isEmpty ? items : featured).take(5).toList();
+          notifyListeners();
+        }, onError: (Object error) {
+          AppLogger.error('Dashboard menu query failed: $error',
+              tag: 'AdminDashboardProvider');
+        });
   }
 
-  void _processOrders(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  void _processOrders(List<OrderModel> orders) {
     final now = DateTime.now();
-    final startOfToday = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
-    final sevenDaysAgo = now.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
-    final thirtyDaysAgo = now.subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+    final today = DateUtils.dateOnly(now);
+    final week = DateTime(now.year, now.month, now.day - 6);
+    final month = DateTime(now.year, now.month, now.day - 29);
+    final customers = <String>{};
+    final dailyRevenue = <DateTime, double>{};
+    final dailyCount = <DateTime, int>{};
+    final quantities = <String, int>{};
+    var deliveryMinutes = 0;
+    var timedDeliveries = 0;
 
-    double todaySalesAcc = 0;
-    double weekSalesAcc = 0;
-    double monthSalesAcc = 0;
+    _counts.clear();
+    todaySales = 0;
+    weeklySales = 0;
+    monthlySales = 0;
+    todayOrdersCount = 0;
 
-    int todayOrdersAcc = 0;
-    int pendingAcc = 0;
-    int preparingAcc = 0;
-    int readyAcc = 0;
-    int outForDeliveryAcc = 0;
-    int completedAcc = 0;
-    int cancelledAcc = 0;
-
-    final parsedOrders = <OrderModel>[];
-
-    for (var doc in docs) {
-      final data = doc.data();
-      data['id'] = doc.id;
-      final order = OrderModel.fromJson(data);
-      parsedOrders.add(order);
-
-      final createdAt = order.createdAt.millisecondsSinceEpoch;
-      final total = order.total;
-      final status = order.status;
-
-      // Status counters
-      switch (status) {
-        case OrderStatus.pending:
-        case OrderStatus.accepted:
-          pendingAcc++;
-          break;
-        case OrderStatus.preparing:
-          preparingAcc++;
-          break;
-        case OrderStatus.ready:
-          readyAcc++;
-          break;
-        case OrderStatus.assigned:
-        case OrderStatus.pickedUp:
-        case OrderStatus.outForDelivery:
-          outForDeliveryAcc++;
-          break;
-        case OrderStatus.delivered:
-          completedAcc++;
-          break;
-        case OrderStatus.cancelled:
-          cancelledAcc++;
-          break;
+    for (final order in orders) {
+      _counts.update(order.status, (value) => value + 1, ifAbsent: () => 1);
+      final day = DateUtils.dateOnly(order.createdAt.toLocal());
+      if (order.status != OrderStatus.cancelled && day == today) {
+        todayOrdersCount++;
       }
+      if (!day.isBefore(month) && order.customerId.isNotEmpty) {
+        customers.add(order.customerId);
+      }
+      if (order.status != OrderStatus.delivered) continue;
 
-      // Sales calculations (exclude cancelled)
-      if (status != OrderStatus.cancelled) {
-        if (createdAt >= startOfToday) {
-          todaySalesAcc += total;
-          todayOrdersAcc++;
-        }
-        if (createdAt >= sevenDaysAgo) {
-          weekSalesAcc += total;
-        }
-        if (createdAt >= thirtyDaysAgo) {
-          monthSalesAcc += total;
-        }
+      final total = order.total;
+      if (day == today) todaySales += total;
+      if (!day.isBefore(week)) weeklySales += total;
+      if (!day.isBefore(month)) monthlySales += total;
+      dailyRevenue.update(day, (revenue) => revenue + total,
+          ifAbsent: () => total);
+      dailyCount.update(day, (value) => value + 1, ifAbsent: () => 1);
+      for (final line in order.items) {
+        quantities.update(line.food.name, (value) => value + line.quantity,
+            ifAbsent: () => line.quantity);
+      }
+      final delivered =
+          order.deliveredAt ?? order.timestampFor(OrderStatus.delivered);
+      if (delivered != null && !delivered.isBefore(order.createdAt)) {
+        timedDeliveries++;
+        deliveryMinutes += delivered.difference(order.createdAt).inMinutes;
       }
     }
 
-    _todaySales = todaySalesAcc;
-    _weeklySales = weekSalesAcc;
-    _monthlySales = monthSalesAcc;
-
-    _todayOrdersCount = todayOrdersAcc;
-    _pendingOrdersCount = pendingAcc;
-    _preparingOrdersCount = preparingAcc;
-    _readyOrdersCount = readyAcc;
-    _outForDeliveryOrdersCount = outForDeliveryAcc;
-    _completedOrdersCount = completedAcc;
-    _cancelledOrdersCount = cancelledAcc;
-
-    _recentOrders = parsedOrders.take(10).toList();
+    final days =
+        List.generate(7, (i) => DateTime(now.year, now.month, now.day - 6 + i));
+    _dailySales = [
+      for (final day in days)
+        DailySalesStat(
+            date: day,
+            revenue: dailyRevenue[day] ?? 0,
+            ordersCount: dailyCount[day] ?? 0),
+    ];
+    final ranked = quantities.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    _topSellers = ranked.take(5).toList();
+    _recentOrders = orders.take(10).toList();
+    newCustomersCount = customers.length;
+    averageDeliveryMinutes =
+        timedDeliveries == 0 ? null : deliveryMinutes / timedDeliveries;
   }
 
   void cancelSubscriptions() {
     _ordersSubscription?.cancel();
     _ridersSubscription?.cancel();
-    _customersSubscription?.cancel();
     _popularItemsSubscription?.cancel();
     _ordersSubscription = null;
     _ridersSubscription = null;
-    _customersSubscription = null;
     _popularItemsSubscription = null;
   }
 

@@ -59,7 +59,9 @@ class ResponsiveBreakpoints {
 
 /// Responsive builder widget that provides screen size and device information
 class ResponsiveBuilder extends StatelessWidget {
-  final Widget Function(BuildContext context, ResponsiveSizingInformation sizingInformation) builder;
+  final Widget Function(
+          BuildContext context, ResponsiveSizingInformation sizingInformation)
+      builder;
 
   const ResponsiveBuilder({super.key, required this.builder});
 
@@ -73,7 +75,8 @@ class ResponsiveBuilder extends StatelessWidget {
         final sizingInfo = ResponsiveSizingInformation(
           deviceScreenType: deviceType,
           screenSize: mediaQuery.size,
-          localWidgetSize: Size(boxConstraints.maxWidth, boxConstraints.maxHeight),
+          localWidgetSize:
+              Size(boxConstraints.maxWidth, boxConstraints.maxHeight),
         );
         return builder(context, sizingInfo);
       },
@@ -190,7 +193,8 @@ class ResponsiveContainer extends StatelessWidget {
       alignment: alignment,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: padding != null ? Padding(padding: padding!, child: child) : child,
+        child:
+            padding != null ? Padding(padding: padding!, child: child) : child,
       ),
     );
   }

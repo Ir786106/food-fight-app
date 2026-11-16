@@ -47,26 +47,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // 2. Double-back to exit on root login screen
     final now = DateTime.now();
-    if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
       _lastBackPressTime = now;
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      AppSnackbar.showSnackBar(context,
+      AppSnackbar.showSnackBar(
+        context,
         SnackBar(
           content: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.exit_to_app_rounded, color: AppColors.brandMaroon, size: 20),
+              Icon(Icons.exit_to_app_rounded,
+                  color: AppColors.brandMaroon, size: 20),
               SizedBox(width: 10),
               Text(
                 'Press back again to exit Food Fight',
-                style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.brandMaroon),
+                style: TextStyle(
+                    fontWeight: FontWeight.w700, color: AppColors.brandMaroon),
               ),
             ],
           ),
           backgroundColor: AppColors.brandYellow,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         ),
       );
@@ -92,8 +97,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       RoleRouter.navigateHome(context, auth.currentUser);
     } else {
-      final error = auth.errorMessage ?? 'Login failed. Please check your credentials.';
-      AppSnackbar.showSnackBar(context,
+      final error =
+          auth.errorMessage ?? 'Login failed. Please check your credentials.';
+      AppSnackbar.showSnackBar(
+        context,
         SnackBar(
           content: Text(error),
           backgroundColor: AppColors.error,
@@ -128,7 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       RoleRouter.navigateHome(context, auth.currentUser);
     } else if (auth.errorMessage != null) {
-      AppSnackbar.showSnackBar(context,
+      AppSnackbar.showSnackBar(
+        context,
         SnackBar(
           content: Text(auth.errorMessage!),
           backgroundColor: AppColors.error,
@@ -185,19 +193,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               horizontal: isCompactLandscape ? 16 : 20,
                               vertical: isCompactLandscape ? 8 : 12,
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 24),
                             decoration: BoxDecoration(
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.7 : 0.8),
+                                color: colorScheme.outlineVariant
+                                    .withValues(alpha: isDark ? 0.7 : 0.8),
                                 width: 1,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: isDark
                                       ? Colors.black.withValues(alpha: 0.4)
-                                      : AppColors.darkBrown.withValues(alpha: 0.08),
+                                      : AppColors.darkBrown
+                                          .withValues(alpha: 0.08),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -210,7 +221,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    edition.allowsCustomerRegistration ? 'Welcome Back' : edition.title,
+                                    edition.allowsCustomerRegistration
+                                        ? 'Welcome Back'
+                                        : edition.title,
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w800,
@@ -233,15 +246,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   CustomTextField(
                                     key: const ValueKey('email_input_field'),
                                     fieldKey: const ValueKey('email_field'),
-                                    semanticsLabel: context.tr('Email Address Field'),
+                                    semanticsLabel:
+                                        context.tr('Email Address Field'),
                                     controller: _emailController,
                                     label: context.tr('Email Address'),
                                     hint: 'name@example.com',
                                     keyboardType: TextInputType.emailAddress,
                                     icon: Icons.email_outlined,
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) return context.tr('Enter your email');
-                                      if (!value.contains('@') || !value.contains('.')) return context.tr('Enter a valid email address');
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return context.tr('Enter your email');
+                                      }
+                                      if (!value.contains('@') ||
+                                          !value.contains('.')) {
+                                        return context
+                                            .tr('Enter a valid email address');
+                                      }
                                       return null;
                                     },
                                   ),
@@ -251,16 +272,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                   CustomTextField(
                                     key: const ValueKey('password_input_field'),
                                     fieldKey: const ValueKey('password_field'),
-                                    toggleKey: const ValueKey('password_visibility_toggle'),
-                                    semanticsLabel: context.tr('Password Field'),
+                                    toggleKey: const ValueKey(
+                                        'password_visibility_toggle'),
+                                    semanticsLabel:
+                                        context.tr('Password Field'),
                                     controller: _passwordController,
                                     label: context.tr('Password'),
                                     hint: '••••••••',
                                     isPassword: true,
                                     icon: Icons.lock_outline_rounded,
                                     validator: (value) {
-                                      if (value == null || value.isEmpty) return context.tr('Enter your password');
-                                      if (value.length < 6) return context.tr('Password must be at least 6 characters');
+                                      if (value == null || value.isEmpty) {
+                                        return context
+                                            .tr('Enter your password');
+                                      }
+                                      if (value.length < 6) {
+                                        return context.tr(
+                                            'Password must be at least 6 characters');
+                                      }
                                       return null;
                                     },
                                   ),
@@ -269,10 +298,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Align(
                                     alignment: AlignmentDirectional.centerEnd,
                                     child: TextButton(
-                                      key: const ValueKey('forgot_password_button'),
-                                      onPressed: () => Navigator.of(context).pushNamed('/forgot-password'),
+                                      key: const ValueKey(
+                                          'forgot_password_button'),
+                                      onPressed: () => Navigator.of(context)
+                                          .pushNamed('/forgot-password'),
                                       style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4, horizontal: 4),
                                       ),
                                       child: Text(
                                         context.tr('Forgot Password?'),
@@ -294,7 +326,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     isLoading: _isLoading,
                                     onPressed: _handleLogin,
                                   ),
-                                  if (edition.allowsCustomerRegistration && !LocalDemo.enabled) ...[
+                                  if (edition.allowsCustomerRegistration &&
+                                      !LocalDemo.enabled) ...[
                                     const SizedBox(height: 18),
 
                                     // Horizontal "OR" Divider
@@ -302,24 +335,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                       children: [
                                         Expanded(
                                           child: Divider(
-                                            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                            color: colorScheme.outlineVariant
+                                                .withValues(alpha: 0.8),
                                             thickness: 1,
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14),
                                           child: Text(
                                             context.tr('OR'),
                                             style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w700,
-                                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                              color: colorScheme
+                                                  .onSurfaceVariant
+                                                  .withValues(alpha: 0.7),
                                             ),
                                           ),
                                         ),
                                         Expanded(
                                           child: Divider(
-                                            color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                            color: colorScheme.outlineVariant
+                                                .withValues(alpha: 0.8),
                                             thickness: 1,
                                           ),
                                         ),
@@ -330,18 +368,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // Google Sign-In Button
                                     if (GoogleSignInButton.isSupported)
                                       GoogleSignInButton(
-                                      key: const ValueKey('google_signin_button'),
-                                      semanticsLabel: context.tr('Continue with Google Button'),
-                                      isLoading: _isGoogleLoading,
-                                      onPressed: _handleGoogleSignIn,
-                                    ),
+                                        key: const ValueKey(
+                                            'google_signin_button'),
+                                        semanticsLabel: context
+                                            .tr('Continue with Google Button'),
+                                        isLoading: _isGoogleLoading,
+                                        onPressed: _handleGoogleSignIn,
+                                      ),
                                     const SizedBox(height: 20),
 
                                     if (PhoneSignInDialog.isSupported)
                                       OutlinedButton.icon(
-                                        onPressed: _isLoading || _isGoogleLoading ? null : _handlePhoneSignIn,
+                                        onPressed:
+                                            _isLoading || _isGoogleLoading
+                                                ? null
+                                                : _handlePhoneSignIn,
                                         icon: const Icon(Icons.phone_outlined),
-                                        label: Text(context.tr('Continue with phone')),
+                                        label: Text(
+                                            context.tr('Continue with phone')),
                                       ),
 
                                     // Sign up prompt
@@ -351,21 +395,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Center(
                                       child: Wrap(
                                         alignment: WrapAlignment.center,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
                                         children: [
                                           Text(
                                             "Don't have an account? ",
                                             style: TextStyle(
                                               fontSize: 13.5,
-                                              color: colorScheme.onSurfaceVariant,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                           GestureDetector(
-                                            key: const ValueKey('signup_button'),
+                                            key:
+                                                const ValueKey('signup_button'),
                                             behavior: HitTestBehavior.opaque,
-                                            onTap: () => Navigator.of(context).pushNamed('/signup'),
+                                            onTap: () => Navigator.of(context)
+                                                .pushNamed('/signup'),
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 4),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 4),
                                               child: Text(
                                                 'Sign Up',
                                                 style: TextStyle(

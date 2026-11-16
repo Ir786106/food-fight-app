@@ -3,10 +3,12 @@ import '../constants/app_constants.dart';
 /// Configuration for Supabase image and media storage
 class SupabaseConfig {
   /// Supabase Project URL (optional fallback)
-  static const String url = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
+  static const String url =
+      String.fromEnvironment('SUPABASE_URL', defaultValue: '');
 
   /// Supabase Publishable Key (injected via environment / dart-define, never committed)
-  static const String publishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: '');
+  static const String publishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: '');
 
   /// Legacy alias for publishableKey
   static const String anonKey = publishableKey;

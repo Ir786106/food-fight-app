@@ -84,14 +84,16 @@ class TrackingTimelineCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.cancel_rounded, color: AppColors.error, size: 28),
+                const Icon(Icons.cancel_rounded,
+                    color: AppColors.error, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     order.cancellationReason?.isNotEmpty == true
                         ? 'Order was cancelled: "${order.cancellationReason}"'
                         : 'This order has been cancelled.',
-                    style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: AppColors.error, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -104,7 +106,8 @@ class TrackingTimelineCard extends StatelessWidget {
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                color: colorScheme.outlineVariant
+                    .withValues(alpha: isDark ? 0.3 : 0.6),
               ),
               boxShadow: [
                 BoxShadow(
@@ -139,7 +142,9 @@ class TrackingTimelineCard extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: isCurrent
                                 ? Border.all(
-                                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                                    color: isDark
+                                        ? AppColors.brandYellow
+                                        : AppColors.brandMaroon,
                                     width: 2.5,
                                   )
                                 : null,
@@ -167,7 +172,8 @@ class TrackingTimelineCard extends StatelessWidget {
                             height: 36,
                             color: isCompleted
                                 ? AppColors.brandYellow
-                                : colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                : colorScheme.outlineVariant
+                                    .withValues(alpha: 0.5),
                           ),
                       ],
                     ),
@@ -184,7 +190,9 @@ class TrackingTimelineCard extends StatelessWidget {
                                 Text(
                                   step['title'] as String,
                                   style: TextStyle(
-                                    fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                                    fontWeight: isCurrent
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
                                     fontSize: 14.5,
                                     color: isPending
                                         ? colorScheme.onSurfaceVariant
@@ -196,9 +204,13 @@ class TrackingTimelineCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     color: isCurrent
-                                        ? (isDark ? AppColors.brandYellow : AppColors.brandMaroon)
+                                        ? (isDark
+                                            ? AppColors.brandYellow
+                                            : AppColors.brandMaroon)
                                         : colorScheme.onSurfaceVariant,
-                                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                                    fontWeight: isCurrent
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ],

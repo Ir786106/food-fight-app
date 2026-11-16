@@ -76,7 +76,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
           const SizedBox(height: 7),
         ],
         Semantics(
-          label: widget.semanticsLabel ?? (widget.label.isNotEmpty ? widget.label : widget.hint),
+          label: widget.semanticsLabel ??
+              (widget.label.isNotEmpty ? widget.label : widget.hint),
           textField: true,
           child: TextFormField(
             key: widget.fieldKey,
@@ -105,65 +106,77 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 fontSize: 14,
               ),
               filled: true,
-              fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+              fillColor: isDark
+                  ? AppColors.darkSurfaceElevated
+                  : AppColors.surfaceMuted,
               prefixIcon: widget.icon != null
                   ? Icon(
                       widget.icon,
-                      color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                      color: isDark
+                          ? AppColors.brandYellow
+                          : AppColors.brandMaroon,
                       size: 20,
                     )
                   : null,
               suffixIcon: widget.isPassword
                   ? IconButton(
-                      key: widget.toggleKey ?? const ValueKey('password_visibility_toggle'),
+                      key: widget.toggleKey ??
+                          const ValueKey('password_visibility_toggle'),
                       icon: Icon(
-                        _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        _obscure
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
                         size: 20,
                       ),
                       tooltip: _obscure ? 'Show password' : 'Hide password',
                       onPressed: () => setState(() => _obscure = !_obscure),
                     )
                   : widget.suffixIcon,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radius14),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.border,
-                width: 1,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radius14),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.border,
+                  width: 1,
+                ),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radius14),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.border,
-                width: 1,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radius14),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.border,
+                  width: 1,
+                ),
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radius14),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
-                width: 1.5,
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radius14),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                  width: 1.5,
+                ),
               ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radius14),
-              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radius14),
-              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-            ),
-            errorStyle: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.error,
-              fontWeight: FontWeight.w500,
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radius14),
+                borderSide:
+                    const BorderSide(color: AppColors.error, width: 1.5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radius14),
+                borderSide:
+                    const BorderSide(color: AppColors.error, width: 1.5),
+              ),
+              errorStyle: GoogleFonts.inter(
+                fontSize: 12,
+                color: AppColors.error,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
   }
 }

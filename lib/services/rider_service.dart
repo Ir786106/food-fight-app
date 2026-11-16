@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../models/rider_model.dart';
-import '../models/order_model.dart';
 import '../core/constants/firestore_collections.dart';
 import '../core/utils/logger.dart';
+import 'trusted_operations.dart';
 
 class RiderService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -22,17 +22,27 @@ class RiderService {
     String? vehicleType,
     String? vehicleNumber,
   }) async {
-    final result = await FirebaseFunctions.instance.httpsCallable('provisionTeamMember').call({
-      'role': 'rider', 'name': name, 'email': email, 'password': password,
-      'phone': phone, 'vehicleType': vehicleType, 'vehicleNumber': vehicleNumber,
+    final result = await FirebaseFunctions.instance
+        .httpsCallable('provisionTeamMember')
+        .call({
+      'role': 'rider',
+      'name': name,
+      'email': email,
+      'password': password,
+      'phone': phone,
+      'vehicleType': vehicleType,
+      'vehicleNumber': vehicleNumber,
       'linkExisting': password.isEmpty,
     });
     return result.data['userId'] as String;
   }
 
   /// Stream all delivery riders (Admin / Super Admin)
-  static Stream<List<RiderModel>> watchAllRiders() {
-    return _ridersCol.snapshots().map((snapshot) {
+  static Stream<List<RiderModel>> watchAllRiders({String? branchId}) {
+    final query = branchId == null
+        ? _ridersCol
+        : _ridersCol.where('branchId', isEqualTo: branchId);
+    return query.snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -51,7 +61,8 @@ class RiderService {
   /// Create a new rider account
   static Future<void> createRider(RiderModel rider) async {
     try {
-      final docRef = rider.id.isNotEmpty ? _ridersCol.doc(rider.id) : _ridersCol.doc();
+      final docRef =
+          rider.id.isNotEmpty ? _ridersCol.doc(rider.id) : _ridersCol.doc();
       final data = rider.toJson();
       data['id'] = docRef.id;
       data['createdAt'] = FieldValue.serverTimestamp();
@@ -61,7 +72,10 @@ class RiderService {
 
       // Also ensure user document reflects the 'delivery_rider' role
       if (rider.userId.isNotEmpty) {
-        await _firestore.collection(FirestoreCollections.users).doc(rider.userId).set({
+        await _firestore
+            .collection(FirestoreCollections.users)
+            .doc(rider.userId)
+            .set({
           'role': 'delivery_rider',
           'name': rider.name,
           'phone': rider.phone,
@@ -98,7 +112,8 @@ class RiderService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      AppLogger.error('Failed to update rider active status: $e', tag: 'RiderService');
+      AppLogger.error('Failed to update rider active status: $e',
+          tag: 'RiderService');
       rethrow;
     }
   }
@@ -109,10 +124,14 @@ class RiderService {
       await _firestore.runTransaction((transaction) async {
         final riderRef = _ridersCol.doc(riderId);
         final rider = await transaction.get(riderRef);
-        if (!rider.exists) throw StateError('Rider profile not found. Contact your administrator.');
+        if (!rider.exists) {
+          throw StateError(
+              'Rider profile not found. Contact your administrator.');
+        }
         final active = rider.data()?['isActive'];
         if (isOnline && active != true && active != 1) {
-          throw StateError('Your rider account is inactive. Contact your administrator.');
+          throw StateError(
+              'Your rider account is inactive. Contact your administrator.');
         }
         transaction.update(riderRef, {
           'isOnline': isOnline ? 1 : 0,
@@ -120,7 +139,8 @@ class RiderService {
         });
       });
     } catch (e) {
-      AppLogger.error('Failed to update rider online status: $e', tag: 'RiderService');
+      AppLogger.error('Failed to update rider online status: $e',
+          tag: 'RiderService');
       rethrow;
     }
   }
@@ -132,7 +152,7 @@ class RiderService {
     String? riderPhone,
     String? expectedRiderId,
   }) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'assign',
       'orderId': orderId,
       'riderId': riderId,
@@ -144,7 +164,7 @@ class RiderService {
     required String orderId,
     required String expectedRiderId,
   }) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'unassign',
       'orderId': orderId,
       'expectedRiderId': expectedRiderId,
@@ -152,54 +172,29 @@ class RiderService {
   }
 
   static Future<void> acceptDelivery(String orderId) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'accept',
       'orderId': orderId,
     });
   }
 
   static Future<void> declineDelivery(String orderId) async {
-    await FirebaseFunctions.instance.httpsCallable('mutateOrder').call({
+    await TrustedOperations.call('mutateOrder', {
       'action': 'decline',
       'orderId': orderId,
     });
   }
 
-  /// Watch active deliveries assigned to a specific rider
-  static Stream<List<OrderModel>> watchRiderDeliveries(String riderId, {String? riderPhone}) {
-    if (riderId.isEmpty) return Stream.value([]);
-    return _ordersCol.where('riderId', isEqualTo: riderId).orderBy('createdAt', descending: true).snapshots().map((snapshot) {
-      final list = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return OrderModel.fromJson(data);
-      }).where((o) {
-        if (o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled) {
-          return false;
-        }
-        return true;
-      }).toList();
+  static Query<Map<String, dynamic>> _riderOrdersQuery(String riderId) =>
+      _ordersCol
+          .where('riderId', isEqualTo: riderId)
+          .orderBy('createdAt', descending: true);
 
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
-    });
-  }
-
-  /// Watch completed deliveries for a specific rider
-  static Stream<List<OrderModel>> watchRiderHistory(String riderId, {String? riderPhone}) {
-    if (riderId.isEmpty) return Stream.value([]);
-    return _ordersCol.where('riderId', isEqualTo: riderId).orderBy('createdAt', descending: true).snapshots().map((snapshot) {
-      final list = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return OrderModel.fromJson(data);
-      }).where((o) {
-        if (o.status != OrderStatus.delivered) return false;
-        return true;
-      }).toList();
-
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
-    });
+  static Future<void> refreshRiderOrders(String riderId) async {
+    // The live listener already maintains the history. Refresh the recent window
+    // without repeating an unbounded server read on every pull gesture.
+    await _riderOrdersQuery(riderId)
+        .limit(50)
+        .get(const GetOptions(source: Source.server));
   }
 }

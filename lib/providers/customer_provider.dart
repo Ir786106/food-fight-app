@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:food_fight/models/user_model.dart';
 import 'package:food_fight/services/customer_service.dart';
@@ -13,9 +12,20 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
   String? _errorMessage;
   String _searchQuery = '';
   bool? _activeFilter;
-  StreamSubscription<List<UserModel>>? _subscription;
+  int _loadGeneration = 0;
 
-  List<UserModel> get customers => List.unmodifiable(_customers);
+  List<UserModel> get customers {
+    final query = _searchQuery.trim().toLowerCase();
+    return _customers.where((customer) {
+      if (_activeFilter != null && customer.isActive != _activeFilter) {
+        return false;
+      }
+      return customer.name.toLowerCase().contains(query) ||
+          customer.email.toLowerCase().contains(query) ||
+          customer.phone.toLowerCase().contains(query);
+    }).toList(growable: false);
+  }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
@@ -24,60 +34,63 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
   CustomerProvider();
 
   void init() {
-    watchCustomers();
+    loadCustomers();
   }
 
   String? _currentBranchId;
   String? get currentBranchId => _currentBranchId;
 
-  /// Watch real-time customer data
-  void watchCustomers({String? search, bool? isActive, String? branchId}) {
-    if (branchId != null) _currentBranchId = branchId;
+  Future<void> loadCustomers(
+      {String? branchId, bool scopeChanged = false}) async {
+    if (scopeChanged) {
+      _currentBranchId = branchId;
+      _customers = [];
+      _customerStats.clear();
+    }
+    final generation = ++_loadGeneration;
     _isLoading = true;
     _errorMessage = null;
     notifyListenersPostFrame();
 
-    _subscription?.cancel();
-    _subscription = CustomerService.watchCustomers(
-      search: search ?? _searchQuery,
-      isActive: isActive ?? _activeFilter,
-      branchId: _currentBranchId,
-    ).listen(
-      (data) {
-        _customers = data;
+    try {
+      final customers = await CustomerService.getCustomers();
+      if (generation == _loadGeneration) _customers = customers;
+    } catch (error) {
+      if (generation != _loadGeneration) return;
+      _customers = [];
+      _errorMessage = 'Unable to load customers. Please try again.';
+      AppLogger.error('Customer directory load failed: $error',
+          tag: 'CustomerProvider');
+    } finally {
+      if (generation == _loadGeneration) {
         _isLoading = false;
-        _errorMessage = null;
         notifyListeners();
-      },
-      onError: (e) {
-        _isLoading = false;
-        _errorMessage = 'Failed to load customers: $e';
-        AppLogger.error('CustomerProvider watch error: $e', tag: 'CustomerProvider');
-        notifyListeners();
-      },
-    );
+      }
+    }
   }
 
   /// Filter search query
   void setSearch(String query) {
     _searchQuery = query;
-    watchCustomers(search: query, isActive: _activeFilter, branchId: _currentBranchId);
+    notifyListeners();
   }
 
   /// Filter by active/inactive
   void setActiveFilter(bool? isActive) {
     _activeFilter = isActive;
-    watchCustomers(search: _searchQuery, isActive: isActive, branchId: _currentBranchId);
+    notifyListeners();
   }
 
   /// Toggle status
   Future<bool> toggleCustomerStatus(String userId, bool currentStatus) async {
     try {
       await CustomerService.toggleCustomerStatus(userId, currentStatus);
+      await loadCustomers();
       return true;
     } catch (e) {
       _errorMessage = 'Failed to update customer status: $e';
-      AppLogger.error('Toggle customer status error: $e', tag: 'CustomerProvider');
+      AppLogger.error('Toggle customer status error: $e',
+          tag: 'CustomerProvider');
       notifyListeners();
       return false;
     }
@@ -88,17 +101,19 @@ class CustomerProvider extends ChangeNotifier with SafeChangeNotifier {
     if (_customerStats.containsKey(customerId)) {
       return _customerStats[customerId]!;
     }
-    final stats = await CustomerService.getCustomerStats(customerId);
+    final stats = await CustomerService.getCustomerStats(customerId,
+        branchId: _currentBranchId);
     _customerStats[customerId] = stats;
     notifyListeners();
     return stats;
   }
 
-  Map<String, dynamic>? statsFor(String customerId) => _customerStats[customerId];
+  Map<String, dynamic>? statsFor(String customerId) =>
+      _customerStats[customerId];
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _loadGeneration++;
     super.dispose();
   }
 }

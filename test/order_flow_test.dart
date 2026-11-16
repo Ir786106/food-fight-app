@@ -34,7 +34,9 @@ void main() {
       ],
     );
 
-    test('OrderModel serialization preserves COD, customer info and payment status', () {
+    test(
+        'OrderModel serialization preserves COD, customer info and payment status',
+        () {
       final orderItem1 = CartItemModel(
         food: testFood,
         quantity: 2,
@@ -151,7 +153,9 @@ void main() {
       expect(cancelled.cancellationReason, equals('Customer requested change'));
     });
 
-    test('CartProvider keeps cart contents if order fails and clears only on success', () async {
+    test(
+        'CartProvider keeps cart contents if order fails and clears only on success',
+        () async {
       final cart = CartProvider();
       cart.addToCart(testFood, quantity: 2);
       expect(cart.items.length, equals(1));

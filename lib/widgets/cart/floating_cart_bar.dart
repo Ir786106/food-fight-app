@@ -42,7 +42,8 @@ class FloatingCartBar extends StatelessWidget {
         opacity: isVisible ? 1.0 : 0.0,
         child: Semantics(
           button: true,
-          label: 'View cart with ${cart.itemCount} items, total Rs. ${cart.total.toStringAsFixed(0)}',
+          label:
+              'View cart with ${cart.itemCount} items, total Rs. ${cart.total.toStringAsFixed(0)}',
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -91,7 +92,8 @@ class FloatingCartBar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.brandYellow.withValues(alpha: 0.35),
+                            color:
+                                AppColors.brandYellow.withValues(alpha: 0.35),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -170,7 +172,8 @@ class FloatingCartBar extends StatelessWidget {
 
                     // Right "View cart" with arrow
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),

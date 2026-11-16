@@ -95,19 +95,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
+                    color: isDark
+                        ? AppColors.darkYellowSoft
+                        : AppColors.yellowSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.camera_alt_outlined,
-                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    color:
+                        isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                     size: 22,
                   ),
                 ),
-                title: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                title: const Text('Take Photo',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final img = await AppImageStorageService.pickImage(source: ImageSource.camera);
+                  final img = await AppImageStorageService.pickImage(
+                      source: ImageSource.camera);
                   if (img != null && mounted) {
                     final bytes = await img.readAsBytes();
                     if (!mounted) return;
@@ -123,19 +129,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkYellowSoft : AppColors.yellowSoft,
+                    color: isDark
+                        ? AppColors.darkYellowSoft
+                        : AppColors.yellowSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.photo_library_outlined,
-                    color: isDark ? AppColors.brandYellow : AppColors.brandMaroon,
+                    color:
+                        isDark ? AppColors.brandYellow : AppColors.brandMaroon,
                     size: 22,
                   ),
                 ),
-                title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                title: const Text('Choose from Gallery',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final img = await AppImageStorageService.pickImage(source: ImageSource.gallery);
+                  final img = await AppImageStorageService.pickImage(
+                      source: ImageSource.gallery);
                   if (img != null && mounted) {
                     final bytes = await img.readAsBytes();
                     if (!mounted) return;
@@ -155,11 +167,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: AppColors.errorSoft,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: AppColors.error, size: 22),
                   ),
                   title: const Text(
                     'Remove Photo',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.error),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.error),
                   ),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -179,9 +195,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _save() async {
     if (_isLoading) return;
     if (_nameController.text.trim().length < 2) {
-      AppSnackbar.showError(context, 'Enter your full name.'); return;
+      AppSnackbar.showError(context, 'Enter your full name.');
+      return;
     }
-    if (!RegExp(r'^(03\d{9}|\+923\d{9})$').hasMatch(_phoneController.text.replaceAll(RegExp(r'[\s()-]'), ''))) {
+    if (!RegExp(r'^(03\d{9}|\+923\d{9})$')
+        .hasMatch(_phoneController.text.replaceAll(RegExp(r'[\s()-]'), ''))) {
       AppSnackbar.showError(context, 'Enter a valid Pakistani mobile number.');
       return;
     }
@@ -212,7 +230,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _isLoading = false);
 
       if (success) {
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           const SnackBar(
             content: Text('Profile updated successfully'),
             backgroundColor: AppColors.success,
@@ -220,8 +239,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
         Navigator.of(context).pop();
       } else {
-        final err = auth.errorMessage ?? 'Failed to update profile. Please try again.';
-        AppSnackbar.showSnackBar(context,
+        final err =
+            auth.errorMessage ?? 'Failed to update profile. Please try again.';
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text(err),
             backgroundColor: AppColors.error,
@@ -234,7 +255,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       }
     } catch (e, stack) {
-      AppLogger.error('Failed to update profile: $e\n$stack', tag: 'EditProfileScreen');
+      AppLogger.error('Failed to update profile: $e\n$stack',
+          tag: 'EditProfileScreen');
       if (mounted) {
         setState(() => _isLoading = false);
         final errText = e.toString().toLowerCase();
@@ -242,7 +264,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             errText.contains('network') ||
             errText.contains('unavailable') ||
             errText.contains('timeout');
-        AppSnackbar.showSnackBar(context,
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text(isNetwork
                 ? 'Network connection issue. Please check your internet.'
@@ -289,7 +312,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         height: 104,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.brandYellow, width: 3),
+                          border: Border.all(
+                              color: AppColors.brandYellow, width: 3),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0x33FFD505),
@@ -301,7 +325,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: ClipOval(
                           child: _removePhoto
                               ? Container(
-                                  color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceMuted,
+                                  color: isDark
+                                      ? AppColors.darkSurfaceElevated
+                                      : AppColors.surfaceMuted,
                                   child: Icon(
                                     Icons.person,
                                     size: 54,
@@ -362,7 +388,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    color:
+                        isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -373,11 +400,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.6),
+                      color: colorScheme.outlineVariant
+                          .withValues(alpha: isDark ? 0.3 : 0.6),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.04),
+                        color: Colors.black
+                            .withValues(alpha: isDark ? 0.35 : 0.04),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -408,7 +437,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         icon: Icons.lock_outline_rounded,
                         keyboardType: TextInputType.emailAddress,
                         readOnly: true,
-                        helperText: 'Email is associated with your login account and cannot be modified.',
+                        helperText:
+                            'Email is associated with your login account and cannot be modified.',
                       ),
                     ],
                   ),
@@ -434,7 +464,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ],
         ),
         child: SafeArea(
-                top: false,
+          top: false,
           child: CustomButton(
             text: 'Save Changes',
             isLoading: _isLoading,

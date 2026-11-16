@@ -11,7 +11,8 @@ import 'package:food_fight/services/cloudinary/cloudinary_image_storage_service.
 /// Delegates uploads to the active provider (Firebase Storage by default).
 /// Keeps Supabase as a read fallback for legacy URLs.
 class AppImageStorageService implements IImageStorageService {
-  static final AppImageStorageService _instance = AppImageStorageService._internal();
+  static final AppImageStorageService _instance =
+      AppImageStorageService._internal();
   AppImageStorageService._internal();
   factory AppImageStorageService() => _instance;
 
@@ -27,7 +28,8 @@ class AppImageStorageService implements IImageStorageService {
   }
 
   /// Pick an image safely with size limits
-  static Future<XFile?> pickImage({ImageSource source = ImageSource.gallery}) async {
+  static Future<XFile?> pickImage(
+      {ImageSource source = ImageSource.gallery}) async {
     final ImagePicker picker = ImagePicker();
     try {
       return await picker.pickImage(
@@ -69,7 +71,8 @@ class AppImageStorageService implements IImageStorageService {
     // First try active provider
     if (StorageProviderConfig.activeProvider == StorageProvider.firebase) {
       // If it's a relative path on Firebase, get public URL or resolve via Firebase storage
-      final firebaseResolved = FirebaseImageStorageService().getImageUrl(cleanPath);
+      final firebaseResolved =
+          FirebaseImageStorageService().getImageUrl(cleanPath);
       if (firebaseResolved.startsWith('http')) {
         return Uri.encodeFull(firebaseResolved);
       }
@@ -82,7 +85,8 @@ class AppImageStorageService implements IImageStorageService {
         return Uri.encodeFull(supabaseUrl);
       }
     } catch (e) {
-      AppLogger.warn('Could not resolve relative path through Supabase: $e', tag: 'AppImageStorage');
+      AppLogger.warn('Could not resolve relative path through Supabase: $e',
+          tag: 'AppImageStorage');
     }
 
     return null;
@@ -100,13 +104,18 @@ class AppImageStorageService implements IImageStorageService {
   }) {
     if (_useSignedSupabase(path)) {
       return SupabaseImageStorageService().uploadImage(
-        image: image, path: path, onProgress: onProgress,
+        image: image,
+        path: path,
+        onProgress: onProgress,
       );
     }
     if (StorageProviderConfig.activeProvider == StorageProvider.firebase) {
-      return FirebaseImageStorageService().uploadImage(image: image, path: path, onProgress: onProgress);
-    } else if (StorageProviderConfig.activeProvider == StorageProvider.cloudinary) {
-      return CloudinaryImageStorageService().uploadImage(image: image, path: path, onProgress: onProgress);
+      return FirebaseImageStorageService()
+          .uploadImage(image: image, path: path, onProgress: onProgress);
+    } else if (StorageProviderConfig.activeProvider ==
+        StorageProvider.cloudinary) {
+      return CloudinaryImageStorageService()
+          .uploadImage(image: image, path: path, onProgress: onProgress);
     }
     return SupabaseImageStorageService().uploadImage(image: image, path: path);
   }
@@ -120,7 +129,10 @@ class AppImageStorageService implements IImageStorageService {
   }) {
     if (_useSignedSupabase(path)) {
       return SupabaseImageStorageService().uploadCompressedImage(
-        image: image, path: path, quality: quality, onProgress: onProgress,
+        image: image,
+        path: path,
+        quality: quality,
+        onProgress: onProgress,
       );
     }
     if (StorageProviderConfig.activeProvider == StorageProvider.firebase) {
@@ -130,7 +142,8 @@ class AppImageStorageService implements IImageStorageService {
         quality: quality,
         onProgress: onProgress,
       );
-    } else if (StorageProviderConfig.activeProvider == StorageProvider.cloudinary) {
+    } else if (StorageProviderConfig.activeProvider ==
+        StorageProvider.cloudinary) {
       return CloudinaryImageStorageService().uploadCompressedImage(
         image: image,
         path: path,
@@ -138,7 +151,8 @@ class AppImageStorageService implements IImageStorageService {
         onProgress: onProgress,
       );
     }
-    return SupabaseImageStorageService().uploadCompressedImage(image: image, path: path, quality: quality);
+    return SupabaseImageStorageService()
+        .uploadCompressedImage(image: image, path: path, quality: quality);
   }
 
   @override
@@ -148,7 +162,8 @@ class AppImageStorageService implements IImageStorageService {
   Future<String> getPublicUrl(String path) => activeService.getPublicUrl(path);
 
   @override
-  Future<Uint8List> downloadImage(String path) => activeService.downloadImage(path);
+  Future<Uint8List> downloadImage(String path) =>
+      activeService.downloadImage(path);
 
   @override
   Future<void> deleteImage(String path) => activeService.deleteImage(path);
@@ -161,7 +176,9 @@ class AppImageStorageService implements IImageStorageService {
     required XFile newImage,
     required String oldPath,
     required String newPath,
-  }) => activeService.updateImage(newImage: newImage, oldPath: oldPath, newPath: newPath);
+  }) =>
+      activeService.updateImage(
+          newImage: newImage, oldPath: oldPath, newPath: newPath);
 
   @override
   Future<String> generateThumbnail({
@@ -169,5 +186,7 @@ class AppImageStorageService implements IImageStorageService {
     required String path,
     int width = 200,
     int height = 200,
-  }) => activeService.generateThumbnail(image: image, path: path, width: width, height: height);
+  }) =>
+      activeService.generateThumbnail(
+          image: image, path: path, width: width, height: height);
 }

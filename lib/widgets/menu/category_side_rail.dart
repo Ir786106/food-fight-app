@@ -107,7 +107,8 @@ class CategorySideRail extends StatelessWidget {
                         behavior: HitTestBehavior.opaque,
                         child: Center(
                           child: isSelected
-                              ? _buildActiveNotchItem(emoji, imageUrl, category, screenBgColor, isDark)
+                              ? _buildActiveNotchItem(emoji, imageUrl, category,
+                                  screenBgColor, isDark)
                               : _buildInactiveItem(emoji, imageUrl, category),
                         ),
                       ),

@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import '../../services/firebase/firebase_auth_service.dart';
 import '../../core/utils/logger.dart';
 import '../../core/metrics/app_startup_metrics.dart';
 import '../../routes/role_router.dart';
@@ -91,23 +90,21 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startParallelRouting() {
-    final minAnimationDelay = Future.delayed(const Duration(milliseconds: 1400));
+    final minAnimationDelay =
+        Future.delayed(const Duration(milliseconds: 1400));
     final routeResolution = _decideDestinationRoute();
-    final edition = context.read<AuthProvider>().edition;
 
     Future.wait([minAnimationDelay, routeResolution])
         .timeout(
-          edition == AppEdition.combined
-              ? const Duration(milliseconds: 3800)
-              : const Duration(seconds: 26),
-          onTimeout: () => [null, null],
-        )
+      const Duration(seconds: 28),
+      onTimeout: () => [null, null],
+    )
         .then((results) async {
       if (!mounted || _hasNavigated) return;
 
       String? destination = (results.length > 1 && results[1] != null)
           ? results[1] as String
-          : await _fallbackOfflineRoute();
+          : _fallbackOfflineRoute();
 
       if (destination == null) {
         // Profile unavailable: show retry dialog instead of falling back to customer home
@@ -116,7 +113,8 @@ class _SplashScreenState extends State<SplashScreen>
       }
 
       _hasNavigated = true;
-      final elapsed = widget.startupStopwatch?.elapsedMilliseconds ?? AppStartupMetrics.elapsedMs;
+      final elapsed = widget.startupStopwatch?.elapsedMilliseconds ??
+          AppStartupMetrics.elapsedMs;
       AppLogger.info(
         '[PERF] Cold start to routed screen: $destination at +${elapsed}ms',
         tag: 'Performance',
@@ -127,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen>
       }
     }).catchError((e) async {
       if (!mounted || _hasNavigated) return;
-      final fallback = await _fallbackOfflineRoute();
+      final fallback = _fallbackOfflineRoute();
       if (fallback != null) {
         _hasNavigated = true;
         if (mounted) Navigator.of(context).pushReplacementNamed(fallback);
@@ -177,61 +175,36 @@ class _SplashScreenState extends State<SplashScreen>
       final auth = context.read<AuthProvider>();
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser == null) {
-        if (!auth.edition.allowsCustomerRegistration) return RoleRouter.loginRoute;
+        if (!auth.edition.allowsCustomerRegistration) {
+          return RoleRouter.loginRoute;
+        }
         final prefs = await SharedPreferences.getInstance();
         final onboardingCompleted =
             prefs.getBool(AppConstants.storageOnboardingCompleted) ?? false;
         return onboardingCompleted ? '/login' : '/onboarding';
       }
 
-      if (auth.edition != AppEdition.combined) {
-        await auth.init(preferCache: false);
-        if (auth.currentUser != null) return RoleRouter.homeRouteFor(auth.currentUser);
-        return FirebaseAuth.instance.currentUser == null ? RoleRouter.loginRoute : null;
-      }
-
-      // User has active session: load cached profile instantly
-      await auth.init(preferCache: true).timeout(
-        const Duration(seconds: 3),
-        onTimeout: () {
-          AppLogger.warn('Auth cache init exceeded 3s, checking cached role', tag: 'Splash');
-        },
-      );
-
-      if (auth.isLoggedIn && auth.currentUser != null) {
+      await auth.init(preferCache: auth.edition == AppEdition.combined);
+      if (auth.currentUser != null) {
         return RoleRouter.homeRouteFor(auth.currentUser);
       }
-
-      // If network is slow or offline, use local cached role
-      final cachedRole = await FirebaseAuthService.getCachedUserRole(firebaseUser.uid);
-      if (cachedRole != null && cachedRole.isNotEmpty) {
-        return RoleRouter.homeRouteForRole(cachedRole);
-      }
-
-      return null;
-    } catch (e) {
-      AppLogger.warn('Route determination notice: $e', tag: 'Splash');
+      return _fallbackOfflineRoute();
+    } catch (_) {
+      AppLogger.warn('Route determination failed during profile verification.',
+          tag: 'Splash');
       return _fallbackOfflineRoute();
     }
   }
 
-  Future<String?> _fallbackOfflineRoute() async {
+  String? _fallbackOfflineRoute() {
     if (!mounted) return null;
     try {
-      final auth = context.read<AuthProvider>();
-      if (auth.edition != AppEdition.combined) return null;
-      final firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser != null) {
-        final cachedRole = await FirebaseAuthService.getCachedUserRole(firebaseUser.uid);
-        if (cachedRole != null && cachedRole.isNotEmpty) {
-          return RoleRouter.homeRouteForRole(cachedRole);
-        }
-        return null;
-      }
+      return FirebaseAuth.instance.currentUser == null
+          ? RoleRouter.loginRoute
+          : null;
     } catch (_) {
-      // In headless test environments where Firebase is not initialized
+      return RoleRouter.loginRoute;
     }
-    return '/login';
   }
 
   @override
@@ -326,10 +299,14 @@ class _SplashScreenState extends State<SplashScreen>
                               height: logoSize,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.brandYellow.withValues(alpha: 0.45), width: 2),
+                                border: Border.all(
+                                    color: AppColors.brandYellow
+                                        .withValues(alpha: 0.45),
+                                    width: 2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.brandYellow.withValues(alpha: 0.18 * _logoFade.value),
+                                    color: AppColors.brandYellow.withValues(
+                                        alpha: 0.18 * _logoFade.value),
                                     blurRadius: 28,
                                     offset: const Offset(0, 10),
                                     spreadRadius: 2,

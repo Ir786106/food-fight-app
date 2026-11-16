@@ -46,7 +46,8 @@ class CouponProvider extends ChangeNotifier with SafeChangeNotifier {
       onError: (e) {
         _isLoading = false;
         _errorMessage = 'Failed to load coupons: $e';
-        AppLogger.error('CouponProvider watch error: $e', tag: 'CouponProvider');
+        AppLogger.error('CouponProvider watch error: $e',
+            tag: 'CouponProvider');
         notifyListeners();
       },
     );

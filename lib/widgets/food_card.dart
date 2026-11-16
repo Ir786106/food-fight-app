@@ -595,7 +595,8 @@ class FoodCard extends StatelessWidget {
                         Navigator.pop(ctx);
                         cart.clearCart();
                         cart.addToCart(food);
-                        AppSnackbar.showSnackBar(context,
+                        AppSnackbar.showSnackBar(
+                          context,
                           SnackBar(
                             content: Text('${food.name} added to cart'),
                             duration: const Duration(milliseconds: 900),
@@ -617,7 +618,8 @@ class FoodCard extends StatelessWidget {
             }
 
             cart.addToCart(food);
-            AppSnackbar.showSnackBar(context,
+            AppSnackbar.showSnackBar(
+              context,
               SnackBar(
                 content: Text('${food.name} added to bag'),
                 duration: const Duration(milliseconds: 900),

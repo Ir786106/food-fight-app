@@ -8,7 +8,8 @@ void main() {
     expect(LocalDemo.options.storageBucket, 'demo-food-fight.appspot.com');
   });
 
-  test('local demo fails before Firebase initialization on native platforms', () async {
+  test('local demo fails before Firebase initialization on native platforms',
+      () async {
     await expectLater(LocalDemo.connect(), throwsStateError);
   });
 }

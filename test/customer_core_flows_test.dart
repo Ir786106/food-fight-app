@@ -33,12 +33,15 @@ void main() {
       );
       expect(updated.name, equals('Golden Champion'));
       expect(updated.phone, equals('03119876543'));
-      expect(updated.profileImage, equals('https://example.com/new_avatar.jpg'));
+      expect(
+          updated.profileImage, equals('https://example.com/new_avatar.jpg'));
       expect(updated.isCustomer, isTrue);
       expect(updated.isAdmin, isFalse);
     });
 
-    test('2. Add to Cart - CartProvider handles item addition, quantities, and badges', () {
+    test(
+        '2. Add to Cart - CartProvider handles item addition, quantities, and badges',
+        () {
       final cart = CartProvider();
       final item1 = FoodModel(
         id: 'food_1',
@@ -168,12 +171,21 @@ void main() {
       ];
 
       // Filter for user_A
-      final userAOrders = orders.where((o) => o.customerId == 'user_A').toList();
+      final userAOrders =
+          orders.where((o) => o.customerId == 'user_A').toList();
       expect(userAOrders.length, equals(2));
 
       // Separate active vs past
-      final active = userAOrders.where((o) => o.status != OrderStatus.delivered && o.status != OrderStatus.cancelled).toList();
-      final past = userAOrders.where((o) => o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled).toList();
+      final active = userAOrders
+          .where((o) =>
+              o.status != OrderStatus.delivered &&
+              o.status != OrderStatus.cancelled)
+          .toList();
+      final past = userAOrders
+          .where((o) =>
+              o.status == OrderStatus.delivered ||
+              o.status == OrderStatus.cancelled)
+          .toList();
 
       expect(active.length, equals(1));
       expect(active.first.orderNumber, equals('FF-1001'));

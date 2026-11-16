@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/order_model.dart';
+import 'trusted_operations.dart';
 
 class CheckoutCancelled implements Exception {
   const CheckoutCancelled();
@@ -12,6 +13,39 @@ class CheckoutCancelled implements Exception {
 /// after the app closes while the server is committing the order.
 class CheckoutService {
   static const _pendingKey = 'pending_checkout_v1';
+
+  static String errorMessage(Object error) {
+    const fallback = 'Unable to place your order. Please retry.';
+    if (error is StateError) {
+      return switch (error.message) {
+        'Choose your branch and delivery area.' => error.message,
+        'Unable to save checkout for a safe retry.' => error.message,
+        _ => fallback,
+      };
+    }
+    if (error is! FirebaseFunctionsException) return fallback;
+
+    final message = error.message?.trim();
+    return switch (error.code) {
+      'not-found' => switch (message) {
+          'A menu item is no longer available. Refresh your cart.' =>
+            'An item in your cart is no longer available. Update your cart.',
+          'This deal is no longer available.' =>
+            'An item in your cart is no longer available. Update your cart.',
+          _ => 'Checkout service is unavailable. Your cart is still saved.',
+        },
+      'unauthenticated' => 'Please sign in to proceed to checkout',
+      'unavailable' ||
+      'deadline-exceeded' =>
+        'Unable to reach checkout. Check your connection and retry.',
+      'permission-denied' =>
+        'Your account does not have permission to place this order.',
+      'failed-precondition' ||
+      'invalid-argument' =>
+        message == null || message.isEmpty ? fallback : message,
+      _ => fallback,
+    };
+  }
 
   static Future<OrderModel> place(
     OrderModel order, {
@@ -62,10 +96,8 @@ class CheckoutService {
       acceptedTotal =
           (pending?['acceptedTotal'] as num?)?.toDouble() ?? order.total;
     } else if (confirmQuote != null) {
-      final quote = await FirebaseFunctions.instance
-          .httpsCallable('quoteOrder')
-          .call(payload);
-      final quoteData = (quote.data as Map)['data'] as Map;
+      final quote = await TrustedOperations.call('quoteOrder', payload);
+      final quoteData = (quote as Map)['data'] as Map;
       acceptedTotal = (quoteData['total'] as num).toDouble();
       if (!await confirmQuote(acceptedTotal)) throw const CheckoutCancelled();
     }
@@ -84,13 +116,12 @@ class CheckoutService {
     if (!persisted) {
       throw StateError('Unable to save checkout for a safe retry.');
     }
-    final response =
-        await FirebaseFunctions.instance.httpsCallable('placeOrder').call({
+    final response = await TrustedOperations.call('placeOrder', {
       ...payload,
       'clientTotal': acceptedTotal,
       'requestId': requestId,
     });
-    final data = Map<String, dynamic>.from(response.data as Map);
+    final data = Map<String, dynamic>.from(response as Map);
     // JSON normalization converts nested callable maps for existing model parsers.
     return OrderModel.fromJson(
         jsonDecode(jsonEncode(data['order'])) as Map<String, dynamic>);

@@ -228,10 +228,10 @@ class DataNotFoundException extends AppException {
 /// Typed exception when an authenticated user's profile document cannot be loaded
 class ProfileUnavailableException extends AppException {
   ProfileUnavailableException({
-    super.message = 'Could not load your account profile. Please check your connection and retry or sign out.',
+    super.message =
+        'Could not load your account profile. Please check your connection and retry or sign out.',
     super.originalException,
   }) : super(
           code: 'profile-unavailable',
         );
 }
-

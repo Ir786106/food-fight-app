@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '585587375994',
     projectId: 'food-fight-bd72e',
     storageBucket: 'food-fight-bd72e.firebasestorage.app',
-    iosClientId: '585587375994-5ak89r759o150jh93cubkp5o92b9l6q3.apps.googleusercontent.com',
+    iosClientId:
+        '585587375994-5ak89r759o150jh93cubkp5o92b9l6q3.apps.googleusercontent.com',
     iosBundleId: 'com.example.foodFight',
   );
   static const FirebaseOptions macos = FirebaseOptions(
@@ -72,7 +73,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '585587375994',
     projectId: 'food-fight-bd72e',
     storageBucket: 'food-fight-bd72e.firebasestorage.app',
-    iosClientId: '585587375994-5ak89r759o150jh93cubkp5o92b9l6q3.apps.googleusercontent.com',
+    iosClientId:
+        '585587375994-5ak89r759o150jh93cubkp5o92b9l6q3.apps.googleusercontent.com',
     iosBundleId: 'com.example.foodFight',
   );
 

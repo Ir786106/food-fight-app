@@ -22,8 +22,13 @@ class OrderDetailModal extends StatefulWidget {
 class _OrderDetailModalState extends State<OrderDetailModal> {
   bool _isUpdating = false;
 
-  OrderStatus? _getNextStatus(OrderStatus current) =>
-      [OrderStatus.pending, OrderStatus.accepted, OrderStatus.preparing].contains(current) ? current.nextStatus : null;
+  OrderStatus? _getNextStatus(OrderStatus current) => [
+        OrderStatus.pending,
+        OrderStatus.accepted,
+        OrderStatus.preparing
+      ].contains(current)
+          ? current.nextStatus
+          : null;
 
   String _getNextStatusActionName(OrderStatus next) {
     switch (next) {
@@ -81,11 +86,14 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
   Future<void> _advanceStatus(OrderStatus nextStatus) async {
     setState(() => _isUpdating = true);
     try {
-      final success = await context.read<OrderProvider>().updateOrderStatus(widget.order.id, nextStatus);
+      final success = await context
+          .read<OrderProvider>()
+          .updateOrderStatus(widget.order.id, nextStatus);
       if (mounted && context.mounted) {
         Navigator.pop(context);
         if (success) {
-          AppSnackbar.showSnackBar(context,
+          AppSnackbar.showSnackBar(
+            context,
             SnackBar(
               content: Text('Order status updated to ${nextStatus.name}'),
               backgroundColor: AppColors.success,
@@ -96,8 +104,11 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
     } catch (e) {
       if (mounted && context.mounted) {
         setState(() => _isUpdating = false);
-        AppSnackbar.showSnackBar(context,
-          SnackBar(content: Text('Error updating order: $e'), backgroundColor: AppColors.error),
+        AppSnackbar.showSnackBar(
+          context,
+          SnackBar(
+              content: Text('Error updating order: $e'),
+              backgroundColor: AppColors.error),
         );
       }
     }
@@ -124,7 +135,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
           children: [
             Text(
               'Please specify a reason for cancelling this order:',
-              style: TextStyle(fontSize: 13, color: AdminTheme.getTextMuted(context)),
+              style: TextStyle(
+                  fontSize: 13, color: AdminTheme.getTextMuted(context)),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -136,7 +148,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                 hintText: 'e.g., Item out of stock, Customer requested',
                 hintStyle: TextStyle(color: AdminTheme.getTextMuted(context)),
                 filled: true,
-                fillColor: isDark ? const Color(0xFF22222E) : Colors.grey.shade100,
+                fillColor:
+                    isDark ? const Color(0xFF22222E) : Colors.grey.shade100,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -164,13 +177,14 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
               Navigator.pop(ctx);
               setState(() => _isUpdating = true);
               await context.read<OrderProvider>().updateOrderStatus(
-                widget.order.id,
-                OrderStatus.cancelled,
-                cancellationReason: reason,
-              );
+                    widget.order.id,
+                    OrderStatus.cancelled,
+                    cancellationReason: reason,
+                  );
               if (mounted && context.mounted) {
                 Navigator.pop(context);
-                AppSnackbar.showSnackBar(context,
+                AppSnackbar.showSnackBar(
+                  context,
                   const SnackBar(
                     content: Text('Order cancelled successfully'),
                     backgroundColor: AppColors.error,
@@ -185,9 +199,15 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
     );
   }
 
-  void _showAssignRiderSheet() {
+  void _showAssignRiderSheet(OrderModel order) {
     final riderProvider = context.read<RiderProvider>();
-    riderProvider.watchAllRiders();
+    final branchId = order.branchId?.trim();
+    if (branchId == null || branchId.isEmpty) {
+      AppSnackbar.showError(
+          context, 'This order needs a branch before a rider can be assigned.');
+      return;
+    }
+    riderProvider.watchAllRiders(branchId: branchId);
 
     showModalBottomSheet(
       context: context,
@@ -208,126 +228,150 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade400,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Assign Delivery Rider',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AdminTheme.getTextDark(context),
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Consumer<RiderProvider>(
-                  builder: (context, provider, _) {
-                    final riders = provider.onlineRiders;
-                    if (provider.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (riders.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No active delivery riders found.\nAdd riders in Fleet Management.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AdminTheme.getTextMuted(context)),
-                        ),
-                      );
-                    }
-                    return ListView.separated(
-                      itemCount: riders.length,
-                      separatorBuilder: (_, __) => const Divider(height: 12),
-                      itemBuilder: (context, index) {
-                        final rider = riders[index];
-                        final isAssigned = widget.order.riderId == rider.id;
-                        final workload = context.watch<OrderProvider>().adminOrders.where((order) => order.riderId == rider.id && !order.status.isTerminal).length;
-
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          leading: CircleAvatar(
-                            backgroundColor: rider.isOnline ? AppColors.success.withValues(alpha: 0.15) : Colors.grey.shade200,
-                            child: Icon(
-                              Icons.delivery_dining_rounded,
-                              color: rider.isOnline ? AppColors.success : Colors.grey.shade600,
-                            ),
-                          ),
-                          title: Text(
-                            rider.name,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Assign Delivery Rider',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AdminTheme.getTextDark(context),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Consumer<RiderProvider>(
+                    builder: (context, provider, _) {
+                      final riders = provider.onlineRiders;
+                      if (provider.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (riders.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No active delivery riders found.\nAdd riders in Fleet Management.',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: AdminTheme.getTextDark(context),
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${rider.phone} | $workload active deliveries',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AdminTheme.getTextMuted(context),
-                            ),
-                          ),
-                          trailing: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isAssigned ? Colors.grey : AdminTheme.primaryBlue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            ),
-                            onPressed: isAssigned
-                                ? null
-                                : () async {
-                                    Navigator.pop(ctx);
-                                    setState(() => _isUpdating = true);
-                                    final nav = Navigator.of(context);
-                                    final success = await provider.assignRider(
-                                      orderId: widget.order.id,
-                                      riderId: rider.id,
-                                      riderName: rider.name,
-                                      riderPhone: rider.phone,
-                                      expectedRiderId: widget.order.riderId,
-                                    );
-                                    if (mounted && context.mounted) {
-                                      setState(() => _isUpdating = false);
-                                      if (!success) AppSnackbar.showError(context, provider.errorMessage ?? 'Could not assign rider.');
-                                      if (success) {
-                                        nav.pop();
-                                        AppSnackbar.showSnackBar(context,
-                                          SnackBar(
-                                            content: Text('Assigned order to ${rider.name}'),
-                                            backgroundColor: AppColors.success,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                            child: Text(isAssigned ? 'Assigned' : 'Assign'),
+                                color: AdminTheme.getTextMuted(context)),
                           ),
                         );
-                      },
-                    );
-                  },
+                      }
+                      return ListView.separated(
+                        itemCount: riders.length,
+                        separatorBuilder: (_, __) => const Divider(height: 12),
+                        itemBuilder: (context, index) {
+                          final rider = riders[index];
+                          final isAssigned = widget.order.riderId == rider.id;
+                          final workload = context
+                              .watch<OrderProvider>()
+                              .adminOrders
+                              .where((order) =>
+                                  order.riderId == rider.id &&
+                                  !order.status.isTerminal)
+                              .length;
+
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            leading: CircleAvatar(
+                              backgroundColor: rider.isOnline
+                                  ? AppColors.success.withValues(alpha: 0.15)
+                                  : Colors.grey.shade200,
+                              child: Icon(
+                                Icons.delivery_dining_rounded,
+                                color: rider.isOnline
+                                    ? AppColors.success
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                            title: Text(
+                              rider.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AdminTheme.getTextDark(context),
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${rider.phone} | $workload active deliveries',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AdminTheme.getTextMuted(context),
+                              ),
+                            ),
+                            trailing: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isAssigned
+                                    ? Colors.grey
+                                    : AdminTheme.primaryBlue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 8),
+                              ),
+                              onPressed: isAssigned
+                                  ? null
+                                  : () async {
+                                      Navigator.pop(ctx);
+                                      setState(() => _isUpdating = true);
+                                      final nav = Navigator.of(context);
+                                      final success =
+                                          await provider.assignRider(
+                                        orderId: widget.order.id,
+                                        riderId: rider.id,
+                                        riderName: rider.name,
+                                        riderPhone: rider.phone,
+                                        expectedRiderId: widget.order.riderId,
+                                      );
+                                      if (mounted && context.mounted) {
+                                        setState(() => _isUpdating = false);
+                                        if (!success) {
+                                          AppSnackbar.showError(
+                                              context,
+                                              provider.errorMessage ??
+                                                  'Could not assign rider.');
+                                        }
+                                        if (success) {
+                                          nav.pop();
+                                          AppSnackbar.showSnackBar(
+                                            context,
+                                            SnackBar(
+                                              content: Text(
+                                                  'Assigned order to ${rider.name}'),
+                                              backgroundColor:
+                                                  AppColors.success,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                              child: Text(isAssigned ? 'Assigned' : 'Assign'),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         );
       },
@@ -336,7 +380,12 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
 
   @override
   Widget build(BuildContext context) {
-    final order = context.watch<OrderProvider>().adminOrders.where((o) => o.id == widget.order.id).firstOrNull ?? widget.order;
+    final order = context
+            .watch<OrderProvider>()
+            .adminOrders
+            .where((o) => o.id == widget.order.id)
+            .firstOrNull ??
+        widget.order;
     final nextStatus = _getNextStatus(order.status);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -389,7 +438,9 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year} at ${order.createdAt.hour.toString().padLeft(2, '0')}:${order.createdAt.minute.toString().padLeft(2, '0')}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: AdminTheme.getTextMuted(context), fontSize: 12),
+                          style: TextStyle(
+                              color: AdminTheme.getTextMuted(context),
+                              fontSize: 12),
                         ),
                       ],
                     ),
@@ -409,10 +460,14 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1E28) : Colors.grey.shade50,
+                        color: isDark
+                            ? const Color(0xFF1E1E28)
+                            : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF2E2E3C) : Colors.grey.shade200,
+                          color: isDark
+                              ? const Color(0xFF2E2E3C)
+                              : Colors.grey.shade200,
                         ),
                       ),
                       child: Column(
@@ -421,7 +476,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           if (order.customerName.isNotEmpty) ...[
                             Row(
                               children: [
-                                const Icon(Icons.person_outline_rounded, size: 18, color: AdminTheme.primaryBlue),
+                                const Icon(Icons.person_outline_rounded,
+                                    size: 18, color: AdminTheme.primaryBlue),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
@@ -439,7 +495,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           ],
                           Row(
                             children: [
-                              const Icon(Icons.location_on_rounded, size: 18, color: AdminTheme.primaryBlue),
+                              const Icon(Icons.location_on_rounded,
+                                  size: 18, color: AdminTheme.primaryBlue),
                               const SizedBox(width: 6),
                               Text(
                                 'Delivery Address',
@@ -456,12 +513,15 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                             order.deliveryAddress.isNotEmpty
                                 ? order.deliveryAddress
                                 : 'No address provided',
-                            style: TextStyle(fontSize: 13, color: AdminTheme.getTextMuted(context)),
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AdminTheme.getTextMuted(context)),
                           ),
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              const Icon(Icons.payment_rounded, size: 18, color: AppColors.success),
+                              const Icon(Icons.payment_rounded,
+                                  size: 18, color: AppColors.success),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -477,9 +537,11 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.warning.withValues(alpha: 0.15),
+                                  color:
+                                      AppColors.warning.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -495,13 +557,16 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           ),
                           if (order.codSettlementStatus == 'pending')
                             TextButton.icon(
-                              onPressed: _isUpdating ? null : () => _confirmSettlement(order),
+                              onPressed: _isUpdating
+                                  ? null
+                                  : () => _confirmSettlement(order),
                               icon: const Icon(Icons.payments_outlined),
                               label: const Text('Confirm rider cash received'),
                             ),
                           if (order.codSettlementStatus == 'settled')
                             const Text('Rider cash received'),
-                          if (order.cancellationReason != null && order.cancellationReason!.isNotEmpty) ...[
+                          if (order.cancellationReason != null &&
+                              order.cancellationReason!.isNotEmpty) ...[
                             const SizedBox(height: 10),
                             Container(
                               padding: const EdgeInsets.all(8),
@@ -511,7 +576,10 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               ),
                               child: Text(
                                 'Reason for Cancellation: ${order.cancellationReason}',
-                                style: const TextStyle(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    color: AppColors.error,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -525,7 +593,9 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1E26) : Colors.grey.shade50,
+                        color: isDark
+                            ? const Color(0xFF1E1E26)
+                            : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isDark ? Colors.white12 : Colors.grey.shade200,
@@ -539,7 +609,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.delivery_dining_rounded, size: 18, color: AdminTheme.primaryBlue),
+                                  const Icon(Icons.delivery_dining_rounded,
+                                      size: 18, color: AdminTheme.primaryBlue),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Delivery Rider',
@@ -551,22 +622,33 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                   ),
                                 ],
                               ),
-                              if (order.status == OrderStatus.ready || order.status == OrderStatus.assigned)
+                              if (order.status == OrderStatus.ready ||
+                                  order.status == OrderStatus.assigned)
                                 TextButton.icon(
-                                  onPressed: _isUpdating ? null : _showAssignRiderSheet,
+                                  onPressed: _isUpdating
+                                      ? null
+                                      : () => _showAssignRiderSheet(order),
                                   icon: Icon(
-                                    order.riderId != null ? Icons.swap_horiz_rounded : Icons.person_add_alt_1_rounded,
+                                    order.riderId != null
+                                        ? Icons.swap_horiz_rounded
+                                        : Icons.person_add_alt_1_rounded,
                                     size: 16,
                                   ),
                                   label: Text(
-                                    order.riderId != null ? 'Change Rider' : 'Assign Rider',
-                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                    order.riderId != null
+                                        ? 'Change Rider'
+                                        : 'Assign Rider',
+                                    style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   style: TextButton.styleFrom(
                                     foregroundColor: AdminTheme.primaryBlue,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
                                 ),
                             ],
@@ -574,63 +656,91 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           const SizedBox(height: 8),
                           if (order.status == OrderStatus.ready)
                             TextButton.icon(
-                              onPressed: _isUpdating ? null : () => _runOrderAction(
-                                () => OrderService.dispatchRider(order.id),
-                              ),
+                              onPressed: _isUpdating
+                                  ? null
+                                  : () => _runOrderAction(
+                                        () => OrderService.dispatchRider(
+                                            order.id),
+                                      ),
                               icon: const Icon(Icons.bolt_outlined),
                               label: const Text('Find available rider'),
                             ),
-                          if (order.status == OrderStatus.assigned && order.riderId != null)
-                            TextButton.icon(icon: const Icon(Icons.person_remove_outlined), label: const Text('Unassign rider'),
-                              onPressed: _isUpdating ? null : () async {
-                                setState(() => _isUpdating = true);
-                                final provider = context.read<RiderProvider>();
-                                final ok = await provider.unassignRider(orderId: order.id, expectedRiderId: order.riderId!);
-                                if (!mounted) return;
-                                setState(() => _isUpdating = false);
-                                if (!ok && context.mounted) AppSnackbar.showError(context, provider.errorMessage ?? 'Could not unassign rider.');
-                              }),
-                          if (order.riderName != null && order.riderName!.isNotEmpty) ...[
+                          if (order.status == OrderStatus.assigned &&
+                              order.riderId != null)
+                            TextButton.icon(
+                                icon: const Icon(Icons.person_remove_outlined),
+                                label: const Text('Unassign rider'),
+                                onPressed: _isUpdating
+                                    ? null
+                                    : () async {
+                                        setState(() => _isUpdating = true);
+                                        final provider =
+                                            context.read<RiderProvider>();
+                                        final ok = await provider.unassignRider(
+                                            orderId: order.id,
+                                            expectedRiderId: order.riderId!);
+                                        if (!mounted) return;
+                                        setState(() => _isUpdating = false);
+                                        if (!ok && context.mounted) {
+                                          AppSnackbar.showError(
+                                              context,
+                                              provider.errorMessage ??
+                                                  'Could not unassign rider.');
+                                        }
+                                      }),
+                          if (order.riderName != null &&
+                              order.riderName!.isNotEmpty) ...[
                             Row(
                               children: [
                                 CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: AdminTheme.primaryBlue.withValues(alpha: 0.15),
-                                  child: const Icon(Icons.person, size: 16, color: AdminTheme.primaryBlue),
+                                  backgroundColor: AdminTheme.primaryBlue
+                                      .withValues(alpha: 0.15),
+                                  child: const Icon(Icons.person,
+                                      size: 16, color: AdminTheme.primaryBlue),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         order.riderName!,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 14,
-                                          color: AdminTheme.getTextDark(context),
+                                          color:
+                                              AdminTheme.getTextDark(context),
                                         ),
                                       ),
-                                      if (order.riderPhone != null && order.riderPhone!.isNotEmpty)
+                                      if (order.riderPhone != null &&
+                                          order.riderPhone!.isNotEmpty)
                                         Text(
                                           order.riderPhone!,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: AdminTheme.getTextMuted(context),
+                                            color: AdminTheme.getTextMuted(
+                                                context),
                                           ),
                                         ),
                                     ],
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: AppColors.darkBrown.withValues(alpha: 0.1),
+                                    color: AppColors.darkBrown
+                                        .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     order.status.displayName,
-                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.darkBrown),
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.darkBrown),
                                   ),
                                 ),
                               ],
@@ -670,7 +780,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                               width: 30,
                               height: 30,
                               decoration: BoxDecoration(
-                                color: AdminTheme.primaryBlue.withValues(alpha: 0.1),
+                                color: AdminTheme.primaryBlue
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Center(
@@ -697,15 +808,24 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                                       color: AdminTheme.getTextDark(context),
                                     ),
                                   ),
-                                  if (item.selectedVariant?.description != null && item.selectedVariant!.description!.isNotEmpty)
+                                  if (item.selectedVariant?.description !=
+                                          null &&
+                                      item.selectedVariant!.description!
+                                          .isNotEmpty)
                                     Text(
                                       item.selectedVariant!.description!,
-                                      style: TextStyle(color: AdminTheme.getTextMuted(context), fontSize: 11),
+                                      style: TextStyle(
+                                          color:
+                                              AdminTheme.getTextMuted(context),
+                                          fontSize: 11),
                                     ),
                                   if (item.addonsDescription != null)
                                     Text(
                                       item.addonsDescription!,
-                                      style: const TextStyle(color: AdminTheme.primaryBlue, fontSize: 11, fontWeight: FontWeight.w600),
+                                      style: const TextStyle(
+                                          color: AdminTheme.primaryBlue,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                 ],
                               ),
@@ -726,19 +846,26 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                     const Divider(height: 24),
 
                     // Price Breakdown
-                    _summaryRow(context, 'Subtotal', 'Rs. ${order.subtotal.toStringAsFixed(0)}'),
+                    _summaryRow(context, 'Subtotal',
+                        'Rs. ${order.subtotal.toStringAsFixed(0)}'),
                     if (order.discount > 0)
-                      _summaryRow(context, 'Discount', '- Rs. ${order.discount.toStringAsFixed(0)}', color: AppColors.success),
-                    _summaryRow(context, 'Delivery Fee', 'Rs. ${order.deliveryCharge.toStringAsFixed(0)}'),
+                      _summaryRow(context, 'Discount',
+                          '- Rs. ${order.discount.toStringAsFixed(0)}',
+                          color: AppColors.success),
+                    _summaryRow(context, 'Delivery Fee',
+                        'Rs. ${order.deliveryCharge.toStringAsFixed(0)}'),
                     const Divider(height: 16),
-                    _summaryRow(context, 'Total Amount', 'Rs. ${order.total.toStringAsFixed(0)}', isBold: true),
+                    _summaryRow(context, 'Total Amount',
+                        'Rs. ${order.total.toStringAsFixed(0)}',
+                        isBold: true),
                     const SizedBox(height: 24),
                   ],
                 ),
               ),
 
               // Action Buttons
-              if (order.status != OrderStatus.delivered && order.status != OrderStatus.cancelled) ...[
+              if (order.status != OrderStatus.delivered &&
+                  order.status != OrderStatus.cancelled) ...[
                 Row(
                   children: [
                     Expanded(
@@ -747,12 +874,14 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                           foregroundColor: AppColors.error,
                           side: const BorderSide(color: AppColors.error),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: _isUpdating ? null : _showCancelDialog,
                         child: const FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text('Cancel Order', style: TextStyle(fontWeight: FontWeight.w700)),
+                          child: Text('Cancel Order',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ),
@@ -765,20 +894,25 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
                             backgroundColor: AdminTheme.primaryBlue,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
-                          onPressed: _isUpdating ? null : () => _advanceStatus(nextStatus),
+                          onPressed: _isUpdating
+                              ? null
+                              : () => _advanceStatus(nextStatus),
                           child: _isUpdating
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2),
                                 )
                               : FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
                                     _getNextStatusActionName(nextStatus),
-                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700),
                                   ),
                                 ),
                         ),
@@ -794,7 +928,8 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
     );
   }
 
-  Widget _summaryRow(BuildContext context, String title, String value, {bool isBold = false, Color? color}) {
+  Widget _summaryRow(BuildContext context, String title, String value,
+      {bool isBold = false, Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -808,7 +943,9 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
               style: TextStyle(
                 fontSize: isBold ? 15 : 13,
                 fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
-                color: isBold ? AdminTheme.getTextDark(context) : AdminTheme.getTextMuted(context),
+                color: isBold
+                    ? AdminTheme.getTextDark(context)
+                    : AdminTheme.getTextMuted(context),
               ),
             ),
           ),
@@ -820,7 +957,10 @@ class _OrderDetailModalState extends State<OrderDetailModal> {
               style: TextStyle(
                 fontSize: isBold ? 16 : 13,
                 fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-                color: color ?? (isBold ? AdminTheme.primaryBlue : AdminTheme.getTextDark(context)),
+                color: color ??
+                    (isBold
+                        ? AdminTheme.primaryBlue
+                        : AdminTheme.getTextDark(context)),
               ),
             ),
           ),

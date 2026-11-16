@@ -10,7 +10,8 @@ import '../core/utils/logger.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
   }
 }
 
@@ -31,6 +32,7 @@ class FcmService {
       onOpen!(data);
     }
   }
+
   static void _open(RemoteMessage message) {
     _pending = Map<String, dynamic>.from(message.data);
     routePending();
@@ -43,25 +45,37 @@ class FcmService {
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       FirebaseMessaging.onMessage.listen((message) {
         final title = message.notification?.title;
-        if (title != null) onForeground?.call(title, Map<String, dynamic>.from(message.data));
+        if (title != null) {
+          onForeground?.call(title, Map<String, dynamic>.from(message.data));
+        }
       });
       FirebaseMessaging.onMessageOpenedApp.listen(_open);
       final initial = await _messaging.getInitialMessage();
       if (initial != null) _open(initial);
     } catch (_) {
-      AppLogger.warn('Push notification initialization unavailable', tag: 'FCM');
+      AppLogger.warn('Push notification initialization unavailable',
+          tag: 'FCM');
     }
   }
+
   static Future<void> initialize() => initializeListenersOnly();
 
   static Future<NotificationSettings?> requestNotificationPermission() async {
     if (LocalDemo.enabled) return null;
-    try { return await _messaging.requestPermission(alert: true, badge: true, sound: true); }
-    catch (_) { return null; }
+    try {
+      return await _messaging.requestPermission(
+          alert: true, badge: true, sound: true);
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<void> registerUserToken(String userId) async {
-    if (LocalDemo.enabled || userId.isEmpty || (_userId == userId && _tokenSubscription != null)) return;
+    if (LocalDemo.enabled ||
+        userId.isEmpty ||
+        (_userId == userId && _tokenSubscription != null)) {
+      return;
+    }
     await _tokenSubscription?.cancel();
     _tokenSubscription = null;
     _userId = userId;
@@ -70,9 +84,11 @@ class FcmService {
     Future<void> save(String token) async {
       if (_userId != userId) return;
       await FirebaseFirestore.instance.collection('users').doc(userId).set({
-        'fcmToken': token, 'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+        'fcmToken': token,
+        'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     }
+
     try {
       final token = await _messaging.getToken();
       if (token != null) await save(token);
@@ -94,11 +110,13 @@ class FcmService {
     if (userId == null) return;
     try {
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'fcmToken': FieldValue.delete(), 'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+        'fcmToken': FieldValue.delete(),
+        'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
       });
       await _messaging.deleteToken();
     } catch (_) {
-      AppLogger.warn('Push token cleanup could not reach the server', tag: 'FCM');
+      AppLogger.warn('Push token cleanup could not reach the server',
+          tag: 'FCM');
     }
   }
 
@@ -120,6 +138,6 @@ class FcmService {
   static Future<void> setOffersEnabled(bool enabled) => LocalDemo.enabled
       ? Future<void>.value()
       : enabled
-      ? _messaging.subscribeToTopic('food_fight_offers')
-      : _messaging.unsubscribeFromTopic('food_fight_offers');
+          ? _messaging.subscribeToTopic('food_fight_offers')
+          : _messaging.unsubscribeFromTopic('food_fight_offers');
 }

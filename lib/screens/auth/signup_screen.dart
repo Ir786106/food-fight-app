@@ -53,7 +53,8 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreedToTerms) {
-      AppSnackbar.showSnackBar(context,
+      AppSnackbar.showSnackBar(
+        context,
         const SnackBar(
           content: Text('Please agree to the Terms & Conditions to proceed'),
           backgroundColor: AppColors.error,
@@ -79,7 +80,8 @@ class _SignupScreenState extends State<SignupScreen> {
       Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false);
     } else {
       final error = auth.errorMessage ?? 'Registration failed';
-      AppSnackbar.showSnackBar(context,
+      AppSnackbar.showSnackBar(
+        context,
         SnackBar(
           content: Text(error),
           backgroundColor: AppColors.error,
@@ -101,7 +103,8 @@ class _SignupScreenState extends State<SignupScreen> {
     if (success) {
       RoleRouter.navigateHome(context, auth.currentUser);
     } else if (auth.errorMessage != null) {
-      AppSnackbar.showSnackBar(context,
+      AppSnackbar.showSnackBar(
+        context,
         SnackBar(
           content: Text(auth.errorMessage!),
           backgroundColor: AppColors.error,
@@ -154,19 +157,22 @@ class _SignupScreenState extends State<SignupScreen> {
                               horizontal: isCompactLandscape ? 16 : 20,
                               vertical: isCompactLandscape ? 8 : 12,
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 24),
                             decoration: BoxDecoration(
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.7 : 0.8),
+                                color: colorScheme.outlineVariant
+                                    .withValues(alpha: isDark ? 0.7 : 0.8),
                                 width: 1,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: isDark
                                       ? Colors.black.withValues(alpha: 0.4)
-                                      : AppColors.darkBrown.withValues(alpha: 0.08),
+                                      : AppColors.darkBrown
+                                          .withValues(alpha: 0.08),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -205,13 +211,16 @@ class _SignupScreenState extends State<SignupScreen> {
                                     label: 'Full Name',
                                     hint: 'John Doe',
                                     icon: Icons.person_outline_rounded,
-                                    validator: (v) => ValidatorUtils.validateRequired(v, fieldName: 'Full Name'),
+                                    validator: (v) =>
+                                        ValidatorUtils.validateRequired(v,
+                                            fieldName: 'Full Name'),
                                   ),
                                   const SizedBox(height: 14),
 
                                   // Email
                                   CustomTextField(
-                                    key: const ValueKey('signup_email_input_field'),
+                                    key: const ValueKey(
+                                        'signup_email_input_field'),
                                     fieldKey: const ValueKey('email_field'),
                                     semanticsLabel: 'Email Address Field',
                                     controller: _emailController,
@@ -227,7 +236,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                   CustomTextField(
                                     key: const ValueKey('phone_input_field'),
                                     fieldKey: const ValueKey('phone_field'),
-                                    semanticsLabel: 'Pakistan Mobile Phone Field',
+                                    semanticsLabel:
+                                        'Pakistan Mobile Phone Field',
                                     controller: _phoneController,
                                     label: 'Phone Number',
                                     hint: '0300 1234567',
@@ -239,24 +249,32 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   // Password
                                   CustomTextField(
-                                    key: const ValueKey('signup_password_input_field'),
-                                    fieldKey: const ValueKey('signup_password_field'),
-                                    toggleKey: const ValueKey('signup_password_visibility_toggle'),
+                                    key: const ValueKey(
+                                        'signup_password_input_field'),
+                                    fieldKey:
+                                        const ValueKey('signup_password_field'),
+                                    toggleKey: const ValueKey(
+                                        'signup_password_visibility_toggle'),
                                     semanticsLabel: 'Password Field',
                                     controller: _passwordController,
                                     label: 'Password',
                                     hint: 'Min 6 characters',
                                     icon: Icons.lock_outline_rounded,
                                     isPassword: true,
-                                    validator: (v) => ValidatorUtils.validatePassword(v, minLength: 6),
+                                    validator: (v) =>
+                                        ValidatorUtils.validatePassword(v,
+                                            minLength: 6),
                                   ),
                                   const SizedBox(height: 14),
 
                                   // Confirm Password
                                   CustomTextField(
-                                    key: const ValueKey('confirm_password_input_field'),
-                                    fieldKey: const ValueKey('confirm_password_field'),
-                                    toggleKey: const ValueKey('confirm_password_visibility_toggle'),
+                                    key: const ValueKey(
+                                        'confirm_password_input_field'),
+                                    fieldKey: const ValueKey(
+                                        'confirm_password_field'),
+                                    toggleKey: const ValueKey(
+                                        'confirm_password_visibility_toggle'),
                                     semanticsLabel: 'Confirm Password Field',
                                     controller: _confirmPasswordController,
                                     label: 'Confirm Password',
@@ -264,7 +282,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                     icon: Icons.lock_outline_rounded,
                                     isPassword: true,
                                     validator: (v) {
-                                      if (v == null || v.isEmpty) return 'Please confirm your password';
+                                      if (v == null || v.isEmpty) {
+                                        return 'Please confirm your password';
+                                      }
                                       if (v != _passwordController.text) {
                                         return 'Passwords do not match';
                                       }
@@ -276,12 +296,15 @@ class _SignupScreenState extends State<SignupScreen> {
                                   // Terms & Conditions Checkbox
                                   InkWell(
                                     key: const ValueKey('terms_checkbox'),
-                                    onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
+                                    onTap: () => setState(
+                                        () => _agreedToTerms = !_agreedToTerms),
                                     borderRadius: BorderRadius.circular(8),
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 4),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
                                         children: [
                                           SizedBox(
                                             width: 24,
@@ -290,9 +313,11 @@ class _SignupScreenState extends State<SignupScreen> {
                                               value: _agreedToTerms,
                                               activeColor: AppColors.primary,
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(5),
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
                                               ),
-                                              onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                                              onChanged: (v) => setState(() =>
+                                                  _agreedToTerms = v ?? false),
                                             ),
                                           ),
                                           const SizedBox(width: 10),
@@ -301,7 +326,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                               'I agree to the Terms & Conditions and Privacy Policy',
                                               style: TextStyle(
                                                 fontSize: 12.5,
-                                                color: colorScheme.onSurfaceVariant,
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
                                                 height: 1.3,
                                               ),
                                             ),
@@ -314,7 +340,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   // Primary Sign Up Button
                                   CustomButton(
-                                    key: const ValueKey('create_account_button'),
+                                    key:
+                                        const ValueKey('create_account_button'),
                                     semanticsLabel: 'Create Account Button',
                                     text: 'Create Account',
                                     isLoading: _isLoading,
@@ -327,24 +354,28 @@ class _SignupScreenState extends State<SignupScreen> {
                                     children: [
                                       Expanded(
                                         child: Divider(
-                                          color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                          color: colorScheme.outlineVariant
+                                              .withValues(alpha: 0.8),
                                           thickness: 1,
                                         ),
                                       ),
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 14),
                                         child: Text(
                                           'OR',
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
-                                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                            color: colorScheme.onSurfaceVariant
+                                                .withValues(alpha: 0.7),
                                           ),
                                         ),
                                       ),
                                       Expanded(
                                         child: Divider(
-                                          color: colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                          color: colorScheme.outlineVariant
+                                              .withValues(alpha: 0.8),
                                           thickness: 1,
                                         ),
                                       ),
@@ -355,19 +386,22 @@ class _SignupScreenState extends State<SignupScreen> {
                                   // Google Sign-Up Button
                                   if (GoogleSignInButton.isSupported)
                                     GoogleSignInButton(
-                                    key: const ValueKey('google_signup_button'),
-                                    semanticsLabel: 'Sign up with Google Button',
-                                    text: 'Sign up with Google',
-                                    isLoading: _isGoogleLoading,
-                                    onPressed: _handleGoogleSignIn,
-                                  ),
+                                      key: const ValueKey(
+                                          'google_signup_button'),
+                                      semanticsLabel:
+                                          'Sign up with Google Button',
+                                      text: 'Sign up with Google',
+                                      isLoading: _isGoogleLoading,
+                                      onPressed: _handleGoogleSignIn,
+                                    ),
                                   const SizedBox(height: 20),
 
                                   // Log in prompt
                                   Center(
                                     child: Wrap(
                                       alignment: WrapAlignment.center,
-                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
                                       children: [
                                         Text(
                                           'Already have an account? ',
@@ -379,9 +413,11 @@ class _SignupScreenState extends State<SignupScreen> {
                                         GestureDetector(
                                           key: const ValueKey('login_link'),
                                           behavior: HitTestBehavior.opaque,
-                                          onTap: () => Navigator.of(context).pop(),
+                                          onTap: () =>
+                                              Navigator.of(context).pop(),
                                           child: const Padding(
-                                            padding: EdgeInsets.symmetric(vertical: 4),
+                                            padding: EdgeInsets.symmetric(
+                                                vertical: 4),
                                             child: Text(
                                               'Log In',
                                               style: TextStyle(
@@ -431,7 +467,8 @@ class _SignupScreenState extends State<SignupScreen> {
             top: 10,
             left: 12,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brandMaroon),
+              icon: const Icon(Icons.arrow_back_rounded,
+                  color: AppColors.brandMaroon),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -503,7 +540,8 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brandMaroon),
+            icon: const Icon(Icons.arrow_back_rounded,
+                color: AppColors.brandMaroon),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 8),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../core/utils/safe_convert.dart';
 import 'food_model.dart';
 import 'menu_item_model.dart';
@@ -21,11 +23,11 @@ class CartItemModel {
     this.unitPrice,
   }) : selectedAddons = selectedAddons ?? [];
 
-  /// Unique key distinguishing this line item (differentiating variants & extras)
+  /// Unique key distinguishing this line item (distinguishing variants, extras, and instructions)
   String get lineKey {
     final v = selectedVariant?.label ?? selectedSize ?? '';
     final aList = selectedAddons.map((a) => a.name).toList()..sort();
-    return '${food.id}::$v::${aList.join(',')}';
+    return jsonEncode([food.id, v, aList, note?.trim() ?? '']);
   }
 
   /// Price of a single item including chosen variant and extras
@@ -77,15 +79,20 @@ class CartItemModel {
   }
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
-    final foodMap = json['food'] is Map ? Map<String, dynamic>.from(json['food'] as Map) : <String, dynamic>{};
+    final foodMap = json['food'] is Map
+        ? Map<String, dynamic>.from(json['food'] as Map)
+        : <String, dynamic>{};
     final food = FoodModel.fromJson(foodMap);
     final rawSize = json['selectedSize']?.toString();
 
     // Parse selected variant if saved or resolve from size
     MenuVariant? parsedVariant;
     if (json['selectedVariant'] != null && json['selectedVariant'] is Map) {
-      parsedVariant = MenuVariant.fromJson(Map<String, dynamic>.from(json['selectedVariant'] as Map));
-    } else if (rawSize != null && food.variants != null && food.variants!.isNotEmpty) {
+      parsedVariant = MenuVariant.fromJson(
+          Map<String, dynamic>.from(json['selectedVariant'] as Map));
+    } else if (rawSize != null &&
+        food.variants != null &&
+        food.variants!.isNotEmpty) {
       parsedVariant = food.variants!.firstWhere(
         (v) => v.label.toLowerCase() == rawSize.toLowerCase(),
         orElse: () => food.variants!.first,
@@ -108,7 +115,9 @@ class CartItemModel {
       selectedSize: rawSize,
       selectedVariant: parsedVariant,
       selectedAddons: parsedAddons,
-      unitPrice: json['unitPrice'] != null ? SafeConvert.toDouble(json['unitPrice']) : null,
+      unitPrice: json['unitPrice'] != null
+          ? SafeConvert.toDouble(json['unitPrice'])
+          : null,
     );
   }
 

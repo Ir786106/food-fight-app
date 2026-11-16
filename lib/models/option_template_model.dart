@@ -34,7 +34,8 @@ class OptionTemplateItem {
 /// Reusable Option Template (Size Set or Extras Group)
 class OptionTemplateModel {
   final String id;
-  final String name; // e.g. "4 Sizes (S, M, L, XL)" or "Extra Toppings" or "Dip Sauces"
+  final String
+      name; // e.g. "4 Sizes (S, M, L, XL)" or "Extra Toppings" or "Dip Sauces"
   final String type; // 'size_set' or 'extras_group'
   final List<OptionTemplateItem> items;
   final int minSelections;
@@ -94,7 +95,9 @@ class OptionTemplateModel {
       maxSelections: SafeConvert.toInt(json['maxSelections'], 1),
       isRequired: json['isRequired'] == true || json['isRequired'] == 1,
       branchId: json['branchId']?.toString(),
-      isActive: json['isActive'] == 1 || json['isActive'] == true || json['isActive'] == null,
+      isActive: json['isActive'] == 1 ||
+          json['isActive'] == true ||
+          json['isActive'] == null,
       createdAt: SafeConvert.toDateTime(json['createdAt']),
       updatedAt: SafeConvert.toDateTime(json['updatedAt']),
     );

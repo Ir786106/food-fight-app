@@ -75,7 +75,8 @@ class ChatMessageModel {
   factory ChatMessageModel.fromMap(Map<String, dynamic> map, [String? id]) =>
       ChatMessageModel.fromJson(map, id);
 
-  factory ChatMessageModel.fromJson(Map<String, dynamic> json, [String? docId]) {
+  factory ChatMessageModel.fromJson(Map<String, dynamic> json,
+      [String? docId]) {
     List<String> readByList = [];
     if (json['readBy'] is List) {
       readByList = (json['readBy'] as List).map((e) => e.toString()).toList();

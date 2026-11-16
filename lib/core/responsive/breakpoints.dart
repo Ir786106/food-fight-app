@@ -17,7 +17,8 @@ enum WindowSizeClass {
   bool get isLarge => this == WindowSizeClass.large;
 
   bool get isMediumOrWider => this != WindowSizeClass.compact;
-  bool get isExpandedOrWider => this == WindowSizeClass.expanded || this == WindowSizeClass.large;
+  bool get isExpandedOrWider =>
+      this == WindowSizeClass.expanded || this == WindowSizeClass.large;
 
   /// Resolves the size class from a raw width in density-independent pixels.
   static WindowSizeClass fromWidth(double width) {

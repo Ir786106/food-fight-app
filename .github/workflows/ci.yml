@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  workflow_call:
 
 jobs:
   analyze-and-test:
@@ -23,6 +24,9 @@ jobs:
 
       - name: Flutter pub get
         run: flutter pub get
+
+      - name: Check English and Urdu catalogs
+        run: node tool/localization_catalog.cjs
 
       - name: Flutter format check
         run: dart format --output=none --set-exit-if-changed lib/ test/
@@ -65,8 +69,23 @@ jobs:
 
       - name: Install Rules Test Dependencies
         working-directory: test/rules
-        run: npm install
+        run: npm ci
+
+      - name: Install Functions Dependencies
+        run: npm ci --prefix functions
+
+      - name: Run backend unit tests
+        run: npm test --prefix functions
 
       - name: Run Firestore Rules Tests in Emulator
-        run: firebase emulators:exec --only firestore "npm --prefix test/rules test"
+        run: firebase emulators:exec --config firebase.demo.json --project demo-food-fight --only firestore "npm --prefix test/rules test"
+
+      - name: Run lifecycle and callable integration tests
+        env:
+          GCLOUD_PROJECT: demo-food-fight
+        run: |
+          firebase emulators:exec --config firebase.demo.json --project demo-food-fight --only auth,firestore "node --test functions/order_lifecycle.emulator.test.js"
+          firebase emulators:exec --config firebase.demo.json --project demo-food-fight --only auth,firestore "node --test functions/platform_administration.emulator.test.js"
+          firebase emulators:exec --config firebase.demo.json --project demo-food-fight --only firestore "node --test functions/migrate_legacy_tenants.emulator.test.js"
+          firebase emulators:exec --inspect-functions --config firebase.demo.json --project demo-food-fight --only auth,firestore,functions "node --test functions/platform_callable.emulator.test.js"
 
